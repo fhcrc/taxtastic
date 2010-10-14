@@ -50,7 +50,7 @@ def getlines(fname):
         for line in f:
             if line.strip() and not line.startswith('#'):
                 yield line.strip()
-                
+
 def main():
 
     usage = textwrap.dedent(__doc__)
@@ -80,7 +80,7 @@ def main():
         help=xws("""
         File containing tree statistics (for example "RAxML_info.whatever").
         """), metavar='FILE')
-    
+
     parser.add_option("-f", "--aln-fasta",
         action="store", dest="aln_fasta", type="string",
         help=xws("""
@@ -104,7 +104,7 @@ def main():
         help=xws("""
         Alignment profile used by hmmer.
         """), metavar='FILE')
-    
+
     parser.add_option("-i", "--seq-info",
         action="store", dest="seq_info", type="string",
         help=xws("""
@@ -119,7 +119,7 @@ def main():
         "tax_id","parent_id","rank","tax_name" followed by a column
         defining tax_id at each rank starting with root.
         """), metavar='FILE')
-        
+
     parser.add_option("-v", "--verbose",
         action="count", dest="verbose",
         help="increase verbosity of screen output (eg, -v is verbose, -vv more so)")
@@ -127,9 +127,9 @@ def main():
     if not sys.argv[2:] or '-h' in sys.argv or '--help' in sys.argv:
         args = ['-h']
     else:
-        command = sys.argv[1]            
+        command = sys.argv[1]
         args = sys.argv[2:]
-        
+
     (options, args) = parser.parse_args(args=args)
 
     loglevel = {
