@@ -200,7 +200,7 @@ class TestTaxTable(unittest.TestCase):
 
         with open(self.fname,'w') as fout:
             self.tax.write_table(taxa=None, csvfile=fout)
-            
+
 
 
 class TestMethods(unittest.TestCase):

@@ -54,10 +54,10 @@ class TestBase(unittest.TestCase):
             logging.WARNING:'',
             logging.INFO:'-v',
             logging.DEBUG:'-vv'}.get(loglevel,'')
-        
+
         self.outputdir = config.outputdir
         self.outfile = os.path.join(self.outputdir, self.funcname)
-        
+
     def tearDown(self):
         pass
 
@@ -68,27 +68,27 @@ class TestHelp(TestBase):
 
     def test02(self):
         self.cmd_ok(args='')
-        
+
 class TestCreate(TestBase):
-    
-    def test01(self):        
+
+    def test01(self):
         self.pkgname = self.outfile+'.refpkg'
         shutil.rmtree(self.pkgname, ignore_errors=True)
         self.cmd_ok(args='create --package-name=%(pkgname)s' % self)
         self.cmd_fails(args='create --package-name=%(pkgname)s' % self)
 
-    def test02(self):        
+    def test02(self):
 
         self.taxonomy = os.path.join(datadir, 'tax_table.csv')
         self.seq_info = os.path.join(datadir, 'bv_refdata.csv')
         self.pkgname = self.outfile+'.refpkg'
-        
+
         shutil.rmtree(self.pkgname, ignore_errors=True)
         self.cmd_ok(args='create --package-name=%(pkgname)s --taxonomy=%(taxonomy)s --seq-info=%(seq_info)s' % self)
 
 
-    
-        
 
-    
-        
+
+
+
+

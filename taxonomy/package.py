@@ -26,11 +26,11 @@ def write_config(fname, optdict, sections):
     """
 
     config = ConfigParser.SafeConfigParser()
-    
+
     for section_name, opts in sections.items():
         config.add_section(section_name)
         for opt in opts:
-            val = optdict.get((section_name,opt),'')                
+            val = optdict.get((section_name,opt),'')
             config.set(section_name, opt, str(val))
 
     cfile = open(fname,'w+')
@@ -50,16 +50,16 @@ def create(pkg_dir, options, manifest_name=manifest_name, package_contents=packa
     optdict = {}
     optdict[('metadata','create_date')] = time.strftime('%Y-%m-%d %H:%M:%S')
 
-    # copy files into the package directory    
+    # copy files into the package directory
     for fname in package_contents['files']:
         pth = getattr(options, fname)
-                
+
         if pth:
             shutil.copy(pth, pkg_dir)
             optdict[('files',fname)] = os.path.split(pth)[1]
             optdict[('md5',fname)] = hashlib.md5(open(pth).read()).hexdigest()
             package_contents['md5'].append(fname)
-            
+
     write_config(fname=manifest, optdict=optdict, sections=package_contents)
 
 

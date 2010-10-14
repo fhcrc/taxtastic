@@ -58,7 +58,7 @@ class TestWriteConfig(unittest.TestCase):
     def setUp(self):
         self.funcname = '_'.join(self.id().split('.')[-2:])
         self.fname = os.path.join(outputdir, self.funcname) + '.ini'
-        
+
     def tearDown(self):
         pass
 
@@ -70,13 +70,13 @@ class TestWriteConfig(unittest.TestCase):
             optdict = options,
             sections = dict(sec1=['opt1','opt2'], sec2=['opt3','opt4'])
             )
-    
+
     def test02(self):
-        
+
         options = {('sec1','opt1'):'val1',('sec1','opt2'):'val2',('sec2','opt3'):'val3'}
         Taxonomy.package.write_config(
             fname = self.fname,
             optdict = options,
             sections = dict(sec1=['opt1','opt2'], sec2=['opt3','opt4'])
             )
-    
+

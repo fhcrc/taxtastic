@@ -131,7 +131,7 @@ class Taxonomy(object):
         """
 
         indent = '.'*_level
-        
+
         undefined = self.undefined_rank
         prefix = self.undef_prefix+'_'
 
@@ -207,7 +207,7 @@ class Taxonomy(object):
             tax_id, primary_name, is_primary = self.primary_from_name(tax_name)
 
         ldict = dict(self._get_lineage(tax_id))
-        
+
         ldict['tax_id'] = tax_id
         ldict['parent_id'], _ = self._node(tax_id)
         ldict['rank'] = self.cached[tax_id][-1][0]
