@@ -30,8 +30,8 @@ unittools
 
 unittools is required to run unit tests::
 
- svn checkout https://web.labmed.washington.edu/svn_pub/unittools/trunk unittools
- cd unittools
+ git clone git@github.com:nhoffman/unittools.git
+ cd unittools && \
  python setup.py install
 
 docutils
@@ -39,7 +39,7 @@ docutils
 
 docutils is required only to compile docs::
 
- wget "http://prdownloads.sourceforge.net/docutils/docutils-0.7.tar.gz?download"
+ wget "http://prdownloads.sourceforge.net/docutils/docutils-0.7.tar.gz?download" && \
  tar -xf docutils-0.7.tar.gz && \
  cd docutils-0.7 && \
  python setup.py install
