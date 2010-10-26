@@ -1,0 +1,66 @@
+
+
+This is RAxML version 7.2.7 released by Alexandros Stamatakis in August 2010.
+
+With greatly appreciated code contributions by:
+Andre Aberer (TUM)
+Simon Berger (TUM)
+John Cazes (TACC)
+Michael Ott (TUM)
+Nick Pattengale (UNM)
+Wayne Pfeiffer (SDSC)
+
+
+Alignment has 185 distinct alignment patterns
+
+Proportion of gaps and completely undetermined characters in this alignment: 0.78%
+
+RAxML rapid hill-climbing mode
+
+Using 1 distinct models/data partitions with joint branch length optimization
+
+
+Executing 1 inferences on the original alignment using 1 distinct randomized MP trees
+
+All free model parameters will be estimated by RAxML
+GAMMA model of rate heteorgeneity, ML estimate of alpha-parameter
+
+GAMMA Model parameters will be estimated up to an accuracy of 0.1000000000 Log Likelihood units
+
+Partition: 0
+Alignment Patterns: 185
+Name: No Name Provided
+DataType: DNA
+Substitution Matrix: GTR
+
+
+
+
+RAxML was called as follows:
+
+/home/matsen/programs/RAxML-7.2.7-ALPHA/raxmlHPC-SSE3 -m GTRGAMMA -n testNuc -s testNuc.phy 
+
+
+Testing which likelihood implementation to use
+Standard Implementation full tree traversal time: 0.001336
+Subtree Equality Vectors for gap columns full tree traversal time: 0.000819
+... using SEV-based implementation
+
+Inference[0]: Time 0.256559 GAMMA-based likelihood -2365.188498, best rearrangement setting 5
+alpha[0]: 0.384677 rates[0] ac ag at cg ct gt: 0.491059 1.225010 0.913008 0.539137 2.673436 1.000000 
+
+
+Conducting final model optimizations on all 1 trees under GAMMA-based models ....
+
+Inference[0] final GAMMA-based Likelihood: -2363.962363 tree written to file /home/matsen/pplacer/test/parse_RAxML/RAxML_result.testNuc
+
+
+Starting final GAMMA-based thorough Optimization on tree 0 likelihood -2363.962363 .... 
+
+Final GAMMA-based Score of best tree -2363.962363
+
+Program execution info written to /home/matsen/pplacer/test/parse_RAxML/RAxML_info.testNuc
+Best-scoring ML tree written to: /home/matsen/pplacer/test/parse_RAxML/RAxML_bestTree.testNuc
+
+Overall execution time: 0.392916 secs or 0.000109 hours or 0.000005 days
+

@@ -1,0 +1,66 @@
+
+
+This is RAxML version 7.2.6 released by Alexandros Stamatakis in February 2010.
+
+With greatly appreciated code contributions by:
+Andre Aberer (TUM)
+Simon Berger (TUM)
+John Cazes (TACC)
+Michael Ott (TUM)
+Nick Pattengale (UNM)
+Wayne Pfeiffer (SDSC)
+
+
+Alignment has 1846 distinct alignment patterns
+
+Proportion of gaps and completely undetermined characters in this alignment: 35.33%
+
+RAxML Model Optimization up to an accuracy of 0.100000 log likelihood units
+
+Using 1 distinct models/data partitions with joint branch length optimization
+
+
+All free model parameters will be estimated by RAxML
+GAMMA model of rate heteorgeneity, ML estimate of alpha-parameter
+
+GAMMA Model parameters will be estimated up to an accuracy of 0.1000000000 Log Likelihood units
+
+Partition: 0
+Alignment Patterns: 1846
+Name: No Name Provided
+DataType: DNA
+Substitution Matrix: GTR
+
+
+
+
+RAxML was called as follows:
+
+raxmlHPC -f e -m GTRGAMMA -t 218.del.Abi-yunna2.tre -n 218.Abi-yunna2 -s 218.del.Abi-yunna2.phy 
+
+
+
+
+Overall Time for Tree Evaluation 60.107188
+Final GAMMA  likelihood: -134010.502603
+Number of free parameters for AIC-TEST(BR-LEN): 440
+Number of free parameters for AIC-TEST(NO-BR-LEN): 9
+
+
+Model Parameters of Partition 0, Name: No Name Provided, Type of Data: DNA
+alpha: 0.544684
+Tree-Length: 50.267307
+rate A <-> C: 0.723082
+rate A <-> G: 1.779172
+rate A <-> T: 1.208387
+rate C <-> G: 0.810352
+rate C <-> T: 3.400536
+rate G <-> T: 1.000000
+
+freq pi(A): 0.244816
+freq pi(C): 0.235353
+freq pi(G): 0.320649
+freq pi(T): 0.199181
+
+Final tree written to:                 /home/matsen/pplacer/test/Abi-yunna2/RAxML_result.218.Abi-yunna2
+Execution Log File written to:         /home/matsen/pplacer/test/Abi-yunna2/RAxML_log.218.Abi-yunna2
