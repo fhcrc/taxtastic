@@ -9,23 +9,29 @@ import sqlite3
 import shutil
 import time
 import pprint
-
 import config
 import Taxonomy
 
+from Taxonomy.package import MLOutputParser
+
 log = logging
 
+module_name = os.path.split(sys.argv[0])[1].rstrip('.py')
 outputdir = os.path.abspath(config.outputdir)
 datadir = os.path.abspath(config.datadir)
 
-class TestBriansClass(unittest.TestCase):
+class TestMLOutputParser(unittest.TestCase):
 
     def setUp(self):
         self.funcname = '_'.join(self.id().split('.')[-2:])
 
-    def tearDown(self):
-        pass
-
+    # Verify we can extract data from all of our example input files.
     def test01(self):
-        print datadir
-        print outputdir
+        test_files = [os.path.join(datadir,'phyml_aa_stats.txt'),
+                      os.path.join(datadir,'phyml_dna_stats.txt'),
+                      os.path.join(datadir,'RAxML_info.re-estimated'),
+                      os.path.join(datadir,'RAxML_info.testNuc')]
+        for file_name in test_files:
+            parser = MLOutputParser(file_name)
+            result = parser.parse_ml_data()
+            self.assertTrue(result)

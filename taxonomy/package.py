@@ -82,7 +82,7 @@ import re
 import json
 
 
-class MLOutputParser:
+class MLOutputParser(object):
     """Maximum Likelihood Output Parser Class"""
     
     file_name = '' # Name of file to parse.
@@ -245,5 +245,4 @@ class MLOutputParser:
             if (not os.access(self.file_name, os.R_OK)):
                 raise Exception()
         except:
-            print 'File is not readable: ' + file_name
-            sys.exit(1)
+            raise Exception, 'File is not readable: ' + file_name
