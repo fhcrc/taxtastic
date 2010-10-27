@@ -72,8 +72,8 @@ def create(pkg_dir, options, manifest_name=manifest_name, package_contents=packa
 # by RAxML (2 types) and PhyML.
 #
 # Supported file types include:
-#     raxml_condensed - rel_rates on a single line
-#     raxml_re_estimated - rel_rates 1 per line
+#     raxml_condensed - subs_rates on a single line
+#     raxml_re_estimated - subs_rates 1 per line
 #     phyml_dna
 #     phyml_aa
 
@@ -157,12 +157,12 @@ class StatsParser(object):
                 self.stats_values['ras_model'] = 'gamma' # gamma is present
                 self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
                 self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
-                self.stats_values['rel_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
-                self.stats_values['rel_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
-                self.stats_values['rel_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
-                self.stats_values['rel_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
-                self.stats_values['rel_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
-                self.stats_values['rel_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
+                self.stats_values['subs_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
+                self.stats_values['subs_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
+                self.stats_values['subs_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
+                self.stats_values['subs_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
+                self.stats_values['subs_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
+                self.stats_values['subs_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
                 return True       
             else:
                 return False   
@@ -181,12 +181,12 @@ class StatsParser(object):
                 self.stats_values['ras_model'] = 'gamma' # gamma is present
                 self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
                 self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
-                self.stats_values['rel_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
-                self.stats_values['rel_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
-                self.stats_values['rel_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
-                self.stats_values['rel_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
-                self.stats_values['rel_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
-                self.stats_values['rel_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
+                self.stats_values['subs_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
+                self.stats_values['subs_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
+                self.stats_values['subs_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
+                self.stats_values['subs_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
+                self.stats_values['subs_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
+                self.stats_values['subs_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
                 return True       
             else:
                 return False   
@@ -203,14 +203,14 @@ class StatsParser(object):
                 self.stats_values['program'] = regex.match(self.input_text).group(1) # program
                 self.stats_values['subs_model'] = regex.match(self.input_text).group(2) # subs_model           
                 self.stats_values['ras_model'] = 'gamma' # gamma is present
-                self.stats_values['gamma']['n_cats'] = float(regex.match(self.input_text).group(3)) # n_cats - default is 4 for RaxML
+                self.stats_values['gamma']['n_cats'] = int(regex.match(self.input_text).group(3)) # n_cats - default is 4 for RaxML
                 self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
-                self.stats_values['rel_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
-                self.stats_values['rel_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
-                self.stats_values['rel_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
-                self.stats_values['rel_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
-                self.stats_values['rel_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
-                self.stats_values['rel_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
+                self.stats_values['subs_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
+                self.stats_values['subs_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
+                self.stats_values['subs_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
+                self.stats_values['subs_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
+                self.stats_values['subs_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
+                self.stats_values['subs_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
                 self.stats_values['datatype'] = 'DNA' # datatype                
                 return True       
             else:
