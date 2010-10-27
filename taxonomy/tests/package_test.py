@@ -12,7 +12,7 @@ import pprint
 import config
 import Taxonomy
 
-from Taxonomy.package import MLOutputParser
+from Taxonomy.package import StatsParser
 
 log = logging
 
@@ -20,7 +20,7 @@ module_name = os.path.split(sys.argv[0])[1].rstrip('.py')
 outputdir = os.path.abspath(config.outputdir)
 datadir = os.path.abspath(config.datadir)
 
-class TestMLOutputParser(unittest.TestCase):
+class TestStatsParser(unittest.TestCase):
 
     def setUp(self):
         self.funcname = '_'.join(self.id().split('.')[-2:])
@@ -32,6 +32,6 @@ class TestMLOutputParser(unittest.TestCase):
                       os.path.join(datadir,'RAxML_info.re-estimated'),
                       os.path.join(datadir,'RAxML_info.testNuc')]
         for file_name in test_files:
-            parser = MLOutputParser(file_name)
-            result = parser.parse_ml_data()
+            parser = StatsParser(file_name)
+            result = parser.parse_stats_data()
             self.assertTrue(result)

@@ -68,7 +68,7 @@ def create(pkg_dir, options, manifest_name=manifest_name, package_contents=packa
 
 
 
-# MLOutputParser class - parse maximum likelihood output files generated 
+# StatsParser class - parse tree stats output files generated 
 # by RAxML (2 types) and PhyML.
 #
 # Supported file types include:
@@ -80,56 +80,51 @@ def create(pkg_dir, options, manifest_name=manifest_name, package_contents=packa
 import os
 import re
 import json
+from collections import defaultdict
 
-
-class MLOutputParser(object):
-    """Maximum Likelihood Output Parser Class"""
+class StatsParser(object):
+    """Tree Statistics Output Parser Class"""
     
     file_name = '' # Name of file to parse.
     file_type = 'unknown'  # Type of file examined, defaults to unknown. 
     input_text = '' # Full text of input file.
     # Property of the class that gets populated when matches are found 
     # within an output file.
-    ml_values = { 'program' : '',
-                  'datatype' : '',
-                  'matrix' : '',
-                  'gamma_cat' : 4, # Default is 4.
-                  'gamma_alpha' : None, # This is actually a Decimal, but Decimal is not JSON serializable so we just work with a string.
-                  'rel_rates' : { 'ac' : None, #  rel_rates are actually Decimals, but Decimal is not JSON serializable so we just work with a string.
-                                  'ag' : None, 
-                                  'at' : None,
-                                  'cg' : None,
-                                  'ct' : None,
-                                  'gt' : None                                                        
-                                }
-                 }
-    
+    stats_values = defaultdict(dict)
+
 ### Public methods ###    
     
-    # Return contents of ml_values, in the format of a dictionary.
-    def get_ml_values(self):
-        return self.ml_values
+    # Return contents of stats_values, in the format of a dictionary.
+    def get_stats_values(self):
+        return self.stats_values
     
-    # Return contents of ml_values in JSON format.
-    def get_ml_json(self):
-        return json.dumps(self.ml_values)
+    # Return contents of stats_values in JSON format.
+    def get_stats_json(self):
+        return json.dumps(self.stats_values, indent=2)
     
+    def write_stats_json(self, out_file):
+        try:
+            json = self.get_stats_json()
+            out = open(out_file, 'w')
+            out.write(json)
+            out.close()
+        except IOError as (errno, strerror):
+            raise Exception, "I/O error({0}): {1}".format(errno, strerror)    
     
     # Return contents of file_type.
     def get_file_type(self):
         return self.file_type
      
-    # Extract data from ML output files.
-    def parse_ml_data(self):    
+    # Extract data from stats output files.
+    def parse_stats_data(self):    
         # Read input file into a string for multiline matching.
+        match_found = False
         try:
             input_file = open(self.file_name, 'r')
             self.input_text = input_file.read()
             input_file.close()
         except IOError as (errno, strerror):
-            print "I/O error({0}): {1}".format(errno, strerror)
-            raise
-        match_found = False
+            raise Exception, "I/O error({0}): {1}".format(errno, strerror)
         if (self._parse_raxml_condensed()):
             self.file_type = 'raxml_condensed'
             match_found = True
@@ -156,21 +151,23 @@ class MLOutputParser(object):
             regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha\[0\]: (\d+\.\d+) rates\[0\] ac ag at cg ct gt: (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) ',
                                re.M|re.DOTALL)
             if (regex.match(self.input_text)):
-                self.ml_values['program'] = regex.match(self.input_text).group(1) # program
-                self.ml_values['datatype'] = regex.match(self.input_text).group(2) # datatype
-                self.ml_values['matrix'] = regex.match(self.input_text).group(3) # matrix
-                self.ml_values['gamma_alpha'] = str(regex.match(self.input_text).group(4)) # gamma_alpha
-                self.ml_values['rel_rates']['ac'] = str(regex.match(self.input_text).group(5)) # ac
-                self.ml_values['rel_rates']['ag'] = str(regex.match(self.input_text).group(6)) # ag
-                self.ml_values['rel_rates']['at'] = str(regex.match(self.input_text).group(7)) # at
-                self.ml_values['rel_rates']['cg'] = str(regex.match(self.input_text).group(8)) # cg
-                self.ml_values['rel_rates']['ct'] = str(regex.match(self.input_text).group(9)) # ct
-                self.ml_values['rel_rates']['gt'] = str(regex.match(self.input_text).group(10)) # gt
+                self.stats_values['program'] = regex.match(self.input_text).group(1) # program
+                self.stats_values['datatype'] = regex.match(self.input_text).group(2) # datatype
+                self.stats_values['subs_model'] = regex.match(self.input_text).group(3) # subs_model
+                self.stats_values['ras_model'] = 'gamma' # gamma is present
+                self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
+                self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
+                self.stats_values['rel_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
+                self.stats_values['rel_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
+                self.stats_values['rel_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
+                self.stats_values['rel_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
+                self.stats_values['rel_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
+                self.stats_values['rel_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
                 return True       
             else:
                 return False   
         except:
-            return False
+            raise Exception, "Encountered a problem within  _parse_raxml_condensed."
 
     # Parse RAxML info file - re-estimated.
     def _parse_raxml_re_estimated(self):
@@ -178,62 +175,65 @@ class MLOutputParser(object):
                            re.M|re.DOTALL)
         try:
             if (regex.match(self.input_text)):
-                self.ml_values['program'] = regex.match(self.input_text).group(1) # program
-                self.ml_values['datatype'] = regex.match(self.input_text).group(2) # datatype
-                self.ml_values['matrix'] = regex.match(self.input_text).group(3) # matrix
-                self.ml_values['gamma_alpha'] = str(regex.match(self.input_text).group(4)) # gamma_alpha
-                self.ml_values['rel_rates']['ac'] = str(regex.match(self.input_text).group(5)) # ac
-                self.ml_values['rel_rates']['ag'] = str(regex.match(self.input_text).group(6)) # ag
-                self.ml_values['rel_rates']['at'] = str(regex.match(self.input_text).group(7)) # at
-                self.ml_values['rel_rates']['cg'] = str(regex.match(self.input_text).group(8)) # cg
-                self.ml_values['rel_rates']['ct'] = str(regex.match(self.input_text).group(9)) # ct
-                self.ml_values['rel_rates']['gt'] = str(regex.match(self.input_text).group(10)) # gt
+                self.stats_values['program'] = regex.match(self.input_text).group(1) # program
+                self.stats_values['datatype'] = regex.match(self.input_text).group(2) # datatype
+                self.stats_values['subs_model'] = regex.match(self.input_text).group(3) # subs_model
+                self.stats_values['ras_model'] = 'gamma' # gamma is present
+                self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
+                self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
+                self.stats_values['rel_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
+                self.stats_values['rel_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
+                self.stats_values['rel_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
+                self.stats_values['rel_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
+                self.stats_values['rel_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
+                self.stats_values['rel_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
                 return True       
             else:
                 return False   
         except:
-            return False
+            raise Exception, "Encountered a problem within _parse_raxml_re_estimated."
      
     # Parse PhyML output file - DNA
     def _parse_phyml_dna(self):
-        regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of .*? substitution:\s+(\w+).*Number of categories:\s+(\d+).*Gamma shape parameter:\s+(\d+\.\d+).*A <-> C\s+(\d+\.\d+).*A <-> G\s+(\d+\.\d+).*A <-> T\s+(\d+\.\d+).*C <-> G\s+(\d+\.\d+).*C <-> T\s+(\d+\.\d+).*G <-> T\s+(\d+\.\d+)', 
+        regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of nucleotides substitution:\s+(\w+).*Number of categories:\s+(\d+).*Gamma shape parameter:\s+(\d+\.\d+).*A <-> C\s+(\d+\.\d+).*A <-> G\s+(\d+\.\d+).*A <-> T\s+(\d+\.\d+).*C <-> G\s+(\d+\.\d+).*C <-> T\s+(\d+\.\d+).*G <-> T\s+(\d+\.\d+)', 
                            re.M|re.DOTALL)
         re_datatype = re.compile('.*Nucleotides frequencies.*', re.M|re.DOTALL)
         try:
             if (regex.match(self.input_text)):
-                self.ml_values['program'] = regex.match(self.input_text).group(1) # program
-                self.ml_values['matrix'] = regex.match(self.input_text).group(2) # matrix            
-                self.ml_values['gamma_cat'] =  regex.match(self.input_text).group(3) # gamma_cat
-                self.ml_values['gamma_alpha'] = str(regex.match(self.input_text).group(4)) # gamma_alpha
-                self.ml_values['rel_rates']['ac'] = str(regex.match(self.input_text).group(5)) # ac
-                self.ml_values['rel_rates']['ag'] = str(regex.match(self.input_text).group(6)) # ag
-                self.ml_values['rel_rates']['at'] = str(regex.match(self.input_text).group(7)) # at
-                self.ml_values['rel_rates']['cg'] = str(regex.match(self.input_text).group(8)) # cg
-                self.ml_values['rel_rates']['ct'] = str(regex.match(self.input_text).group(9)) # ct
-                self.ml_values['rel_rates']['gt'] = str(regex.match(self.input_text).group(10)) # gt
-                self.ml_values['datatype'] = 'DNA' # datatype                
+                self.stats_values['program'] = regex.match(self.input_text).group(1) # program
+                self.stats_values['subs_model'] = regex.match(self.input_text).group(2) # subs_model           
+                self.stats_values['ras_model'] = 'gamma' # gamma is present
+                self.stats_values['gamma']['n_cats'] = float(regex.match(self.input_text).group(3)) # n_cats - default is 4 for RaxML
+                self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
+                self.stats_values['rel_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
+                self.stats_values['rel_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
+                self.stats_values['rel_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
+                self.stats_values['rel_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
+                self.stats_values['rel_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
+                self.stats_values['rel_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
+                self.stats_values['datatype'] = 'DNA' # datatype                
                 return True       
             else:
                 return False   
         except:
-            return False  
+            raise Exception, "Encountered a problem within _parse_phyml_dna."
 
     # Parse PhyML output file - AA
     def _parse_phyml_aa(self):
-        regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of .*? substitution:\s+(\w+).*', 
+        regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of amino acids substitution:\s+(\w+).*', 
                            re.M|re.DOTALL)
 
         try:
             if (regex.match(self.input_text)):
-                self.ml_values['program'] = regex.match(self.input_text).group(1) # program
-                self.ml_values['matrix'] = regex.match(self.input_text).group(2) # matrix            
-                self.ml_values['datatype'] = 'AA' # datatype   
-                self.ml_values['gamma_cat'] = None # N/A 
+                self.stats_values['program'] = regex.match(self.input_text).group(1) # program
+                self.stats_values['subs_model'] = regex.match(self.input_text).group(2) # subs_model
+                self.stats_values['ras_model'] = None # gamma is not present
+                self.stats_values['datatype'] = 'AA' # datatype   
                 return True       
             else:
                 return False   
         except:
-            return False  
+            raise Exception, "Encountered a problem within _parse_phyml_aa."
 
             
 ### Constructor ###
