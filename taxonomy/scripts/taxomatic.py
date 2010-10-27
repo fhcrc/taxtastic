@@ -71,7 +71,7 @@ def main():
         help=xws("""Name of output directory. [default %default]
         """), metavar='PATH')
 
-    parser.add_option("--t", "--tree-file",
+    parser.add_option("-t", "--tree-file",
         action="store", dest="tree_file", type="string",
         help=xws("""
         Phylogenetic tree in newick format.

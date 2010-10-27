@@ -74,6 +74,7 @@ def create(pkg_dir, options, manifest_name=manifest_name, package_contents=packa
 # Supported file types include:
 #     raxml_condensed - subs_rates on a single line
 #     raxml_re_estimated - subs_rates 1 per line
+#     raxml_aa - amino acid
 #     phyml_dna
 #     phyml_aa
 
@@ -130,6 +131,9 @@ class StatsParser(object):
             match_found = True
         elif (self._parse_raxml_re_estimated()):
             self.file_type = 'raxml_re_estimated'
+            match_found = True            
+        elif (self._parse_raxml_aa()):
+            self.file_type = 'raxml_aa'
             match_found = True            
         elif (self._parse_phyml_dna()):
             self.file_type = 'phyml_dna'
@@ -193,6 +197,29 @@ class StatsParser(object):
         except:
             raise Exception, "Encountered a problem within _parse_raxml_re_estimated."
      
+
+    # Parse RAxML info file - amino acid.
+    def _parse_raxml_aa(self):
+        regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha\[0\]: (\d+\.\d+)',
+                           re.M|re.DOTALL)
+        try:
+            if (regex.match(self.input_text)):
+                self.stats_values['program'] = regex.match(self.input_text).group(1) # program
+                self.stats_values['datatype'] = regex.match(self.input_text).group(2) # datatype
+                self.stats_values['subs_model'] = regex.match(self.input_text).group(3) # subs_model
+                self.stats_values['ras_model'] = 'gamma' # gamma is present
+                self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
+                self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
+                return True       
+            else:
+                return False   
+        except:
+            raise Exception, "Encountered a problem within _parse_raxml_aa."
+     
+
+
+
+
     # Parse PhyML output file - DNA
     def _parse_phyml_dna(self):
         regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of nucleotides substitution:\s+(\w+).*Number of categories:\s+(\d+).*Gamma shape parameter:\s+(\d+\.\d+).*A <-> C\s+(\d+\.\d+).*A <-> G\s+(\d+\.\d+).*A <-> T\s+(\d+\.\d+).*C <-> G\s+(\d+\.\d+).*C <-> T\s+(\d+\.\d+).*G <-> T\s+(\d+\.\d+)', 

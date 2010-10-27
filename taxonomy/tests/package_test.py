@@ -30,6 +30,7 @@ class TestStatsParser(unittest.TestCase):
         test_files = [os.path.join(datadir,'phyml_aa_stats.txt'),
                       os.path.join(datadir,'phyml_dna_stats.txt'),
                       os.path.join(datadir,'RAxML_info.re-estimated'),
+                      os.path.join(datadir,'RAxML_info.aa'),
                       os.path.join(datadir,'RAxML_info.testNuc')]
         for file_name in test_files:
             parser = StatsParser(file_name)
