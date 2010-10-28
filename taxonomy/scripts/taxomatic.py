@@ -122,11 +122,22 @@ def main():
         defining tax_id at each rank starting with root.
         """), metavar='FILE')
 
+    parser.add_option("-m", "--mask_to_be_implemented",
+        action="store", dest="mask", type="string",
+        help=xws("""
+        'mask' is listed in package_contents but needs a command-line option implemented here.
+        """), metavar='FILE')
+
+
     parser.add_option("-v", "--verbose",
         action="count", dest="verbose",
         help="increase verbosity of screen output (eg, -v is verbose, -vv more so)")
 
-    if not sys.argv[2:] or '-h' in sys.argv or '--help' in sys.argv:
+    #  Need to make sure a valid action is passed in as the first argument.
+    #  'create' is currently the only supported option.
+    if (sys.argv[1] != 'create'):
+        args = ['-h']
+    elif not sys.argv[2:] or '-h' in sys.argv or '--help' in sys.argv:
         args = ['-h']
     else:
         command = sys.argv[1]

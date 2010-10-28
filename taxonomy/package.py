@@ -4,68 +4,80 @@ import os
 import time
 import shutil
 import hashlib
+import Taxonomy
+import re
+import json
+from collections import defaultdict
+#from Taxonomy.package import StatsParser
 
 log = logging
 
 PACKAGE_VERSION = 0
 
 manifest_name = 'CONTENTS.json'
+phylo_model_file = 'phylo_model.json'
 
 package_contents = {
     'metadata':['create_date','author','description','package_version'],
     'files':['tree_file','tree_stats','aln_fasta','aln_sto',
-             'profile', 'seq_info','taxonomy','mask'],
+             'profile','seq_info','taxonomy','mask','phylo_model_file'],
     'md5':[]
     }
 
-def write_config(fname, optdict, sections):
+def write_config(fname, optdict):
     """
     * fname - name of config file
-    * optdict - a dict with keys d[(section, opt)] = val
-    * sections - a list of tuples, eg
-      (('section1',['opt1','opt2',...]),('section2',['opt3','opt4',...]))
-      where 'opt*' are attributes of 'options'
+    * optdict - a dictionary with sections for keys and nested dictionaries { option : value } for top-level values.
     """
+    config_json = json.dumps(optdict, indent=2)
+    try:
+        config_file = open(fname, 'w+')
+        config_file.write(config_json)
+        log.info('writing %s' % fname)
+        config_file.seek(0)
+        #print config_file.read()
+        config_file.close()
+    except IOError as (errno, strerror):
+        raise Exception, "I/O error({0}): {1}".format(errno, strerror)
 
-    config = ConfigParser.SafeConfigParser()
+# Read in a tree stats files and extract some data to be written to a JSON phylo model file.
+def write_tree_stats_json(pkg_dir, input_file, phylo_model_file=phylo_model_file):
+    phylo_model_file = os.path.join(pkg_dir, phylo_model_file)
+    parser = Taxonomy.package.StatsParser(input_file)
+    result = parser.parse_stats_data()
+    if (result == True):
+        parser.write_stats_json(phylo_model_file)
+    else:
+        raise Exception, "Unable to create " + phylo_model_file + " from " + input_file + "." 
 
-    for section_name, opts in sections.items():
-        config.add_section(section_name)
-        for opt in opts:
-            val = optdict.get((section_name,opt),'')
-            config.set(section_name, opt, str(val))
 
-    cfile = open(fname,'w+')
-    config.write(cfile)
-    log.info('writing %s' % fname)
-
-    cfile.seek(0)
-    # log.info('\n' + cfile.read())
-    print cfile.read()
-    cfile.close()
-
-def create(pkg_dir, options, manifest_name=manifest_name, package_contents=package_contents):
+def create(pkg_dir, options, manifest_name=manifest_name, package_contents=package_contents, phylo_model_file=phylo_model_file):
 
     os.mkdir(pkg_dir)
     manifest = os.path.join(pkg_dir, manifest_name)
-
-    optdict = {}
-    optdict[('metadata','create_date')] = time.strftime('%Y-%m-%d %H:%M:%S')
+    optdict = defaultdict(dict)
+    optdict['metadata']['create_date'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
     # copy files into the package directory
     for fname in package_contents['files']:
+        # phylo_modle_file is part of the package, but not a command-line argument.
+        if (fname == 'phylo_model_file'):
+            continue
         pth = getattr(options, fname)
-
         if pth:
             shutil.copy(pth, pkg_dir)
-            optdict[('files',fname)] = os.path.split(pth)[1]
-            optdict[('md5',fname)] = hashlib.md5(open(pth).read()).hexdigest()
+            optdict['files'][fname] = os.path.split(pth)[1]
+            optdict['md5'][fname] = hashlib.md5(open(pth).read()).hexdigest()
             package_contents['md5'].append(fname)
 
-    write_config(fname=manifest, optdict=optdict, sections=package_contents)
+    # Write out the phylo model file in JSON format, but only if tree_stats was specified as an argument.
+    if (getattr(options, 'tree_stats') is not None):
+        write_tree_stats_json(pkg_dir, getattr(options, 'tree_stats'))
+        optdict['files'][phylo_model_file] = os.path.split(phylo_model_file)[1]
+        optdict['md5'][phylo_model_file] = hashlib.md5(open(os.path.join(pkg_dir, phylo_model_file)).read()).hexdigest()
 
 
-
+    write_config(fname=manifest, optdict=optdict)
 
 
 # StatsParser class - parse tree stats output files generated 
@@ -77,11 +89,6 @@ def create(pkg_dir, options, manifest_name=manifest_name, package_contents=packa
 #     raxml_aa - amino acid
 #     phyml_dna
 #     phyml_aa
-
-import os
-import re
-import json
-from collections import defaultdict
 
 class StatsParser(object):
     """Tree Statistics Output Parser Class"""
