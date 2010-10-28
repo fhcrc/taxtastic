@@ -8,7 +8,6 @@ import Taxonomy
 import re
 import json
 from collections import defaultdict
-#from Taxonomy.package import StatsParser
 
 log = logging
 
