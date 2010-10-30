@@ -54,4 +54,4 @@ a local repository and install as follows::
  cd taxtastic/taxonomy
  python setup.py install
 
-
+This will put taxomatic.py and taxtable.py in the same directory as your python installation.

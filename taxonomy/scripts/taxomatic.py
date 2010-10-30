@@ -11,7 +11,15 @@ This script accepts a set of files as input, performs some basic
 sanity checks of format and content, and creates a package directory
 with manifest.
 
-TODO: Is this the place for us to decsribe the refpkg standard?
+The reference package specification can be seen at 
+http://github.com/nhoffman/taxtastic/wiki/refpkg.
+
+Commands
+========
+
+create
+  Create a reference package
+
 
 Command line options
 ====================
