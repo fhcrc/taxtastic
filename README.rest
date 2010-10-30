@@ -24,7 +24,13 @@ When performed for the first time, this downloads the NCBI taxonomy and builds a
 That takes a while, but it only needs to be performed once.
 Then::
 
-  taxomatic.py create -s RAxML_info.rpoB.PROTGAMMAWAGF -t RAxML_result.rpsB.PROTGAMMAWAGF -f rpoB.aln -T rpoB.taxonomy -i rpoB.seq_info.csv -P rpoB.refpkg 
+  taxomatic.py create \
+        -s RAxML_info.rpoB.PROTGAMMAWAGF \
+        -t RAxML_result.rpsB.PROTGAMMAWAGF \
+        -f rpoB.aln \
+        -T rpoB.taxonomy \
+        -i rpoB.seq_info.csv \
+        -P rpoB.refpkg 
 
 Now, given a query sequence alignment which is in frame with your reference alignment, you can run pplacer (from the "tax" git branch) to get taxonomically annotated placements, and visualizations combining both taxonomic and phylogenetic placements with two more steps::
 
