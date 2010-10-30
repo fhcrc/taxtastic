@@ -4,7 +4,7 @@ import os
 import time
 import shutil
 import hashlib
-import Taxonomy
+import taxonomy
 import re
 import json
 from collections import defaultdict
