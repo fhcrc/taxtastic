@@ -146,12 +146,11 @@ def main():
     # set up logging
     logging.basicConfig(file=sys.stdout, format=logformat, level=loglevel)
 
-    zfile = Taxonomy.ncbi.fetch_data(dest_dir=options.dest_dir, new=False)
-
     pth, fname = os.path.split(options.dbfile)
     dbname = options.dbfile if pth else os.path.join(options.dest_dir, fname)
 
     if not os.access(dbname, os.F_OK) or options.new_database:
+        zfile = Taxonomy.ncbi.fetch_data(dest_dir=options.dest_dir, new=False)
         log.warning('creating new database in %s using data in %s' % (dbname, zfile))
         con = Taxonomy.ncbi.db_connect(dbname, new=True)
         Taxonomy.ncbi.db_load(con, zfile)
