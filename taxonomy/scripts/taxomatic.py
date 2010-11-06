@@ -11,7 +11,15 @@ This script accepts a set of files as input, performs some basic
 sanity checks of format and content, and creates a package directory
 with manifest.
 
-TODO: Is this the place for us to decsribe the refpkg standard?
+The reference package specification can be seen at 
+http://github.com/nhoffman/taxtastic/wiki/refpkg.
+
+Commands
+========
+
+create
+  Create a reference package
+
 
 Command line options
 ====================
@@ -71,7 +79,7 @@ def main():
         help=xws("""Name of output directory. [default %default]
         """), metavar='PATH')
 
-    parser.add_option("--t", "--tree-file",
+    parser.add_option("-t", "--tree-file",
         action="store", dest="tree_file", type="string",
         help=xws("""
         Phylogenetic tree in newick format.
@@ -122,11 +130,22 @@ def main():
         defining tax_id at each rank starting with root.
         """), metavar='FILE')
 
+    parser.add_option("-m", "--mask_to_be_implemented",
+        action="store", dest="mask", type="string",
+        help=xws("""
+        'mask' is listed in package_contents but needs a command-line option implemented here.
+        """), metavar='FILE')
+
+
     parser.add_option("-v", "--verbose",
         action="count", dest="verbose",
         help="increase verbosity of screen output (eg, -v is verbose, -vv more so)")
 
-    if not sys.argv[2:] or '-h' in sys.argv or '--help' in sys.argv:
+    #  Need to make sure a valid action is passed in as the first argument.
+    #  'create' is currently the only supported option.
+    if (sys.argv[1] != 'create'):
+        args = ['-h']
+    elif not sys.argv[2:] or '-h' in sys.argv or '--help' in sys.argv:
         args = ['-h']
     else:
         command = sys.argv[1]
