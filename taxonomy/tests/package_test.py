@@ -72,12 +72,12 @@ class TestStatsParser(unittest.TestCase):
                 os.remove(outfile)
             except OSError:
                 pass
-            
+
             parser = StatsParser(infile)
             parser.parse_stats_data()
             parser.write_stats_json(outfile)
             self.assertTrue(os.path.isfile(outfile))
-            
+
     def testJsonRegression(self):
         """
         Regression testing of values parsed from each input file to
@@ -89,17 +89,26 @@ class TestStatsParser(unittest.TestCase):
             Recursively compare key, value dictionary pairs. Raises
             error on difference.
             """
-
+            
             for k in set(d1.keys()) | set(d2.keys()):
-                v1, v2 = d1[k], d2[k]
+                try:
+                    v1, v2 = d1[k], d2[k]
+                except KeyError, msg:
+                    log.error(pprint.pformat(d1))
+                    log.error(pprint.pformat(d2))
+                    raise KeyError(msg)
+                    
+                log.debug('%s %s %s' % (k, v1, v2))
+
                 if isinstance(v1, dict):
                     compare(v1, v2)
                 elif isinstance(v1, float):
                     self.assertAlmostEqual(v1, v2)
                 else:
                     self.assertEqual(v1, v2)
-                    
+
         for statsfile in test_paths:
+            log.info(statsfile)
             parser = StatsParser(statsfile)
             parser.parse_stats_data()
             svals = dict(parser.get_stats_values())

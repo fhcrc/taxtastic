@@ -77,7 +77,6 @@ def create(pkg_dir, options, manifest_name=manifest_name, package_contents=packa
 
     write_config(fname=manifest, optdict=optdict)
 
-
 # StatsParser class - parse tree stats output files generated
 # by RAxML (2 types) and PhyML.
 #

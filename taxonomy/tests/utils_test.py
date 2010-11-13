@@ -50,7 +50,7 @@ class TestGetNewNodes(unittest.TestCase):
     def tearDown(self):
         pass
 
-    if hasattr(Taxonomy.utils, 'read_spreadsheet'):    
+    if hasattr(Taxonomy.utils, 'read_spreadsheet'):
         def test01(self):
             rows = Taxonomy.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
             check = lambda val: isinstance(val, str) and '.' not in val
@@ -59,4 +59,4 @@ class TestGetNewNodes(unittest.TestCase):
         def test02(self):
             self.assertRaises(AttributeError, Taxonomy.utils.get_new_nodes,
                               os.path.join(datadir,'new_taxa.xls'))
-            
+
