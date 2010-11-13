@@ -4,6 +4,10 @@ ifdef TARGET
 	TARG=-t ${TARGET}
 endif
 
+ifdef BIN
+	BIN=${BIN}/
+endif
+
 all: test
 
 install:
@@ -12,10 +16,10 @@ install:
 	cd ${RUNIT_DIR}
 
 test:
-	runtests.py ${TARG} ${FLAGS}
+	${BIN}runtests.py ${TARG} ${FLAGS}
 
 %.py: FORCE
-	runtests.py $@ ${TARG} ${FLAGS}
+	${BIN}runtests.py $@ ${TARG} ${FLAGS}
 
 FORCE:
 

@@ -195,7 +195,7 @@ def main():
             taxa.add(tax_id)
             if not is_primary:
                 log.warning('%(tax_id)8s  %(tax_name)40s -(primary name)-> %(primary_name)s' % locals())
-            
+
     log.warning('calculating lineages for %s taxa' % len(taxa))
     for taxid in taxa:
         log.warning('adding %s' % taxid)

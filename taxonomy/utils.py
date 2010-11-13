@@ -63,12 +63,14 @@ if xlrd:
         return headers, lines
 
 def get_new_nodes(fname):
-    if fname.endswith('.xls') and xlrd:
-        headers, rows = read_spreadsheet(
-            fname,
-            fmts={'tax_id':'%i',
-                  'parent_id':'%i'
-                  })
+    if fname.endswith('.xls'):
+        if xlrd:
+            headers, rows = read_spreadsheet(
+                fname,
+                fmts={'tax_id':'%i', 'parent_id':'%i' }
+                )
+        else:
+            raise AttributeError('xlrd not installed: cannot parse .xls files.')
     elif fname.endswith('.csv'):
         reader = csv.DictReader(fname)
         rows = (d for d in reader if d['tax_id'])
