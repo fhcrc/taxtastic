@@ -1,0 +1,18 @@
+{
+  "datatype": "AA", 
+  "subs_model": "WAG", 
+  "program": "RAxML version 7.2.6", 
+  "ras_model": "gamma", 
+  "gamma": {
+    "alpha": 0.73156900000000002, 
+    "n_cats": 4
+  }, 
+  "subs_rates": {
+    "ac": 0.723082, 
+    "gt": 1.0, 
+    "ag": 1.779172, 
+    "cg": 0.81035199999999996, 
+    "at": 1.2083870000000001, 
+    "ct": 3.4005359999999998
+  }
+}
