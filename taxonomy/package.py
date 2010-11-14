@@ -77,55 +77,80 @@ def create(pkg_dir, options, manifest_name=manifest_name, package_contents=packa
 
     write_config(fname=manifest, optdict=optdict)
 
-# StatsParser class - parse tree stats output files generated
-# by RAxML (2 types) and PhyML.
-#
-# Supported file types include:
-#     raxml_condensed - subs_rates on a single line
-#     raxml_re_estimated - subs_rates 1 per line
-#     raxml_aa - amino acid
-#     phyml_dna
-#     phyml_aa
+# Brian - I made some changes to the StatsParser class - some are
+# cosmetic; others make it a bit more "pythonic" - I left some
+# comments meant to be deleted inline (anything starting with NH:).
 
 class StatsParser(object):
-    """Tree Statistics Output Parser Class"""
-
-    file_name = '' # Name of file to parse.
-    file_type = 'unknown'  # Type of file examined, defaults to unknown.
-    input_text = '' # Full text of input file.
-    # Property of the class that gets populated when matches are found
-    # within an output file.
-    stats_values = defaultdict(dict)
+    """
+    StatsParser class - parse tree stats output files generated
+    by RAxML (2 types) and PhyML.
+    """
 
 ### Constructor ###
 
     def __init__(self, file_name):
+        """
+        * file_name - name of input file to parse.
+
+        Supported file types include:
+        * raxml_condensed - subs_rates on a single line
+        * raxml_re_estimated - subs_rates 1 per line
+        * raxml_aa - amino acid
+        * phyml_dna
+        * phyml_aa
+        """
+
+        ## NH: these are better as instance variables than class
+        ## variables - there isn't a case when you want all instances
+        ## to share the same value or to be updated
+        ## simultaneously. Defining stats_values as a class variable
+        ## introduces a bug that causes the value of this variable to
+        ## be shared among instances.
+
         self.file_name = file_name
-        # Make sure the file passed in both exists and is readable.
-        try:
-            if (not os.access(self.file_name, os.R_OK)):
-                raise Exception()
-        except:
-            raise Exception, 'File is not readable: ' + file_name
+        self.file_type = 'unknown'  # Type of file examined, defaults to unknown.
+        self.input_text = '' # Full text of input file.
+        # Property of the class that gets populated when matches are found
+        # within an output file.
+        self.stats_values = defaultdict(dict)
+
+        ## don't re-raise exceptions (especially when you make the
+        ## exception less specific in the process); in any case, you
+        ## look for an error when the file is opened
 
 ### Public methods ###
 
-    # Return contents of stats_values, in the format of a dictionary.
+    ## NH: note that getters and setters are generally not necessary
+    ## in python.
+
+    ## NH: the comments are great, but better as docstrings so that
+    ## they can be seen using help() and in document autogeneration.
+
     def get_stats_values(self):
+        """
+        Return contents of stats_values, in the format of a
+        dictionary.
+        """
         return self.stats_values
 
-    # Return contents of stats_values in JSON format.
     def get_stats_json(self):
+        """
+        Return contents of stats_values in JSON format.
+        """
         return json.dumps(self.stats_values, indent=2)
 
     def write_stats_json(self, out_file):
-        try:
-            json = self.get_stats_json()
-            out = open(out_file, 'w')
-            out.write(json)
-            out.close()
-        except IOError as (errno, strerror):
-            raise Exception, "I/O error({0}): {1}".format(errno, strerror)
+        """
+        Write the values parsed from the statistics file in JSON
+        format to out_file.
+        """
+
+        ## NH: again, no need to re-raise exceptions - it makes the
+        ## traceback harder to read. The "with" block takes care of
+        ## closing the file.
+        with open(out_file, 'w') as out:
+            out.write(self.get_stats_json())
 
     # Return contents of file_type.
     def get_file_type(self):
@@ -135,12 +160,10 @@ class StatsParser(object):
     def parse_stats_data(self):
         # Read input file into a string for multiline matching.
         match_found = False
-        try:
-            input_file = open(self.file_name, 'r')
+
+        with open(self.file_name, 'r') as input_file:
             self.input_text = input_file.read()
-            input_file.close()
-        except IOError as (errno, strerror):
-            raise Exception, "I/O error({0}): {1}".format(errno, strerror)
+
         if (self._parse_raxml_condensed()):
             self.file_type = 'raxml_condensed'
             match_found = True
