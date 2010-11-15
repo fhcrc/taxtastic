@@ -89,7 +89,7 @@ class TestStatsParser(unittest.TestCase):
             Recursively compare key, value dictionary pairs. Raises
             error on difference.
             """
-            
+
             for k in set(d1.keys()) | set(d2.keys()):
                 try:
                     v1, v2 = d1[k], d2[k]
@@ -97,7 +97,7 @@ class TestStatsParser(unittest.TestCase):
                     log.error(pprint.pformat(d1))
                     log.error(pprint.pformat(d2))
                     raise KeyError(msg)
-                    
+
                 log.debug('%s %s %s' % (k, v1, v2))
 
                 if isinstance(v1, dict):
