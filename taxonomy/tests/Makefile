@@ -12,10 +12,10 @@ install:
 	cd ${RUNIT_DIR}
 
 test:
-	runtests.py ${TARG} ${FLAGS}
+	python ./runtests.py ${TARG} ${FLAGS}
 
 %.py: FORCE
-	runtests.py $@ ${TARG} ${FLAGS}
+	python ./runtests.py $@ ${TARG} ${FLAGS}
 
 FORCE:
 

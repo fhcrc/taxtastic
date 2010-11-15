@@ -11,7 +11,7 @@ This script accepts a set of files as input, performs some basic
 sanity checks of format and content, and creates a package directory
 with manifest.
 
-The reference package specification can be seen at 
+The reference package specification can be seen at
 http://github.com/nhoffman/taxtastic/wiki/refpkg.
 
 Commands
@@ -143,7 +143,7 @@ def main():
 
     #  Need to make sure a valid action is passed in as the first argument.
     #  'create' is currently the only supported option.
-    if (sys.argv[1] != 'create'):
+    if not sys.argv[1:] or sys.argv[1] != 'create':
         args = ['-h']
     elif not sys.argv[2:] or '-h' in sys.argv or '--help' in sys.argv:
         args = ['-h']
