@@ -1,4 +1,4 @@
-#!/Users/nhoffman/devel/bin/python
+#!/use/bin/env python
 
 import cProfile
 import glob
