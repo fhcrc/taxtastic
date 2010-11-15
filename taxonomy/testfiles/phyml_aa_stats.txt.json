@@ -2,17 +2,5 @@
   "datatype": "AA", 
   "subs_model": "WAG", 
   "program": "PhyML v3.0", 
-  "ras_model": null, 
-  "gamma": {
-    "alpha": 0.38467699999999999, 
-    "n_cats": 4
-  }, 
-  "subs_rates": {
-    "ac": 0.49105900000000002, 
-    "gt": 1.0, 
-    "ag": 1.2250099999999999, 
-    "cg": 0.53913699999999998, 
-    "at": 0.91300800000000004, 
-    "ct": 2.6734360000000001
-  }
+  "ras_model": null
 }
