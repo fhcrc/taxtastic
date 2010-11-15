@@ -27,17 +27,11 @@ def write_config(fname, optdict):
     * fname - name of config file
     * optdict - a dictionary with sections for keys and nested dictionaries { option : value } for top-level values.
     """
-    config_json = json.dumps(optdict, indent=2)
-    try:
-        config_file = open(fname, 'w+')
-        config_file.write(config_json)
-        log.info('writing %s' % fname)
-        config_file.seek(0)
-        #print config_file.read()
-        config_file.close()
-    except IOError as (errno, strerror):
-        raise Exception, "I/O error({0}): {1}".format(errno, strerror)
 
+    log.info('writing %s' % fname)
+    with open(fname, 'w+') as config_file:
+        config_file.write(json.dumps(optdict, indent=2))
+        
 # Read in a tree stats files and extract some data to be written to a JSON phylo model file.
 def write_tree_stats_json(pkg_dir, input_file, phylo_model_file=phylo_model_file):
     phylo_model_file = os.path.join(pkg_dir, phylo_model_file)
@@ -78,16 +72,15 @@ def create(pkg_dir, options, manifest_name=manifest_name, package_contents=packa
     write_config(fname=manifest, optdict=optdict)
 
 # Brian - I made some changes to the StatsParser class - some are
-# cosmetic; others make it a bit more "pythonic" - I left some
-# comments meant to be deleted inline (anything starting with NH:).
+# cosmetic; others make it a bit more "pythonic". Only one notable
+# bug. I left some comments meant to be deleted inline (anything
+# starting with NH:).
 
 class StatsParser(object):
     """
     StatsParser class - parse tree stats output files generated
     by RAxML (2 types) and PhyML.
     """
-
-### Constructor ###
 
     def __init__(self, file_name):
         """
@@ -156,148 +149,206 @@ class StatsParser(object):
     def get_file_type(self):
         return self.file_type
 
-    # Extract data from stats output files.
     def parse_stats_data(self):
-        # Read input file into a string for multiline matching.
-        match_found = False
+        """
+        Extract data from stats output files.
+        """
 
+        # Read input file into a string for multiline matching.
         with open(self.file_name, 'r') as input_file:
             self.input_text = input_file.read()
 
-        if (self._parse_raxml_condensed()):
-            self.file_type = 'raxml_condensed'
-            match_found = True
-        elif (self._parse_raxml_re_estimated()):
-            self.file_type = 'raxml_re_estimated'
-            match_found = True
-        elif (self._parse_raxml_aa()):
-            self.file_type = 'raxml_aa'
-            match_found = True
-        elif (self._parse_phyml_dna()):
-            self.file_type = 'phyml_dna'
-            match_found = True
-        elif (self._parse_phyml_aa()):
-            self.file_type = 'phyml_aa'
-            match_found = True
+        ## NH: since you named your private methods so nicely
+        ## according to corresponding file type, you can replace the
+        ## code block below with the following:
+        match_found = False
+        for file_type in ['raxml_condensed','raxml_re_estimated','raxml_aa','phyml_dna','phyml_aa']:
+            match_found = getattr(self, '_parse_'+file_type)()
+            if match_found:
+                self.file_type = file_type
+                break
+                
+        # if (self._parse_raxml_condensed()):
+        #     self.file_type = 'raxml_condensed'
+        #     match_found = True
+        # elif (self._parse_raxml_re_estimated()):
+        #     self.file_type = 'raxml_re_estimated'
+        #     match_found = True
+        # elif (self._parse_raxml_aa()):
+        #     self.file_type = 'raxml_aa'
+        #     match_found = True
+        # elif (self._parse_phyml_dna()):
+        #     self.file_type = 'phyml_dna'
+        #     match_found = True
+        # elif (self._parse_phyml_aa()):
+        #     self.file_type = 'phyml_aa'
+        #     match_found = True
+
         return match_found
 
-    # Determine the md5sum of the output file.
     def get_md5sum(self):
+        """
+        Determine the md5sum of the output file.
+
+        TODO: implement me
+        """
         pass
 
 ### Private methods ###
 
-    # Parse RAxML info file - condensed.
+    ## NH: for each of the methods below, I removed the try block -
+    ## it's better to just let any errors propagate. It should be clear
+    ## from the trackeback where the error originated.
+    
     def _parse_raxml_condensed(self):
-        try:
-            regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha\[0\]: (\d+\.\d+) rates\[0\] ac ag at cg ct gt: (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) ',
-                               re.M|re.DOTALL)
-            if (regex.match(self.input_text)):
-                self.stats_values['program'] = regex.match(self.input_text).group(1) # program
-                self.stats_values['datatype'] = regex.match(self.input_text).group(2) # datatype
-                self.stats_values['subs_model'] = regex.match(self.input_text).group(3) # subs_model
-                self.stats_values['ras_model'] = 'gamma' # gamma is present
-                self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
-                self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
-                self.stats_values['subs_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
-                self.stats_values['subs_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
-                self.stats_values['subs_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
-                self.stats_values['subs_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
-                self.stats_values['subs_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
-                self.stats_values['subs_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
-                return True
-            else:
-                return False
-        except:
-            raise Exception, "Encountered a problem within  _parse_raxml_condensed."
+        """
+        Parse RAxML info file - condensed.
+        """
 
-    # Parse RAxML info file - re-estimated.
+        regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha\[0\]: (\d+\.\d+) rates\[0\] ac ag at cg ct gt: (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) ',
+                           re.M|re.DOTALL)
+
+        if (regex.match(self.input_text)):
+            self.stats_values['program'] = regex.match(self.input_text).group(1) # program
+            self.stats_values['datatype'] = regex.match(self.input_text).group(2) # datatype
+            self.stats_values['subs_model'] = regex.match(self.input_text).group(3) # subs_model
+            self.stats_values['ras_model'] = 'gamma' # gamma is present
+            self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
+            self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
+            self.stats_values['subs_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
+            self.stats_values['subs_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
+            self.stats_values['subs_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
+            self.stats_values['subs_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
+            self.stats_values['subs_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
+            self.stats_values['subs_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
+            return True
+        else:
+            return False
+    
     def _parse_raxml_re_estimated(self):
+        """
+        Parse RAxML info file - re-estimated.
+        """
+        
         regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha: (\d+\.\d+).*rate A <-> C: (\d+\.\d+).*rate A <-> G: (\d+\.\d+).*rate A <-> T: (\d+\.\d+).*rate C <-> G: (\d+\.\d+).*rate C <-> T: (\d+\.\d+).*rate G <-> T: (\d+\.\d+)',
                            re.M|re.DOTALL)
-        try:
-            if (regex.match(self.input_text)):
-                self.stats_values['program'] = regex.match(self.input_text).group(1) # program
-                self.stats_values['datatype'] = regex.match(self.input_text).group(2) # datatype
-                self.stats_values['subs_model'] = regex.match(self.input_text).group(3) # subs_model
-                self.stats_values['ras_model'] = 'gamma' # gamma is present
-                self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
-                self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
-                self.stats_values['subs_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
-                self.stats_values['subs_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
-                self.stats_values['subs_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
-                self.stats_values['subs_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
-                self.stats_values['subs_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
-                self.stats_values['subs_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
-                return True
-            else:
-                return False
-        except:
-            raise Exception, "Encountered a problem within _parse_raxml_re_estimated."
+
+        if (regex.match(self.input_text)):
+            self.stats_values['program'] = regex.match(self.input_text).group(1) # program
+            self.stats_values['datatype'] = regex.match(self.input_text).group(2) # datatype
+            self.stats_values['subs_model'] = regex.match(self.input_text).group(3) # subs_model
+            self.stats_values['ras_model'] = 'gamma' # gamma is present
+            self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
+            self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
+            self.stats_values['subs_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
+            self.stats_values['subs_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
+            self.stats_values['subs_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
+            self.stats_values['subs_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
+            self.stats_values['subs_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
+            self.stats_values['subs_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
+            return True
+        else:
+            return False
 
 
-    # Parse RAxML info file - amino acid.
+    # def _parse_raxml_aa(self):
+    #     """
+    #     Parse RAxML info file - amino acid.
+    #     """
+
+    #     regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha\[0\]: (\d+\.\d+)',
+    #                        re.M|re.DOTALL)
+
+    #     if (regex.match(self.input_text)):
+    #         self.stats_values['program'] = regex.match(self.input_text).group(1) # program
+    #         self.stats_values['datatype'] = regex.match(self.input_text).group(2) # datatype
+    #         self.stats_values['subs_model'] = regex.match(self.input_text).group(3) # subs_model
+    #         self.stats_values['ras_model'] = 'gamma' # gamma is present
+    #         self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
+    #         self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
+    #         return True
+    #     else:
+    #         return False
+        
     def _parse_raxml_aa(self):
-        regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha\[0\]: (\d+\.\d+)',
-                           re.M|re.DOTALL)
-        try:
-            if (regex.match(self.input_text)):
-                self.stats_values['program'] = regex.match(self.input_text).group(1) # program
-                self.stats_values['datatype'] = regex.match(self.input_text).group(2) # datatype
-                self.stats_values['subs_model'] = regex.match(self.input_text).group(3) # subs_model
-                self.stats_values['ras_model'] = 'gamma' # gamma is present
-                self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
-                self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
-                return True
-            else:
-                return False
-        except:
-            raise Exception, "Encountered a problem within _parse_raxml_aa."
+        """
+        Parse RAxML info file - amino acid.
+        """
 
+        # NH: there's really nothing wrong with the way you've
+        # implemented any of these private methods - the only thing
+        # that is significantly less efficient than it could be is
+        # that the groups can be stored in an object - it isn't
+        # necessary to re-run the regular expression for each group,
+        # eg:
+        # mobj = regex.match(self.input_text)
+        # if mobj:
+        #     program = mobj.groups()[1]
+        #
+        # 
+        # Also, note that regex.search (as opposed to regex.match)
+        # allows matches starting in the middle of the string.
+        #
+        # however, I probably would have broken this up into multiple
+        # regular expressions to make it easier to read and less
+        # fragile.
+        
+        regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha\[0\]: (\d+\.\d+)', re.M|re.DOTALL)
 
+        mobj = regex.match(self.input_text)
+        if mobj:
+            groups = mobj.groups()
+            self.stats_values['program'] = groups[0] # program
+            self.stats_values['datatype'] = groups[1] # datatype
+            self.stats_values['subs_model'] = groups[2] # subs_model
+            self.stats_values['ras_model'] = 'gamma' # gamma is present
+            self.stats_values['gamma']['alpha'] = float(groups[3]) # alpha
+            self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
+            return True
+        else:
+            return False
 
-
-
-    # Parse PhyML output file - DNA
     def _parse_phyml_dna(self):
+        """
+        Parse PhyML output file - DNA
+        """
+        
         regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of nucleotides substitution:\s+(\w+).*Number of categories:\s+(\d+).*Gamma shape parameter:\s+(\d+\.\d+).*A <-> C\s+(\d+\.\d+).*A <-> G\s+(\d+\.\d+).*A <-> T\s+(\d+\.\d+).*C <-> G\s+(\d+\.\d+).*C <-> T\s+(\d+\.\d+).*G <-> T\s+(\d+\.\d+)',
                            re.M|re.DOTALL)
         re_datatype = re.compile('.*Nucleotides frequencies.*', re.M|re.DOTALL)
-        try:
-            if (regex.match(self.input_text)):
-                self.stats_values['program'] = regex.match(self.input_text).group(1) # program
-                self.stats_values['subs_model'] = regex.match(self.input_text).group(2) # subs_model
-                self.stats_values['ras_model'] = 'gamma' # gamma is present
-                self.stats_values['gamma']['n_cats'] = int(regex.match(self.input_text).group(3)) # n_cats - default is 4 for RaxML
-                self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
-                self.stats_values['subs_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
-                self.stats_values['subs_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
-                self.stats_values['subs_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
-                self.stats_values['subs_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
-                self.stats_values['subs_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
-                self.stats_values['subs_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
-                self.stats_values['datatype'] = 'DNA' # datatype
-                return True
-            else:
-                return False
-        except:
-            raise Exception, "Encountered a problem within _parse_phyml_dna."
 
-    # Parse PhyML output file - AA
+        if (regex.match(self.input_text)):
+            self.stats_values['program'] = regex.match(self.input_text).group(1) # program
+            self.stats_values['subs_model'] = regex.match(self.input_text).group(2) # subs_model
+            self.stats_values['ras_model'] = 'gamma' # gamma is present
+            self.stats_values['gamma']['n_cats'] = int(regex.match(self.input_text).group(3)) # n_cats - default is 4 for RaxML
+            self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
+            self.stats_values['subs_rates']['ac'] = float(regex.match(self.input_text).group(5)) # ac
+            self.stats_values['subs_rates']['ag'] = float(regex.match(self.input_text).group(6)) # ag
+            self.stats_values['subs_rates']['at'] = float(regex.match(self.input_text).group(7)) # at
+            self.stats_values['subs_rates']['cg'] = float(regex.match(self.input_text).group(8)) # cg
+            self.stats_values['subs_rates']['ct'] = float(regex.match(self.input_text).group(9)) # ct
+            self.stats_values['subs_rates']['gt'] = float(regex.match(self.input_text).group(10)) # gt
+            self.stats_values['datatype'] = 'DNA' # datatype
+            return True
+        else:
+            return False
+    
     def _parse_phyml_aa(self):
+        """
+        Parse PhyML output file - AA
+        """
+        
         regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of amino acids substitution:\s+(\w+).*',
                            re.M|re.DOTALL)
 
-        try:
-            if (regex.match(self.input_text)):
-                self.stats_values['program'] = regex.match(self.input_text).group(1) # program
-                self.stats_values['subs_model'] = regex.match(self.input_text).group(2) # subs_model
-                self.stats_values['ras_model'] = None # gamma is not present
-                self.stats_values['datatype'] = 'AA' # datatype
-                return True
-            else:
-                return False
-        except:
-            raise Exception, "Encountered a problem within _parse_phyml_aa."
+        if (regex.match(self.input_text)):
+            self.stats_values['program'] = regex.match(self.input_text).group(1) # program
+            self.stats_values['subs_model'] = regex.match(self.input_text).group(2) # subs_model
+            self.stats_values['ras_model'] = None # gamma is not present
+            self.stats_values['datatype'] = 'AA' # datatype
+            return True
+        else:
+            return False
 
 
