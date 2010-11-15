@@ -25,49 +25,77 @@ package_contents = {
 def write_config(fname, optdict):
     """
     * fname - name of config file
-    * optdict - a dictionary with sections for keys and nested dictionaries { option : value } for top-level values.
+    * optdict - a dictionary with sections for keys and nested dictionaries
+      { option : value } for top-level values.
     """
 
     log.info('writing %s' % fname)
     with open(fname, 'w+') as config_file:
         config_file.write(json.dumps(optdict, indent=2))
+
+class ConfigError(Exception):
+    pass
+
         
 # Read in a tree stats files and extract some data to be written to a JSON phylo model file.
-def write_tree_stats_json(pkg_dir, input_file, phylo_model_file=phylo_model_file):
-    phylo_model_file = os.path.join(pkg_dir, phylo_model_file)
-    parser = Taxonomy.package.StatsParser(input_file)
-    result = parser.parse_stats_data()
-    if (result == True):
-        parser.write_stats_json(phylo_model_file)
-    else:
-        raise Exception, "Unable to create " + phylo_model_file + " from " + input_file + "."
+def write_tree_stats_json(input_file, phylo_model_file):
 
+    parser = StatsParser(input_file)
+    success = parser.parse_stats_data()
 
-def create(pkg_dir, options, manifest_name=manifest_name, package_contents=package_contents, phylo_model_file=phylo_model_file):
+    if not success:
+        raise ConfigError("Unable to create %s from %s." % (phylo_model_file, input_file)) 
 
+    parser.write_stats_json(phylo_model_file)
+    
+def create(pkg_dir, options,
+           manifest_name=manifest_name,
+           package_contents=package_contents,
+           phylo_model_file=phylo_model_file):
+
+    """
+    Create the reference package (a directory with a manifest named
+    `manifest_name`).
+
+     * pkg_dir - the name of the directory to be created
+     * options - output of optparse.OptionParser.parse_args
+     * manifest_name - name of the JSON-format manifest file. Uses
+       Taxonomy.package.manifest_name by default.
+     * package_contents - A dict defining sections and contents of
+       each. Uses Taxonomy.package.package_contents by default.
+     * phylo_model_file - Names the JSON format file containing the
+       phylo model data; uses Taxonomy.package.phylo_model_file by default.
+    """
+    
     os.mkdir(pkg_dir)
     manifest = os.path.join(pkg_dir, manifest_name)
     optdict = defaultdict(dict)
     optdict['metadata']['create_date'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
-    # copy files into the package directory
+    # phylo_modle_file is part of the package, but not a command-line
+    # argument; write out the phylo model file in JSON format, but
+    # only if tree_stats was specified as an argument.
+    if options.tree_stats:
+        phylo_model_pth = os.path.join(pkg_dir, phylo_model_file)
+        write_tree_stats_json(
+            input_file = options.tree_stats,
+            phylo_model_file = phylo_model_pth
+            )
+
+        optdict['files']['phylo_model_file'] = phylo_model_file
+        optdict['md5']['phylo_model_file'] = \
+            hashlib.md5(open(phylo_model_pth).read()).hexdigest()
+        
+    # copy all provided files into the package directory
     for fname in package_contents['files']:
-        # phylo_modle_file is part of the package, but not a command-line argument.
-        if (fname == 'phylo_model_file'):
+        if fname == 'phylo_model_file':
             continue
+        
         pth = getattr(options, fname)
         if pth:
             shutil.copy(pth, pkg_dir)
-            optdict['files'][fname] = os.path.split(pth)[1]
+            optdict['files'][fname] = os.path.split(pth)[1]            
             optdict['md5'][fname] = hashlib.md5(open(pth).read()).hexdigest()
-            package_contents['md5'].append(fname)
-
-    # Write out the phylo model file in JSON format, but only if tree_stats was specified as an argument.
-    if (getattr(options, 'tree_stats') is not None):
-        write_tree_stats_json(pkg_dir, getattr(options, 'tree_stats'))
-        optdict['files'][phylo_model_file] = os.path.split(phylo_model_file)[1]
-        optdict['md5'][phylo_model_file] = hashlib.md5(open(os.path.join(pkg_dir, phylo_model_file)).read()).hexdigest()
-
 
     write_config(fname=manifest, optdict=optdict)
 
@@ -167,7 +195,7 @@ class StatsParser(object):
             if match_found:
                 self.file_type = file_type
                 break
-                
+
         # if (self._parse_raxml_condensed()):
         #     self.file_type = 'raxml_condensed'
         #     match_found = True
@@ -199,7 +227,7 @@ class StatsParser(object):
     ## NH: for each of the methods below, I removed the try block -
     ## it's better to just let any errors propagate. It should be clear
     ## from the trackeback where the error originated.
-    
+
     def _parse_raxml_condensed(self):
         """
         Parse RAxML info file - condensed.
@@ -224,12 +252,12 @@ class StatsParser(object):
             return True
         else:
             return False
-    
+
     def _parse_raxml_re_estimated(self):
         """
         Parse RAxML info file - re-estimated.
         """
-        
+
         regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha: (\d+\.\d+).*rate A <-> C: (\d+\.\d+).*rate A <-> G: (\d+\.\d+).*rate A <-> T: (\d+\.\d+).*rate C <-> G: (\d+\.\d+).*rate C <-> T: (\d+\.\d+).*rate G <-> T: (\d+\.\d+)',
                            re.M|re.DOTALL)
 
@@ -269,7 +297,7 @@ class StatsParser(object):
     #         return True
     #     else:
     #         return False
-        
+
     def _parse_raxml_aa(self):
         """
         Parse RAxML info file - amino acid.
@@ -285,14 +313,14 @@ class StatsParser(object):
         # if mobj:
         #     program = mobj.groups()[1]
         #
-        # 
+        #
         # Also, note that regex.search (as opposed to regex.match)
         # allows matches starting in the middle of the string.
         #
         # however, I probably would have broken this up into multiple
         # regular expressions to make it easier to read and less
         # fragile.
-        
+
         regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha\[0\]: (\d+\.\d+)', re.M|re.DOTALL)
 
         mobj = regex.match(self.input_text)
@@ -312,7 +340,7 @@ class StatsParser(object):
         """
         Parse PhyML output file - DNA
         """
-        
+
         regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of nucleotides substitution:\s+(\w+).*Number of categories:\s+(\d+).*Gamma shape parameter:\s+(\d+\.\d+).*A <-> C\s+(\d+\.\d+).*A <-> G\s+(\d+\.\d+).*A <-> T\s+(\d+\.\d+).*C <-> G\s+(\d+\.\d+).*C <-> T\s+(\d+\.\d+).*G <-> T\s+(\d+\.\d+)',
                            re.M|re.DOTALL)
         re_datatype = re.compile('.*Nucleotides frequencies.*', re.M|re.DOTALL)
@@ -333,12 +361,12 @@ class StatsParser(object):
             return True
         else:
             return False
-    
+
     def _parse_phyml_aa(self):
         """
         Parse PhyML output file - AA
         """
-        
+
         regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of amino acids substitution:\s+(\w+).*',
                            re.M|re.DOTALL)
 

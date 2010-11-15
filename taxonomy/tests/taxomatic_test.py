@@ -78,13 +78,21 @@ class TestCreate(TestBase):
         self.cmd_fails(args='create --package-name=%(pkgname)s' % self)
 
     def test02(self):
-
         self.taxonomy = os.path.join(datadir, 'tax_table.csv')
         self.seq_info = os.path.join(datadir, 'bv_refdata.csv')
         self.pkgname = self.outfile+'.refpkg'
 
         shutil.rmtree(self.pkgname, ignore_errors=True)
         self.cmd_ok(args='create --package-name=%(pkgname)s --taxonomy=%(taxonomy)s --seq-info=%(seq_info)s' % self)
+
+    def test03(self):
+        self.taxonomy = os.path.join(datadir, 'tax_table.csv')
+        self.seq_info = os.path.join(datadir, 'bv_refdata.csv')
+        self.tree_stats = os.path.join(datadir, 'phyml_aa_stats.txt')
+        self.pkgname = self.outfile+'.refpkg'
+
+        shutil.rmtree(self.pkgname, ignore_errors=True)
+        self.cmd_ok(args='create --package-name=%(pkgname)s --taxonomy=%(taxonomy)s --seq-info=%(seq_info)s --tree-stats=%(tree_stats)s' % self)
 
 
 
