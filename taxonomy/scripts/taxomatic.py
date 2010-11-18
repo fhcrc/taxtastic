@@ -215,9 +215,13 @@ def main():
     if action == 'help' or print_opts:
         print usage
         parser.print_help()
-    elif action == 'create':
+    else:
         try:
-            Taxonomy.package.create(options.package_name, options)
+            if hasattr(Taxonomy.package, action):
+                getattr(Taxonomy.package, action)(options)
+            else:
+                log.error('Sorry: the %s action is not yet implemented' % action)
+                sys.exit(1)
         except OSError:
             log.error('A package named "%s" already exists' % options.package_name)
             sys.exit(2)

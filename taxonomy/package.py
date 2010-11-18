@@ -48,7 +48,7 @@ def write_tree_stats_json(input_file, phylo_model_file):
 
     parser.write_stats_json(phylo_model_file)
     
-def create(pkg_dir, options,
+def create(options,
            manifest_name=manifest_name,
            package_contents=package_contents,
            phylo_model_file=phylo_model_file):
@@ -57,8 +57,9 @@ def create(pkg_dir, options,
     Create the reference package (a directory with a manifest named
     `manifest_name`).
 
-     * pkg_dir - the name of the directory to be created
-     * options - output of optparse.OptionParser.parse_args
+     * options - output of optparse.OptionParser.parse_args (or
+       presumably any other object with the required attributes:
+       [TODO: list required attributes here])
      * manifest_name - name of the JSON-format manifest file. Uses
        Taxonomy.package.manifest_name by default.
      * package_contents - A dict defining sections and contents of
@@ -66,6 +67,8 @@ def create(pkg_dir, options,
      * phylo_model_file - Names the JSON format file containing the
        phylo model data; uses Taxonomy.package.phylo_model_file by default.
     """
+
+    pkg_dir = options.package_name
     
     os.mkdir(pkg_dir)
     manifest = os.path.join(pkg_dir, manifest_name)
