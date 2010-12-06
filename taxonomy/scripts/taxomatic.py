@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 """\
-============
 taxomatic.py
 ============
 
-Usage: taxomatic.py action <options>
+Usage: %prog action <options>
 
 Creation, validation, and modification of reference packages for use
 with `pplacer` and related software.
@@ -13,7 +12,7 @@ with `pplacer` and related software.
 Actions
 =======
 
-Use `taxomatic.py -h` or `taxomatic.py --help` to print this help text. 
+Use `taxomatic.py -h` or `taxomatic.py --help` to print this help text.
 
 help
   Print detailed help for an action below using `taxomatic.py help <action>`
@@ -21,7 +20,7 @@ create
   Create a reference package
 check
   Verify that reference package is intact and valid.
-  
+
 """
 
 help_create = """\
@@ -82,9 +81,9 @@ def main():
 
     ## TODO: implement this block preceding `parser = OptionParser...`
     ## as a function or class elsewhere?
-    
+
     valid_actions = ('help','create','check')
-    
+
     short_usage = textwrap.dedent(__doc__)
     long_usage = short_usage + help_tail
     full_usage = short_usage + \
@@ -96,7 +95,7 @@ def main():
     action = 'help'
     usage = short_usage
     print_opts = True
-    
+
     if len(argv) == 0:
         pass
     elif argv[0] == 'help':
@@ -109,7 +108,7 @@ def main():
     else:
         action, args = argv[0], argv[1:]
         print_opts = False
-        
+
     if action not in valid_actions:
         action_str = ','.join('"%s"'%a for a in valid_actions)
         msg = textwrap.fill(
@@ -117,7 +116,7 @@ def main():
                 (action, action_str))
         sys.stderr.write(msg + '\n')
         sys.exit(1)
-        
+
     parser = OptionParser(usage='',
                           version="$Id$",
                           formatter=SimpleHelpFormatter())
@@ -130,14 +129,14 @@ def main():
     parser.add_option("-v", "--verbose",
         action="count", dest="verbose",
         help="increase verbosity of screen output (eg, -v is verbose, -vv more so)")
-    
+
     if action in ('create','check'):
         parser.add_option("-P", "--package-name",
             action="store", dest="package_name", type="string",
             help=xws("""Name of output directory. [default %default]
             """), metavar='PATH')
 
-    if action in ('create'):        
+    if action in ('create'):
         parser.add_option("-t", "--tree-file",
             action="store", dest="tree_file", type="string",
             help=xws("""
@@ -194,7 +193,7 @@ def main():
             help=xws("""
             'mask' is listed in package_contents but needs a command-line option implemented here.
             """), metavar='FILE')
-        
+
     (options, args) = parser.parse_args(args=args)
 
     loglevel = {
@@ -211,7 +210,7 @@ def main():
 
     # set up logging
     logging.basicConfig(file=sys.stdout, format=logformat, level=loglevel)
-    
+
     if action == 'help' or print_opts:
         print usage
         parser.print_help()
