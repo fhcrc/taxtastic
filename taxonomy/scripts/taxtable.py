@@ -100,9 +100,9 @@ def main():
     """))
 
     parser.add_option("-t", "--tax-ids", dest="taxids", help=xws("""
-        A comma delimited list of tax_ids or the name of a file
-        specifying tax_ids (whitespace-delimited; lines beginning with
-        "#" are ignored).
+        A comma delimited list of tax_ids provided on the command line
+        or the name of a file specifying tax_ids
+        (whitespace-delimited; lines beginning with "#" are ignored).
     """))
 
     parser.add_option("-n", "--tax-names", dest="taxnames", help=xws("""
