@@ -58,8 +58,9 @@ def read(fname, ncol):
                 data = []
                 count = counter(1)
             else:
-                spl = line.split()[:-1]
-                spl[-1] = spl[-1].split('*')[1]
+                spl = line.split()[:-1]                
+                tax_id = spl[-1]
+                spl[-1] = tax_id.split('*')[1] if tax_id != 'none' else None
                 data.append([seqname, str(count.next())] + spl)
 
         yield data
@@ -80,7 +81,7 @@ def main():
     parser.add_option("-f", "--infile",
         action="store", dest="infile", type="string",
         help=xws("""Input .place file"""))
-    
+
     parser.add_option("-o", "--outfile",
         action="store", dest="outfile", type="string",
         help=xws("""Output CSV file containing pplacer data."""))
@@ -108,20 +109,20 @@ def main():
 
     try:
         fname = args[0]
-    except IndexError:        
+    except IndexError:
         fname = options.infile
 
     if not fname:
         print('Error: an input file is required.\n')
         parser.print_usage()
         exit(1)
-        
+
     colnames = ('name','hit','at','mlwr','ppost','mlll','bml','edge','branch','tax_id')
 
     fout = open(options.outfile, 'w') if options.outfile else sys.stdout
     writer = csv.writer(fout, quoting=csv.QUOTE_NONE, delimiter='\t')
     writer.writerow(colnames)
     writer.writerows(itertools.chain(*read(fname, ncol=len(colnames))))
-    
+
 if __name__ == '__main__':
     main()
