@@ -69,6 +69,14 @@ class TestHelp(TestBase):
     def test02(self):
         self.cmd_ok(args='')
 
+    def test03(self):
+        self.cmd_fails(args='create')
+
+    def test04(self):
+        self.cmd_fails(args='notacommand')
+        
+
+        
 class TestCreate(TestBase):
 
     def test01(self):
