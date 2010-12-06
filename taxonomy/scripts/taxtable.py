@@ -1,27 +1,13 @@
 #!/usr/bin/env python
 
 """\
-===========
 taxtable.py
 ===========
 
-Installation
-============
-
-taxonomy package
-----------------
-
-sqlalchemy
-----------
-
-xlrd
-----
-
-The xlrd package is required to read Excel spreadsheets. See
-http://pypi.python.org/pypi/xlrd for installtion instructions.
+Usage: %prog <options>
 
 Command line options
-====================
+--------------------
 
 Help text can be viewed using the '-h' option.
 
