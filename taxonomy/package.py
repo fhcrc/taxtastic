@@ -36,7 +36,7 @@ def write_config(fname, optdict):
 class ConfigError(Exception):
     pass
 
-        
+
 # Read in a tree stats files and extract some data to be written to a JSON phylo model file.
 def write_tree_stats_json(input_file, phylo_model_file):
 
@@ -44,10 +44,10 @@ def write_tree_stats_json(input_file, phylo_model_file):
     success = parser.parse_stats_data()
 
     if not success:
-        raise ConfigError("Unable to create %s from %s." % (phylo_model_file, input_file)) 
+        raise ConfigError("Unable to create %s from %s." % (phylo_model_file, input_file))
 
     parser.write_stats_json(phylo_model_file)
-    
+
 def create(options,
            manifest_name=manifest_name,
            package_contents=package_contents,
@@ -69,7 +69,7 @@ def create(options,
     """
 
     pkg_dir = options.package_name
-    
+
     os.mkdir(pkg_dir)
     manifest = os.path.join(pkg_dir, manifest_name)
     optdict = defaultdict(dict)
@@ -88,16 +88,16 @@ def create(options,
         optdict['files']['phylo_model_file'] = phylo_model_file
         optdict['md5']['phylo_model_file'] = \
             hashlib.md5(open(phylo_model_pth).read()).hexdigest()
-        
+
     # copy all provided files into the package directory
     for fname in package_contents['files']:
         if fname == 'phylo_model_file':
             continue
-        
+
         pth = getattr(options, fname)
         if pth:
             shutil.copy(pth, pkg_dir)
-            optdict['files'][fname] = os.path.split(pth)[1]            
+            optdict['files'][fname] = os.path.split(pth)[1]
             optdict['md5'][fname] = hashlib.md5(open(pth).read()).hexdigest()
 
     write_config(fname=manifest, optdict=optdict)
