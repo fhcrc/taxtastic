@@ -1,0 +1,9 @@
+bin
+_build
+common_src
+pplacer_src
+tags
+_tags
+*.mltop
+*.top
+.toplevel_history

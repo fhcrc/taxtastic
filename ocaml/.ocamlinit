@@ -1,0 +1,9 @@
+#use "topfind";;
+#directory "_build";;
+#directory "_build/common_src";;
+#directory "_build/pplacer_src";;
+#directory "top_tests"
+#directory "/home/matsen/godi/lib/ocaml/pkg-lib/"
+#directory "/home/matsen/godi/lib/ocaml/pkg-lib/json/"
+#directory "/home/matsen/godi/lib/ocaml/pkg-lib/ocaml-csv/"
+#directory "/home/matsen/godi/lib/ocaml/std-lib/"

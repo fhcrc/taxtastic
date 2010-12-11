@@ -1,0 +1,21 @@
+===========================
+taxtastic-ocaml design file
+===========================
+
+colorings
+=========
+Have colorings be by regular expression list or JSON file
+
+
+PD maximization
+===============
+have a hashtbl of edges
+
+type edge =
+ {
+ bl : float
+ id : int
+
+ List.remove
+
+
