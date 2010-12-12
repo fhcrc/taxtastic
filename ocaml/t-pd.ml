@@ -31,6 +31,10 @@ let x = PendSet.elements (pendset_of_pt four);;
 let x = pl_of_hash four;;
 let x = perform four 7.;;
 *)
+let six = of_string "((x:1,y:2):4,(a:9,b:9):9,(c:9,d:9):9):9";;
+let x = to_gtree six;;
+let _ = delete_pend six 0 in (pl_of_hash six, to_gtree six);;
+let _ = delete_pend six 2 in (pl_of_hash six, to_gtree six);;
 
 (* let pt = of_file "COG0001.auto1.fast.tre" *)
 (* let out = perform pt 1e-2 *)

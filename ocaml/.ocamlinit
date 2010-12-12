@@ -7,3 +7,5 @@
 #directory "/home/matsen/godi/lib/ocaml/pkg-lib/json/"
 #directory "/home/matsen/godi/lib/ocaml/pkg-lib/ocaml-csv/"
 #directory "/home/matsen/godi/lib/ocaml/std-lib/"
+#install_printer Stree.ppr 
+#install_printer Newick.ppr 

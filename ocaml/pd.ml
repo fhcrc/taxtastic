@@ -125,20 +125,20 @@ let to_gtree pt =
   let count = ref (Hashtbl.fold (fun i _ -> max i) pt 0) 
   and m = ref IntMap.empty
   in
-  let add_bl i bl = 
+  let add_bark i bl nameo = 
     m := 
       IntMap.add i 
-        (new Newick_bark.newick_bark (`Of_bl_name_boot(Some bl, None, None)))
+        (new Newick_bark.newick_bark (`Of_bl_name_boot(Some bl, nameo, None)))
         !m
   in
   let rec aux ~bad our_id = 
     match Hashtbl.find pt our_id with
     | Inte(bl,l,r) ->
         incr count;
-        add_bl (!count) bl;
+        add_bark (!count) bl None;
         let our_side = get_side_without bad l r in
         Stree.Node(!count, List.map (aux ~bad:our_id) our_side)
-    | Pend(id,bl,_) -> add_bl id bl; Stree.Leaf id
+    | Pend(id,bl,_) -> add_bark id bl (Some (string_of_int id)); Stree.Leaf id
   in
   let start_edge = find_internal pt in
   match Hashtbl.find pt start_edge with
@@ -146,11 +146,13 @@ let to_gtree pt =
       let stl = aux ~bad:(List.hd r) start_edge
       and str = aux ~bad:(List.hd l) start_edge
       in
-      add_bl (Stree.top_id stl) (bl/.2.);
-      add_bl (Stree.top_id str) (bl/.2.);
+      add_bark (Stree.top_id stl) (bl/.2.) None;
+      add_bark (Stree.top_id str) (bl/.2.) None;
       incr count;
       Gtree.gtree (Stree.Node(!count, [stl;str])) !m
   | Pend(_,_,_) -> assert(false)
+
+let to_stree pt = Gtree.get_stree (to_gtree pt)
 
 (* *** PTREE CHANGING *** *)
 
@@ -204,7 +206,7 @@ let delete_pend pt del_id =
                 | Pend(id,bl,l) -> Pend(id,bl, check_rem1 l)
                 | Inte(bl,l,r) -> Inte(bl, check_rem1 l, check_rem1 r))
               pt)
-            eidl
+            eidl;
       )
 
       
@@ -242,9 +244,9 @@ let perform orig_pt stopping_bl =
           Printf.printf "%d %g\n" orig_id bl;
           try
             delete_pend pt id; 
-            aux ((orig_id,bl,pl_of_hash pt)::accu) (PendSet.remove p s)
+            aux ((orig_id,bl,to_stree pt)::accu) (PendSet.remove p s)
           with
-          | Not_found -> print_endline "lolo"; (orig_id,bl,pl_of_hash pt)::accu
+          | Not_found -> print_endline "lolo"; (orig_id,bl,to_stree pt)::accu
         end
     | (_, Inte(_,_,_)) -> assert false
   in
