@@ -45,9 +45,14 @@ let of_stree bl_getter st =
           (Base.pull_each_out tL)
     | Stree.Leaf id -> add_edge id above_ids None
   in
-  aux [] st;
-  Hashtbl.remove pt (Stree.top_id st); (* remove fake root leaf *)
-  pt
+  match st with
+  | Stree.Leaf _ -> pt
+  | Stree.Node(_, tL) ->
+    List.iter
+      (fun (to_build, rest) -> aux (List.map Stree.top_id rest) to_build)
+    (Base.pull_each_out tL);
+  (* Hashtbl.remove pt (Stree.top_id st); (* remove fake root leaf *) *)
+    pt
 
 let of_gtree gt = 
   of_stree 
