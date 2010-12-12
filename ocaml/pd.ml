@@ -28,7 +28,6 @@ type edge =
   (* oh yes! *)
 type ptree = (int, edge) Hashtbl.t
 
-
 let sorted_list_eq l1 l2 = List.sort compare l1 = List.sort compare l2
 
 (* assert that one_side is a (potentially resorted version of) l or r, and
@@ -37,6 +36,14 @@ let other_side one_side l r =
   if sorted_list_eq one_side l then r
   else if sorted_list_eq one_side r then l
   else raise (Other_side (one_side, l, r))
+
+let list_replace ~src ~dst = List.map (fun x -> if x = src then dst else x)
+let edgel_replace ~src ~dst = function
+  | Pend(id,bl,l) as p -> 
+      if List.mem src l then Pend(id,bl, list_replace src dst l) else p
+  | Inte(bl,l,r) as i -> 
+      if not ((List.mem src l) || (List.mem src r)) then i
+      else Inte(bl, list_replace src dst l, list_replace src dst r)
 
 let of_stree bl_getter st = 
   let pt = Hashtbl.create (1+(Stree.max_id st)) in
@@ -65,19 +72,31 @@ let of_stree bl_getter st =
       let (eid1, eid2) = (Stree.top_id t1, Stree.top_id t2) in
       match ((eid1,Hashtbl.find pt eid1), (eid2,Hashtbl.find pt eid2)) with
       | ((id1, Inte(bl1,l1,r1)), (id2, Inte(bl2,l2,r2))) -> 
-          Hashtbl.replace pt id1
-            (Inte(bl1+.bl2, other_side [id2] l1 r1, other_side [id1] l2 r2));
+          let join1 = other_side [id2] l1 r1
+          and join2 = other_side [id1] l2 r2
+          in
+          (* make new internal edge *)
+          Hashtbl.replace pt id1 (Inte(bl1+.bl2, join1, join2));
+          (* clean out old edge *)
           Hashtbl.remove pt id2;
-      | _ -> Not_implemented "rooted on pendant edge"
+          (* reconnect things to new edge *)
+          List.iter 
+            (fun id -> 
+              Hashtbl.replace pt id 
+                (edgel_replace ~src:id2 ~dst:id1 (Hashtbl.find pt id)))
+            (join1 @ join2);
+      | _ -> raise (Not_implemented "rooted on pendant edge")
       end
     | Stree.Node(_, tL) -> List.iter root_build (Base.pull_each_out tL);
   in
   pt
 
 let of_gtree gt = 
-  of_stree 
-    (fun i -> (IntMap.find i gt.Gtree.bark_map)#get_bl)
-    gt.Gtree.stree
+  let get_bl i = 
+    try (IntMap.find i gt.Gtree.bark_map)#get_bl with
+    | Not_found -> failwith "tree is missing branch lengths"
+  in
+  of_stree get_bl gt.Gtree.stree
 
 let of_string s = of_gtree (Newick.of_string s)
 let of_file s = of_gtree (Newick.of_file s)
@@ -99,12 +118,12 @@ let delete_pend pt del_id =
   | Pend(_, _, el) -> 
       Hashtbl.remove pt del_id;
       (match el with
-      | [] -> assert false
-      | [_] -> assert false 
+      | [] | [_] -> assert false 
       | [eid1; eid2] -> begin
         (* degree two-- heal the wound. *)
         match ((eid1,Hashtbl.find pt eid1), (eid2,Hashtbl.find pt eid2)) with
-        | ((_,Pend(_,_,_)),(_,Pend(_,_,_))) -> assert false
+        | ((_,Pend(_,_,_)),(_,Pend(_,_,_))) -> 
+            raise (Not_implemented "can't make trees smaller than three leaves")
         | ((id1, Inte(bl1,l1,r1)), (id2, Inte(bl2,l2,r2))) -> 
         (* join two actual internal edges together. *)
             Hashtbl.replace pt id1
@@ -143,8 +162,11 @@ let delete_pend pt del_id =
 (* we only want Pends in the set! *)
 module OrderedPend = struct
   type t = int * edge
+  (* order first by bl, then by compare *)
   let compare a b = match (a,b) with
-  | ((_,Pend(_, bla, _)), (_,Pend(_, blb, _))) -> compare bla blb
+  | ((_,Pend(_, bla, _)), (_,Pend(_, blb, _))) -> begin 
+    match compare bla blb with 0 -> compare a b | x -> x 
+    end
   | _ -> assert(false)
 end
 
@@ -159,6 +181,8 @@ let pendset_of_pt pt =
     pt 
     PendSet.empty
 
+let pl_of_hash h = Hashtbl.fold (fun k v l -> (k,v)::l) h []
+
 let perform orig_pt stopping_bl = 
   let pt = Hashtbl.copy orig_pt in
   let rec aux accu s = 
@@ -167,8 +191,11 @@ let perform orig_pt stopping_bl =
         if bl > stopping_bl then accu
         else begin
           Printf.printf "%d %g\n" orig_id bl;
-          delete_pend pt id; 
-          aux ((orig_id,bl)::accu) (PendSet.remove p s)
+          try
+            delete_pend pt id; 
+            aux ((orig_id,bl,pl_of_hash pt)::accu) (PendSet.remove p s)
+          with
+          | Not_found -> print_endline "lolo"; (orig_id,bl,pl_of_hash pt)::accu
         end
     | (_, Inte(_,_,_)) -> assert false
   in
