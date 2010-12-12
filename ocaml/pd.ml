@@ -1,6 +1,7 @@
 
 exception Found_multiply
 exception Other_side of int list * int list * int list 
+exception Int_not_found of int
 
 open MapsSets
 
@@ -8,7 +9,7 @@ open MapsSets
 let list_remove1 x l = 
   match List.partition ((=) x) l with
   | ([_],l') -> l'
-  | ([],_) -> raise Not_found
+  | ([],_) -> raise (Int_not_found x)
   | (_,_) -> raise Found_multiply
 
 let safe_add h k v = 
@@ -91,8 +92,8 @@ let delete_pend pt del_id =
         (* join two actual internal edges together. *)
             Hashtbl.replace pt id1
               (Inte(bl1+.bl2, 
-                list_remove1 del_id (other_side [del_id; id2] l1 r1),
-                list_remove1 del_id (other_side [del_id; id1] l2 r2)));
+                other_side [del_id; id2] l1 r1,
+                other_side [del_id; id1] l2 r2));
             Hashtbl.remove pt id2
         | ((pid, Pend(orig_id,bl1,l1)), (iid, Inte(bl2,l2,r)))
         | ((iid, Inte(bl2,l2,r)), (pid, Pend(orig_id,bl1,l1))) ->
@@ -104,8 +105,11 @@ let delete_pend pt del_id =
             Hashtbl.remove pt pid;
       end
       | eidl -> 
+        (* degree greater than two: 
+        * delete del_id from the edge lists of the other nodes *)
           let check_rem1 l = 
-            let out = list_remove1 del_id l in
+            let out = List.filter ((<>) del_id) l in
+        (* make sure that internal nodes still have degree greater than two *)
             assert(1 < List.length out);
             out
           in
@@ -145,14 +149,12 @@ let perform orig_pt stopping_bl =
     | (id, Pend(orig_id,bl,_) as p) ->
         if bl > stopping_bl then accu
         else begin
+          Printf.printf "%d %g\n" orig_id bl;
           delete_pend pt id; 
           aux ((orig_id,bl)::accu) (PendSet.remove p s)
         end
     | (_, Inte(_,_,_)) -> assert false
   in
   List.rev (aux [] (pendset_of_pt pt))
-
-
-
 
 
