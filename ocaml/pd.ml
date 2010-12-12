@@ -1,6 +1,7 @@
 
 exception Found_multiply
 exception Other_side of int list * int list * int list 
+exception Side_without of int * int list * int list 
 exception Int_not_found of int
 exception Not_implemented of string
 
@@ -36,6 +37,11 @@ let get_other_side one_side l r =
   if sorted_list_eq one_side l then r
   else if sorted_list_eq one_side r then l
   else raise (Other_side (one_side, l, r))
+
+let get_side_without x l r = 
+  if List.mem x l then r
+  else if List.mem x r then l
+  else raise (Side_without (x, l, r))
 
 let list_replace ~src ~dst = List.map (fun x -> if x = src then dst else x)
 let edgel_replace ~src ~dst = function
@@ -104,17 +110,17 @@ let of_file s = of_gtree (Newick.of_file s)
 
 
 (* uuuuuugly! *)
-exception Found_inte of edge
+exception Found_inte of int
 let find_internal pt = 
   try
     Hashtbl.iter 
-      (fun _ -> function | Inte(_,_,_) as x -> raise (Found_inte x) | _ -> ())
+      (fun i -> function | Inte(_,_,_) -> raise (Found_inte i) | _ -> ())
       pt;
     assert false
   with
-  | Found_inte x -> x
+  | Found_inte i -> i
 
-let to_stree pt = 
+let to_gtree pt = 
   (* start with an index bigger than anything in pt *)
   let count = ref (Hashtbl.fold (fun i _ -> max i) pt 0) 
   and m = ref IntMap.empty
@@ -125,24 +131,23 @@ let to_stree pt =
         (new Newick_bark.newick_bark (`Of_bl_name_boot(Some bl, None, None)))
         !m
   in
-  let rec aux wrong_side = function
+  let rec aux ~bad our_id = 
+    match Hashtbl.find pt our_id with
     | Inte(bl,l,r) ->
         incr count;
         add_bl (!count) bl;
-        let our_side = get_other_side wrong_side l r in
-        Stree.Node(
-          !count, 
-          List.map 
-            (fun i -> aux our_side (Hashtbl.find pt i))
-            our_side)
+        let our_side = get_side_without bad l r in
+        Stree.Node(!count, List.map (aux ~bad:our_id) our_side)
     | Pend(id,bl,_) -> add_bl id bl; Stree.Leaf id
   in
-  match find_internal pt with
+  let start_edge = find_internal pt in
+  match Hashtbl.find pt start_edge with
   | Inte(bl,l,r) -> 
-      let halfinte = (Inte(bl/.2.,l,r)) in
-      let stl = aux r halfinte
-      and str = aux l halfinte
+      let stl = aux ~bad:(List.hd r) start_edge
+      and str = aux ~bad:(List.hd l) start_edge
       in
+      add_bl (Stree.top_id stl) (bl/.2.);
+      add_bl (Stree.top_id str) (bl/.2.);
       incr count;
       Gtree.gtree (Stree.Node(!count, [stl;str])) !m
   | Pend(_,_,_) -> assert(false)

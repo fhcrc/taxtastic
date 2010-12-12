@@ -12,7 +12,7 @@ let unit_bl_of_s s =
 let test_to_from s = 
   let st = Gtree.get_stree (Newick.of_string s) in
   let pt = of_stree (fun _ -> 1.) st in
-  (s, pl_of_hash pt, st, to_stree pt);;
+  (s, pl_of_hash pt, st, to_gtree pt);;
 
 let test s = 
   let pt = unit_bl_of_s s in
@@ -25,10 +25,12 @@ let x = test_to_from "((x,y),(a,b))";;
 let x = test "((x,y),((a,b),(c,d)))";;
 let x = test_to_from "((x,y),((a,b),(c,d)))";;
 
+(*
 let four = of_string "((x:1,y:2):4,(a:9,b:9):9,(c:9,d:9):9):9";;
 let x = PendSet.elements (pendset_of_pt four);;
 let x = pl_of_hash four;;
 let x = perform four 7.;;
+*)
 
 (* let pt = of_file "COG0001.auto1.fast.tre" *)
 (* let out = perform pt 1e-2 *)
