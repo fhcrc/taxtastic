@@ -2,6 +2,7 @@
 exception Found_multiply
 exception Other_side of int list * int list * int list 
 exception Int_not_found of int
+exception Not_implemented of string
 
 open MapsSets
 
@@ -27,6 +28,16 @@ type edge =
   (* oh yes! *)
 type ptree = (int, edge) Hashtbl.t
 
+
+let sorted_list_eq l1 l2 = List.sort compare l1 = List.sort compare l2
+
+(* assert that one_side is a (potentially resorted version of) l or r, and
+ * return the one that it is not *)
+let other_side one_side l r =
+  if sorted_list_eq one_side l then r
+  else if sorted_list_eq one_side r then l
+  else raise (Other_side (one_side, l, r))
+
 let of_stree bl_getter st = 
   let pt = Hashtbl.create (1+(Stree.max_id st)) in
   let add_edge id left righto = 
@@ -45,14 +56,23 @@ let of_stree bl_getter st =
           (Base.pull_each_out tL)
     | Stree.Leaf id -> add_edge id above_ids None
   in
-  match st with
-  | Stree.Leaf _ -> pt
-  | Stree.Node(_, tL) ->
-    List.iter
-      (fun (to_build, rest) -> aux (List.map Stree.top_id rest) to_build)
-    (Base.pull_each_out tL);
-  (* Hashtbl.remove pt (Stree.top_id st); (* remove fake root leaf *) *)
-    pt
+  let root_build (to_build, rest) = aux (List.map Stree.top_id rest) to_build in
+  let () = 
+    match st with
+    | Stree.Leaf _ -> ()
+    | Stree.Node(_, [t1; t2]) -> begin
+      List.iter root_build (Base.pull_each_out [t1; t2]);
+      let (eid1, eid2) = (Stree.top_id t1, Stree.top_id t2) in
+      match ((eid1,Hashtbl.find pt eid1), (eid2,Hashtbl.find pt eid2)) with
+      | ((id1, Inte(bl1,l1,r1)), (id2, Inte(bl2,l2,r2))) -> 
+          Hashtbl.replace pt id1
+            (Inte(bl1+.bl2, other_side [id2] l1 r1, other_side [id1] l2 r2));
+          Hashtbl.remove pt id2;
+      | _ -> Not_implemented "rooted on pendant edge"
+      end
+    | Stree.Node(_, tL) -> List.iter root_build (Base.pull_each_out tL);
+  in
+  pt
 
 let of_gtree gt = 
   of_stree 
@@ -66,14 +86,6 @@ let of_file s = of_gtree (Newick.of_file s)
 
 (* *** PTREE CHANGING *** *)
 
-let sorted_list_eq l1 l2 = List.sort compare l1 = List.sort compare l2
-
-(* assert that one_side is a (potentially resorted version of) l or r, and
- * return the one that it is not *)
-let other_side one_side l r =
-  if sorted_list_eq one_side l then r
-  else if sorted_list_eq one_side r then l
-  else raise (Other_side (one_side, l, r))
 
 (* replace the binding of k in h with its image under f *)
 let hashtbl_map1 f h k = Hashtbl.replace h k (f (Hashtbl.find h k))

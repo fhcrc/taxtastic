@@ -11,15 +11,13 @@ let x = pl_of_hash pt
 let ps = pendset_of_pt pt
 let x = PendSet.elements ps
 
-let st = Gtree.get_stree (Newick.of_string "((x,y),(a,b),(c,d))")
-let pt = of_stree (fun _ -> 1.) st
-let x = pl_of_hash pt
+let test s = 
+  let st = Gtree.get_stree (Newick.of_string s) in
+  let pt = of_stree (fun _ -> 1.) st in
+  pl_of_hash pt
 
-(*
- * [(5, Inte (1., [6; 2], [3; 4])); (4, Pend (4, 1., [5; 3]));
- *  (3, Pend (3, 1., [5; 4])); (2, Inte (1., [6; 5], [0; 1]));
- *  (1, Pend (1, 1., [2; 0])); (0, Pend (0, 1., [2; 1]))] 
- *  *)
+let x = test "((x,y),(a,b))"
+let x = test "((x,y),(a,b),(c,d))"
 
 let ps = pendset_of_pt pt
 let x = PendSet.elements ps
