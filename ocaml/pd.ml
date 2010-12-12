@@ -32,7 +32,7 @@ let sorted_list_eq l1 l2 = List.sort compare l1 = List.sort compare l2
 
 (* assert that one_side is a (potentially resorted version of) l or r, and
  * return the one that it is not *)
-let other_side one_side l r =
+let get_other_side one_side l r =
   if sorted_list_eq one_side l then r
   else if sorted_list_eq one_side r then l
   else raise (Other_side (one_side, l, r))
@@ -72,8 +72,9 @@ let of_stree bl_getter st =
       let (eid1, eid2) = (Stree.top_id t1, Stree.top_id t2) in
       match ((eid1,Hashtbl.find pt eid1), (eid2,Hashtbl.find pt eid2)) with
       | ((id1, Inte(bl1,l1,r1)), (id2, Inte(bl2,l2,r2))) -> 
-          let join1 = other_side [id2] l1 r1
-          and join2 = other_side [id1] l2 r2
+          (* remove degree two node at root *)
+          let join1 = get_other_side [id2] l1 r1
+          and join2 = get_other_side [id1] l2 r2
           in
           (* make new internal edge *)
           Hashtbl.replace pt id1 (Inte(bl1+.bl2, join1, join2));
@@ -102,6 +103,49 @@ let of_string s = of_gtree (Newick.of_string s)
 let of_file s = of_gtree (Newick.of_file s)
 
 
+(* uuuuuugly! *)
+exception Found_inte of edge
+let find_internal pt = 
+  try
+    Hashtbl.iter 
+      (fun _ -> function | Inte(_,_,_) as x -> raise (Found_inte x) | _ -> ())
+      pt;
+    assert false
+  with
+  | Found_inte x -> x
+
+let to_stree pt = 
+  (* start with an index bigger than anything in pt *)
+  let count = ref (Hashtbl.fold (fun i _ -> max i) pt 0) 
+  and m = ref IntMap.empty
+  in
+  let add_bl i bl = 
+    m := 
+      IntMap.add i 
+        (new Newick_bark.newick_bark (`Of_bl_name_boot(Some bl, None, None)))
+        !m
+  in
+  let rec aux wrong_side = function
+    | Inte(bl,l,r) ->
+        incr count;
+        add_bl (!count) bl;
+        let our_side = get_other_side wrong_side l r in
+        Stree.Node(
+          !count, 
+          List.map 
+            (fun i -> aux our_side (Hashtbl.find pt i))
+            our_side)
+    | Pend(id,bl,_) -> add_bl id bl; Stree.Leaf id
+  in
+  match find_internal pt with
+  | Inte(bl,l,r) -> 
+      let halfinte = (Inte(bl/.2.,l,r)) in
+      let stl = aux r halfinte
+      and str = aux l halfinte
+      in
+      incr count;
+      Gtree.gtree (Stree.Node(!count, [stl;str])) !m
+  | Pend(_,_,_) -> assert(false)
 
 (* *** PTREE CHANGING *** *)
 
@@ -111,7 +155,7 @@ let hashtbl_map1 f h k = Hashtbl.replace h k (f (Hashtbl.find h k))
 
 let freplace f h id = Hashtbl.replace h id (f (Hashtbl.find h id))
 
-(* sound of rubber hitting road *)
+(* <sound of rubber hitting road> *)
 let delete_pend pt del_id = 
   match Hashtbl.find pt del_id with
   | Inte(_,_,_) -> failwith "can't delete internal edge"
@@ -128,8 +172,8 @@ let delete_pend pt del_id =
         (* join two actual internal edges together. *)
             Hashtbl.replace pt id1
               (Inte(bl1+.bl2, 
-                other_side [del_id; id2] l1 r1,
-                other_side [del_id; id1] l2 r2));
+                get_other_side [del_id; id2] l1 r1,
+                get_other_side [del_id; id1] l2 r2));
             Hashtbl.remove pt id2
         | ((pid, Pend(orig_id,bl1,l1)), (iid, Inte(bl2,l2,r)))
         | ((iid, Inte(bl2,l2,r)), (pid, Pend(orig_id,bl1,l1))) ->
@@ -137,7 +181,7 @@ let delete_pend pt del_id =
          * branch length on the other pendant edge. *)
             assert(sorted_list_eq l1 [iid; del_id]);
             Hashtbl.replace pt iid
-              (Pend(orig_id, bl1+.bl2, other_side [del_id; pid] l2 r));
+              (Pend(orig_id, bl1+.bl2, get_other_side [del_id; pid] l2 r));
             Hashtbl.remove pt pid;
       end
       | eidl -> 

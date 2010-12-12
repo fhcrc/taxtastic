@@ -9,13 +9,21 @@ let unit_bl_of_s s =
   let st = Gtree.get_stree (Newick.of_string s) in
   of_stree (fun _ -> 1.) st
 
+let test_to_from s = 
+  let st = Gtree.get_stree (Newick.of_string s) in
+  let pt = of_stree (fun _ -> 1.) st in
+  (s, pl_of_hash pt, st, to_stree pt);;
+
 let test s = 
   let pt = unit_bl_of_s s in
   let ps = pendset_of_pt pt in
-  (pl_of_hash pt, PendSet.elements ps)
+  (pl_of_hash pt, PendSet.elements ps);;
 
-let x = test "((x,y),(a,b))"
-let x = test "((x,y),(a,b),(c,d))"
+let x = test "((x,y),(a,b))";;
+let x = test_to_from "((x,y),(a,b))";;
+
+let x = test "((x,y),((a,b),(c,d)))";;
+let x = test_to_from "((x,y),((a,b),(c,d)))";;
 
 let four = of_string "((x:1,y:2):4,(a:9,b:9):9,(c:9,d:9):9):9";;
 let x = PendSet.elements (pendset_of_pt four);;
