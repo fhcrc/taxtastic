@@ -162,8 +162,29 @@ let hashtbl_map1 f h k = Hashtbl.replace h k (f (Hashtbl.find h k))
 
 let freplace f h id = Hashtbl.replace h id (f (Hashtbl.find h id))
 
+type idbl = {id : int; bl : float}
+      
+(* we only want Pends in the set! *)
+module OrderedIdbl = struct
+  type t = idbl
+  (* order first by bl, then by id *)
+  let compare a b = 
+    match compare a.bl b.bl with 0 -> compare a.id b.id | x -> x 
+end
+
+module IdblSet = Set.Make(OrderedIdbl)
+
+let idblset_of_pt pt = 
+  Hashtbl.fold 
+    (fun id e s -> 
+      match e with 
+      | Pend(_,bl,_) -> IdblSet.add {id=id;bl=bl} s 
+      | Inte(_,_,_) -> s)
+    pt 
+    IdblSet.empty
+
 (* <sound of rubber hitting road> *)
-let delete_pend pt del_id = 
+let delete_pend pt del_id idbls = 
   match Hashtbl.find pt del_id with
   | Inte(_,_,_) -> failwith "can't delete internal edge"
   | Pend(_, _, el) -> 
@@ -181,7 +202,8 @@ let delete_pend pt del_id =
               (Inte(bl1+.bl2, 
                 get_other_side [del_id; id2] l1 r1,
                 get_other_side [del_id; id1] l2 r2));
-            Hashtbl.remove pt id2
+            Hashtbl.remove pt id2;
+            idbls
         | ((pid, Pend(orig_id,bl1,l1)), (iid, Inte(bl2,l2,r)))
         | ((iid, Inte(bl2,l2,r)), (pid, Pend(orig_id,bl1,l1))) ->
         (* we are deleting one side of a cherry. in this case, we extend the
@@ -190,6 +212,9 @@ let delete_pend pt del_id =
             Hashtbl.replace pt iid
               (Pend(orig_id, bl1+.bl2, get_other_side [del_id; pid] l2 r));
             Hashtbl.remove pt pid;
+            IdblSet.add 
+              {id=iid; bl=bl1+.bl2} 
+              (IdblSet.remove {id=pid; bl=bl1} idbls)
       end
       | eidl -> 
         (* degree greater than two: 
@@ -207,49 +232,23 @@ let delete_pend pt del_id =
                 | Inte(bl,l,r) -> Inte(bl, check_rem1 l, check_rem1 r))
               pt)
             eidl;
+          idbls
       )
-
-      
-(* we only want Pends in the set! *)
-module OrderedPend = struct
-  type t = int * edge
-  (* order first by bl, then by compare *)
-  let compare a b = match (a,b) with
-  | ((_,Pend(_, bla, _)), (_,Pend(_, blb, _))) -> begin 
-    match compare bla blb with 0 -> compare a b | x -> x 
-    end
-  | _ -> assert(false)
-end
-
-module PendSet = Set.Make(OrderedPend)
-
-let pendset_of_pt pt = 
-  Hashtbl.fold 
-    (fun id e s -> 
-      match e with 
-      | Pend(_,_,_) as pe -> PendSet.add (id,pe) s 
-      | Inte(_,_,_) -> s)
-    pt 
-    PendSet.empty
 
 let pl_of_hash h = Hashtbl.fold (fun k v l -> (k,v)::l) h []
 
 let perform orig_pt stopping_bl = 
   let pt = Hashtbl.copy orig_pt in
   let rec aux accu s = 
-    match PendSet.min_elt s with
-    | (id, Pend(orig_id,bl,_) as p) ->
-        if bl > stopping_bl then accu
-        else begin
-          Printf.printf "%d %g\n" orig_id bl;
-          try
-            delete_pend pt id; 
-            aux ((orig_id,bl,to_stree pt)::accu) (PendSet.remove p s)
-          with
-          | Not_found -> print_endline "lolo"; (orig_id,bl,to_stree pt)::accu
-        end
-    | (_, Inte(_,_,_)) -> assert false
+    let m = IdblSet.min_elt s in
+    if m.bl > stopping_bl then accu
+    else begin
+      Printf.printf "%d\t%g\n" m.id m.bl;
+      let x = Hashtbl.find pt m.id in
+      let new_s = delete_pend pt m.id (IdblSet.remove m s) in 
+      aux ((x,m.bl,to_stree pt)::accu) new_s
+    end
   in
-  List.rev (aux [] (pendset_of_pt pt))
+  List.rev (aux [] (idblset_of_pt pt))
 
 

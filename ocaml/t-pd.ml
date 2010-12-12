@@ -16,8 +16,8 @@ let test_to_from s =
 
 let test s = 
   let pt = unit_bl_of_s s in
-  let ps = pendset_of_pt pt in
-  (pl_of_hash pt, PendSet.elements ps);;
+  let ps = idblset_of_pt pt in
+  (pl_of_hash pt, IdblSet.elements ps);;
 
 let x = test "((x,y),(a,b))";;
 let x = test_to_from "((x,y),(a,b))";;
@@ -30,11 +30,16 @@ let four = of_string "((x:1,y:2):4,(a:9,b:9):9,(c:9,d:9):9):9";;
 let x = PendSet.elements (pendset_of_pt four);;
 let x = pl_of_hash four;;
 let x = perform four 7.;;
-*)
+
 let six = of_string "((x:1,y:2):4,(a:9,b:9):9,(c:9,d:9):9):9";;
 let x = to_gtree six;;
-let _ = delete_pend six 0 in (pl_of_hash six, to_gtree six);;
-let _ = delete_pend six 2 in (pl_of_hash six, to_gtree six);;
+let s = idblset_of_pt six;;
+let s = delete_pend six 0 s;; let x = (IdblSet.elements s, pl_of_hash six, to_gtree six);;
+let s = delete_pend six 3 s;; let x = (IdblSet.elements s, pl_of_hash six, to_gtree six);;
+*)
+
+let six = of_string "((x:1,y:9):4,(a:1,b:9):9,(c:9,d:9):9):9";;
+let x = perform six 7.;;
 
 (* let pt = of_file "COG0001.auto1.fast.tre" *)
 (* let out = perform pt 1e-2 *)
