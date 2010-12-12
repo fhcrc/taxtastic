@@ -1,7 +1,9 @@
 
 open Pd
 
-let x = list_remove_single 3 [4;3;5]
+let pl_of_hash h = Hashtbl.fold (fun k v l -> (k,v)::l) h []
+
+let x = list_remove1 3 [4;3;5]
 
 let gt = Newick.of_string "(x:15,(a:3,b:4):3):1"
 
