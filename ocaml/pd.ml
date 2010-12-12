@@ -1,5 +1,6 @@
 
 exception Found_multiply
+exception Other_side of int list * int list * int list 
 
 open MapsSets
 
@@ -39,7 +40,7 @@ let of_stree bl_getter st =
         let ids_of_tl = List.map Stree.top_id in
         add_edge id above_ids (Some (ids_of_tl tL));
         List.iter
-          (fun (below, rest) -> aux (ids_of_tl rest) below) 
+          (fun (below, rest) -> aux (id::(ids_of_tl rest)) below) 
           (Base.pull_each_out tL)
     | Stree.Leaf id -> add_edge id above_ids None
   in
@@ -53,6 +54,7 @@ let of_gtree gt =
     gt.Gtree.stree
 
 let of_string s = of_gtree (Newick.of_string s)
+let of_file s = of_gtree (Newick.of_file s)
 
 
 
@@ -65,11 +67,12 @@ let sorted_list_eq l1 l2 = List.sort compare l1 = List.sort compare l2
 let other_side one_side l r =
   if sorted_list_eq one_side l then r
   else if sorted_list_eq one_side r then l
-  else assert(false)
+  else raise (Other_side (one_side, l, r))
 
 (* replace the binding of k in h with its image under f *)
 let hashtbl_map1 f h k = Hashtbl.replace h k (f (Hashtbl.find h k))
 
+let freplace f h id = Hashtbl.replace h id (f (Hashtbl.find h id))
 
 (* sound of rubber hitting road *)
 let delete_pend pt del_id = 
@@ -78,18 +81,18 @@ let delete_pend pt del_id =
   | Pend(_, _, el) -> 
       Hashtbl.remove pt del_id;
       (match el with
-      | [] | [_] -> assert false 
+      | [] -> assert false
+      | [_] -> assert false 
       | [eid1; eid2] -> begin
         (* degree two-- heal the wound. *)
         match ((eid1,Hashtbl.find pt eid1), (eid2,Hashtbl.find pt eid2)) with
         | ((_,Pend(_,_,_)),(_,Pend(_,_,_))) -> assert false
         | ((id1, Inte(bl1,l1,r1)), (id2, Inte(bl2,l2,r2))) -> 
-        (* join two actual internal edges together. 
-         * we arbitrarily pick eid1 for the id of the renewed edge. *)
+        (* join two actual internal edges together. *)
             Hashtbl.replace pt id1
               (Inte(bl1+.bl2, 
-                other_side [del_id; id2] l1 r1,
-                other_side [del_id; id1] l2 r2));
+                list_remove1 del_id (other_side [del_id; id2] l1 r1),
+                list_remove1 del_id (other_side [del_id; id1] l2 r2)));
             Hashtbl.remove pt id2
         | ((pid, Pend(orig_id,bl1,l1)), (iid, Inte(bl2,l2,r)))
         | ((iid, Inte(bl2,l2,r)), (pid, Pend(orig_id,bl1,l1))) ->
@@ -97,12 +100,25 @@ let delete_pend pt del_id =
          * branch length on the other pendant edge. *)
             assert(sorted_list_eq l1 [iid; del_id]);
             Hashtbl.replace pt iid
-              (Pend(orig_id, bl1+.bl2, other_side [del_id; eid1] l2 r));
+              (Pend(orig_id, bl1+.bl2, other_side [del_id; pid] l2 r));
             Hashtbl.remove pt pid;
       end
-      | _ -> print_endline "XXXXXXXXXXXXXXXXXXX");
+      | eidl -> 
+          let check_rem1 l = 
+            let out = list_remove1 del_id l in
+            assert(1 < List.length out);
+            out
+          in
+          List.iter 
+            (freplace
+              (function
+                | Pend(id,bl,l) -> Pend(id,bl, check_rem1 l)
+                | Inte(bl,l,r) -> Inte(bl, check_rem1 l, check_rem1 r))
+              pt)
+            eidl
+      )
 
-
+      
 (* we only want Pends in the set! *)
 module OrderedPend = struct
   type t = int * edge
@@ -130,7 +146,7 @@ let perform orig_pt stopping_bl =
         if bl > stopping_bl then accu
         else begin
           delete_pend pt id; 
-          aux (orig_id::accu) (PendSet.remove p s)
+          aux ((orig_id,bl)::accu) (PendSet.remove p s)
         end
     | (_, Inte(_,_,_)) -> assert false
   in
