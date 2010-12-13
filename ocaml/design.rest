@@ -2,20 +2,14 @@
 taxtastic-ocaml design file
 ===========================
 
+implementation queue
+====================
+
+be able to specify arbitrary root
+---------------------------------
+at an internal node or an edge
+
 colorings
 =========
 Have colorings be by regular expression list or JSON file
-
-
-PD maximization
-===============
-have a hashtbl of edges
-
-type edge =
- {
- bl : float
- id : int
-
- List.remove
-
 

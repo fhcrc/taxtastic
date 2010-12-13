@@ -80,10 +80,9 @@ let of_stree bl_getter st =
       (* tree with degree two rootings require some special care *)
       (* first build the basic tree *)
       List.iter root_build (Base.pull_each_out [t1; t2]);
-      let (eid1, eid2) = (Stree.top_id t1, Stree.top_id t2) in
-      match ((eid1,Hashtbl.find pt eid1), (eid2,Hashtbl.find pt eid2)) with
-      | ((id1, Inte(bl1,l1,r1)), (id2, Inte(bl2,l2,r2))) -> 
-          (* remove degree two node at root *)
+      let (id1, id2) = (Stree.top_id t1, Stree.top_id t2) in
+      match (Hashtbl.find pt id1, Hashtbl.find pt id2) with
+      | (Inte(bl1,l1,r1), Inte(bl2,l2,r2)) -> 
           let join1 = get_other_side [id2] l1 r1
           and join2 = get_other_side [id1] l2 r2
           in
@@ -130,10 +129,11 @@ let find_internal pt =
   | Found_inte i -> Some i
 
 let to_gtree pt = 
-  (* start with an index bigger than anything in pt *)
-  print_endline "whooops, we have to take something bigger than any of the orig
-  ids";
-  let count = ref (Hashtbl.fold (fun i _ -> max i) pt 0) 
+  (* start with maximum of indices of the ids *)
+  let count = 
+    ref (Hashtbl.fold 
+      (fun _ e j -> match e with Pend(i,_,_) -> max i j | _ -> j) 
+      pt 0) 
   and m = ref IntMap.empty
   in
   let add_bark i bl nameo = 
@@ -142,21 +142,23 @@ let to_gtree pt =
         (new Newick_bark.newick_bark (`Of_bl_name_boot(Some bl, nameo, None)))
         !m
   in
-  let rec aux ~bad our_id = 
+  (* above is a neighboring edge index in the "up" direction in the resulting
+   * rooting *)
+  let rec aux ~above our_id = 
     match Hashtbl.find pt our_id with
     | Inte(bl,l,r) ->
         incr count;
         add_bark (!count) bl None;
-        let our_side = get_side_without bad l r in
-        Stree.Node(!count, List.map (aux ~bad:our_id) our_side)
+        let our_side = get_side_without above l r in
+        Stree.Node(!count, List.map (aux ~above:our_id) our_side)
     | Pend(id,bl,_) -> add_bark id bl (Some (string_of_int id)); Stree.Leaf id
   in
   match find_internal pt with
   | Some start_edge -> begin
       match Hashtbl.find pt start_edge with
       | Inte(bl,l,r) -> 
-          let stl = aux ~bad:(List.hd r) start_edge
-          and str = aux ~bad:(List.hd l) start_edge
+          let stl = aux ~above:(List.hd r) start_edge
+          and str = aux ~above:(List.hd l) start_edge
           in
           add_bark (Stree.top_id stl) (bl/.2.) None;
           add_bark (Stree.top_id str) (bl/.2.) None;
