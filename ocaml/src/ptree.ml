@@ -5,6 +5,8 @@ exception Other_side of int list * int list * int list
 exception Side_without of int * int list * int list 
 exception Not_implemented of string
 exception Missing_edge of int * string
+exception Pend_mismatch of int list (*desired*) * int list (*found*)
+exception Inte_mismatch of int list (*desired*) * int list (*foundl*) * int list (*foundr*)
 
 open MapsSets
 
@@ -30,13 +32,12 @@ let find pt i =
 let strict_remove pt i =
   if Hashtbl.mem pt i then Hashtbl.remove pt i
   else raise (Missing_edge (i, "strict_remove"))
-
-
-(* *** GENERALITIES *** *)
-
 let safe_add h k v = 
   assert(not (Hashtbl.mem h k));
   Hashtbl.add h k v
+
+
+(* *** GENERALITIES *** *)
 
 let sorted_list_eq l1 l2 = List.sort compare l1 = List.sort compare l2
 
@@ -62,6 +63,55 @@ let edgel_replace ~src ~dst = function
       if not ((List.mem src l) || (List.mem src r)) then i
       else Inte(bl, list_replace src dst l, list_replace src dst r)
 
+(* uuuuuugly! *)
+exception Found_inte of int
+let find_internal pt = 
+  try
+    iter 
+      (fun i -> function 
+        | Inte(_,_,_) -> raise (Found_inte i) 
+        | _ -> ())
+      pt;
+    None
+  with
+  | Found_inte i -> Some i
+
+(* Define a node of an edge to be the 
+ * (edge id)::(one of the edge lists of the node)
+ * Here we check if n is one of the nodes of the edge with id eid.
+ * *)
+let check_node n eid = function
+  | Pend(_,_,l) -> 
+      let found = eid::l in
+      if not (sorted_list_eq n found) then
+        raise (Pend_mismatch (n,found))
+  | Inte(_,l,r) -> 
+      let foundl,foundr = (eid::l,eid::r) in
+      if not ((sorted_list_eq n foundl) || (sorted_list_eq n foundr)) then
+        raise (Inte_mismatch (n,foundl,foundr))
+
+let check pt = 
+  let rec rooted_check above eidl = 
+    List.iter
+      (fun below ->
+        let e = try find pt below with
+        | Missing_edge (missing,_) as x ->
+            Printf.printf "%d missing (requested by %d)\n" missing above;
+            raise x
+        in
+        check_node (above::eidl) below e;
+        match e with
+        | Pend(_,_,_) -> ()
+        | Inte(_,l,r) -> rooted_check below (get_side_without above l r))
+      eidl
+  in
+  match find_internal pt with
+  | None -> assert false
+  | Some i -> begin
+      match find pt i with
+      | Inte(_,l,r) -> rooted_check i l; rooted_check i r
+      | _ -> assert false
+    end
 
 (* *** OF *** *)
 
@@ -130,19 +180,6 @@ let of_file s = of_gtree (Newick.of_file s)
 
 
 (* *** TO *** *)
-
-(* uuuuuugly! *)
-exception Found_inte of int
-let find_internal pt = 
-  try
-    iter 
-      (fun i -> function 
-        | Inte(_,_,_) -> raise (Found_inte i) 
-        | _ -> ())
-      pt;
-    None
-  with
-  | Found_inte i -> Some i
 
 let to_gtree pt = 
   (* start with maximum of indices of the ids *)
