@@ -25,6 +25,8 @@ class Taxonomy(object):
           rank to create new labels for undefined ranks.
 
         Example:
+        > from sqlalchemy import create_engine
+        > from Taxonomy import Taxonomy, ncbi
         > engine = create_engine('sqlite:///%s' % dbname, echo=False)
         > tax = Taxonomy(engine, Taxonomy.ncbi.ranks)
 

@@ -31,7 +31,7 @@ def write_config(fname, optdict):
 
     log.info('writing %s' % fname)
     with open(fname, 'w+') as config_file:
-        config_file.write(json.dumps(optdict, indent=2))
+        config_file.write(json.dumps(optdict, indent=2) + '\n')
 
 class ConfigError(Exception):
     pass
