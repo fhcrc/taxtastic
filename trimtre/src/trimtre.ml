@@ -6,6 +6,7 @@ open MapsSets
 
 let out_prefix = ref ""
 let cutoff = ref 0.
+let names_only = ref false
 
 let parse_args () = 
   let files  = ref [] in
@@ -14,7 +15,9 @@ let parse_args () =
      "-o", Arg.Set_string out_prefix,
      "Set the output prefix. Required if there are two or more input files.";
      "--cutoff", Arg.Set_float cutoff,
-     "Specify the maximum branch length to be trimmed (required)."
+     "Specify the maximum branch length to be trimmed (required).";
+     "--names-only", Arg.Set names_only,
+     "Only split out a list of names, rather than names and PD decrease."
    ]
   in
   let usage = "trimtre trims the tree.\n"
@@ -42,12 +45,14 @@ let () =
         let pt = Ptree.of_gtree gt 
         and get_name id = (IntMap.find id gt.Gtree.bark_map)#get_name 
         in
+        let line_of_result = 
+          if !names_only then (fun (id,_,_) -> [get_name id])
+          else (fun (id,bl,_) -> [get_name id; string_of_float bl])
+        in
         wrap_output (!out_prefix)
           (fun ch ->
             Csv.save_out ch
-              (List.map
-                (fun (id,bl,_) -> [get_name id; string_of_float bl])
-                (Pd.until_stopping (!cutoff) pt))))
+              (List.map line_of_result (Pd.until_stopping (!cutoff) pt))))
       (parse_args ())
   end
 
