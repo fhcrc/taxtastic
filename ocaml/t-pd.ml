@@ -1,9 +1,8 @@
 
+open Ptree
 open Pd
 
 let pl_of_hash h = Hashtbl.fold (fun k v l -> (k,v)::l) h []
-
-let x = list_remove1 3 [4;3;5]
 
 let unit_bl_of_s s =
   let st = Gtree.get_stree (Newick.of_string s) in
@@ -16,7 +15,7 @@ let test_to_from s =
 
 let test s = 
   let pt = unit_bl_of_s s in
-  let ps = idblset_of_pt pt in
+  let ps = idblset_of_ptree pt in
   (pl_of_hash pt, IdblSet.elements ps);;
 
 let x = test "((x,y),(a,b))";;

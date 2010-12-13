@@ -4,7 +4,7 @@
 open MapsSets
 open Ptree
 
-let freplace f h id = Hashtbl.replace h id (f (Hashtbl.find h id))
+(* we use the IdblSet to choose what is the next best edge choice *)
 
 type idbl = {id : int; bl : float}
       
@@ -18,7 +18,7 @@ end
 
 module IdblSet = Set.Make(OrderedIdbl)
 
-let idblset_of_pt pt = 
+let idblset_of_ptree pt = 
   Hashtbl.fold 
     (fun id e s -> 
       match e with 
@@ -27,56 +27,64 @@ let idblset_of_pt pt =
     pt 
     IdblSet.empty
 
+let hashtbl_freplace f h id = Hashtbl.replace h id (f (Hashtbl.find h id))
+
+
 (* <sound of rubber hitting road> *)
-let delete_pend pt del_id idbls = 
-  match Hashtbl.find pt del_id with
+(* we delete the specified pendant branch, extend the other branches to maintain
+ * the structure of the tree, and perform the corresponding
+ * modification to idbls (which gets returned). *)
+let delete_pend pt idbl idbls = 
+  match Hashtbl.find pt idbl.id with
   | Inte(_,_,_) -> failwith "can't delete internal edge"
   | Pend(_, _, eidl) -> 
-      Hashtbl.remove pt del_id;
+      let del_idbls = IdblSet.remove idbl idbls in
+      Hashtbl.remove pt idbl.id;
       (match eidl with
       | [] | [_] -> assert false 
       | [eid1; eid2] -> begin
         (* degree two-- heal the wound. *)
         match ((eid1,Hashtbl.find pt eid1), (eid2,Hashtbl.find pt eid2)) with
         | ((_,Pend(_,_,_)),(_,Pend(_,_,_))) -> 
-            raise (Not_implemented "can't make trees smaller than three leaves")
+            raise (Not_implemented "can't cut down trees without internal edges")
         | ((id1, Inte(bl1,l1,r1)), (id2, Inte(bl2,l2,r2))) -> 
-        (* join two actual internal edges together. *)
+        (* we are deleting a pendant edge which touches two internal edges. 
+         * we join these two internal edges together. *)
             Hashtbl.replace pt id1
               (Inte(bl1+.bl2, 
-                get_other_side [del_id; id2] l1 r1,
-                get_other_side [del_id; id1] l2 r2));
+                get_other_side [idbl.id; id2] l1 r1,
+                get_other_side [idbl.id; id1] l2 r2));
             Hashtbl.remove pt id2;
-            idbls
+            del_idbls
         | ((pid, Pend(orig_id,bl1,l1)), (iid, Inte(bl2,l2,r)))
         | ((iid, Inte(bl2,l2,r)), (pid, Pend(orig_id,bl1,l1))) ->
-        (* we are deleting one side of a cherry. in this case, we extend the
+        (* we are deleting one edge of a cherry. in this case, we extend the
          * branch length on the other pendant edge. *)
-            assert(sorted_list_eq l1 [iid; del_id]);
+            assert(sorted_list_eq l1 [iid; idbl.id]);
             Hashtbl.replace pt iid
-              (Pend(orig_id, bl1+.bl2, get_other_side [del_id; pid] l2 r));
+              (Pend(orig_id, bl1+.bl2, get_other_side [idbl.id; pid] l2 r));
             Hashtbl.remove pt pid;
             IdblSet.add 
               {id=iid; bl=bl1+.bl2} 
-              (IdblSet.remove {id=pid; bl=bl1} idbls)
+              (IdblSet.remove {id=pid; bl=bl1} del_idbls)
       end
       | eidl -> 
         (* degree greater than two: 
-        * delete del_id from the edge lists of the other nodes *)
+        * delete idbl.id from the edge lists of the other nodes *)
           let check_rem1 l = 
-            let out = List.filter ((<>) del_id) l in
+            let out = List.filter ((<>) idbl.id) l in
         (* make sure that internal nodes still have degree greater than two *)
             assert(1 < List.length out);
             out
           in
           List.iter 
-            (freplace
+            (hashtbl_freplace
               (function
                 | Pend(id,bl,l) -> Pend(id,bl, check_rem1 l)
                 | Inte(bl,l,r) -> Inte(bl, check_rem1 l, check_rem1 r))
               pt)
             eidl;
-          idbls
+          del_idbls
       )
 
 let pl_of_hash h = Hashtbl.fold (fun k v l -> (k,v)::l) h []
@@ -89,10 +97,9 @@ let perform orig_pt stopping_bl =
     else match Hashtbl.find pt m.id with
     | Pend(orig_id, bl, _) ->
         assert(bl = m.bl);
-        let new_s = delete_pend pt m.id (IdblSet.remove m s) in 
+        let new_s = delete_pend pt m s in 
         aux ((orig_id,m.bl,to_stree pt)::accu) new_s
     | Inte(_,_,_) -> assert false
   in
-  List.rev (aux [] (idblset_of_pt pt))
-
+  List.rev (aux [] (idblset_of_ptree pt))
 
