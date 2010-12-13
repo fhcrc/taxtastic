@@ -1,4 +1,4 @@
-RELEASE=pd
+RELEASE=trimtre
 
 all: $(RELEASE)
 

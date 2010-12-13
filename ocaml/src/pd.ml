@@ -19,15 +19,15 @@ end
 module IdblSet = Set.Make(OrderedIdbl)
 
 let idblset_of_ptree pt = 
-  Hashtbl.fold 
+  fold 
     (fun id e s -> 
       match e with 
-      | Pend(_,bl,_) -> IdblSet.add {id=id;bl=bl} s 
+      | Pend(id',bl,_) -> assert(id=id'); IdblSet.add {id=id;bl=bl} s 
       | Inte(_,_,_) -> s)
     pt 
     IdblSet.empty
 
-let hashtbl_freplace f h id = Hashtbl.replace h id (f (Hashtbl.find h id))
+let hashtbl_freplace f h id = strict_replace h id (f (find h id))
 
 
 (* <sound of rubber hitting road> *)
@@ -35,26 +35,26 @@ let hashtbl_freplace f h id = Hashtbl.replace h id (f (Hashtbl.find h id))
  * the structure of the tree, and perform the corresponding
  * modification to idbls (which gets returned). *)
 let delete_pend pt idbl idbls = 
-  match Hashtbl.find pt idbl.id with
+  match find pt idbl.id with
   | Inte(_,_,_) -> failwith "can't delete internal edge"
   | Pend(_, _, eidl) -> 
       let del_idbls = IdblSet.remove idbl idbls in
-      Hashtbl.remove pt idbl.id;
+      strict_remove pt idbl.id;
       (match eidl with
       | [] | [_] -> assert false 
       | [eid1; eid2] -> begin
         (* degree two-- heal the wound. *)
-        match ((eid1,Hashtbl.find pt eid1), (eid2,Hashtbl.find pt eid2)) with
+        match ((eid1,find pt eid1), (eid2,find pt eid2)) with
         | ((_,Pend(_,_,_)),(_,Pend(_,_,_))) -> 
             raise (Not_implemented "can't cut down trees without internal edges")
         | ((id1, Inte(bl1,l1,r1)), (id2, Inte(bl2,l2,r2))) -> 
         (* we are deleting a pendant edge which touches two internal edges. 
          * we join these two internal edges together. *)
-            Hashtbl.replace pt id1
+            strict_replace pt id1
               (Inte(bl1+.bl2, 
                 get_other_side [idbl.id; id2] l1 r1,
                 get_other_side [idbl.id; id1] l2 r2));
-            Hashtbl.remove pt id2;
+            strict_remove pt id2;
             del_idbls
         | ((pid, Pend(orig_id,pbl,pl)), (iid, Inte(ibl,il,ir)))
         | ((iid, Inte(ibl,il,ir)), (pid, Pend(orig_id,pbl,pl))) ->
@@ -63,9 +63,9 @@ let delete_pend pt idbl idbls =
          * edge's length. That way, we don't have to update the other edges with
          * a different id. *)
             assert(sorted_list_eq pl [iid; idbl.id]);
-            Hashtbl.replace pt iid
+            strict_replace pt iid
               (Pend(orig_id, pbl+.ibl, get_other_side [idbl.id; pid] il ir));
-            Hashtbl.remove pt pid;
+            strict_remove pt pid;
             IdblSet.add 
               {id=iid; bl=pbl+.ibl} 
               (IdblSet.remove {id=pid; bl=pbl} del_idbls)
@@ -89,11 +89,12 @@ let delete_pend pt idbl idbls =
           del_idbls
       )
 
-let until_stopping pt stopping_bl = 
+let until_stopping stopping_bl pt = 
   let rec aux accu s = 
-    let m = IdblSet.min_elt s in
+    let m = try IdblSet.min_elt s with Not_found -> assert false in
+    Printf.printf "%d\n" (IdblSet.cardinal s);
     if m.bl > stopping_bl then accu
-    else match Hashtbl.find pt m.id with
+    else match find pt m.id with
     | Pend(orig_id, bl, _) ->
         assert(bl = m.bl);
         let new_s = delete_pend pt m s in 
@@ -101,4 +102,3 @@ let until_stopping pt stopping_bl =
     | Inte(_,_,_) -> assert false
   in
   List.rev (aux [] (idblset_of_ptree pt))
-

@@ -4,6 +4,7 @@
 exception Other_side of int list * int list * int list 
 exception Side_without of int * int list * int list 
 exception Not_implemented of string
+exception Missing_edge of int * string
 
 open MapsSets
 
@@ -14,6 +15,21 @@ type edge =
 
 (* oh yes! a mutable data structure, just for fun. *)
 type ptree = (int, edge) Hashtbl.t
+
+(* *** ACCESS *** *)
+
+let create = Hashtbl.create
+let fold = Hashtbl.fold
+let iter = Hashtbl.iter
+let strict_replace pt i e = 
+  if Hashtbl.mem pt i then Hashtbl.replace pt i e 
+  else raise (Missing_edge (i, "strict_replace"))
+let find pt i = 
+  try Hashtbl.find pt i with 
+  | Not_found -> raise (Missing_edge (i, "find"))
+let strict_remove pt i =
+  if Hashtbl.mem pt i then Hashtbl.remove pt i
+  else raise (Missing_edge (i, "strict_remove"))
 
 
 (* *** GENERALITIES *** *)
@@ -51,7 +67,7 @@ let edgel_replace ~src ~dst = function
 
 (* bl_getter is a function which returns a bl given an id *)
 let of_stree bl_getter st = 
-  let pt = Hashtbl.create (1+(Stree.max_id st)) in
+  let pt = create (1+(Stree.max_id st)) in
   (* righto is None if we have a pendant edge *)
   let add_edge id left righto = 
     let bl = bl_getter id in
@@ -81,20 +97,20 @@ let of_stree bl_getter st =
       (* first build the basic tree *)
       List.iter root_build (Base.pull_each_out [t1; t2]);
       let (id1, id2) = (Stree.top_id t1, Stree.top_id t2) in
-      match (Hashtbl.find pt id1, Hashtbl.find pt id2) with
+      match (find pt id1, find pt id2) with
       | (Inte(bl1,l1,r1), Inte(bl2,l2,r2)) -> 
           let join1 = get_other_side [id2] l1 r1
           and join2 = get_other_side [id1] l2 r2
           in
           (* make new internal edge *)
-          Hashtbl.replace pt id1 (Inte(bl1+.bl2, join1, join2));
+          strict_replace pt id1 (Inte(bl1+.bl2, join1, join2));
           (* clean out old edge *)
-          Hashtbl.remove pt id2;
+          strict_remove pt id2;
           (* reconnect things to new edge *)
           List.iter 
             (fun id -> 
-              Hashtbl.replace pt id 
-                (edgel_replace ~src:id2 ~dst:id1 (Hashtbl.find pt id)))
+              strict_replace pt id 
+                (edgel_replace ~src:id2 ~dst:id1 (find pt id)))
             (join1 @ join2);
       | _ -> raise (Not_implemented "rooted on pendant edge")
       end
@@ -119,7 +135,7 @@ let of_file s = of_gtree (Newick.of_file s)
 exception Found_inte of int
 let find_internal pt = 
   try
-    Hashtbl.iter 
+    iter 
       (fun i -> function 
         | Inte(_,_,_) -> raise (Found_inte i) 
         | _ -> ())
@@ -131,7 +147,7 @@ let find_internal pt =
 let to_gtree pt = 
   (* start with maximum of indices of the ids *)
   let count = 
-    ref (Hashtbl.fold 
+    ref (fold 
       (fun _ e j -> match e with Pend(i,_,_) -> max i j | _ -> j) 
       pt 0) 
   and m = ref IntMap.empty
@@ -145,7 +161,7 @@ let to_gtree pt =
   (* above is a neighboring edge index in the "up" direction in the resulting
    * rooting *)
   let rec aux ~above our_id = 
-    match Hashtbl.find pt our_id with
+    match find pt our_id with
     | Inte(bl,l,r) ->
         incr count;
         let node_id = !count in (* have to nail down count due to recursion *)
@@ -156,7 +172,7 @@ let to_gtree pt =
   in
   match find_internal pt with
   | Some start_edge -> begin
-      match Hashtbl.find pt start_edge with
+      match find pt start_edge with
       | Inte(bl,l,r) -> 
           let stl = aux ~above:(List.hd r) start_edge
           and str = aux ~above:(List.hd l) start_edge
@@ -169,7 +185,7 @@ let to_gtree pt =
   end
   | None ->
       let tL = (* fix our mutables *)
-        Hashtbl.fold
+        fold
           (fun _ e l ->
             match e with 
             | Inte(_,_,_) -> assert false
