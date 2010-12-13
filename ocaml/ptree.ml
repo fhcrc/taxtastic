@@ -168,19 +168,17 @@ let to_gtree pt =
       | Pend(_,_,_) -> assert(false)
   end
   | None ->
-      let st = 
-        Stree.Node 
-          (1 + !count,
-          Hashtbl.fold
-            (fun _ e l ->
-              match e with 
-              | Inte(_,_,_) -> assert false
-              | Pend(id,bl,_) -> 
-                  add_bark id bl (Some (string_of_int id));
-                  (Stree.Leaf id)::l)
-            pt
-            [])
+      let tL = (* fix our mutables *)
+        Hashtbl.fold
+          (fun _ e l ->
+            match e with 
+            | Inte(_,_,_) -> assert false
+            | Pend(id,bl,_) -> 
+                add_bark id bl (Some (string_of_int id));
+                (Stree.Leaf id)::l)
+          pt
+          []
       in
-      Gtree.gtree st !m
+      Gtree.gtree (Stree.Node (1 + !count, tL)) !m
 
 let to_stree pt = Gtree.get_stree (to_gtree pt)

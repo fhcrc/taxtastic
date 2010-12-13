@@ -56,17 +56,17 @@ let delete_pend pt idbl idbls =
                 get_other_side [idbl.id; id1] l2 r2));
             Hashtbl.remove pt id2;
             del_idbls
-        | ((pid, Pend(orig_id,bl1,l1)), (iid, Inte(bl2,l2,r)))
-        | ((iid, Inte(bl2,l2,r)), (pid, Pend(orig_id,bl1,l1))) ->
+        | ((pid, Pend(orig_id,pbl,pl)), (iid, Inte(ibl,il,ir)))
+        | ((iid, Inte(ibl,il,ir)), (pid, Pend(orig_id,pbl,pl))) ->
         (* we are deleting one edge of a cherry. in this case, we extend the
          * branch length on the other pendant edge. *)
-            assert(sorted_list_eq l1 [iid; idbl.id]);
+            assert(sorted_list_eq pl [iid; idbl.id]);
             Hashtbl.replace pt iid
-              (Pend(orig_id, bl1+.bl2, get_other_side [idbl.id; pid] l2 r));
+              (Pend(orig_id, pbl+.ibl, get_other_side [idbl.id; pid] il ir));
             Hashtbl.remove pt pid;
             IdblSet.add 
-              {id=iid; bl=bl1+.bl2} 
-              (IdblSet.remove {id=pid; bl=bl1} del_idbls)
+              {id=iid; bl=pbl+.ibl} 
+              (IdblSet.remove {id=pid; bl=pbl} del_idbls)
       end
       | eidl -> 
         (* degree greater than two: 
