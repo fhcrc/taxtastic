@@ -116,9 +116,9 @@ let find_internal pt =
     Hashtbl.iter 
       (fun i -> function | Inte(_,_,_) -> raise (Found_inte i) | _ -> ())
       pt;
-    assert false
+    None
   with
-  | Found_inte i -> i
+  | Found_inte i -> Some i
 
 let to_gtree pt = 
   (* start with an index bigger than anything in pt *)
@@ -140,17 +140,34 @@ let to_gtree pt =
         Stree.Node(!count, List.map (aux ~bad:our_id) our_side)
     | Pend(id,bl,_) -> add_bark id bl (Some (string_of_int id)); Stree.Leaf id
   in
-  let start_edge = find_internal pt in
-  match Hashtbl.find pt start_edge with
-  | Inte(bl,l,r) -> 
-      let stl = aux ~bad:(List.hd r) start_edge
-      and str = aux ~bad:(List.hd l) start_edge
+  match find_internal pt with
+  | Some start_edge -> begin
+      match Hashtbl.find pt start_edge with
+      | Inte(bl,l,r) -> 
+          let stl = aux ~bad:(List.hd r) start_edge
+          and str = aux ~bad:(List.hd l) start_edge
+          in
+          add_bark (Stree.top_id stl) (bl/.2.) None;
+          add_bark (Stree.top_id str) (bl/.2.) None;
+          incr count;
+          Gtree.gtree (Stree.Node(!count, [stl;str])) !m
+      | Pend(_,_,_) -> assert(false)
+  end
+  | None ->
+      let st = 
+        Stree.Node 
+          (1 + !count,
+          Hashtbl.fold
+            (fun _ e l ->
+              match e with 
+              | Inte(_,_,_) -> assert false
+              | Pend(id,bl,_) -> 
+                  add_bark id bl (Some (string_of_int id));
+                  (Stree.Leaf id)::l)
+            pt
+            [])
       in
-      add_bark (Stree.top_id stl) (bl/.2.) None;
-      add_bark (Stree.top_id str) (bl/.2.) None;
-      incr count;
-      Gtree.gtree (Stree.Node(!count, [stl;str])) !m
-  | Pend(_,_,_) -> assert(false)
+      Gtree.gtree st !m
 
 let to_stree pt = Gtree.get_stree (to_gtree pt)
 
