@@ -50,10 +50,14 @@ let delete_pend pt idbl idbls =
         | ((id1, Inte(bl1,l1,r1)), (id2, Inte(bl2,l2,r2))) -> 
         (* we are deleting a pendant edge which touches two internal edges. 
          * we join these two internal edges together. *)
+        (* id2_far_side is the set of edges far from idbl.id *)
+            let id2_far_side = get_other_side [idbl.id; id1] l2 r2 in
+         (* we need to re-attach the edges which point to id2 *)
+            List.iter (tree_update ~src:id2 ~dst:id1 pt) id2_far_side;
             strict_replace pt id1
               (Inte(bl1+.bl2, 
                 get_other_side [idbl.id; id2] l1 r1,
-                get_other_side [idbl.id; id1] l2 r2));
+                id2_far_side));
             strict_remove pt id2;
             del_idbls
         | ((pid, Pend(orig_id,pbl,pl)), (iid, Inte(ibl,il,ir)))

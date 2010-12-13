@@ -18,26 +18,8 @@ type edge =
 (* oh yes! a mutable data structure, just for fun. *)
 type ptree = (int, edge) Hashtbl.t
 
-(* *** ACCESS *** *)
 
-let create = Hashtbl.create
-let fold = Hashtbl.fold
-let iter = Hashtbl.iter
-let strict_replace pt i e = 
-  if Hashtbl.mem pt i then Hashtbl.replace pt i e 
-  else raise (Missing_edge (i, "strict_replace"))
-let find pt i = 
-  try Hashtbl.find pt i with 
-  | Not_found -> raise (Missing_edge (i, "find"))
-let strict_remove pt i =
-  if Hashtbl.mem pt i then Hashtbl.remove pt i
-  else raise (Missing_edge (i, "strict_remove"))
-let safe_add h k v = 
-  assert(not (Hashtbl.mem h k));
-  Hashtbl.add h k v
-
-
-(* *** GENERALITIES *** *)
+(* *** EDGE UTILS *** *)
 
 let sorted_list_eq l1 l2 = List.sort compare l1 = List.sort compare l2
 
@@ -56,12 +38,35 @@ let get_side_without x l r =
 
 let list_replace ~src ~dst = List.map (fun x -> if x = src then dst else x)
 
-let edgel_replace ~src ~dst = function
+let edge_update ~src ~dst = function
   | Pend(id,bl,l) as p -> 
       if List.mem src l then Pend(id,bl, list_replace src dst l) else p
   | Inte(bl,l,r) as i -> 
       if not ((List.mem src l) || (List.mem src r)) then i
       else Inte(bl, list_replace src dst l, list_replace src dst r)
+
+
+(* *** PTREE UTILS *** *)
+
+let create = Hashtbl.create
+let fold = Hashtbl.fold
+let iter = Hashtbl.iter
+let strict_replace pt i e = 
+  if Hashtbl.mem pt i then Hashtbl.replace pt i e 
+  else raise (Missing_edge (i, "strict_replace"))
+let find pt i = 
+  try Hashtbl.find pt i with 
+  | Not_found -> raise (Missing_edge (i, "find"))
+let strict_remove pt i =
+  if Hashtbl.mem pt i then Hashtbl.remove pt i
+  else raise (Missing_edge (i, "strict_remove"))
+let safe_add h k v = 
+  assert(not (Hashtbl.mem h k));
+  Hashtbl.add h k v
+let tree_update ~src ~dst pt id = 
+  if src = id then raise (Not_implemented "replacing own id");
+  strict_replace pt id (edge_update ~src ~dst (find pt id))
+
 
 (* uuuuuugly! *)
 exception Found_inte of int
@@ -157,11 +162,7 @@ let of_stree bl_getter st =
           (* clean out old edge *)
           strict_remove pt id2;
           (* reconnect things to new edge *)
-          List.iter 
-            (fun id -> 
-              strict_replace pt id 
-                (edgel_replace ~src:id2 ~dst:id1 (find pt id)))
-            (join1 @ join2);
+          List.iter (tree_update ~src:id2 ~dst:id1 pt) (join1 @ join2);
       | _ -> raise (Not_implemented "rooted on pendant edge")
       end
     | Stree.Node(_, tL) -> List.iter root_build (Base.pull_each_out tL);
