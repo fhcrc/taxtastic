@@ -39,12 +39,14 @@ let () =
     List.iter
       (fun fname ->
         let gt = Newick.of_file fname in
-        let pt = Ptree.of_gtree gt in
+        let pt = Ptree.of_gtree gt 
+        and get_name id = (IntMap.find id gt.Gtree.bark_map)#get_name 
+        in
         wrap_output (!out_prefix)
           (fun ch ->
             Csv.save_out ch
               (List.map
-                (fun (id,bl,_) -> [string_of_int id; string_of_float bl])
+                (fun (id,bl,_) -> [get_name id; string_of_float bl])
                 (Pd.until_stopping (!cutoff) pt))))
       (parse_args ())
   end

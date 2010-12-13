@@ -96,7 +96,6 @@ let delete_pend pt idbl idbls =
 let until_stopping stopping_bl pt = 
   let rec aux accu s = 
     let m = try IdblSet.min_elt s with Not_found -> assert false in
-    Printf.printf "%d\n" (IdblSet.cardinal s);
     if m.bl > stopping_bl then accu
     else match find pt m.id with
     | Pend(orig_id, bl, _) ->
