@@ -38,7 +38,7 @@ let s = delete_pend six 3 s;; let x = (IdblSet.elements s, pl_of_hash six, to_gt
 *)
 
 let six = of_string "((x:1,y:2):1,(a:1,b:9):9,(c:9,d:9):9):9";;
-let x = perform six 7.;;
+let x = until_stopping six 7.;;
 
 (* let pt = of_file "COG0001.auto1.fast.tre" *)
 (* let out = perform pt 1e-2 *)

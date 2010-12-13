@@ -58,8 +58,10 @@ let delete_pend pt idbl idbls =
             del_idbls
         | ((pid, Pend(orig_id,pbl,pl)), (iid, Inte(ibl,il,ir)))
         | ((iid, Inte(ibl,il,ir)), (pid, Pend(orig_id,pbl,pl))) ->
-        (* we are deleting one edge of a cherry. in this case, we extend the
-         * branch length on the other pendant edge. *)
+        (* we are deleting one edge of a cherry. in this case, we delete the
+         * other pendant edge and extend the just-proximal edge with the pendant
+         * edge's length. That way, we don't have to update the other edges with
+         * a different id. *)
             assert(sorted_list_eq pl [iid; idbl.id]);
             Hashtbl.replace pt iid
               (Pend(orig_id, pbl+.ibl, get_other_side [idbl.id; pid] il ir));
@@ -71,7 +73,7 @@ let delete_pend pt idbl idbls =
       | eidl -> 
         (* degree greater than two: 
         * delete idbl.id from the edge lists of the other nodes *)
-          let check_rem1 l = 
+          let check_del1 l = 
             let out = List.filter ((<>) idbl.id) l in
         (* make sure that internal nodes still have degree greater than two *)
             assert(1 < List.length out);
@@ -80,17 +82,14 @@ let delete_pend pt idbl idbls =
           List.iter 
             (hashtbl_freplace
               (function
-                | Pend(id,bl,l) -> Pend(id,bl, check_rem1 l)
-                | Inte(bl,l,r) -> Inte(bl, check_rem1 l, check_rem1 r))
+                | Pend(id,bl,l) -> Pend(id, bl, check_del1 l)
+                | Inte(bl,l,r) -> Inte(bl, check_del1 l, check_del1 r))
               pt)
             eidl;
           del_idbls
       )
 
-let pl_of_hash h = Hashtbl.fold (fun k v l -> (k,v)::l) h []
-
-let perform orig_pt stopping_bl = 
-  let pt = Hashtbl.copy orig_pt in
+let until_stopping pt stopping_bl = 
   let rec aux accu s = 
     let m = IdblSet.min_elt s in
     if m.bl > stopping_bl then accu
