@@ -148,9 +148,10 @@ let to_gtree pt =
     match Hashtbl.find pt our_id with
     | Inte(bl,l,r) ->
         incr count;
-        add_bark (!count) bl None;
+        let node_id = !count in (* have to nail down count due to recursion *)
+        add_bark node_id bl None;
         let our_side = get_side_without above l r in
-        Stree.Node(!count, List.map (aux ~above:our_id) our_side)
+        Stree.Node(node_id, List.map (aux ~above:our_id) our_side)
     | Pend(id,bl,_) -> add_bark id bl (Some (string_of_int id)); Stree.Leaf id
   in
   match find_internal pt with
