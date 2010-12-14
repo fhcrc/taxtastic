@@ -67,7 +67,6 @@ let tree_update ~src ~dst pt id =
   if src = id then raise (Not_implemented "replacing own id");
   strict_replace pt id (edge_update ~src ~dst (find pt id))
 
-
 (* uuuuuugly! *)
 exception Found_inte of int
 let find_internal pt = 
@@ -95,8 +94,10 @@ let check_node n eid = function
       if not ((sorted_list_eq n foundl) || (sorted_list_eq n foundr)) then
         raise (Inte_mismatch (n,foundl,foundr))
 
+(* check all of the connections of a tree *)
 let check pt = 
   let rec rooted_check above eidl = 
+    let our_node = above::eidl in
     List.iter
       (fun below ->
         let e = try find pt below with
@@ -104,7 +105,7 @@ let check pt =
             Printf.printf "%d missing (requested by %d)\n" missing above;
             raise x
         in
-        check_node (above::eidl) below e;
+        check_node our_node below e;
         match e with
         | Pend(_,_,_) -> ()
         | Inte(_,l,r) -> rooted_check below (get_side_without above l r))
