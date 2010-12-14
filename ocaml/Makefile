@@ -1,4 +1,4 @@
-RELEASE=trimtre
+RELEASE=prunetre
 
 all: $(RELEASE)
 
