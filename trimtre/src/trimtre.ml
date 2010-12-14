@@ -7,6 +7,7 @@ open MapsSets
 let out_prefix = ref ""
 let cutoff = ref 0.
 let names_only = ref false
+let safe = ref true
 
 let parse_args () = 
   let files  = ref [] in
@@ -17,7 +18,9 @@ let parse_args () =
      "--cutoff", Arg.Set_float cutoff,
      "Specify the maximum branch length to be trimmed (required).";
      "--names-only", Arg.Set names_only,
-     "Only split out a list of names, rather than names and PD decrease."
+     "Only split out a list of names, rather than names and PD decrease.";
+     "--unsafe", Arg.Clear safe,
+     "Don't perform internal checks.";
    ]
   in
   let usage = "trimtre trims the tree.\n"
@@ -52,8 +55,7 @@ let () =
         wrap_output (!out_prefix)
           (fun ch ->
             Csv.save_out ch
-              (List.map line_of_result (Pd.until_stopping (!cutoff) pt))))
+              (List.map line_of_result (Pd.until_stopping (!safe) (!cutoff) pt))))
       (parse_args ())
   end
-
 

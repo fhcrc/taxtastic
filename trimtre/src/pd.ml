@@ -93,7 +93,7 @@ let delete_pend pt idbl idbls =
           del_idbls
       )
 
-let until_stopping stopping_bl pt = 
+let until_stopping safe stopping_bl pt = 
   let rec aux accu s = 
     let m = try IdblSet.min_elt s with Not_found -> assert false in
     if m.bl > stopping_bl then accu
@@ -101,7 +101,7 @@ let until_stopping stopping_bl pt =
     | Pend(orig_id, bl, _) ->
         assert(bl = m.bl);
         let new_s = delete_pend pt m s in 
-        check pt;
+        if safe then check pt;
         aux ((orig_id,m.bl,to_stree pt)::accu) new_s
     | Inte(_,_,_) -> assert false
   in
