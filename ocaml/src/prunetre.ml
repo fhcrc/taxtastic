@@ -9,6 +9,7 @@ let cutoff = ref 0.
 let names_only = ref false
 let safe = ref true
 let never_prune_from = ref ""
+let never_prune_regex_from = ref ""
 
 let parse_args () = 
   let files  = ref [] in
@@ -23,7 +24,9 @@ let parse_args () =
      "--unsafe", Arg.Clear safe,
      "Don't perform internal checks.";
      "--never-prune-from", Arg.Set_string never_prune_from,
-     "Provide a file containing taxa that should never be pruned.";
+     "Provide a file containing taxa that will not be pruned.";
+     "--never-prune-regex-from", Arg.Set_string never_prune_regex_from,
+     "Provide a file containing regular expressions; taxa matching one of these will not be pruned.";
    ]
   in
   let usage = "prunetre prunes the tree.\n"
@@ -46,23 +49,45 @@ let wrap_output fname f =
 let () =
   if not !Sys.interactive then begin
     let files = parse_args () in
-    let exclude_names = 
+    let never_prune_names = 
       match !never_prune_from with
       | "" -> StringSet.empty
       | fname -> 
           StringSetFuns.of_list (File_parsing.string_list_of_file fname)
+    and never_prune_regexl = 
+      match !never_prune_from with
+      | "" -> []
+      | fname -> List.map Str.regexp (File_parsing.string_list_of_file fname)
+    in
+    let ss_list_add = List.fold_right StringSet.add
+    and search r str = 
+      try let _ = Str.search_forward r str 0 in true with 
+      | Not_found -> false
     in
     List.iter
       (fun fname ->
         let gt = Newick.of_file fname in
-        let pt = Ptree.of_gtree gt 
-        and get_name id = (IntMap.find id gt.Gtree.bark_map)#get_name 
-        and exclude_ids = 
+        let get_name id = (IntMap.find id gt.Gtree.bark_map)#get_name in
+        let namel = 
+          Gtree.recur 
+            (fun _ below -> List.flatten below) 
+            (fun i -> [get_name i])
+            gt
+        in
+        let never_prunes = 
+          List.fold_right
+            (fun r -> ss_list_add (List.filter (search r) namel))
+            never_prune_regexl
+            never_prune_names
+        in
+        StringSet.iter (Printf.printf "not pruning %s\n") never_prunes;
+        let pt = Ptree.of_gtree gt
+        and never_prune_ids = 
           IntMap.fold 
             (fun i b s ->
               match b#get_name_opt with
               | Some name ->
-                  if StringSet.mem name exclude_names then IntSet.add i s
+                  if StringSet.mem name never_prunes then IntSet.add i s
                   else s
               | None -> s)
             gt.Gtree.bark_map
@@ -77,7 +102,7 @@ let () =
             Csv.save_out ch
               (List.map 
                  line_of_result 
-                 (Pd.until_stopping (!safe) exclude_ids (!cutoff) pt))))
+                 (Pd.until_stopping (!safe) never_prune_ids (!cutoff) pt))))
       files
   end
 
