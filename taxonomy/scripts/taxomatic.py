@@ -167,12 +167,6 @@ def main():
             Alignment profile.
             """), metavar='FILE')
 
-        parser.add_option("-H", "--hmm-profile",
-            action="store", dest="hmm_profile", type="string",
-            help=xws("""
-            Alignment profile used by hmmer.
-            """), metavar='FILE')
-
         parser.add_option("-i", "--seq-info",
             action="store", dest="seq_info", type="string",
             help=xws("""
