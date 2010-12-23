@@ -55,7 +55,7 @@ let () =
       | fname -> 
           StringSetFuns.of_list (File_parsing.string_list_of_file fname)
     and never_prune_regexl = 
-      match !never_prune_from with
+      match !never_prune_regex_from with
       | "" -> []
       | fname -> List.map Str.regexp (File_parsing.string_list_of_file fname)
     in
