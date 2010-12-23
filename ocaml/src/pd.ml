@@ -18,10 +18,11 @@ end
 
 module IdblSet = Set.Make(OrderedIdbl)
 
-let idblset_of_ptree pt = 
+let idblset_of_ptree exclude_ids pt = 
   fold 
     (fun id e s -> 
-      match e with 
+      if IntSet.mem id exclude_ids then s
+      else match e with 
       | Pend(id',bl,_) -> assert(id=id'); IdblSet.add {id=id;bl=bl} s 
       | Inte(_,_,_) -> s)
     pt 
@@ -93,16 +94,19 @@ let delete_pend pt idbl idbls =
           del_idbls
       )
 
-let until_stopping safe stopping_bl pt = 
+let until_stopping safe exclude_ids stopping_bl pt = 
   let rec aux accu s = 
-    let m = try IdblSet.min_elt s with Not_found -> assert false in
-    if m.bl > stopping_bl then accu
-    else match find pt m.id with
-    | Pend(orig_id, bl, _) ->
-        assert(bl = m.bl);
-        let new_s = delete_pend pt m s in 
-        if safe then check pt;
-        aux ((orig_id,m.bl,to_stree pt)::accu) new_s
-    | Inte(_,_,_) -> assert false
+    if s = IdblSet.empty then accu
+    else begin
+      let m = IdblSet.min_elt s in
+      if m.bl > stopping_bl then accu
+      else match find pt m.id with
+      | Pend(orig_id, bl, _) ->
+          assert(bl = m.bl);
+          let new_s = delete_pend pt m s in 
+          if safe then check pt;
+          aux ((orig_id,m.bl,to_stree pt)::accu) new_s
+      | Inte(_,_,_) -> assert false
+    end
   in
-  List.rev (aux [] (idblset_of_ptree pt))
+  List.rev (aux [] (idblset_of_ptree exclude_ids pt))
