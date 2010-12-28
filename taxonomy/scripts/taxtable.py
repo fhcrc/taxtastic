@@ -6,6 +6,12 @@ taxtable.py
 
 Usage: %prog <options>
 
+Notes
+-----
+
+
+
+
 Command line options
 --------------------
 
@@ -100,15 +106,21 @@ def main():
     """))
 
     parser.add_option("-t", "--tax-ids", dest="taxids", help=xws("""
-        A comma delimited list of tax_ids provided on the command line
-        or the name of a file specifying tax_ids
-        (whitespace-delimited; lines beginning with "#" are ignored).
+        Specifies the taxids to include. Taxids may be provided in one
+        of two ways: 1) as a comma delimited list on the command line
+        (eg, '-t taxid1,taxid2'); or 2) as the name of a file
+        containing a whitespace-delimited list of tax_ids (ie,
+        separated by tabs, spaces, or newlines; lines beginning with
+        "#" are ignored). May be omitted if --tax-names is used
+        instead.
     """))
 
     parser.add_option("-n", "--tax-names", dest="taxnames", help=xws("""
-        An optional file containing a list of taxonomic names to
-        match against primary names and synonyms as a source
-        of tax_ids. Lines beginning with # are ignored.
+        An optional file identifing taxa in the form of taxonomic
+        names. Names are matched against both primary names and
+        synonyms. Lines beginning with "#" are ignored. Taxa
+        identified here will be added to those specified using
+        --tax-ids.
     """))
 
     parser.add_option("-v", "--verbose",
@@ -184,7 +196,8 @@ def main():
 
     log.warning('calculating lineages for %s taxa' % len(taxa))
     for taxid in taxa:
-        log.warning('adding %s' % taxid)
+        log.warning('adding %s' % taxid)        
+        
         tax.lineage(taxid)
 
     if options.outfile:

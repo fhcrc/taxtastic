@@ -70,6 +70,31 @@ class TestGetLineagePrivate(unittest.TestCase):
         self.assertTrue(lineage[0][0] == 'root')
         self.assertTrue(lineage[-1][0] == 'species')
 
+    def test03(self):
+        tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
+
+        self.assertFalse(tax_id in self.tax.cached)
+        self.assertRaises(KeyError, self.tax._get_lineage, tax_id)
+
+class TestGetMerged(unittest.TestCase):
+
+    def setUp(self):
+        self.funcname = '_'.join(self.id().split('.')[-2:])
+        self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
+        self.tax = Taxonomy.Taxonomy(self.engine, Taxonomy.ncbi.ranks)
+
+    def tearDown(self):
+        self.engine.dispose()
+
+    def test01(self):
+        tax_id = '1378'
+        merged = self.tax._get_merged(tax_id)
+        self.assertTrue(merged is None)
+
+    def test02(self):
+        tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
+        merged = self.tax._get_merged(tax_id)
+        self.assertFalse(merged is None)
 
 class TestTaxNameSearch(unittest.TestCase):
 
@@ -164,9 +189,13 @@ class TestGetLineagePublic(unittest.TestCase):
         # lineage = self.tax.lineage(tax_id)
         # self.assertTrue(lineage['rank'] == 'genus')
 
+    def test07(self):
+        tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
+        lineage = self.tax.lineage(tax_id=tax_id)
 
 
 
+        
 class TestTaxTable(unittest.TestCase):
 
     def setUp(self):

@@ -48,6 +48,7 @@ class Taxonomy(object):
         self.nodes = self.meta.tables['nodes']
         self.names = self.meta.tables['names']
         self.source = self.meta.tables['source']
+        self.merged = self.meta.tables['merged']
 
         self.ranks = ranks
         self.rankset = set(self.ranks)
@@ -125,7 +126,29 @@ class Taxonomy(object):
 
         return tax_id, tax_name, bool(is_primary)
 
+    def _get_merged(self, old_tax_id):
+        """
+        Returns tax_id into which `old_tax_id` has been merged.
 
+        CREATE TABLE merged(
+        old_tax_id    TEXT,
+        new_tax_id    TEXT REFERENCES nodes(tax_id)
+        );
+        """
+
+        merged = self.merged
+        s = select([self.merged.c.new_tax_id], self.merged.c.old_tax_id == old_tax_id)
+        res = s.execute()
+        output = res.fetchall() or None
+
+        if output is not None:
+            if len(output) > 1:
+                raise ValueError('There is more than one value for merged.old_tax_id = "%s"' % old_tax_id)
+            else:
+                output = output[0][0]
+            
+        return output
+    
     def _get_lineage(self, tax_id, _level=0):
         """
         Returns cached lineage from self.cached or recursively builds
@@ -198,8 +221,6 @@ class Taxonomy(object):
     def lineage(self, tax_id=None, tax_name=None):
         """
         Public method for returning a lineage; includes tax_name and rank
-
-        TODO: should handle merged tax_ids
         """
 
         if not bool(tax_id) ^ bool(tax_name):
