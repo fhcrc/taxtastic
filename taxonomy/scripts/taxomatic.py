@@ -182,7 +182,7 @@ def main():
             defining tax_id at each rank starting with root.
             """), metavar='FILE')
 
-        parser.add_option("-m", "--mask_to_be_implemented",
+        parser.add_option("-m", "--mask",
             action="store", dest="mask", type="string",
             help=xws("""
             'mask' is listed in package_contents but needs a command-line option implemented here.
