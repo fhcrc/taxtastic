@@ -11,11 +11,10 @@ class Alignment(object):
     A class to provide alignment-related tools for reference packages.
     """
 
-    def __init__(self, reference_package, sequence_files, out_prefix, debug=False, verbose=False):
+    def __init__(self, reference_package, out_prefix, debug=False, verbose=False):
         """
         Constructor - sets up a number of properties when instantiated.
         """
-        self.sequence_files = sequence_files
         self.reference_package = reference_package        
         # Determine the name of the reference package, excluding any other 
         # elements in its path.
@@ -46,7 +45,7 @@ class Alignment(object):
             
     # Public methods
 
-    def hmmer_align(self, squeeze=False, mask=False, frag=False, ref=False, squeeze_prefix='', mask_prefix=''):
+    def hmmer_align(self, sequence_files, squeeze=False, mask=False, frag=False, ref=False, squeeze_prefix='', mask_prefix=''):
         """
         Create an alignment with hmmer. Then, separate out reference sequences 
         from the fragments into two separate files.
@@ -63,7 +62,7 @@ class Alignment(object):
         # hmmalign must be in PATH for this to work.
         hmmer_template = Template('hmmalign -o $tmp_file' + ' --mapali ' + \
                                   self.aln_sto + ' ' + self.profile + ' $sequence_file')
-        for sequence_file in self.sequence_files:
+        for sequence_file in sequence_files:
             
             # Determine a name for the temporary output file.
             tmp_file = sequence_file + '.' + str(os.getpid()) + '.sto'
