@@ -2,9 +2,9 @@
 import sys, os, string, argparse, re
 
 # Insert one level above project directory to path for testing.
-sys.path.insert(0, "../..")
-from taxonomy.alignment import Alignment
-#from Taxonomy.alignment import Alignment
+#sys.path.insert(0, "../..")
+#from taxonomy.alignment import Alignment
+from Taxonomy.alignment import Alignment
 
 
 def main():
@@ -30,7 +30,8 @@ def main():
     align.hmmer_align(sequence_files=hmmsearch_output_file,
                       squeeze=True, mask=True, 
                       frag=True, ref=False,
-                      separate_steps=True
+                      separate_steps=True,
+                      sequence_file_format='stockholm',
                      )
 
 

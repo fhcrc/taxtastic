@@ -55,7 +55,6 @@ class Alignment(object):
         hmmsearch_command = 'hmmsearch --notextw --noali -A ' + hmmsearch_output_file + \
                             ' ' + self.profile + ' ' + sequence_file
 
-        print hmmsearch_command, hmmsearch_output_file
 
         child = subprocess.Popen(hmmsearch_command,
                                  stdin=None,
@@ -72,7 +71,7 @@ class Alignment(object):
 
 
     def hmmer_align(self, sequence_files, squeeze=False, mask=False, 
-                    frag=False, ref=False, separate_steps=False):
+                    frag=False, ref=False, separate_steps=False, sequence_file_format='fasta'):
         """
         Create an alignment with hmmalign. Then, separate out reference sequences 
         from the fragments into two separate files. If separate_steps is True, 
@@ -121,7 +120,7 @@ class Alignment(object):
                         out_refs = self.out_prefix + sequence_file_name_prefix + ".ref.fasta"
                         out_frags = self.out_prefix + sequence_file_name_prefix + ".frag.fasta"
 
-                    frag_names = self._names(SeqIO.parse(sequence_file, "fasta"))
+                    frag_names = self._names(SeqIO.parse(sequence_file, sequence_file_format))
    
 
                     # We need to write out two files, so we need two iterators.
