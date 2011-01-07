@@ -15,19 +15,23 @@ def main():
     arguments = parse_arguments()
     out_prefix = arguments.out_prefix
     reference_package = arguments.refpkg[0]
-    sequence_files = arguments.seqfiles
-    
-    # Create alignment with hmmer for all sequence files.  Squeeze and 
-    # use mask if desired.
+    sequence_file = arguments.seqfile[0]
+    search_options = arguments.search_options    
+
     align = Alignment(reference_package=reference_package, 
-                      sequence_files=sequence_files,
                       out_prefix=out_prefix,
                      )
 
-    #align.hmmer_align(sequence_files=sequence_files,
-    #                  squeeze=True, mask=True, 
-    #                  frag=True, ref=True,
-    #                 )
+
+    hmmsearch_output_file = [ align.hmmer_search(search_options=search_options, sequence_file=sequence_file) ]
+ 
+    # Create alignment with hmmer for the file containing 
+    # recruited sequences.  Squeeze and use mask if desired.
+    align.hmmer_align(sequence_files=hmmsearch_output_file,
+                      squeeze=True, mask=True, 
+                      frag=True, ref=False,
+                      separate_steps=True
+                     )
 
 
 def parse_arguments():
@@ -39,9 +43,9 @@ def parse_arguments():
     parser.add_argument('-o', '--outprefix', dest='out_prefix', help='Output file prefix. ' + \
                         'Defaults to refpkg_prefix.sequence_file_prefix.  Currently only works ' + \
                         'with a single sequence file')
-    parser.add_argument('--search-opts', dest='search_opts', metavar='OPTS', help='hmmsearch options, such as "-E 1"')
+    parser.add_argument('--search-opts', dest='search_options', metavar='OPTS', help='hmmsearch options, such as "-E 1"')
     parser.add_argument('refpkg', nargs=1, type=reference_package, help='Reference package directory')
-    parser.add_argument('seqfiles', nargs='+', help='A list of one or more fasta files')
+    parser.add_argument('seqfile', nargs=1, help='A single fasta files')
     return parser.parse_args()
 
 

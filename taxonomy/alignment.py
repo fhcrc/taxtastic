@@ -45,10 +45,39 @@ class Alignment(object):
             
     # Public methods
 
-    def hmmer_align(self, sequence_files, squeeze=False, mask=False, frag=False, ref=False, squeeze_prefix='', mask_prefix=''):
+    def hmmer_search(self, search_options, sequence_file):
         """
-        Create an alignment with hmmer. Then, separate out reference sequences 
-        from the fragments into two separate files.
+        Recruit fragments using hmmsearch.  Works with a single sequence file, further 
+        work would be required if it is to be expanded to work with multiple sequence files.
+        """
+        # hmmsearch must be in PATH for this to work.
+        hmmsearch_output_file = self.out_prefix + '.search_out.sto'
+        hmmsearch_command = 'hmmsearch --notextw --noali -A ' + hmmsearch_output_file + \
+                            ' ' + self.profile + ' ' + sequence_file
+
+        print hmmsearch_command, hmmsearch_output_file
+
+        child = subprocess.Popen(hmmsearch_command,
+                                 stdin=None,
+                                 stdout=None,
+                                 stderr=None,
+                                 shell=(sys.platform!="win32"))
+        return_code = child.wait()
+
+        # If return code was not 1, hmmsearch completed without errors.
+        if not return_code:
+            return hmmsearch_output_file
+        else:
+            raise Exception, "hmmsearch command failed: \n" + hmmsearch_command
+
+
+    def hmmer_align(self, sequence_files, squeeze=False, mask=False, 
+                    frag=False, ref=False, separate_steps=False):
+        """
+        Create an alignment with hmmalign. Then, separate out reference sequences 
+        from the fragments into two separate files. If separate_steps is True, 
+        separate files with squeeze and mask output will be written.  Note that 
+        mask=True forces a squeeze action.
         """
         # Check to make sure aln_sto has no all-gap columns.  An exception 
         # is thrown if one or more all-gap columns are found.
@@ -57,7 +86,6 @@ class Alignment(object):
         # Get first sequence length from an alignment.
         aln_sto_length = self._get_sequence_length(self.aln_sto, 'stockholm')
         aln_fasta_length = self._get_sequence_length(self.aln_fasta, 'fasta')
-        #aln_fasta_length = 13
 
         # hmmalign must be in PATH for this to work.
         hmmer_template = Template('hmmalign -o $tmp_file' + ' --mapali ' + \
@@ -94,6 +122,7 @@ class Alignment(object):
                         out_frags = self.out_prefix + sequence_file_name_prefix + ".frag.fasta"
 
                     frag_names = self._names(SeqIO.parse(sequence_file, "fasta"))
+   
 
                     # We need to write out two files, so we need two iterators.
                     in_frags = SeqIO.parse(tmp_file, "stockholm")
@@ -113,6 +142,15 @@ class Alignment(object):
                         # comparing with aln_sto.
                         in_seqs = self._sequence_length_check(in_seqs, aln_sto_length)
 
+                        if separate_steps:
+                            # Write just frag output after only squeezing is finished.
+                            if frag:
+                                SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), 
+                                            self.out_prefix + '.squeezed.fasta', "fasta")
+                                # It is very important to reset in_frags for later separate_steps use.  
+                                in_frags = SeqIO.parse(tmp_file, "stockholm")
+                                in_frags = self._squeezerator(in_frags, gaps)
+
                     if mask:
                         # Regex to remove whitespace from mask file.
                         whitespace = re.compile(r'\s|\n', re.MULTILINE)
@@ -131,9 +169,18 @@ class Alignment(object):
                         # comparing with aln_fasta.
                         in_seqs = self._sequence_length_check(in_seqs, aln_fasta_length)
 
+                        if separate_steps:
+                            # Write just frag output after both squeezing and masking.
+                            if frag:
+                                SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), 
+                                            self.out_prefix + '.masked.fasta', "fasta")
+
                     # Two separate files are written out, so two separate sets of iterators/generators are used.
-                    SeqIO.write(self._id_filter(in_seqs, lambda(idstr): idstr not in frag_names), out_refs, "fasta")
-                    SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), out_frags, "fasta")
+                    # If separate steps is True, 
+                    if ref and not separate_steps:
+                        SeqIO.write(self._id_filter(in_seqs, lambda(idstr): idstr not in frag_names), out_refs, "fasta")
+                    if frag and not separate_steps:
+                        SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), out_frags, "fasta")
             except:
                 raise
             finally:
