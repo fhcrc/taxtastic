@@ -185,7 +185,7 @@ def main():
         parser.add_option("-m", "--mask",
             action="store", dest="mask", type="string",
             help=xws("""
-            'mask' is listed in package_contents but needs a command-line option implemented here.
+            Text file containing a mask.
             """), metavar='FILE')
 
     (options, args) = parser.parse_args(args=args)
