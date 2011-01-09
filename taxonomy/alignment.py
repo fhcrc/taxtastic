@@ -93,7 +93,7 @@ class Alignment(object):
             
             # Determine a name for the temporary output file.
             tmp_file = sequence_file + '.' + str(os.getpid()) + '.sto'
-            sequence_file_name = list(os.path.split(sequence_file)).pop()
+            _,sequence_file_name = os.path.split(sequence_file)
             sequence_file_name_prefix = string.join(list(os.path.splitext(sequence_file_name))[0:-1])
 
             hmmalign_command = hmmer_template.substitute(sequence_file=sequence_file,
