@@ -5,17 +5,14 @@ from Bio import SeqIO, AlignIO
 from Bio.Seq import Seq, SeqRecord
 
 
-# idea:
-# pull the rf line out of the ref sto.
-# get the mask in terms of the consensus columns of the ref alignment
-# align with hmmalign --mapali
-# make the consensus columns alignment
-# trim it using the mask
 
 
 class Alignment(object):
     """
     A class to provide alignment-related tools for reference packages.
+
+    Notes:
+    A "mask" is just a boolean list.
     """
 
     def __init__(self, reference_package, out_prefix, debug=False, verbose=False):
@@ -51,27 +48,21 @@ class Alignment(object):
         # initialize the masking
         if 'mask' in json_contents['files']:
             self.mask_file = os.path.join(self.reference_package, json_contents['files']['mask'])
-	    mask = self._mask_of_file(self.mask_file)
-	    for masked_pos in mask:
-		if not self.consensus_list[masked_pos]:
+	
+	    sto_len = self._get_sequence_length(self.aln_sto, "stockholm")
+
+	    self.trimal_mask = self._mask_of_file(self.mask_file, sto_len)
+	    # first make sure that the trimal mask only includes consensus columns according to HMMER
+	    for pos in range(sto_len):
+		if self.trimal_mask[pos] & (not self.consensus_list[pos]):
 		    assert(False)
-# Brian-- I would rather this throw an exception which says "trying to include a (non-consensus column " + string(masked_pos) + " in the mask")
+# Brian-- I would rather this last assert(False) throw an exception which says "trying to include a (non-consensus column " + string(pos) + " in the mask")
 # does it make sense to define a custom exception for this class? 
 # I don't really know the standard practice here.
 
-        # Now we make consensus_mask, which is a list of indices on which we can mask after squeezing to the consensus columns.
-	# Thus the indices correspond to sites in the alignment with all non-consensus columns removed)
+	    # Now we make consensus_only_mask, which is the mask after we have taken just the consensus columns.
 
-            consensus_mask = []
-	    consensus_index = 0
-	    mask_set = set(mask)
-            for pos in range(len(self.consensus_list)):
-		if self.consensus_list[pos]:
-		    # we add in
-		    if pos in mask_set:
-			consensus_mask.append(consensus_index)
-	            consensus_index += 1
-            print consensus_mask
+            self.consensus_only_mask = self._mask_list(mask=self.consensus_list, to_mask=self.trimal_mask)
 
         self.debug = debug
         self.verbose = verbose
@@ -185,7 +176,7 @@ class Alignment(object):
                                 in_frags = self._squeezerator(in_frags, gaps)
 
                     if mask:
-			mask = _mask_of_file(self.mask_file)
+			mask = _mask_of_file(self.mask_file, mask_len)
 
                         # Setup mask generator for in_seqs and in_frags
                         in_seqs = self._maskerator(in_seqs, mask)
@@ -302,28 +293,51 @@ class Alignment(object):
 
 
     # Begin mask-related functions
-    def _maskerator(self, records, mask):
+
+    def _mask_list(self, mask, to_mask):
+	"""
+	Mask a list!
+	"""
+	assert(len(mask) == len(to_mask))
+	masked = []
+	for i in range(len(mask)):
+	    if mask[i]:
+		masked.append(to_mask[i])
+	return(masked)
+
+
+    def _maskerator(self, mask, records):
         """
-        Prune down all sequences to a select list of positions, a mask.
+	Apply a mask to all sequences in records.
         """
         for record in records:
             sequence = list(str(record.seq))
-            yield SeqRecord(Seq(''.join([sequence[i] for i in mask])), 
+            yield SeqRecord(Seq(''.join(self._mask_list(mask, sequence))),
                             id=record.id, description=record.description)
 
-    def _mask_of_file(self, mask_file):
+    def _int_list_of_file(self, file_name):
         """
-        Get an integer list from a file.
+        Get a comma-delimited integer list from a file.
         """
         # Regex to remove whitespace from mask file.
         whitespace = re.compile(r'\s|\n', re.MULTILINE)
-        with open(mask_file, 'r') as handle:
+        with open(file_name, 'r') as handle:
             mask_text = handle.read() 
             mask_text = re.sub(whitespace, '', mask_text)
 
         # Cast mask positions to integers
         return(map(int, mask_text.split(',')))
 
+    def _mask_of_file(self, mask_file, length):
+	"""
+	Make a mask of a zero-indexed comma-delimited integer list in a file.
+	The included indices are turned to True in the mask.
+	Will fail if mask is out of range, and that's a good thing.
+	"""
+	mask = [False] * length
+	for i in self._int_list_of_file(mask_file):
+	    mask[i] = True
+	return(mask)
 
     # End mask-related functions
 
@@ -364,7 +378,6 @@ class Alignment(object):
                                  ', expected ' + str(reference_length)
 
     # End alignment-validation-related functions
-
 
     # consensus column related functions
 
