@@ -5,6 +5,13 @@ from Bio import SeqIO, AlignIO
 from Bio.Seq import Seq, SeqRecord
 
 
+# idea:
+# pull the rf line out of the ref sto.
+# get the mask in terms of the consensus columns of the ref alignment
+# align with hmmalign --mapali
+# make the consensus columns alignment
+# trim it using the mask
+
 
 class Alignment(object):
     """
@@ -15,6 +22,7 @@ class Alignment(object):
         """
         Constructor - sets up a number of properties when instantiated.
         """
+
         self.reference_package = reference_package        
         # Determine the name of the reference package, excluding any other 
         # elements in its path.
@@ -39,6 +47,8 @@ class Alignment(object):
         if 'mask' in json_contents['files']:
             self.mask_file = os.path.join(self.reference_package, json_contents['files']['mask'])
 
+        # read in the consensus RF line
+	self.consensus_rf = self._consensus_rf_of_sto(self.aln_sto)
         self.debug = debug
         self.verbose = verbose
 
@@ -151,14 +161,7 @@ class Alignment(object):
                                 in_frags = self._squeezerator(in_frags, gaps)
 
                     if mask:
-                        # Regex to remove whitespace from mask file.
-                        whitespace = re.compile(r'\s|\n', re.MULTILINE)
-                        with open(self.mask_file, 'r') as handle:
-                            mask_text = handle.read() 
-                            mask_text = re.sub(whitespace, '', mask_text)
-
-                        # Cast mask positions to integers
-                        mask = map(int, mask_text.split(','))
+			mask = _mask_of_file(self.mask_file)
 
                         # Setup mask generator for in_seqs and in_frags
                         in_seqs = self._maskerator(in_seqs, mask)
@@ -284,6 +287,20 @@ class Alignment(object):
             yield SeqRecord(Seq(''.join([sequence[i] for i in mask])), 
                             id=record.id, description=record.description)
 
+    def _mask_of_file(self, mask_file):
+        """
+        Get an integer list from a file.
+        """
+        # Regex to remove whitespace from mask file.
+        whitespace = re.compile(r'\s|\n', re.MULTILINE)
+        with open(mask_file, 'r') as handle:
+            mask_text = handle.read() 
+            mask_text = re.sub(whitespace, '', mask_text)
+
+        # Cast mask positions to integers
+        return(map(int, mask_text.split(',')))
+
+
     # End mask-related functions
 
 
@@ -323,4 +340,20 @@ class Alignment(object):
                                  ', expected ' + str(reference_length)
 
     # End alignment-validation-related functions
+
+
+    # consensus column related functions
+
+    def _consensus_rf_of_sto(self, sto_aln):
+	rf_rex = re.compile("#=GC RF\s+([x.]*)")
+	rf_list = []
+	with open(sto_aln, 'r') as handle:
+	    for line in handle.readlines():
+		m = rf_rex.match(line)
+		if m:
+		    rf_list.append(m.group(1))
+            return("".join(rf_list))
+
+
+    # End consensus column related functions
 
