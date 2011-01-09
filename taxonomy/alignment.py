@@ -44,11 +44,35 @@ class Alignment(object):
         self.aln_sto = os.path.join(aln_sto, json_contents['files']['aln_sto'])
         self.aln_fasta = os.path.join(aln_fasta, json_contents['files']['aln_fasta'])
         self.profile = os.path.join(profile, json_contents['files']['profile'])
-        if 'mask' in json_contents['files']:
-            self.mask_file = os.path.join(self.reference_package, json_contents['files']['mask'])
 
         # read in the consensus RF line
-	self.consensus_rf = self._consensus_rf_of_sto(self.aln_sto)
+	self.consensus_list = self._consensus_list_of_sto(self.aln_sto)
+
+        # initialize the masking
+        if 'mask' in json_contents['files']:
+            self.mask_file = os.path.join(self.reference_package, json_contents['files']['mask'])
+	    mask = self._mask_of_file(self.mask_file)
+	    for masked_pos in mask:
+		if not self.consensus_list[masked_pos]:
+		    assert(False)
+# Brian-- I would rather this throw an exception which says "trying to include a (non-consensus column " + string(masked_pos) + " in the mask")
+# does it make sense to define a custom exception for this class? 
+# I don't really know the standard practice here.
+
+        # Now we make consensus_mask, which is a list of indices on which we can mask after squeezing to the consensus columns.
+	# Thus the indices correspond to sites in the alignment with all non-consensus columns removed)
+
+            consensus_mask = []
+	    consensus_index = 0
+	    mask_set = set(mask)
+            for pos in range(len(self.consensus_list)):
+		if self.consensus_list[pos]:
+		    # we add in
+		    if pos in mask_set:
+			consensus_mask.append(consensus_index)
+	            consensus_index += 1
+            print consensus_mask
+
         self.debug = debug
         self.verbose = verbose
 
@@ -344,15 +368,27 @@ class Alignment(object):
 
     # consensus column related functions
 
-    def _consensus_rf_of_sto(self, sto_aln):
+    # I wish biopython did this...
+    def _consensus_list_of_sto(self, sto_aln):
+	"""
+	Return a boolean list indicating if the given column is consensus according to the GC RF line.
+	"""
 	rf_rex = re.compile("#=GC RF\s+([x.]*)")
 	rf_list = []
+
+	def is_consensus(c):
+	    if c == 'x':
+		return(True)
+	    if c == '.':
+		return(False)
+	    assert(False)
+
 	with open(sto_aln, 'r') as handle:
 	    for line in handle.readlines():
 		m = rf_rex.match(line)
 		if m:
 		    rf_list.append(m.group(1))
-            return("".join(rf_list))
+            return(map(is_consensus, list("".join(rf_list))))
 
 
     # End consensus column related functions
