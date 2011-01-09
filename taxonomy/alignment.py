@@ -6,15 +6,20 @@ from Bio.Seq import Seq, SeqRecord
 
 
 
+
 class Alignment(object):
     """
     A class to provide alignment-related tools for reference packages.
+
+    Notes:
+    A "mask" is just a boolean list.
     """
 
     def __init__(self, reference_package, out_prefix, debug=False, verbose=False):
         """
         Constructor - sets up a number of properties when instantiated.
         """
+
         self.reference_package = reference_package        
         # Determine the name of the reference package, excluding any other 
         # elements in its path.
@@ -36,8 +41,28 @@ class Alignment(object):
         self.aln_sto = os.path.join(aln_sto, json_contents['files']['aln_sto'])
         self.aln_fasta = os.path.join(aln_fasta, json_contents['files']['aln_fasta'])
         self.profile = os.path.join(profile, json_contents['files']['profile'])
+
+        # read in the consensus RF line
+	self.consensus_list = self._consensus_list_of_sto(self.aln_sto)
+
+        # initialize the masking
         if 'mask' in json_contents['files']:
             self.mask_file = os.path.join(self.reference_package, json_contents['files']['mask'])
+	
+	    sto_len = self._get_sequence_length(self.aln_sto, "stockholm")
+
+	    self.trimal_mask = self._mask_of_file(self.mask_file, sto_len)
+	    # first make sure that the trimal mask only includes consensus columns according to HMMER
+	    for pos in range(sto_len):
+		if self.trimal_mask[pos] & (not self.consensus_list[pos]):
+		    assert(False)
+# Brian-- I would rather this last assert(False) throw an exception which says "trying to include a (non-consensus column " + string(pos) + " in the mask")
+# does it make sense to define a custom exception for this class? 
+# I don't really know the standard practice here.
+
+	    # Now we make consensus_only_mask, which is the mask after we have taken just the consensus columns.
+
+            self.consensus_only_mask = self._mask_list(mask=self.consensus_list, to_mask=self.trimal_mask)
 
         self.debug = debug
         self.verbose = verbose
@@ -70,36 +95,36 @@ class Alignment(object):
             raise Exception, "hmmsearch command failed: \n" + hmmsearch_command
 
 
-    def hmmer_align(self, sequence_files, squeeze=False, mask=False, 
+    def hmmer_align(self, sequence_files, 
                     frag=False, ref=False, separate_steps=False, sequence_file_format='fasta'):
         """
         Create an alignment with hmmalign. Then, separate out reference sequences 
         from the fragments into two separate files. If separate_steps is True, 
-        separate files with squeeze and mask output will be written.  Note that 
-        mask=True forces a squeeze action.
+        separate files with consensus and mask output will be written.  Note that 
+        mask=True forces a consensus action.
         """
-        # Check to make sure aln_sto has no all-gap columns.  An exception 
-        # is thrown if one or more all-gap columns are found.
-        self._validate_stockholm_alignment(self.aln_sto)
-       
+
         # Get first sequence length from an alignment.
         aln_sto_length = self._get_sequence_length(self.aln_sto, 'stockholm')
         aln_fasta_length = self._get_sequence_length(self.aln_fasta, 'fasta')
 
         # hmmalign must be in PATH for this to work.
-        hmmer_template = Template('hmmalign -o $tmp_file' + ' --mapali ' + \
+        hmmer_template = Template('hmmalign -o $together_aln' + ' --mapali ' + \
                                   self.aln_sto + ' ' + self.profile + ' $sequence_file')
         for sequence_file in sequence_files:
             
+	    # Brian-- it appears to me that the way this is set up, then if len(sequence_files) > 1 then we will be over-writing if we specify a prefix.
+	    # is that correct?
+
             # Determine a name for the temporary output file.
-            tmp_file = sequence_file + '.' + str(os.getpid()) + '.sto'
-            sequence_file_name = list(os.path.split(sequence_file)).pop()
+            together_aln = self.out_prefix + '.align_out.sto'
+            _,sequence_file_name = os.path.split(sequence_file)
             sequence_file_name_prefix = string.join(list(os.path.splitext(sequence_file_name))[0:-1])
 
             hmmalign_command = hmmer_template.substitute(sequence_file=sequence_file,
                                                          aln_sto=self.aln_sto,
                                                          profile=self.profile,
-                                                         tmp_file=tmp_file,
+                                                         together_aln=together_aln,
                                                         )
 
             try:
@@ -114,6 +139,7 @@ class Alignment(object):
                 # If return code was not 1, split off the reference sequences from the fragments.
                 if not return_code:
                     # Determine output file names.  Set to default if -o was not specified.
+		    # Brian-- do these os.path.join calls do anything?
                     out_refs, out_frags = [os.path.join(self.out_prefix + '.ref.fasta'), 
                                            os.path.join(self.out_prefix + '.frag.fasta')]
                     if not self.out_prefix_arg:
@@ -122,69 +148,71 @@ class Alignment(object):
 
                     frag_names = self._names(SeqIO.parse(sequence_file, sequence_file_format))
    
+                    # pull up the together_aln then mask it
+                    def make_masked_iterator():
+			full_aln = SeqIO.parse(together_aln, "stockholm")
+			aln_consensus_list = self._consensus_list_of_sto(together_aln)
+			return(self._maskerator(
+				# mask using the consensus_only mask
+				self.consensus_only_mask, 
+				# after taking only the alignment columns
+				self._maskerator(aln_consensus_list, full_aln)))
+			
+                    SeqIO.write(self._id_filter(make_masked_iterator(), lambda(idstr): idstr in frag_names), 
+                                self.out_prefix + '.masked.fasta', "fasta")
+
+                    SeqIO.write(self._id_filter(make_masked_iterator(), lambda(idstr): idstr not in frag_names), 
+                                self.out_prefix + '.refs.fasta', "fasta")
 
                     # We need to write out two files, so we need two iterators.
-                    in_frags = SeqIO.parse(tmp_file, "stockholm")
-                    in_seqs = SeqIO.parse(tmp_file, "stockholm")
+                    # in_frags = SeqIO.parse(tmp_file, "stockholm")
+                    # in_seqs = SeqIO.parse(tmp_file, "stockholm")
      
-                    if squeeze or mask_file:
-                        # A separate iterator to determine squeeze gaps is necessary
-                        squeeze_seqs = SeqIO.parse(tmp_file, "stockholm")
-                        squeeze_seqs = self._id_filter(squeeze_seqs, lambda(idstr): idstr not in frag_names)
-                        gaps = self._squeeze_gaps(squeeze_seqs)
+                    # if mask_file:
+                    #     full_aln = SeqIO.parse(tmp_file, "stockholm")
 
-                        # Setup squeeze generator for in_seqs and in_frags
-                        in_seqs = self._squeezerator(in_seqs, gaps)
-                        in_frags = self._squeezerator(in_frags, gaps)
+                    #     # Setup sequence length validation generator for in_seqs, 
+                    #     # comparing with aln_sto.
+                    #     in_seqs = self._sequence_length_check(in_seqs, aln_sto_length)
 
-                        # Setup sequence length validation generator for in_seqs, 
-                        # comparing with aln_sto.
-                        in_seqs = self._sequence_length_check(in_seqs, aln_sto_length)
+                    #     if separate_steps:
+                    #         # Write just frag output after only squeezing is finished.
+                    #         if frag:
+                    #             SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), 
+                    #                         self.out_prefix + '.squeezed.fasta', "fasta")
+                    #             # It is very important to reset in_frags for later separate_steps use.  
+                    #             in_frags = SeqIO.parse(tmp_file, "stockholm")
+                    #             in_frags = self._squeezerator(in_frags, gaps)
 
-                        if separate_steps:
-                            # Write just frag output after only squeezing is finished.
-                            if frag:
-                                SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), 
-                                            self.out_prefix + '.squeezed.fasta', "fasta")
-                                # It is very important to reset in_frags for later separate_steps use.  
-                                in_frags = SeqIO.parse(tmp_file, "stockholm")
-                                in_frags = self._squeezerator(in_frags, gaps)
+                    # if mask:
+		    #     mask = _mask_of_file(self.mask_file, mask_len)
 
-                    if mask:
-                        # Regex to remove whitespace from mask file.
-                        whitespace = re.compile(r'\s|\n', re.MULTILINE)
-                        with open(self.mask_file, 'r') as handle:
-                            mask_text = handle.read() 
-                            mask_text = re.sub(whitespace, '', mask_text)
+                    #     # Setup mask generator for in_seqs and in_frags
+                    #     in_seqs = self._maskerator(in_seqs, mask)
+                    #     in_frags = self._maskerator(in_frags, mask)
 
-                        # Cast mask positions to integers
-                        mask = map(int, mask_text.split(','))
+                    #     # Setup sequence length validation generator for in_seqs, 
+                    #     # comparing with aln_fasta.
+                    #     in_seqs = self._sequence_length_check(in_seqs, aln_fasta_length)
 
-                        # Setup mask generator for in_seqs and in_frags
-                        in_seqs = self._maskerator(in_seqs, mask)
-                        in_frags = self._maskerator(in_frags, mask)
+                    #     if separate_steps:
+                    #         # Write just frag output after both squeezing and masking.
+                    #         if frag:
+                    #             SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), 
+                    #                         self.out_prefix + '.masked.fasta', "fasta")
 
-                        # Setup sequence length validation generator for in_seqs, 
-                        # comparing with aln_fasta.
-                        in_seqs = self._sequence_length_check(in_seqs, aln_fasta_length)
-
-                        if separate_steps:
-                            # Write just frag output after both squeezing and masking.
-                            if frag:
-                                SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), 
-                                            self.out_prefix + '.masked.fasta', "fasta")
-
-                    # Two separate files are written out, so two separate sets of iterators/generators are used.
-                    # If separate steps is True, 
-                    if ref and not separate_steps:
-                        SeqIO.write(self._id_filter(in_seqs, lambda(idstr): idstr not in frag_names), out_refs, "fasta")
-                    if frag and not separate_steps:
-                        SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), out_frags, "fasta")
+                    # # Two separate files are written out, so two separate sets of iterators/generators are used.
+                    # # If separate steps is True, 
+                    # if ref and not separate_steps:
+                    #     SeqIO.write(self._id_filter(in_seqs, lambda(idstr): idstr not in frag_names), out_refs, "fasta")
+                    # if frag and not separate_steps:
+                    #     SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), out_frags, "fasta")
             except:
                 raise
-            finally:
-                # Always remove the temporary alignment file.
-                os.remove(tmp_file)
+	    # we may want to tidy things up with an option
+            # finally:
+            #     # Always remove the temporary alignment file
+            #     os.remove(tmp_file)
 
 
     # Private methods
@@ -213,94 +241,60 @@ class Alignment(object):
             if (f(record.id)):
                 yield record
         
-    
-    # Begin squeeze-related functions
-
-    def _squeeze_gaps(self, records):
-        """
-        Determine which gaps can be squeezed out, building up a template.
-        """
-        # Need to iterate an additional time to determine which 
-        # gaps are shared between all sequences in an alignment.
-        gaps = []
-        for record in records:
-            if len(gaps) == 0:
-                gaps_length = len(str(record.seq))
-                gaps = [1] * gaps_length
-            gaps = map(self._gap_check, gaps, list(str(record.seq)))
-
-        return gaps
-
-
-    def _squeezerator(self, records, gaps):
-        """
-        Remove any gaps that are present in the same position across all sequences in an alignment.
-        """
-        sequence_length = len(gaps)
-        for record in records:
-            sequence = list(str(record.seq))
-            squeezed = []
-            position = 0
-            while (position < sequence_length):
-                if bool(gaps[position]) is False:
-                    squeezed.append(sequence[position])
-                position += 1
-            yield SeqRecord(Seq(''.join(squeezed)), id=record.id,
-                            description=record.description)
-
-
-    def _is_gap(self, character):
-        """
-        Find out if the current position has a gap.  '.' is 
-        used to represent gaps in the stockholm format, but Biopython 
-        SeqRecords seem to store these as '-'.
-        """
-        if character == '-':
-            return 1
-        else:
-            return 0
-
-
-    def _gap_check(self, gap, character):
-        """
-        Build up a gaps list that is used on all sequences 
-        in an alignment.
-        """
-        # Skip any characters that have already been found
-        if gap == 0:
-            return gap
-        return int(bool(gap) & bool(self._is_gap(character)))
-
-    # End squeeze-related functions
-
 
     # Begin mask-related functions
-    def _maskerator(self, records, mask):
+    # Brian: does it make sense to have these be part of the object if none of them refer to self?
+    # the answer to me seems "no" but...
+
+    def _mask_list(self, mask, to_mask):
+	"""
+	Mask a list!
+	"""
+	assert(len(mask) == len(to_mask))
+	masked = []
+	for i in range(len(mask)):
+	    if mask[i]:
+		masked.append(to_mask[i])
+	return(masked)
+
+
+    def _maskerator(self, mask, records):
         """
-        Prune down all sequences to a select list of positions, a mask.
+	Apply a mask to all sequences in records.
         """
         for record in records:
             sequence = list(str(record.seq))
-            yield SeqRecord(Seq(''.join([sequence[i] for i in mask])), 
+            yield SeqRecord(Seq(''.join(self._mask_list(mask, sequence))),
                             id=record.id, description=record.description)
+
+    def _int_list_of_file(self, file_name):
+        """
+        Get a comma-delimited integer list from a file.
+        """
+        # Regex to remove whitespace from mask file.
+        whitespace = re.compile(r'\s|\n', re.MULTILINE)
+        with open(file_name, 'r') as handle:
+            mask_text = handle.read() 
+            mask_text = re.sub(whitespace, '', mask_text)
+
+        # Cast mask positions to integers
+        return(map(int, mask_text.split(',')))
+
+    def _mask_of_file(self, mask_file, length):
+	"""
+	Make a mask of a zero-indexed comma-delimited integer list in a file.
+	The included indices are turned to True in the mask.
+	Will fail if mask is out of range, and that's a good thing.
+	"""
+	mask = [False] * length
+	for i in self._int_list_of_file(mask_file):
+	    mask[i] = True
+	return(mask)
 
     # End mask-related functions
 
 
     # Alignment-validation-related functions
-
-    def _validate_stockholm_alignment(self, aln_sto):
-        """
-        Make sure there are no all-gap columns in aln_sto.
-        """
-        align_sto = AlignIO.read(aln_sto, 'stockholm')
-        gaps = self._squeeze_gaps(align_sto)
-        if 1 in gaps:
-            raise Exception, 'file ' + aln_sto + ' contains ' + \
-                             str(gaps.count(1)) + ' all-gap column(s).'
-
-        return 
-
 
     def _get_sequence_length(self, source_file, source_file_type):
         """
@@ -323,4 +317,31 @@ class Alignment(object):
                                  ', expected ' + str(reference_length)
 
     # End alignment-validation-related functions
+
+    # consensus column related functions
+
+    # I wish biopython did this...
+    def _consensus_list_of_sto(self, sto_aln):
+	"""
+	Return a boolean list indicating if the given column is consensus according to the GC RF line.
+	"""
+	rf_rex = re.compile("#=GC RF\s+([x.]*)")
+	rf_list = []
+
+	def is_consensus(c):
+	    if c == 'x':
+		return(True)
+	    if c == '.':
+		return(False)
+	    assert(False)
+
+	with open(sto_aln, 'r') as handle:
+	    for line in handle.readlines():
+		m = rf_rex.match(line)
+		if m:
+		    rf_list.append(m.group(1))
+            return(map(is_consensus, list("".join(rf_list))))
+
+
+    # End consensus column related functions
 

@@ -28,7 +28,6 @@ def main():
     # Create alignment with hmmer for the file containing 
     # recruited sequences.  Squeeze and use mask if desired.
     align.hmmer_align(sequence_files=hmmsearch_output_file,
-                      squeeze=True, mask=True, 
                       frag=True, ref=False,
                       separate_steps=True,
                       sequence_file_format='stockholm',
