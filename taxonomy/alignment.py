@@ -109,19 +109,22 @@ class Alignment(object):
         aln_fasta_length = self._get_sequence_length(self.aln_fasta, 'fasta')
 
         # hmmalign must be in PATH for this to work.
-        hmmer_template = Template('hmmalign -o $tmp_file' + ' --mapali ' + \
+        hmmer_template = Template('hmmalign -o $together_aln' + ' --mapali ' + \
                                   self.aln_sto + ' ' + self.profile + ' $sequence_file')
         for sequence_file in sequence_files:
             
+	    # Brian-- it appears to me that the way this is set up, then if len(sequence_files) > 1 then we will be over-writing if we specify a prefix.
+	    # is that correct?
+
             # Determine a name for the temporary output file.
-            tmp_file = sequence_file + '.' + str(os.getpid()) + '.sto'
+            together_aln = self.out_prefix + '.align_out.sto'
             _,sequence_file_name = os.path.split(sequence_file)
             sequence_file_name_prefix = string.join(list(os.path.splitext(sequence_file_name))[0:-1])
 
             hmmalign_command = hmmer_template.substitute(sequence_file=sequence_file,
                                                          aln_sto=self.aln_sto,
                                                          profile=self.profile,
-                                                         tmp_file=tmp_file,
+                                                         together_aln=together_aln,
                                                         )
 
             try:
@@ -136,6 +139,7 @@ class Alignment(object):
                 # If return code was not 1, split off the reference sequences from the fragments.
                 if not return_code:
                     # Determine output file names.  Set to default if -o was not specified.
+		    # Brian-- do these os.path.join calls do anything?
                     out_refs, out_frags = [os.path.join(self.out_prefix + '.ref.fasta'), 
                                            os.path.join(self.out_prefix + '.frag.fasta')]
                     if not self.out_prefix_arg:
@@ -144,13 +148,21 @@ class Alignment(object):
 
                     frag_names = self._names(SeqIO.parse(sequence_file, sequence_file_format))
    
+                    # pull up the together_aln then mask it
+                    def make_masked_iterator():
+			full_aln = SeqIO.parse(together_aln, "stockholm")
+			aln_consensus_list = self._consensus_list_of_sto(together_aln)
+			return(self._maskerator(
+				# mask using the consensus_only mask
+				self.consensus_only_mask, 
+				# after taking only the alignment columns
+				self._maskerator(aln_consensus_list, full_aln)))
+			
+                    SeqIO.write(self._id_filter(make_masked_iterator(), lambda(idstr): idstr in frag_names), 
+                                self.out_prefix + '.masked.fasta', "fasta")
 
-                    full_aln = SeqIO.parse(tmp_file, "stockholm")
-		    aln_consensus_list = self._consensus_list_of_sto(tmp_file)
-		    consensus_only = self._maskerator(aln_consensus_list, full_aln)
-                    
-		    
-		    SeqIO.write(consensus_only, "consensus_masked.fasta", "fasta")
+                    SeqIO.write(self._id_filter(make_masked_iterator(), lambda(idstr): idstr not in frag_names), 
+                                self.out_prefix + '.refs.fasta', "fasta")
 
                     # We need to write out two files, so we need two iterators.
                     # in_frags = SeqIO.parse(tmp_file, "stockholm")
@@ -197,8 +209,9 @@ class Alignment(object):
                     #     SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), out_frags, "fasta")
             except:
                 raise
+	    # we may want to tidy things up with an option
             # finally:
-            #     # Always remove the temporary alignment file.
+            #     # Always remove the temporary alignment file
             #     os.remove(tmp_file)
 
 
