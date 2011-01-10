@@ -8,5 +8,6 @@ __version_info__ = tuple([ int(num) for num in __version__.split('.')])
 import ncbi
 import utils
 import package
+from alignment import Alignment
 from taxonomy import Taxonomy
 
