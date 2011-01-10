@@ -142,7 +142,7 @@ class Alignment(object):
                 if not return_code:
                     # Determine output file names.  Set to default if -o was not specified.
 		    # Brian-- do these os.path.join calls do anything?
-                    # Erick-- I think they used but don't look to serve any purpose now.
+                    # Erick-- I think they used to, but don't look to serve any purpose now.
                     out_refs, out_frags = [os.path.join(self.out_prefix + '.ref.fasta'), 
                                            os.path.join(self.out_prefix + '.frag.fasta')]
                     if not self.out_prefix_arg:
