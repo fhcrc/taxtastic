@@ -15,15 +15,17 @@ class Alignment(object):
     A "mask" is just a boolean list, with True meaning include.
     """
 
-    def __init__(self, reference_package, out_prefix, debug=False, verbose=False):
+    def __init__(self, reference_package, out_prefix, min_length=None, debug=False, verbose=False):
         """
         Constructor - sets up a number of properties when instantiated.
         """
+        self.debug = debug
+        self.verbose = verbose
 
         self.reference_package = reference_package        
         # Determine the name of the reference package, excluding any other 
         # elements in its path.
-        self.reference_package_name = list(os.path.split(reference_package)).pop()
+        self.reference_package_name = os.path.split(reference_package)[-1]
         self.reference_package_name_prefix = os.path.splitext(self.reference_package_name)[0]
 
         # Keep track of whether or not an out_prefix was specifed.
@@ -32,10 +34,10 @@ class Alignment(object):
         # Set default prefix if unspecified.
         if out_prefix is None:
             # Sequence file names will be appended within for loops.
-            out_prefix = os.path.join(reference_package, reference_package_name_prefix) + '.'
+            out_prefix = os.path.join(self.reference_package, self.reference_package_name_prefix) + '.'
 
-        # Brian: can you please make this an option --min-length rather than hard coded?
-	self.min_length = 25
+        if min_length:
+	    self.min_length = min_length
 
         # Read in CONTENTS.json and retrieve settings we will be working with.
         json_file = os.path.join(reference_package, 'CONTENTS.json')
@@ -62,17 +64,12 @@ class Alignment(object):
 	    for pos in range(sto_len):
 	        if self.trimal_mask[pos] & (not self.consensus_list[pos]):
 		    print("trying to include a non-consensus column %d in the mask" % pos)
-		    assert(False)
-# Brian-- I would rather this last assert(False) throw an exception which says "trying to include a (non-consensus column " + string(pos) + " in the mask")
-# does it make sense to define a custom exception for this class? 
-# I don't really know the standard practice here.
+                    raise Exception, "trying to include a (non-consensus column " + \
+                                     str(pos) + " in the mask"
 
 	    # Now we make consensus_only_mask, which is the mask after we have taken just the consensus columns.
-
             self.consensus_only_mask = self._mask_list(mask=self.consensus_list, to_mask=self.trimal_mask)
 
-        self.debug = debug
-        self.verbose = verbose
 
             
     # Public methods
@@ -113,16 +110,15 @@ class Alignment(object):
 
         # Get first sequence length from an alignment.
         aln_sto_length = self._get_sequence_length(self.aln_sto, 'stockholm')
-        aln_fasta_length = self._get_sequence_length(self.aln_fasta, 'fasta')
+        #aln_fasta_length = self._get_sequence_length(self.aln_fasta, 'fasta')
+        aln_fasta_length = 13
+        
 
         # hmmalign must be in PATH for this to work.
         hmmer_template = Template('hmmalign -o $together_aln' + ' --mapali ' + \
                                   self.aln_sto + ' ' + self.profile + ' $sequence_file')
         for sequence_file in sequence_files:
             
-	    # Brian-- it appears to me that the way this is set up, then if len(sequence_files) > 1 then we will be over-writing if we specify a prefix.
-	    # is that correct?
-
             together_aln = self.out_prefix + '.align_out.sto'
             _,sequence_file_name = os.path.split(sequence_file)
             sequence_file_name_prefix = string.join(list(os.path.splitext(sequence_file_name))[0:-1])
@@ -146,6 +142,7 @@ class Alignment(object):
                 if not return_code:
                     # Determine output file names.  Set to default if -o was not specified.
 		    # Brian-- do these os.path.join calls do anything?
+                    # Erick-- I think they used but don't look to serve any purpose now.
                     out_refs, out_frags = [os.path.join(self.out_prefix + '.ref.fasta'), 
                                            os.path.join(self.out_prefix + '.frag.fasta')]
                     if not self.out_prefix_arg:

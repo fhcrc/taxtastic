@@ -17,9 +17,11 @@ def main():
     reference_package = arguments.refpkg[0]
     sequence_file = arguments.seqfile[0]
     search_options = arguments.search_options    
+    min_length = arguments.min_length   
 
     align = Alignment(reference_package=reference_package, 
                       out_prefix=out_prefix,
+                      min_length=min_length,
                      )
 
 
@@ -40,12 +42,15 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser(description='refpkg_searchaln.py - hmmsearch wrapper ' + \
                                                  'with refpkg-align.py-like functionality.')
-    parser.add_argument('-o', '--outprefix', dest='out_prefix', help='Output file prefix. ' + \
+    parser.add_argument('-o', '--outprefix', required=True, dest='out_prefix', help='Output file prefix. ' + \
                         'Defaults to refpkg_prefix.sequence_file_prefix.  Currently only works ' + \
                         'with a single sequence file')
+    parser.add_argument('--min-length', dest='min_length', type=int, default=1, metavar='N', 
+                        help='minimum sequence length. Defaults to 1, no minimum.')
     parser.add_argument('--search-opts', dest='search_options', metavar='OPTS', help='hmmsearch options, such as "-E 1"')
-    parser.add_argument('refpkg', nargs=1, type=reference_package, help='Reference package directory')
+    parser.add_argument('refpkg', nargs=1, type=reference_package, help='reference package directory')
     parser.add_argument('seqfile', nargs=1, help='A single fasta files')
+
     return parser.parse_args()
 
 

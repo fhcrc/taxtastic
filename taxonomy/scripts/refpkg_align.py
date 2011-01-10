@@ -17,8 +17,8 @@ def main():
     reference_package = arguments.refpkg[0]
     sequence_files = arguments.seqfiles
     # --squeeze is implicit when --mask is specified.
-    squeeze = arguments.squeeze or arguments.mask_file
-    mask = arguments.mask
+    #squeeze = arguments.squeeze or arguments.mask_file
+    #mask = arguments.mask
     
     # Create alignment with hmmer for all sequence files.  Squeeze and 
     # use mask if desired.
@@ -27,9 +27,9 @@ def main():
                      )
 
     align.hmmer_align(sequence_files=sequence_files, 
-                      squeeze=squeeze, mask=mask, 
                       frag=True, ref=True,
                      )
+                      #squeeze=squeeze, 
 
 
 def parse_arguments():
@@ -43,10 +43,19 @@ def parse_arguments():
                         'with a single sequence file')
     parser.add_argument('refpkg', nargs=1, type=reference_package, help='Reference package directory')
     parser.add_argument('seqfiles', nargs='+', help='A list of one or more fasta files')
-    parser.add_argument('--squeeze', action='store_true', default=False, help='Squeeze out .s from an alignment ')
-    parser.add_argument('--mask', dest='mask', action='store_true',  default=False,
-                        help='Use mask specified in CONTENTS.json.  Implies --squeeze')
-    return parser.parse_args()
+    # squeezing always done now
+    #parser.add_argument('--squeeze', action='store_true', default=False, help='Squeeze out .s from an alignment ')
+    # Mask done automatically if found in CONTENTS.json
+    #parser.add_argument('--mask', dest='mask', action='store_true',  default=False,
+    #                    help='Use mask specified in CONTENTS.json.  Implies --squeeze')
+
+    arguments = parser.parse_args()
+    # out_prefix only works when a single sequence file is passed. 
+    if arguments.out_prefix and len(arguments.seqfiles) > 1:
+        raise Exception, "--out-prefix cannot be used when more than a single sequence file is specified"
+
+    return arguments
+
 
 
 def reference_package(reference_package):
