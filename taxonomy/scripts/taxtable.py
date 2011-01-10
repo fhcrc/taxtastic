@@ -20,6 +20,7 @@ Help text can be viewed using the '-h' option.
 """
 
 from optparse import OptionParser, IndentedHelpFormatter
+import contextlib
 import gettext
 import logging
 import os
@@ -127,6 +128,10 @@ def main():
         action="count", dest="verbose",
         help="increase verbosity of screen output (eg, -v is verbose, -vv more so)")
 
+    parser.add_option("-q", "--quiet", action="store_true", dest="quiet",
+        help="suppress output destined for stderr")
+
+
     (options, args) = parser.parse_args()
 
     loglevel = {
@@ -143,6 +148,20 @@ def main():
 
     # set up logging
     logging.basicConfig(file=sys.stdout, format=logformat, level=loglevel)
+
+    # suppress output to stderr if --quiet specified
+    if options.quiet:
+        # Adapted from Alex Martelli's example on stackoverflow.com
+        @contextlib.contextmanager
+        def suppress_stderr():
+            saved = sys.stderr
+            class DevNull(object):
+                def write(self, _): pass
+            sys.stderr = DevNull()
+            yield
+            sys.stderr = saved
+    
+        sys.stderr = suppress_stderr()
 
     pth, fname = os.path.split(options.dbfile)
     dbname = options.dbfile if pth else os.path.join(options.dest_dir, fname)
