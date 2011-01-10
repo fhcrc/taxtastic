@@ -46,7 +46,7 @@ def parse_arguments():
                         'Defaults to refpkg_prefix.sequence_file_prefix.  Currently only works ' + \
                         'with a single sequence file')
     parser.add_argument('--min-length', dest='min_length', type=int, default=1, metavar='N', 
-                        help='minimum sequence length. Defaults to 1, no minimum.')
+                        help='minimum sequence length. Defaults to 1.')
     parser.add_argument('--search-opts', dest='search_options', metavar='OPTS', help='hmmsearch options, such as "-E 1"')
     parser.add_argument('refpkg', nargs=1, type=reference_package, help='reference package directory')
     parser.add_argument('seqfile', nargs=1, help='A single fasta files')
