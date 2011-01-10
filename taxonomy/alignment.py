@@ -12,7 +12,7 @@ class Alignment(object):
     A class to provide alignment-related tools for reference packages.
 
     Notes:
-    A "mask" is just a boolean list.
+    A "mask" is just a boolean list, with True meaning include.
     """
 
     def __init__(self, reference_package, out_prefix, debug=False, verbose=False):
@@ -45,6 +45,9 @@ class Alignment(object):
         # read in the consensus RF line
 	self.consensus_list = self._consensus_list_of_sto(self.aln_sto)
 
+        # debugging
+	# print ("".join(map(lambda(b): str(int(b)), self.consensus_list)))
+
         # initialize the masking
         if 'mask' in json_contents['files']:
             self.mask_file = os.path.join(self.reference_package, json_contents['files']['mask'])
@@ -54,7 +57,8 @@ class Alignment(object):
 	    self.trimal_mask = self._mask_of_file(self.mask_file, sto_len)
 	    # first make sure that the trimal mask only includes consensus columns according to HMMER
 	    for pos in range(sto_len):
-		if self.trimal_mask[pos] & (not self.consensus_list[pos]):
+	        if self.trimal_mask[pos] & (not self.consensus_list[pos]):
+		    print("trying to include a non-consensus column %d in the mask" % pos)
 		    assert(False)
 # Brian-- I would rather this last assert(False) throw an exception which says "trying to include a (non-consensus column " + string(pos) + " in the mask")
 # does it make sense to define a custom exception for this class? 
