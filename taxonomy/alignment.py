@@ -168,50 +168,7 @@ class Alignment(object):
                     SeqIO.write(self._id_filter(make_masked_iterator(), lambda(idstr): idstr not in frag_names), 
                                 self.out_prefix + '.refs.fasta', "fasta")
 
-                    # We need to write out two files, so we need two iterators.
-                    # in_frags = SeqIO.parse(tmp_file, "stockholm")
-                    # in_seqs = SeqIO.parse(tmp_file, "stockholm")
-     
-                    # if mask_file:
-                    #     full_aln = SeqIO.parse(tmp_file, "stockholm")
-
-                    #     # Setup sequence length validation generator for in_seqs, 
-                    #     # comparing with aln_sto.
-                    #     in_seqs = self._sequence_length_check(in_seqs, aln_sto_length)
-
-                    #     if separate_steps:
-                    #         # Write just frag output after only squeezing is finished.
-                    #         if frag:
-                    #             SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), 
-                    #                         self.out_prefix + '.squeezed.fasta', "fasta")
-                    #             # It is very important to reset in_frags for later separate_steps use.  
-                    #             in_frags = SeqIO.parse(tmp_file, "stockholm")
-                    #             in_frags = self._squeezerator(in_frags, gaps)
-
-                    # if mask:
-		    #     mask = _mask_of_file(self.mask_file, mask_len)
-
-                    #     # Setup mask generator for in_seqs and in_frags
-                    #     in_seqs = self._maskerator(in_seqs, mask)
-                    #     in_frags = self._maskerator(in_frags, mask)
-
-                    #     # Setup sequence length validation generator for in_seqs, 
-                    #     # comparing with aln_fasta.
-                    #     in_seqs = self._sequence_length_check(in_seqs, aln_fasta_length)
-
-                    #     if separate_steps:
-                    #         # Write just frag output after both squeezing and masking.
-                    #         if frag:
-                    #             SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), 
-                    #                         self.out_prefix + '.masked.fasta', "fasta")
-
-                    # # Two separate files are written out, so two separate sets of iterators/generators are used.
-                    # # If separate steps is True, 
-                    # if ref and not separate_steps:
-                    #     SeqIO.write(self._id_filter(in_seqs, lambda(idstr): idstr not in frag_names), out_refs, "fasta")
-                    # if frag and not separate_steps:
-                    #     SeqIO.write(self._id_filter(in_frags, lambda(idstr): idstr in frag_names), out_frags, "fasta")
-            except:
+	    except:
                 raise
 	    # we may want to tidy things up with an option
             # finally:
