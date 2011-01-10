@@ -34,6 +34,9 @@ class Alignment(object):
             # Sequence file names will be appended within for loops.
             out_prefix = os.path.join(reference_package, reference_package_name_prefix) + '.'
 
+        # Brian: can you please make this an option --min-length rather than hard coded?
+	self.min_length = 25
+
         # Read in CONTENTS.json and retrieve settings we will be working with.
         json_file = os.path.join(reference_package, 'CONTENTS.json')
         json_contents = self._read_contents_json(json_file)
@@ -120,7 +123,6 @@ class Alignment(object):
 	    # Brian-- it appears to me that the way this is set up, then if len(sequence_files) > 1 then we will be over-writing if we specify a prefix.
 	    # is that correct?
 
-            # Determine a name for the temporary output file.
             together_aln = self.out_prefix + '.align_out.sto'
             _,sequence_file_name = os.path.split(sequence_file)
             sequence_file_name_prefix = string.join(list(os.path.splitext(sequence_file_name))[0:-1])
@@ -156,12 +158,15 @@ class Alignment(object):
                     def make_masked_iterator():
 			full_aln = SeqIO.parse(together_aln, "stockholm")
 			aln_consensus_list = self._consensus_list_of_sto(together_aln)
-			return(self._maskerator(
-				# mask using the consensus_only mask
-				self.consensus_only_mask, 
-				# after taking only the alignment columns
-				self._maskerator(aln_consensus_list, full_aln)))
-			
+			return(
+			    self._min_length_filter(
+			        self.min_length,
+				self._maskerator(
+				    # mask using the consensus_only mask
+				    self.consensus_only_mask, 
+				    # after taking only the alignment columns
+				    self._maskerator(aln_consensus_list, full_aln))))
+			    
                     SeqIO.write(self._id_filter(make_masked_iterator(), lambda(idstr): idstr in frag_names), 
                                 self.out_prefix + '.masked.fasta', "fasta")
 
@@ -170,7 +175,7 @@ class Alignment(object):
 
 	    except:
                 raise
-	    # we may want to tidy things up with an option
+	    # we may want to tidy things up with an option later, but for now we just leave everything around.
             # finally:
             #     # Always remove the temporary alignment file
             #     os.remove(tmp_file)
@@ -196,12 +201,22 @@ class Alignment(object):
 
     def _id_filter(self, in_seqs, f):
         """
-        Generator function to filter out sequences.
+        Generator function to filter out sequences by id.
         """
         for record in in_seqs:
             if (f(record.id)):
                 yield record
-        
+
+    def _min_length_filter(self, min_length, records):
+        """
+        Generator function to filter out sequences by sequence length.
+        """
+        for record in records:
+	    nongaps = len(filter(lambda(s): s != "-", list(str(record.seq))))
+	    if nongaps >= min_length:
+		yield record
+	    else:
+	        print record.id + " is too short"  
 
     # Begin mask-related functions
     # Brian: does it make sense to have these be part of the object if none of them refer to self?
