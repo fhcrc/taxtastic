@@ -15,7 +15,7 @@ class Alignment(object):
     A "mask" is just a boolean list, with True meaning include.
     """
 
-    def __init__(self, reference_package, out_prefix, min_length=None, debug=False, verbose=False):
+    def __init__(self, reference_package, out_prefix, profile_version, min_length=None, debug=False, verbose=False):
         """
         Constructor - sets up a number of properties when instantiated.
         """
@@ -47,6 +47,11 @@ class Alignment(object):
         self.aln_fasta = os.path.join(aln_fasta, json_contents['files']['aln_fasta'])
         self.profile = os.path.join(profile, json_contents['files']['profile'])
 
+        # There is no reason to go beyond this point if the profile is not valid.
+        if not self.match_model(profile_version):
+            raise Exception, 'profile: ' + self.profile + ' does not appear to be valid.' + \
+                             ' Version match specified: ' + profile_version
+ 
         # read in the consensus RF line
 	self.consensus_list = self._consensus_list_of_sto(self.aln_sto)
 
@@ -74,7 +79,7 @@ class Alignment(object):
             
     # Public methods
 
-    def hmmer_search(self, search_options, sequence_file):
+    def hmmer_search(self, sequence_file):
         """
         Recruit fragments using hmmsearch.  Works with a single sequence file, further 
         work would be required if it is to be expanded to work with multiple sequence files.
@@ -100,12 +105,11 @@ class Alignment(object):
 
 
     def hmmer_align(self, sequence_files, 
-                    frag=False, ref=False, separate_steps=False, sequence_file_format='fasta'):
+                    frag=False, ref=False, sequence_file_format='fasta'):
         """
         Create an alignment with hmmalign. Then, separate out reference sequences 
-        from the fragments into two separate files. If separate_steps is True, 
-        separate files with consensus and mask output will be written.  Note that 
-        mask=True forces a consensus action.
+        from the fragments into two separate files. Note that mask=True forces 
+        a consensus action.
         """
 
         # Get first sequence length from an alignment.
@@ -140,14 +144,6 @@ class Alignment(object):
             
                 # If return code was not 1, split off the reference sequences from the fragments.
                 if not return_code:
-                    # Determine output file names.  Set to default if -o was not specified.
-		    # Brian-- do these os.path.join calls do anything?
-                    # Erick-- I think they used to, but don't look to serve any purpose now.
-                    out_refs, out_frags = [os.path.join(self.out_prefix + '.ref.fasta'), 
-                                           os.path.join(self.out_prefix + '.frag.fasta')]
-                    if not self.out_prefix_arg:
-                        out_refs = self.out_prefix + sequence_file_name_prefix + ".ref.fasta"
-                        out_frags = self.out_prefix + sequence_file_name_prefix + ".frag.fasta"
 
                     frag_names = self._names(SeqIO.parse(sequence_file, sequence_file_format))
    
@@ -176,6 +172,32 @@ class Alignment(object):
             # finally:
             #     # Always remove the temporary alignment file
             #     os.remove(tmp_file)
+
+
+    def match_model(self, version=r'\d+'):
+        """
+        Verify that the header contents look to be from a specific model, 
+        determined by the file extension (e.g. .cm, .hmm, etc.).  version 
+        option defaults to any version, but can take a specific number or 
+        a regular expression.
+        """
+        file_type = os.path.splitext(self.profile)[1]
+        header = self._extract_header(file_type=file_type)
+
+        is_match = False
+        if file_type == '.cm':
+            # Match a couple of things one would expect to find in a .cm file.
+            cm_header = re.compile(r"^INFERNAL-" + str(version) + r".*MODEL", re.MULTILINE|re.DOTALL)
+            is_match = bool(cm_header.search(header))
+        if file_type == '.hmm':
+            # Match a couple of things one would expect to find in a .hmm file.
+            hmm_header = re.compile(r"^HMMER" + str(version) + r".*CKSUM", re.MULTILINE|re.DOTALL)
+            is_match = bool(hmm_header.search(header))
+
+        return is_match
+
+
+
 
 
     # Private methods
@@ -214,6 +236,23 @@ class Alignment(object):
 		yield record
 	    else:
 	        print record.id + " is too short"  
+
+
+    def _extract_header(self, file_type):
+        """
+        Extract the header portion of the file.
+        """
+        line_count = 0
+        if file_type == '.hmm':
+            line_count = 14
+        elif file_type == '.cm':
+            line_count = 14
+        
+        # Only read in the first <line_count> lines to extract just the header.
+        with open(self.profile, 'r') as model:
+            header = ''.join([model.readline() for i in range(line_count)])
+        return header
+
 
     # Begin mask-related functions
     # Brian: does it make sense to have these be part of the object if none of them refer to self?
@@ -317,4 +356,5 @@ class Alignment(object):
 
 
     # End consensus column related functions
+
 

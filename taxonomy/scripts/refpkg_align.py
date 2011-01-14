@@ -2,9 +2,9 @@
 import sys, os, string, argparse, re
 
 # Insert one level above project directory to path for testing.
-#sys.path.insert(0, "../..")
-#from taxonomy.alignment import Alignment
-from Taxonomy.alignment import Alignment
+sys.path.insert(0, "../..")
+from taxonomy.alignment import Alignment
+#from Taxonomy.alignment import Alignment
 
 
 def main():
@@ -13,9 +13,11 @@ def main():
     """
     # Get command-line arguments.
     arguments = parse_arguments()
+    min_length = arguments.min_length
     out_prefix = arguments.out_prefix
     reference_package = arguments.refpkg[0]
     sequence_files = arguments.seqfiles
+    profile_version = arguments.profile_version
     # --squeeze is implicit when --mask is specified.
     #squeeze = arguments.squeeze or arguments.mask_file
     #mask = arguments.mask
@@ -24,6 +26,8 @@ def main():
     # use mask if desired.
     align = Alignment(reference_package=reference_package, 
                       out_prefix=out_prefix,
+                      profile_version=profile_version,
+                      min_length=min_length,
                      )
 
     align.hmmer_align(sequence_files=sequence_files, 
@@ -41,6 +45,11 @@ def parse_arguments():
     parser.add_argument('-o', '--outprefix', dest='out_prefix', help='Output file prefix. ' + \
                         'Defaults to refpkg_prefix.sequence_file_prefix.  Currently only works ' + \
                         'with a single sequence file')
+    parser.add_argument('--profileversion', dest='profile_version', default=r"\d+", 
+                        help='Integer or regular expression matching a profile version or version. ' + \
+                        'For hmmer 3, "3" would be sufficient input.')
+    parser.add_argument('--min-length', dest='min_length', type=int, default=1, metavar='N',
+                        help='minimum sequence length. Defaults to 1.')
     parser.add_argument('refpkg', nargs=1, type=reference_package, help='Reference package directory')
     parser.add_argument('seqfiles', nargs='+', help='A list of one or more fasta files')
     # squeezing always done now
