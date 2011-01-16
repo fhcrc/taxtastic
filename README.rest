@@ -37,7 +37,6 @@ Now, given a query sequence alignment which is in frame with your reference alig
   pplacer -c rpoB.refpkg sample.fasta
   placeviz -c rpoB.refpkg sample.place
 
-Shaweet!
 
 
 .. Targets ..
