@@ -2,9 +2,9 @@
 import sys, os, string, argparse, re
 
 # Insert one level above project directory to path for testing.
-#sys.path.insert(0, "../..")
-#from taxonomy.alignment import Alignment
-from Taxonomy.alignment import Alignment
+sys.path.insert(0, "../..")
+from taxonomy.alignment import Alignment
+#from Taxonomy.alignment import Alignment
 
 
 def main():
@@ -18,6 +18,7 @@ def main():
     reference_package = arguments.refpkg[0]
     sequence_file = arguments.seqfile[0]
     min_length = arguments.min_length   
+    search_options = arguments.search_options
 
     align = Alignment(reference_package=reference_package, 
                       out_prefix=out_prefix,
@@ -26,7 +27,8 @@ def main():
                      )
 
 
-    hmmsearch_output_file = [ align.hmmer_search(sequence_file=sequence_file) ]
+    hmmsearch_output_file = [ align.hmmer_search(search_options=search_options,
+                              sequence_file=sequence_file) ]
  
     # Create alignment with hmmer for the file containing 
     # recruited sequences.
@@ -50,6 +52,8 @@ def parse_arguments():
     parser.add_argument('--profileversion', dest='profile_version', default=r"\d+",
                         help='Integer or regular expression matching a profile version or version. ' + \
                         'For hmmer 3, "3" would be sufficient input.')
+    parser.add_argument('--search-opts', dest='search_options', metavar='OPTS',
+                        help='hmmsearch options, such as "-E 1e-2"', default='')
     parser.add_argument('refpkg', nargs=1, type=reference_package, help='reference package directory')
     parser.add_argument('seqfile', nargs=1, help='A single fasta files')
 

@@ -79,16 +79,16 @@ class Alignment(object):
             
     # Public methods
 
-    def hmmer_search(self, sequence_file):
+    def hmmer_search(self, sequence_file, search_options=''):
         """
         Recruit fragments using hmmsearch.  Works with a single sequence file, further 
         work would be required if it is to be expanded to work with multiple sequence files.
         """
         # hmmsearch must be in PATH for this to work.
         hmmsearch_output_file = self.out_prefix + '.search_out.sto'
-        hmmsearch_command = 'hmmsearch --notextw --noali -A ' + hmmsearch_output_file + \
+        hmmsearch_command = 'hmmsearch --notextw --noali ' + \
+                            search_options + ' -A ' + hmmsearch_output_file + \
                             ' ' + self.profile + ' ' + sequence_file
-
 
         child = subprocess.Popen(hmmsearch_command,
                                  stdin=None,
