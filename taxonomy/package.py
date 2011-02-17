@@ -16,7 +16,7 @@ manifest_name = 'CONTENTS.json'
 phylo_model_file = 'phylo_model.json'
 
 package_contents = {
-    'metadata':['create_date','author','description','package_version'],
+    'metadata':['create_date','author','description','package_version','empirical_frequencies'],
     'files':['tree_file','tree_stats','aln_fasta','aln_sto',
              'profile','seq_info','taxonomy','mask','phylo_model_file'],
     'md5':[]
@@ -38,15 +38,9 @@ class ConfigError(Exception):
 
 
 # Read in a tree stats files and extract some data to be written to a JSON phylo model file.
-def write_tree_stats_json(input_file, phylo_model_file):
-
-    parser = StatsParser(input_file)
-    success = parser.parse_stats_data()
-
-    if not success:
-        raise ConfigError("Unable to create %s from %s." % (phylo_model_file, input_file))
-
+def write_tree_stats_json(parser, phylo_model_file):
     parser.write_stats_json(phylo_model_file)
+
 
 def create(options,
            manifest_name=manifest_name,
@@ -75,19 +69,31 @@ def create(options,
     optdict = defaultdict(dict)
     optdict['metadata']['create_date'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
-    # phylo_modle_file is part of the package, but not a command-line
+    # phylo_model_file is part of the package, but not a command-line
     # argument; write out the phylo model file in JSON format, but
     # only if tree_stats was specified as an argument.
     if options.tree_stats:
         phylo_model_pth = os.path.join(pkg_dir, phylo_model_file)
+
+        parser = StatsParser(options.tree_stats)
+        success = parser.parse_stats_data()
+
+        if not success:
+            raise ConfigError("Unable to create %s from %s." % (phylo_model_pth, options.tree_stats))
+
         write_tree_stats_json(
-            input_file = options.tree_stats,
-            phylo_model_file = phylo_model_pth
+            parser=parser,
+            phylo_model_file=phylo_model_pth
             )
+
 
         optdict['files']['phylo_model_file'] = phylo_model_file
         optdict['md5']['phylo_model_file'] = \
             hashlib.md5(open(phylo_model_pth).read()).hexdigest()
+
+        # Determine if empirical frequencies were used for the tree.
+        empirical_frequencies = parser.is_empirical()
+        optdict['metadata']['empirical_frequencies'] = empirical_frequencies
 
     # copy all provided files into the package directory
     for fname in package_contents['files']:
@@ -101,11 +107,6 @@ def create(options,
             optdict['md5'][fname] = hashlib.md5(open(pth).read()).hexdigest()
 
     write_config(fname=manifest, optdict=optdict)
-
-# Brian - I made some changes to the StatsParser class - some are
-# cosmetic; others make it a bit more "pythonic". Only one notable
-# bug. I left some comments meant to be deleted inline (anything
-# starting with NH:).
 
 class StatsParser(object):
     """
@@ -125,13 +126,6 @@ class StatsParser(object):
         * phyml_aa
         """
 
-        ## NH: these are better as instance variables than class
-        ## variables - there isn't a case when you want all instances
-        ## to share the same value or to be updated
-        ## simultaneously. Defining stats_values as a class variable
-        ## introduces a bug that causes the value of this variable to
-        ## be shared among instances.
-
         self.file_name = file_name
         self.file_type = 'unknown'  # Type of file examined, defaults to unknown.
         self.input_text = '' # Full text of input file.
@@ -139,17 +133,8 @@ class StatsParser(object):
         # within an output file.
         self.stats_values = defaultdict(dict)
 
-        ## don't re-raise exceptions (especially when you make the
-        ## exception less specific in the process); in any case, you
-        ## look for an error when the file is opened
 
 ### Public methods ###
-
-    ## NH: note that getters and setters are generally not necessary
-    ## in python.
-
-    ## NH: the comments are great, but better as docstrings so that
-    ## they can be seen using help() and in document autogeneration.
 
     def get_stats_values(self):
         """
@@ -158,11 +143,13 @@ class StatsParser(object):
         """
         return self.stats_values
 
+
     def get_stats_json(self):
         """
         Return contents of stats_values in JSON format.
         """
         return json.dumps(self.stats_values, indent=2)
+
 
     def write_stats_json(self, out_file):
         """
@@ -170,15 +157,14 @@ class StatsParser(object):
         format to out_file.
         """
 
-        ## NH: again, no need to re-raise exceptions - it makes the
-        ## traceback harder to read. The "with" block takes care of
-        ## closing the file.
         with open(out_file, 'w') as out:
             out.write(self.get_stats_json())
+
 
     # Return contents of file_type.
     def get_file_type(self):
         return self.file_type
+
 
     def parse_stats_data(self):
         """
@@ -189,9 +175,6 @@ class StatsParser(object):
         with open(self.file_name, 'r') as input_file:
             self.input_text = input_file.read()
 
-        ## NH: since you named your private methods so nicely
-        ## according to corresponding file type, you can replace the
-        ## code block below with the following:
         match_found = False
         for file_type in ['raxml_condensed','raxml_re_estimated','raxml_aa','phyml_dna','phyml_aa']:
             match_found = getattr(self, '_parse_'+file_type)()
@@ -199,37 +182,33 @@ class StatsParser(object):
                 self.file_type = file_type
                 break
 
-        # if (self._parse_raxml_condensed()):
-        #     self.file_type = 'raxml_condensed'
-        #     match_found = True
-        # elif (self._parse_raxml_re_estimated()):
-        #     self.file_type = 'raxml_re_estimated'
-        #     match_found = True
-        # elif (self._parse_raxml_aa()):
-        #     self.file_type = 'raxml_aa'
-        #     match_found = True
-        # elif (self._parse_phyml_dna()):
-        #     self.file_type = 'phyml_dna'
-        #     match_found = True
-        # elif (self._parse_phyml_aa()):
-        #     self.file_type = 'phyml_aa'
-        #     match_found = True
-
         return match_found
 
-    def get_md5sum(self):
-        """
-        Determine the md5sum of the output file.
 
-        TODO: implement me
+    def is_empirical(self):
         """
-        pass
+        Determine if empirical base frequencies were used.  Defaults to true 
+        unless proven otherwise.  Only matches RaxML-generated files.
+        """
+        empirical_frequencies = True 
+        
+        # Determine if the file type is RaxML, then look for the 
+        # string "Empirical Base Frequencies".  If it isn't there, 
+        # empirical_frequencies gets set to false.
+        if self.file_type.startswith('raxml'):
+            regex = re.compile('.*(RAxML version .*?)Empirical Base Frequencies:',
+                           re.M|re.DOTALL)
+
+            if not regex.match(self.input_text):
+                empirical_frequencies = False          
+        else:
+            print "Warning: phyml stats files don't specify empirical or " + \
+                  "model frequencies; assuming empirical."
+
+        return empirical_frequencies
+
 
 ### Private methods ###
-
-    ## NH: for each of the methods below, I removed the try block -
-    ## it's better to just let any errors propagate. It should be clear
-    ## from the trackeback where the error originated.
 
     def _parse_raxml_condensed(self):
         """
