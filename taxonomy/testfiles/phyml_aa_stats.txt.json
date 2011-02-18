@@ -2,5 +2,6 @@
   "datatype": "AA", 
   "subs_model": "WAG", 
   "program": "PhyML v3.0", 
-  "ras_model": null
+  "ras_model": null,
+  "empirical_frequencies": true
 }

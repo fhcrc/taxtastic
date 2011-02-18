@@ -1,4 +1,5 @@
 {
+  "empirical_frequencies": true,
   "datatype": "DNA", 
   "subs_model": "GTR", 
   "program": "RAxML version 7.2.6", 

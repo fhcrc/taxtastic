@@ -1,4 +1,5 @@
 {
+  "empirical_frequencies": true,
   "datatype": "AA", 
   "subs_model": "WAG", 
   "program": "RAxML version 7.2.6", 

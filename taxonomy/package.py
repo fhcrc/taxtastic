@@ -188,18 +188,25 @@ class StatsParser(object):
         # Default to Ture for empirical_frequencies, unless proven otherwise.
         empirical_frequencies = True
 
-        # Determine if the file type is RaxML, then look for the 
+
+        # Determine if the file type is RaxML.  If nucleotides, leave 
+        # empirical_frequencies true.  Otherwise look for the 
         # string "Empirical Base Frequencies".  If it isn't there, 
         # empirical_frequencies gets set to false.
         if self.file_type.startswith('raxml'):
-            regex = re.compile('.*(RAxML version .*?)Empirical Base Frequencies:',
-                           re.M|re.DOTALL)
+            # empirical_frequencies will always be true for nucleotides.
+            if self.stats_values['datatype'] != 'DNA' and \
+               self.stats_values['datatype'] != 'RNA':
 
-            if not regex.match(self.input_text):
-                empirical_frequencies = False          
+                regex = re.compile('.*(RAxML version .*?)Empirical Base Frequencies:',
+                        re.M|re.DOTALL)
+
+                if not regex.match(self.input_text):
+                    empirical_frequencies = False          
         else:
             print "Warning: phyml stats files don't specify empirical or " + \
                   "model frequencies; assuming empirical."
+
 
         return empirical_frequencies
 

@@ -1,4 +1,5 @@
 {
+  "empirical_frequencies": true,
   "datatype": "DNA", 
   "subs_model": "GTR", 
   "program": "PhyML v3.0_360-500M", 
