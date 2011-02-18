@@ -81,19 +81,12 @@ def create(options,
         if not success:
             raise ConfigError("Unable to create %s from %s." % (phylo_model_pth, options.tree_stats))
 
-        write_tree_stats_json(
-            parser=parser,
-            phylo_model_file=phylo_model_pth
-            )
-
+        parser.write_stats_json(phylo_model_pth)
 
         optdict['files']['phylo_model_file'] = phylo_model_file
         optdict['md5']['phylo_model_file'] = \
-            hashlib.md5(open(phylo_model_pth).read()).hexdigest()
+        hashlib.md5(open(phylo_model_pth).read()).hexdigest()
 
-        # Determine if empirical frequencies were used for the tree.
-        empirical_frequencies = parser.is_empirical()
-        optdict['metadata']['empirical_frequencies'] = empirical_frequencies
 
     # copy all provided files into the package directory
     for fname in package_contents['files']:
@@ -180,6 +173,8 @@ class StatsParser(object):
             match_found = getattr(self, '_parse_'+file_type)()
             if match_found:
                 self.file_type = file_type
+                # Determine if empirical frequencies were used for the tree.
+                self.stats_values['empirical_frequencies'] = self.is_empirical()
                 break
 
         return match_found
@@ -190,8 +185,9 @@ class StatsParser(object):
         Determine if empirical base frequencies were used.  Defaults to true 
         unless proven otherwise.  Only matches RaxML-generated files.
         """
-        empirical_frequencies = True 
-        
+        # Default to Ture for empirical_frequencies, unless proven otherwise.
+        empirical_frequencies = True
+
         # Determine if the file type is RaxML, then look for the 
         # string "Empirical Base Frequencies".  If it isn't there, 
         # empirical_frequencies gets set to false.
@@ -260,25 +256,6 @@ class StatsParser(object):
         else:
             return False
 
-
-    # def _parse_raxml_aa(self):
-    #     """
-    #     Parse RAxML info file - amino acid.
-    #     """
-
-    #     regex = re.compile('.*(RAxML version .*?) release.*DataType: (\w+).*Substitution Matrix: (\w+).*alpha\[0\]: (\d+\.\d+)',
-    #                        re.M|re.DOTALL)
-
-    #     if (regex.match(self.input_text)):
-    #         self.stats_values['program'] = regex.match(self.input_text).group(1) # program
-    #         self.stats_values['datatype'] = regex.match(self.input_text).group(2) # datatype
-    #         self.stats_values['subs_model'] = regex.match(self.input_text).group(3) # subs_model
-    #         self.stats_values['ras_model'] = 'gamma' # gamma is present
-    #         self.stats_values['gamma']['alpha'] = float(regex.match(self.input_text).group(4)) # alpha
-    #         self.stats_values['gamma']['n_cats'] = 4 # n_cats - default is 4 for RaxML
-    #         return True
-    #     else:
-    #         return False
 
     def _parse_raxml_aa(self):
         """
