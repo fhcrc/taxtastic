@@ -21,7 +21,7 @@ First we generate the taxonomy::
   taxtable.py -t rpoB.ids_only > rpoB.taxonomy
 
 When performed for the first time, this downloads the NCBI taxonomy and builds a SQLite3 database from it. 
-That takes a while, but it only needs to be performed once.
+That takes a while, but it only needs to be performed once (after that you can point to the database with -d).
 Then::
 
   taxomatic.py create \
@@ -32,12 +32,12 @@ Then::
         -i rpoB.seq_info.csv \
         -P rpoB.refpkg 
 
-Now, given a query sequence alignment which is in frame with your reference alignment, you can run pplacer (from the "tax" git branch) to get taxonomically annotated placements, and visualizations combining both taxonomic and phylogenetic placements with two more steps::
+Now you can run pplacer to get taxonomically annotated placements, and visualizations combining both taxonomic and phylogenetic placements with two more steps::
 
   pplacer -c rpoB.refpkg sample.fasta
-  placeviz -c rpoB.refpkg sample.place
+  guppy fat -c rpoB.refpkg sample.place
 
 
 
 .. Targets ..
-.. _reference package: http://github.com/nhoffman/taxtastic/wiki/refpkg
+.. _reference package: http://github.com/fhcrc/taxtastic/wiki/refpkg
