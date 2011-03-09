@@ -2,10 +2,8 @@
 import json, sys, os, string, argparse, subprocess, re
 from string import Template
 from Bio import SeqIO, AlignIO
-from Bio.Seq import Seq, SeqRecord
-
-
-
+# from Bio.Seq import Seq, SeqRecord
+from Bio.Seq import Seq
 
 class Alignment(object):
     """
