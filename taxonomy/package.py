@@ -41,7 +41,19 @@ class ConfigError(Exception):
 def write_tree_stats_json(parser, phylo_model_file):
     parser.write_stats_json(phylo_model_file)
 
+class Refpkg:
+    """
+    Class for reading and validating reference packages.
+    """
 
+    def __init__(self, refpkg):
+        """
+        * refpkg - path to a reference package directory
+        """
+    
+        pass
+
+        
 def create(options,
            manifest_name=manifest_name,
            package_contents=package_contents,
