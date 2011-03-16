@@ -20,6 +20,7 @@ from optparse import OptionParser, IndentedHelpFormatter
 import csv
 import gettext
 import itertools
+import json
 import logging
 import os
 import pprint
@@ -38,33 +39,52 @@ class SimpleHelpFormatter(IndentedHelpFormatter):
 def xws(s):
     return ' '.join(s.split())
 
-def read(fname, ncol):
+# def read(fname, ncol):
 
-    counter = itertools.count
+#     counter = itertools.count
 
-    with open(fname) as lines:
-        data = []
-        skip = False
-        for line in lines:
-            if line.startswith('#'):
-                continue
-            elif skip:
-                skip = False
-            elif line.startswith('>'):
-                if data:
-                    yield data
-                seqname = line.strip('\n >')
-                skip = True ## skip the next line (the sequence string)
-                data = []
-                count = counter(1)
-            else:
-                spl = line.split()[:-1]                
-                tax_id = spl[-1]
-                spl[-1] = tax_id.split('*')[1] if tax_id != 'none' else None
-                data.append([seqname, str(count.next())] + spl)
+#     with open(fname) as lines:
+#         data = []
+#         skip = False
+#         for line in lines:
+#             if line.startswith('#'):
+#                 continue
+#             elif skip:
+#                 skip = False
+#             elif line.startswith('>'):
+#                 if data:
+#                     yield data
+#                 seqname = line.strip('\n >')
+#                 skip = True ## skip the next line (the sequence string)
+#                 data = []
+#                 count = counter(1)
+#             else:
+#                 spl = line.split()[:-1]                
+#                 tax_id = spl[-1]
+#                 spl[-1] = tax_id.split('*')[1] if tax_id != 'none' else None
+#                 data.append([seqname, str(count.next())] + spl)
 
-        yield data
+#         yield data
 
+def read(fname):
+
+    """
+    Returns an iterator over pplacer results.
+    """
+
+    with open(fname) as infile:
+        data = json.load(infile)
+
+    placements = data['placements']
+
+    yield ['name','hit'] + data['fields']    
+    for d in placements:
+        name = d['n']
+        hit = itertools.count(1)
+        for p in d['p']:
+            yield name + [hit.next()] + p
+
+            
 def main():
 
     usage = textwrap.dedent(__doc__)
@@ -116,13 +136,10 @@ def main():
         print('Error: an input file is required.\n')
         parser.print_usage()
         exit(1)
-
-    colnames = ('name','hit','at','mlwr','ppost','mlll','bml','edge','branch','tax_id')
-
+        
     fout = open(options.outfile, 'w') if options.outfile else sys.stdout
-    writer = csv.writer(fout, quoting=csv.QUOTE_NONE, delimiter='\t')
-    writer.writerow(colnames)
-    writer.writerows(itertools.chain(*read(fname, ncol=len(colnames))))
-
+    writer = csv.writer(fout, quoting=csv.QUOTE_NONNUMERIC, delimiter=',')
+    writer.writerows(read(fname))
+    
 if __name__ == '__main__':
     main()
