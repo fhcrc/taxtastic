@@ -18,3 +18,5 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+.. automodule:: taxonomy
+   :members:
