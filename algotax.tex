@@ -90,7 +90,7 @@ Then we can construct a minimal leaf recoloring by just taking the color of the 
 
 \subsubsection{Fixed parameter tractability}
 % Using their more general framework, \cite{moranSnirRecoloringApprox05} have shown that the problem admits a FPT solution.
-Their solution is $O(n^4 \nbadcolors \Bell(\nbadcolors))$, where $\nbadcolors$ is the number of ``bad'' colors, i.e. the number of colors which violate convexity (if we take the induced coloring on the tree, then cut by it, then $\nbadcolors$ is the number of colors which exist in more than one connected component.)
+Their solution is $O(n^4 \nbadcolors \Bell(\nbadcolors))$, where $\nbadcolors$ is the number of ``bad'' colors, i.e. the number of colors which violate convexity (if we take the induced coloring on the tree, then cut by it, then $\nbadcolors$ is the number of colors which exist in more than one connected component).
 Note that this algorithm is polynomial in $n$ and exponential in the total number of colors which violate convexity.
 
 In this section we describe a fixed parameter algorithm that is exponential in a local quantity rather than the global number of bad colors.
@@ -105,23 +105,27 @@ It is not a general improvement over their bound, but rather a better bound for 
 \end{defn}
 
 \begin{defn}
+  Given a rooted subtree $T$ of a rooted colored tree $(S, \col)$, define a subsolution for a rooted subtree $T$ and $X \subset \cut(T)$ to be a maximal element $phi(X)$ of $\subcolS(\col)$ which includes at least one taxon with each color in $X$ and such that the domain of $\phi(X)$ is a subset of $L(T)$.
+\end{defn}
+
+\begin{defn}
   Define a solution map for a rooted subtree $T$ of a rooted colored tree $(S, \col)$ to be a map
   \[
   \phi: 2^{\cut(T)} \rightarrow \subcolS(\col)
   \]
-  from any set of colors cut by the root edge of $T$ to a solution of Problem~\ref{prob:subcolor} for $(T, \col)$.
+  to be a map from subsets of $\cut(T)$ to their correspoinding subsolutions.
 \end{defn}
 
 
 \begin{prop}
-Problem~\ref{prob:subcolor} can be solved for a rooted colored tree $(S, \col)$ with $n$ leaves in $O(n^2 2^{\bad(\col)})$ time.
+Problem~\ref{prob:subcolor} can be solved for a rooted colored tree $(S, \col)$ with $n$ leaves in $O(n 2^{\bad(\col)})$ time.
 \end{prop}
 
 \begin{proof}
 
 The proof will proceed by constructing solution maps for all subtrees $T$ of $S$ by recursion.
 In fact, we will show that the solution map for a given internal node can be constructed from the maps for the nodes below it in time $2^{\bad(\col)}$;
-this will demonstrate the proposition because there are $O(n^2)$ nodes and the leaf solution maps are trivial.
+this will demonstrate the proposition because there are $O(n)$ internal nodes and the leaf solution maps are trivial.
 
 For the recursion, assume that subtree $T$ is composed of two rooted subtrees $T_1$ and $T_2$.
 The correctness of the recursion is simple: every optimal solution can be broken down into elements of solution maps for the subtrees.
@@ -144,7 +148,7 @@ A naive implementation of this recursion will check every subset of $X_1$ and $X
 This is sub-optimal.
 Indeed, for cases when $X_1$ and $X_2$ are disjoint, we can divide the possible $X$ into $X_1 \symmdiff X_2$ and $X_1 \cap X_2$.
 The elements of $X_1 \symmdiff X_2$ come ``for free'': we can add them or take them away at will.
-Thus we need to find the optimal partition of $X_1 \cap X_2 \cap K$ (for the $\cap K$ we don't need to worry about things which are only common to $X_1$ and $X_2$ and don't appear other places); this is $O(2^{\bad(\col)})$ but should be bad.
+Thus we need to find the optimal partition of $X_1 \cap X_2 \cap K$ (for the $\cap K$ we don't need to worry about things which are only common to $X_1$ and $X_2$ and don't appear other places); this is $O(2^{\bad(\col)})$ but shouldn't be bad.
 One can cover the cases when $X_1$ and $X_2$ are not disjoint by iterating $X$ through the single-element sets of $X_1 \cap X_2$.
 
 \end{proof}
