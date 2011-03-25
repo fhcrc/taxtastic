@@ -1,0 +1,321 @@
+\documentclass{amsart}
+
+% my notation
+\newcommand{\col}{\chi}
+\newcommand{\colt}{\tilde{\chi}}
+\newcommand{\symmdiff}{\Delta}
+\newcommand{\colorS}{\mathcal{C}}
+\newcommand{\subcolS}{\mathsf{Sub}}
+\newcommand{\treecut}{\Psi}
+\newcommand{\cut}{\kappa}
+\newcommand{\bad}{\beta}
+
+% my operator names
+\newcommand{\rk}{\operatorname{rk}}
+\newcommand{\subrk}{\operatorname{subrk}}
+\newcommand{\minsubrk}{\subrk_{\min}}
+\newcommand{\mrca}{\sup}
+\newcommand{\opt}[1]{\overset{\circ}{#1}}
+\newcommand{\mlst}{\operatorname{mlst}}
+\newcommand{\Bell}{\operatorname{Bell}}
+
+% others' notation
+\newcommand{\nbadcolors}{n_c^*}
+% theorems, etc
+\newtheorem{lemma}{Lemma}
+\newtheorem{prop}{Proposition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{problem}{Problem}
+\newtheorem{defn}{Definition}
+
+
+\begin{document}
+
+% \section{Introduction}
+% explain induced subtree and rooted subtree
+
+\section{Finding a tree that does not violate taxonomic assignments}
+Define minimal deletion to be the minimal number of taxa that have to be deleted in order to have a tree that is concordant with the taxonomic assignments.
+
+\subsection{Agreement with a complete taxonomic tree}
+This is the same as MCST, and is hard (french)
+We may not want it anyway.
+
+\subsection{Agreement with leaf taxonomic assignments}
+
+Define an ``color set'' as a set of colors.
+Define coloring of a given tree to be a mapping from a subset of the nodes of the tree to the colors.
+A leaf coloring is a coloring with domain a subset of the leaves.
+A multicoloring is a map from the edges of the tree to subsets of the colors.
+We say that a color $c$ is cut by an edge $e$ if $e$ lies in the subtree induced by the leaves of color $c$.
+
+Given a leaf coloring on a tree $T$
+\[
+\col: F \subset L(T) \rightarrow C
+\]
+define the induced multicoloring
+\[
+\colt: E(T) \rightarrow 2^C
+\]
+such that $\colt(e)$ is the (potentially empty) set of colors which are cut by that edge.
+
+Define the badness $\bad(\col)$ of a coloring $\col$ to be $\max_{e \in E(T)} |\colt(e)| $ for all $e$.
+We say that a coloring is convex if it has badness equal to zero or one.
+
+\begin{defn}
+  A subcoloring of a leaf coloring $\col: F \subset L(T) \rightarrow C$ is a coloring $\nu: G \subset F \rightarrow C$ such that $\nu$ agrees with $\col$ on the domain of $\nu$.
+  Let $\subcolS(\col)$ be the set of subcolorings of a given coloring.
+\end{defn}
+These are partially ordered by inclusion of domains.
+The size of a subcoloring is defined to be the size of its domain.
+
+For two colorings $\col_1$ and $\col_2$ with disjoint domains we can make a coloring on the union of their domains in the obvious way, which will be denoted $\col_1 \sqcup \col_2$.
+
+\begin{problem}
+\label{prob:subcolor}
+  Given a leaf coloring $\col$ on a tree $T$, find a largest convex subcoloring in $\subcolS(\col)$.
+\end{problem}
+
+\subsubsection{Hardness}
+Given a set of leaf taxonomic assignments, we would like to find the maximum-sized set of taxa which is compatible with the phylogenetic tree.
+Call this the maximum agreement subset of taxa.
+
+We can reduce it to a minimal recoloring in the sense of Moran and Snir.
+Assume we are given a tree with leaf coloring, and we know a minimal leaf deletion.
+Then we can construct a minimal leaf recoloring by just taking the color of the first ancestor for each deleted leaf.
+
+\begin{prop}
+  A minimal deletion and ancestral leaf recoloring gives a minimal leaf recoloring.
+\end{prop}
+
+\subsubsection{Fixed parameter tractability}
+% Using their more general framework, \cite{moranSnirRecoloringApprox05} have shown that the problem admits a FPT solution.
+Their solution is $O(n^4 \nbadcolors \Bell(\nbadcolors))$, where $\nbadcolors$ is the number of ``bad'' colors, i.e. the number of colors which violate convexity (if we take the induced coloring on the tree, then cut by it, then $\nbadcolors$ is the number of colors which exist in more than one connected component.)
+Note that this algorithm is polynomial in $n$ and exponential in the total number of colors which violate convexity.
+
+In this section we describe a fixed parameter algorithm that is exponential in a local quantity rather than the global number of bad colors.
+It is not a general improvement over their bound, but rather a better bound for the more specific problem investigated here.
+
+
+\subsubsection{Recursion}
+
+\begin{defn}
+  Let $(S, \col)$ be a colored subtree and let $T$ be a rooted subtree of $S$.
+  Define $\cut(T)$ to be the colors cut by the root edge of $T$ as it sits inside $S$.
+\end{defn}
+
+\begin{defn}
+  Define a solution map for a rooted subtree $T$ of a rooted colored tree $(S, \col)$ to be a map
+  \[
+  \phi: 2^{\cut(T)} \rightarrow \subcolS(\col)
+  \]
+  from any set of colors cut by the root edge of $T$ to a solution of Problem~\ref{prob:subcolor} for $(T, \col)$.
+\end{defn}
+
+
+\begin{prop}
+Problem~\ref{prob:subcolor} can be solved for a rooted colored tree $(S, \col)$ with $n$ leaves in $O(n^2 2^{\bad(\col)})$ time.
+\end{prop}
+
+\begin{proof}
+
+The proof will proceed by constructing solution maps for all subtrees $T$ of $S$ by recursion.
+In fact, we will show that the solution map for a given internal node can be constructed from the maps for the nodes below it in time $2^{\bad(\col)}$;
+this will demonstrate the proposition because there are $O(n^2)$ nodes and the leaf solution maps are trivial.
+
+For the recursion, assume that subtree $T$ is composed of two rooted subtrees $T_1$ and $T_2$.
+The correctness of the recursion is simple: every optimal solution can be broken down into elements of solution maps for the subtrees.
+Let $K = \cut(T)$, $K_1 = \cut(T_1)$ and $K_2 = \cut(T_2)$.
+By the recursion, these rooted trees $T_1$ and $T_2$ have solutions $\phi_1$ and $\phi_2$, respectively.
+
+We would like to find a solution $\phi(X)$ for any $X \in 2^K$.
+Everything depends on deciding $X_1 \subset K_1$ and $X_2 \subset K_2$ such that $X = (X_1 \cup X_2) \cap K$.
+Once these choices are made the value of $\phi(X)$ will be $\phi(X_1) \sqcup \phi(X_2)$.
+It is required that $|X_1 \cap X_2| \leq 1$ to ensure convexity.
+The optimal choice of $X_1$ and $X_2$ will be the one that maximizes the size of $\phi(X_1) \sqcup \phi(X_2)$.
+Every optimal solution can be expressed in this form by definition.
+
+Rather than looking for an optimal solution for a given $X$, we will evaluate every legal $X_1$ and $X_2$ and assign the value of that pair to the corresponding $X$.
+If $X_1$ and $X_2$ are disjoint, then set $X$ to be $(X_1 \cup X_2) \cap K$: anything in them can be used.
+If $X_1$ and $X_2$ intersect in a single element $c$, then set $X$ to $\{c\} \cap K$.
+Note that in this latter case we have $X_1 = X_2 = \{c\}$.
+
+A naive implementation of this recursion will check every subset of $X_1$ and $X_2$; therefore every node is going to have complexity $O(2^{2 \bad(\col)})$.
+This is sub-optimal.
+Indeed, for cases when $X_1$ and $X_2$ are disjoint, we can divide the possible $X$ into $X_1 \symmdiff X_2$ and $X_1 \cap X_2$.
+The elements of $X_1 \symmdiff X_2$ come ``for free'': we can add them or take them away at will.
+Thus we need to find the optimal partition of $X_1 \cap X_2 \cap K$ (for the $\cap K$ we don't need to worry about things which are only common to $X_1$ and $X_2$ and don't appear other places); this is $O(2^{\bad(\col)})$ but should be bad.
+One can cover the cases when $X_1$ and $X_2$ are not disjoint by iterating $X$ through the single-element sets of $X_1 \cap X_2$.
+
+\end{proof}
+
+% This corresponds with the original definition of $X$:
+% \begin{lemma}
+% \[
+%   (X_1 \cup X_2) \cap K = (C_1 \cup C_2) \cap K
+% \]
+% \end{lemma}
+% \begin{proof}
+%   $\subset$ is clear.
+%   For $\supset$, say a $c \in C_1 \cap K$.
+%   Thus $c \in L(T) \setminus (C_1 \cup C_2)$, and thus $c \in K_1$.
+% \end{proof}
+
+% $C_1 \cap C_2 \subset K_1 \cap K_2$ because anything in both is in each of the cut sets.
+% $C_1 \cap C_2 \supset K_1 \cap K_2$ because anything in each of the cut sets must be in each of $C_1$ and $C_2$.
+% So they are equal.
+% Thus $X_1 \cap X_2 = C_1 \cap C_2$.
+
+
+\section{Computational matters}
+
+Rerooting at the max $K$ will reduce the amount of computation.
+
+\section{Taxonomic rerooting}
+
+Given a taxonomic identifier $u$, let $\rk(u)$ be the rank of $u$ in the taxonomic hierarchy.
+Given a set of taxonomic identifiers $U$, let $\mrca(U)$ denote the most recent common ancestor of the identifiers in $U$.
+By an abuse of notation, we also let $\rk(U)$ signify $\rk(\mrca(U))$.
+
+\begin{lemma}
+  \[
+  \rk(A \cup B) \geq \max(\rk(A),\rk(B))
+  \]
+\end{lemma}
+
+Given $x$ a node of $T$, say $\phi(x;T)$ are the trees obtained by deleting $x$ from $T$.
+Define $\subrk(x;T)$ to be $\max_{S \in L(\treecut(x;T))} \rk(S)$.
+
+Let
+\[
+\minsubrk(T) = \min_{x \in N(T)} \subrk(x;T)
+\]
+
+Given $x \in N(T)$, let ${A_1,\cdots,A_n} = \treecut(x;T)$, and that
+\[
+  (a_1,\cdots,a_n) = (\rk(A_1), \cdots, \rk(A_n))
+\]
+assume WLOG that $a_1 \leq a_2 \leq \cdots \leq a_n$.
+
+There are two cases: $a_{n-1} = a_n$ and $a_{n-1} < a_n$.
+In the first case, we know that $\minsubrk(T) = a_{n-1} = a_n$ because any direction we travel will leave one of the $a_i$'s intact, which will act as a lower bound for $\minsubrk(T)$.
+In the second case, $a_{n-1} \leq \minsubrk(T)$ but $\minsubrk(T)$ but may be less than $a_n$, which we can discover by moving towards it.
+
+
+\end{document}
+
+% leftovers from cleanup
+
+\begin{defn}
+  Let the coloring set $\colorS(T, C)$ where $T$ is a phylogenetic tree and $C$ is a set of colors to be the set of maps $\chi: X \rightarrow C$ where $X \subset L(T)$.
+\end{defn}
+
+
+Kicked out:
+\begin{enumerate}
+  \item $r_1 \in X_1 \cap X$ and $r_2 \in X_2 \cap X$
+(this is too strong: we are now not worrying about the root ``state'' unless it matters)
+\end{enumerate}
+
+Don't forget!
+$X_1$ and $X_2$ need not sit in $X$.
+
+
+
+
+Let $X^c$ be $X$'s complement in $K$.
+
+
+\subsection{Notation}
+$\symmdiff$ is the symmetric difference.
+
+The sets of interest are
+$I_i = K \cap K_i$
+$J_1 = I_1 \setminus K_2$ and $J_2 = I_2 \setminus K_1$. (these are ones which can only show in one)
+$O = (K_1 \cap K_2) \setminus K$ (these are the ones which can only arc over)
+
+Explicit descripton:
+We start with our $X$.
+We take every $O_1$ and $O_2$ subsets of $O$ such that $|O_1 \cap O_2| \leq 1$ and $(O_1 \cup O_2) \cap X^c = \emptyset$.
+We also need to make sure that we don't have $O_1$ and $X$ intersecting with a different color when $O_1$ and $O_2$ do.
+Then $X_i = J_i \cup O_i$.
+
+The solution for $X$ is then the union of the best for each $X_i$.
+
+Should do this functorially-- because we might be able to get away with bit strings later.
+
+Two choices of where the color of $(T_1, T_2)$ MRCA root color comes from:
+- $R = K_1 \symmdiff K_2$, in which case $X_1$ and $X_2$ are disjoint, which gives an $|R| 2^{|R|}$.
+- $U = X \cap K_1 \cap K_2$, in which case we have $|U| 2^{|U|}$.
+
+So that could be a $2^{|K_1 \cap K_2|}$ operation.
+We have to do this for every $(\rho, X)$, meaning that the whole machine will have complexity $K \times 2^{|K| + |K_1 \cap K_2|}$.
+
+Let $\kappa$ be the maximum across edges $e$ of $\|\chi(e)\|$.
+Complete algorithm: $O(n \kappa 2^{|\kappa| + |\kappa_1 \cap \kappa_2|})$
+
+We are taking the max over distributions of colors, and for each distribution we are taking the best solution.
+Every legal distribution of colors follows our specified rules.
+
+Any rooting will work.
+Do we get better performance from an intelligent rooting?
+That way, we will have smaller taxon numbers when we have to investigate lots of choices.
+
+Data structures:
+Want to have a map from root color options and subsets of K to optimal solutions.
+That will be an actual map from elements cross subsets to sets.
+Could we have a durable subset thingy?
+
+There is a partial order for these things?
+Can we restrict the domain a bit?
+
+
+We can ta
+
+Start by finding cut colors for each split
+
+Wouldn't it be easier to disallow colors?
+This color is already used on the other side of the tree, and adding it would change some chosen root color
+
+Disallowing colors:
+
+\begin{defn}
+  Define a solution map for a sub-pair $(T,K)$ of a colored rooted tree $(S, \col)$ to be a map
+  \[
+  \phi: \opt{K} \times 2^K \rightarrow \subcolS(\col)
+  \]
+  from a choice of the root color and a choice of excluded colors below the root edge to a rooted solution.
+\end{defn}
+
+That is, $\phi(r, C)$ a set of taxa in the tree, including only taxa with the color C
+such that the induced coloring is convex and the taxon set is maximal among subsets with these color characteristics.
+
+Now, say that tree is formed of two subtrees which have sub-pairs $(T_1,K_1)$ and $(T_2,K_2)$ and complete rooted solutions for each.
+Say we would like to find a solution for $(\rho, X) \in \opt{K} \times 2^K$.
+If a color is in
+Let $R = X \cap (K_1 \symmdiff K_2)$; for these colors we are Really sure where they should come from.
+We take every $X_1,X_2$ pair such that
+- $X_1 \subset K_1$
+- $X_2 \subset K_2$
+-
+why would we exclude something that is not cut?
+
+Let $U = X \cap K_1 \cap K_2$; these are the colors which we don't know which tree to take them from.
+Note that $K_1 \cap K_2$
+For every $X_1 \subset K_1$ and $X_2 \subset K_2$ such that $K \ (X_1 \cup X_2) \subset \{\rho\}$ and $X_1 \cap X_2 = X$, we find the solution such that $X \cup X_1$ is excluded in $T_1$ and $X \cup X_2$ is excluded in $T_2$.
+So don't we have to keep track of the exclusion of every possible bad color subset?
+No, because if a color isn't cut by a
+Some exclusions are trivial, because we just take the
+At the end, each side is going to have to have exclusions for every single bad color.
+The solution for that $X$ is the merge of the best solutions for subsets $X_1 \subset K_1$ and $X_2 \subset K_2$ such that $K \ (X_1 \cup X_2) \subset \{\rho\}$ and $X_1 \cup X_2 = X$.
+So that could be a $2^{|K_1 \cap K_2|}$ operation.
+We have to do this for every $(\rho, X)$, meaning that the whole step will have complexity $K \times 2^{|K| + |K_1 \cap K_2|}$.
+
+
+% A weaker but easier to state thing would be to have maps to subsets:
+% Define the Constrained Maximum Agreement Taxon Subset (CMATS) problem for a given $(\chi, e, c)$ where $\chi$ is a leaf coloring and $e$ is an edge and $c \in \chit(e)$ be a taxon set $X$ of maximal size such that $\chi$ restricted to $X$ is convex and $\chi|_X (e) = {c}$.
+% The diadvantage is that then we fix the original coloring as a global variable, and the range of a subcoloring is then defined with respect to that.
+
+% \bibliography{algotax}
+% \bibliographystyle{plain}
+
