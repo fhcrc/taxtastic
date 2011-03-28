@@ -33,6 +33,8 @@
 
 % \section{Introduction}
 % explain induced subtree and rooted subtree
+% L(T), E(T), N(T)
+% power set notation
 
 \section{Finding a tree that does not violate taxonomic assignments}
 Define minimal deletion to be the minimal number of taxa that have to be deleted in order to have a tree that is concordant with the taxonomic assignments.
@@ -43,17 +45,17 @@ We may not want it anyway.
 
 \subsection{Agreement with leaf taxonomic assignments}
 
-Define an ``color set'' as a set of colors.
-Define coloring of a given tree to be a mapping from a subset of the nodes of the tree to the colors.
-A leaf coloring is a coloring with domain a subset of the leaves.
-A multicoloring is a map from the edges of the tree to subsets of the colors.
+For the purposes of this paper, a ``color set'' will be an arbitrary finite set.
+A node coloring of a tree $T$ is defined to be a mapping from a subset of the nodes of the tree to the colors.
+A leaf coloring is defined to be a node coloring with domain a subset of the leaves.
+A multicoloring is defined to be a map from the edges of the tree to subsets of the colors.
 We say that a color $c$ is cut by an edge $e$ if $e$ lies in the subtree induced by the leaves of color $c$.
 
-Given a leaf coloring on a tree $T$
+Given a leaf coloring
 \[
 \col: F \subset L(T) \rightarrow C
 \]
-define the induced multicoloring
+on a tree $T$, define the induced multicoloring
 \[
 \colt: E(T) \rightarrow 2^C
 \]
@@ -63,8 +65,8 @@ Define the badness $\bad(\col)$ of a coloring $\col$ to be $\max_{e \in E(T)} |\
 We say that a coloring is convex if it has badness equal to zero or one.
 
 \begin{defn}
-  A subcoloring of a leaf coloring $\col: F \subset L(T) \rightarrow C$ is a coloring $\nu: G \subset F \rightarrow C$ such that $\nu$ agrees with $\col$ on the domain of $\nu$.
-  Let $\subcolS(\col)$ be the set of subcolorings of a given coloring.
+  A subcoloring of a leaf coloring is a coloring $\nu: G \rightarrow C$ for $G \subset F$ such that $\nu$ agrees with $\col$ on the domain of $\nu$.
+  Let $\subcolS(\col)$ be the set of subcolorings of a given coloring $\col$.
 \end{defn}
 These are partially ordered by inclusion of domains.
 The size of a subcoloring is defined to be the size of its domain.
@@ -105,7 +107,7 @@ It is not a general improvement over their bound, but rather a better bound for 
 \end{defn}
 
 \begin{defn}
-  Given a rooted subtree $T$ of a rooted colored tree $(S, \col)$, define a subsolution for a rooted subtree $T$ and $X \subset \cut(T)$ to be a maximal element $phi(X)$ of $\subcolS(\col)$ which includes at least one taxon with each color in $X$ and such that the domain of $\phi(X)$ is a subset of $L(T)$.
+  Given a rooted subtree $T$ of a rooted colored tree $(S, \col)$, define a subsolution for a rooted subtree $T$ and $Y \subset \cut(T)$ to be a maximal element $\phi(Y)$ of $\subcolS(\col)$ which includes at least one taxon with each color in $Y$ and such that the domain of $\phi(Y)$ is a subset of $L(T)$.
 \end{defn}
 
 \begin{defn}
@@ -116,6 +118,7 @@ It is not a general improvement over their bound, but rather a better bound for 
   to be a map from subsets of $\cut(T)$ to their correspoinding subsolutions.
 \end{defn}
 
+From the above definition of a subsolution, $\phi(Y)$ will be a leaf coloring with each of the colors in $Y$ in its image.
 
 \begin{prop}
 Problem~\ref{prob:subcolor} can be solved for a rooted colored tree $(S, \col)$ with $n$ leaves in $O(n 2^{\bad(\col)})$ time.
@@ -130,33 +133,33 @@ this will demonstrate the proposition because there are $O(n)$ internal nodes an
 For the recursion, assume that subtree $T$ is composed of two rooted subtrees $T_1$ and $T_2$.
 The correctness of the recursion is simple: every optimal solution can be broken down into elements of solution maps for the subtrees.
 Let $K = \cut(T)$, $K_1 = \cut(T_1)$ and $K_2 = \cut(T_2)$.
-By the recursion, these rooted trees $T_1$ and $T_2$ have solutions $\phi_1$ and $\phi_2$, respectively.
+By the recursion, these rooted trees $T_1$ and $T_2$ have solution maps $\phi_1$ and $\phi_2$, respectively.
 
-We would like to find a solution $\phi(X)$ for any $X \in 2^K$.
-Everything depends on deciding $X_1 \subset K_1$ and $X_2 \subset K_2$ such that $X = (X_1 \cup X_2) \cap K$.
-Once these choices are made the value of $\phi(X)$ will be $\phi(X_1) \sqcup \phi(X_2)$.
-It is required that $|X_1 \cap X_2| \leq 1$ to ensure convexity.
-The optimal choice of $X_1$ and $X_2$ will be the one that maximizes the size of $\phi(X_1) \sqcup \phi(X_2)$.
+We would like to find a solution $\phi(Y)$ for any $Y \in 2^K$.
+This solution will be determined by considering $Y_1 \subset K_1$ and $Y_2 \subset K_2$ such that $Y = (Y_1 \cup Y_2) \cap K$.
+The map $\phi(Y_1) \sqcup \phi(Y_2)$ is well defined exactly when $|Y_1 \cap Y_2| \leq 1$.
+Once these choices are made the value of $\phi(Y)$.
+The optimal choice of $Y_1$ and $Y_2$ will be the one that maximizes the size of $\phi(Y_1) \sqcup \phi(Y_2)$.
 Every optimal solution can be expressed in this form by definition.
 
-Rather than looking for an optimal solution for a given $X$, we will evaluate every legal $X_1$ and $X_2$ and assign the value of that pair to the corresponding $X$.
-If $X_1$ and $X_2$ are disjoint, then set $X$ to be $(X_1 \cup X_2) \cap K$: anything in them can be used.
-If $X_1$ and $X_2$ intersect in a single element $c$, then set $X$ to $\{c\} \cap K$.
-Note that in this latter case we have $X_1 = X_2 = \{c\}$.
+Rather than looking for an optimal solution for a given $Y$, we will evaluate every legal $Y_1$ and $Y_2$ and assign the value of that pair to the corresponding $Y$.
+If $Y_1$ and $Y_2$ are disjoint, then set $Y$ to be $(Y_1 \cup Y_2) \cap K$: anything in them can be used.
+If $Y_1$ and $Y_2$ intersect in a single element $c$, then set $Y$ to $\{c\} \cap K$.
+Note that in this latter case we have $Y_1 = Y_2 = \{c\}$.
 
-A naive implementation of this recursion will check every subset of $X_1$ and $X_2$; therefore every node is going to have complexity $O(2^{2 \bad(\col)})$.
+A naive implementation of this recursion will check every subset of $Y_1$ and $Y_2$; therefore every node is going to have complexity $O(2^{2 \bad(\col)})$.
 This is sub-optimal.
-Indeed, for cases when $X_1$ and $X_2$ are disjoint, we can divide the possible $X$ into $X_1 \symmdiff X_2$ and $X_1 \cap X_2$.
-The elements of $X_1 \symmdiff X_2$ come ``for free'': we can add them or take them away at will.
-Thus we need to find the optimal partition of $X_1 \cap X_2 \cap K$ (for the $\cap K$ we don't need to worry about things which are only common to $X_1$ and $X_2$ and don't appear other places); this is $O(2^{\bad(\col)})$ but shouldn't be bad.
-One can cover the cases when $X_1$ and $X_2$ are not disjoint by iterating $X$ through the single-element sets of $X_1 \cap X_2$.
+Indeed, for cases when $Y_1$ and $Y_2$ are disjoint, we can divide the possible $Y$ into $Y_1 \symmdiff Y_2$ and $Y_1 \cap Y_2$.
+The elements of $Y_1 \symmdiff Y_2$ come ``for free'': we can add them or take them away at will.
+Thus we need to find the optimal partition of $Y_1 \cap Y_2 \cap K$ (for the $\cap K$ we don't need to worry about things which are only common to $Y_1$ and $Y_2$ and don't appear other places); this is $O(2^{\bad(\col)})$ but shouldn't be bad.
+One can cover the cases when $Y_1$ and $Y_2$ are not disjoint by iterating $Y$ through the single-element sets of $Y_1 \cap Y_2$.
 
 \end{proof}
 
-% This corresponds with the original definition of $X$:
+% This corresponds with the original definition of $Y$:
 % \begin{lemma}
 % \[
-%   (X_1 \cup X_2) \cap K = (C_1 \cup C_2) \cap K
+%   (Y_1 \cup Y_2) \cap K = (C_1 \cup C_2) \cap K
 % \]
 % \end{lemma}
 % \begin{proof}
@@ -168,7 +171,7 @@ One can cover the cases when $X_1$ and $X_2$ are not disjoint by iterating $X$ t
 % $C_1 \cap C_2 \subset K_1 \cap K_2$ because anything in both is in each of the cut sets.
 % $C_1 \cap C_2 \supset K_1 \cap K_2$ because anything in each of the cut sets must be in each of $C_1$ and $C_2$.
 % So they are equal.
-% Thus $X_1 \cap X_2 = C_1 \cap C_2$.
+% Thus $Y_1 \cap Y_2 = C_1 \cap C_2$.
 
 
 \section{Computational matters}
@@ -211,23 +214,23 @@ In the second case, $a_{n-1} \leq \minsubrk(T)$ but $\minsubrk(T)$ but may be le
 % leftovers from cleanup
 
 \begin{defn}
-  Let the coloring set $\colorS(T, C)$ where $T$ is a phylogenetic tree and $C$ is a set of colors to be the set of maps $\chi: X \rightarrow C$ where $X \subset L(T)$.
+  Let the coloring set $\colorS(T, C)$ where $T$ is a phylogenetic tree and $C$ is a set of colors to be the set of maps $\chi: Y \rightarrow C$ where $Y \subset L(T)$.
 \end{defn}
 
 
 Kicked out:
 \begin{enumerate}
-  \item $r_1 \in X_1 \cap X$ and $r_2 \in X_2 \cap X$
+  \item $r_1 \in Y_1 \cap Y$ and $r_2 \in Y_2 \cap Y$
 (this is too strong: we are now not worrying about the root ``state'' unless it matters)
 \end{enumerate}
 
 Don't forget!
-$X_1$ and $X_2$ need not sit in $X$.
+$Y_1$ and $Y_2$ need not sit in $Y$.
 
 
 
 
-Let $X^c$ be $X$'s complement in $K$.
+Let $Y^c$ be $Y$'s complement in $K$.
 
 
 \subsection{Notation}
@@ -239,21 +242,21 @@ $J_1 = I_1 \setminus K_2$ and $J_2 = I_2 \setminus K_1$. (these are ones which c
 $O = (K_1 \cap K_2) \setminus K$ (these are the ones which can only arc over)
 
 Explicit descripton:
-We start with our $X$.
-We take every $O_1$ and $O_2$ subsets of $O$ such that $|O_1 \cap O_2| \leq 1$ and $(O_1 \cup O_2) \cap X^c = \emptyset$.
-We also need to make sure that we don't have $O_1$ and $X$ intersecting with a different color when $O_1$ and $O_2$ do.
-Then $X_i = J_i \cup O_i$.
+We start with our $Y$.
+We take every $O_1$ and $O_2$ subsets of $O$ such that $|O_1 \cap O_2| \leq 1$ and $(O_1 \cup O_2) \cap Y^c = \emptyset$.
+We also need to make sure that we don't have $O_1$ and $Y$ intersecting with a different color when $O_1$ and $O_2$ do.
+Then $Y_i = J_i \cup O_i$.
 
-The solution for $X$ is then the union of the best for each $X_i$.
+The solution for $Y$ is then the union of the best for each $Y_i$.
 
 Should do this functorially-- because we might be able to get away with bit strings later.
 
 Two choices of where the color of $(T_1, T_2)$ MRCA root color comes from:
-- $R = K_1 \symmdiff K_2$, in which case $X_1$ and $X_2$ are disjoint, which gives an $|R| 2^{|R|}$.
-- $U = X \cap K_1 \cap K_2$, in which case we have $|U| 2^{|U|}$.
+- $R = K_1 \symmdiff K_2$, in which case $Y_1$ and $Y_2$ are disjoint, which gives an $|R| 2^{|R|}$.
+- $U = Y \cap K_1 \cap K_2$, in which case we have $|U| 2^{|U|}$.
 
 So that could be a $2^{|K_1 \cap K_2|}$ operation.
-We have to do this for every $(\rho, X)$, meaning that the whole machine will have complexity $K \times 2^{|K| + |K_1 \cap K_2|}$.
+We have to do this for every $(\rho, Y)$, meaning that the whole machine will have complexity $K \times 2^{|K| + |K_1 \cap K_2|}$.
 
 Let $\kappa$ be the maximum across edges $e$ of $\|\chi(e)\|$.
 Complete algorithm: $O(n \kappa 2^{|\kappa| + |\kappa_1 \cap \kappa_2|})$
@@ -295,29 +298,29 @@ That is, $\phi(r, C)$ a set of taxa in the tree, including only taxa with the co
 such that the induced coloring is convex and the taxon set is maximal among subsets with these color characteristics.
 
 Now, say that tree is formed of two subtrees which have sub-pairs $(T_1,K_1)$ and $(T_2,K_2)$ and complete rooted solutions for each.
-Say we would like to find a solution for $(\rho, X) \in \opt{K} \times 2^K$.
+Say we would like to find a solution for $(\rho, Y) \in \opt{K} \times 2^K$.
 If a color is in
-Let $R = X \cap (K_1 \symmdiff K_2)$; for these colors we are Really sure where they should come from.
-We take every $X_1,X_2$ pair such that
-- $X_1 \subset K_1$
-- $X_2 \subset K_2$
+Let $R = Y \cap (K_1 \symmdiff K_2)$; for these colors we are Really sure where they should come from.
+We take every $Y_1,Y_2$ pair such that
+- $Y_1 \subset K_1$
+- $Y_2 \subset K_2$
 -
 why would we exclude something that is not cut?
 
-Let $U = X \cap K_1 \cap K_2$; these are the colors which we don't know which tree to take them from.
+Let $U = Y \cap K_1 \cap K_2$; these are the colors which we don't know which tree to take them from.
 Note that $K_1 \cap K_2$
-For every $X_1 \subset K_1$ and $X_2 \subset K_2$ such that $K \ (X_1 \cup X_2) \subset \{\rho\}$ and $X_1 \cap X_2 = X$, we find the solution such that $X \cup X_1$ is excluded in $T_1$ and $X \cup X_2$ is excluded in $T_2$.
+For every $Y_1 \subset K_1$ and $Y_2 \subset K_2$ such that $K \ (Y_1 \cup Y_2) \subset \{\rho\}$ and $Y_1 \cap Y_2 = Y$, we find the solution such that $Y \cup Y_1$ is excluded in $T_1$ and $Y \cup Y_2$ is excluded in $T_2$.
 So don't we have to keep track of the exclusion of every possible bad color subset?
 No, because if a color isn't cut by a
 Some exclusions are trivial, because we just take the
 At the end, each side is going to have to have exclusions for every single bad color.
-The solution for that $X$ is the merge of the best solutions for subsets $X_1 \subset K_1$ and $X_2 \subset K_2$ such that $K \ (X_1 \cup X_2) \subset \{\rho\}$ and $X_1 \cup X_2 = X$.
+The solution for that $Y$ is the merge of the best solutions for subsets $Y_1 \subset K_1$ and $Y_2 \subset K_2$ such that $K \ (Y_1 \cup Y_2) \subset \{\rho\}$ and $Y_1 \cup Y_2 = Y$.
 So that could be a $2^{|K_1 \cap K_2|}$ operation.
-We have to do this for every $(\rho, X)$, meaning that the whole step will have complexity $K \times 2^{|K| + |K_1 \cap K_2|}$.
+We have to do this for every $(\rho, Y)$, meaning that the whole step will have complexity $K \times 2^{|K| + |K_1 \cap K_2|}$.
 
 
 % A weaker but easier to state thing would be to have maps to subsets:
-% Define the Constrained Maximum Agreement Taxon Subset (CMATS) problem for a given $(\chi, e, c)$ where $\chi$ is a leaf coloring and $e$ is an edge and $c \in \chit(e)$ be a taxon set $X$ of maximal size such that $\chi$ restricted to $X$ is convex and $\chi|_X (e) = {c}$.
+% Define the Constrained Maximum Agreement Taxon Subset (CMATS) problem for a given $(\chi, e, c)$ where $\chi$ is a leaf coloring and $e$ is an edge and $c \in \chit(e)$ be a taxon set $Y$ of maximal size such that $\chi$ restricted to $Y$ is convex and $\chi|_Y (e) = {c}$.
 % The diadvantage is that then we fix the original coloring as a global variable, and the range of a subcoloring is then defined with respect to that.
 
 % \bibliography{algotax}
