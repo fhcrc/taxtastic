@@ -67,6 +67,7 @@ We say that a coloring is convex if it has badness equal to zero or one.
 \begin{defn}
   A subcoloring of a leaf coloring is a coloring $\nu: G \rightarrow C$ for $G \subset F$ such that $\nu$ agrees with $\col$ on the domain of $\nu$.
   Let $\subcolS(\col)$ be the set of subcolorings of a given coloring $\col$.
+  Let $\subcolS_D(\col)$ be the set of subcolorings with domain $D$.
 \end{defn}
 These are partially ordered by inclusion of domains.
 The size of a subcoloring is defined to be the size of its domain.
@@ -113,10 +114,16 @@ It is not a general improvement over their bound, but rather a better bound for 
 \begin{defn}
   Define a solution map for a rooted subtree $T$ of a rooted colored tree $(S, \col)$ to be a map
   \[
-  \phi: 2^{\cut(T)} \rightarrow \subcolS(\col)
+  \phi: 2^{\cut(T)} \rightarrow \subcolS_{L(T)}(\col)
   \]
   to be a map from subsets of $\cut(T)$ to their correspoinding subsolutions.
 \end{defn}
+
+If $\phi$ is a solution map for a rooted subtree $T$ of a rooted colored tree $(S, \col)$, and $T'$ is a rooted subtree of $T$, then there exists a well-defined notion of the restriction of $\phi$ to $T'$
+\[
+  \phi_{T'}: 2^{\cut(T')} \rightarrow \subcolS_{L(T')}(\col).
+\]
+
 
 From the above definition of a subsolution, $\phi(Y)$ will be a leaf coloring with each of the colors in $Y$ in its image.
 
@@ -131,6 +138,7 @@ In fact, we will show that the solution map for a given internal node can be con
 this will demonstrate the proposition because there are $O(n)$ internal nodes and the leaf solution maps are trivial.
 
 For the recursion, assume that subtree $T$ is composed of two rooted subtrees $T_1$ and $T_2$.
+
 The correctness of the recursion is simple: every optimal solution can be broken down into elements of solution maps for the subtrees.
 Let $K = \cut(T)$, $K_1 = \cut(T_1)$ and $K_2 = \cut(T_2)$.
 By the recursion, these rooted trees $T_1$ and $T_2$ have solution maps $\phi_1$ and $\phi_2$, respectively.
