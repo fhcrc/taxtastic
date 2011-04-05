@@ -3,10 +3,13 @@
 % my notation
 \newcommand{\col}{\chi}
 \newcommand{\colt}{\tilde{\chi}}
-\newcommand{\subcol}{\hat{\chi}}
+\newcommand{\subcol}{\chi'}
+\newcommand{\altcol}{\chi^{\dag}}
+\newcommand{\subcolt}{\tilde{\chi}'}
 \newcommand{\symmdiff}{\Delta}
 \newcommand{\colorS}{\mathcal{C}}
 \newcommand{\subcolS}{\mathsf{Sub}}
+\newcommand{\subcolST}{\subcolS_{L(T)}}
 \newcommand{\treecut}{\Psi}
 \newcommand{\cut}{\kappa}
 \newcommand{\bad}{\beta}
@@ -28,6 +31,7 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{problem}{Problem}
 \newtheorem{defn}{Definition}
+\newtheorem{obs}{Observation}
 
 
 \begin{document}
@@ -102,30 +106,70 @@ In this section we describe a fixed parameter algorithm that is exponential in a
 It is not a general improvement over their bound, but rather a better bound for the more specific problem investigated here.
 
 
-\subsubsection{Recursion}
+\subsubsection{Subsolution maps}
+
+For the purposes of this section, assume a fixed leaf-colored tree $(S, \col)$ for which we would like to find an optimal subcoloring.
+Because of this fixing, we will omit the specification of the coloring $\col$.
+If the tree is not rooted, root it arbitrarily.
 
 \begin{defn}
-  Let $(S, \col)$ be a colored subtree and let $T$ be a rooted subtree of $S$.
-  Define $\cut(T)$ to be the colors of $\col$ cut by the root edge of $T$ as it sits inside $S$.
+  Given $T$ be a rooted subtree of $S$, define $\cut(T)$ to be the colors of $\col$ cut by the root edge of $T$ as it sits inside $S$.
 \end{defn}
 
-Let $\subcol$ be a solution of Problem~\ref{prob:subcolor} for $(S, \col)$ and $T$ a rooted subtree of $S$.
-Now, the image $C = \subcol(L(T))$ is a subset of $\cut(T)$.
-The subcoloring restricted to $L(T)$ must be optimal for the colored rooted tree $(T, \col \|_{L(T)})$.
-BUT-- we also have to make it clear that the root must be a certain color as well, no?
+%%% For a rooted subtree $T$ we say that a subcoloring in
+% \begin{defn}
+%   Let $\subcol$ be a solution of Problem~\ref{prob:subcolor} for $(S, \col)$ and $T$ a rooted subtree of $S$.
+%   Now, the image $C = \subcol(L(T))$ is a subset of $\cut(T)$.
+%   The subcoloring restricted to $L(T)$ must be optimal for the colored rooted tree $(T, \col \|_{L(T)})$.
+% \end{defn}
 
 \begin{defn}
-  Given a rooted subtree $T$ of a rooted colored tree $(S, \col)$, define a subsolution for a rooted subtree $T$ and $Y \subset \cut(T)$ to be a maximal element $\phi(Y)$ of $\subcolS_{L(T)}(\col)$ which includes at least one taxon with each color in $Y$.
+  For a rooted subtree $T$ we say that a subcoloring $\subcol$ in $\subcolST$ is convex on $T$ for above color $c$ if $\subcol$ is convex for $T$ when a leaf of color $c$ is attached to the root of $T$.
 \end{defn}
 
 \begin{defn}
-  Define a solution map for a rooted subtree $T$ of a rooted colored tree $(S, \col)$ to be a map
+  \label{defn:subsolution}
+  Given a rooted subtree $T$ of a rooted colored tree $(S, \col)$, define a subsolution for a rooted subtree $T$, $X \subset \cut(T)$, and $c \in \cut(X)$ to be an element $\subcol \in \subcolST$ such that
+  \begin{itemize}
+    \item $\subcol$ is convex with above color $c$
+    \item the range of $\subcol$ intersected with $K$ is $X$
+    \item $\subcol$ is a subcoloring of maximal size among such subcolorings.
+  \end{itemize}
+\end{defn}
+
+\begin{prop}
+  \label{prop:subsolution}
+  Solutions to Problem~\ref{prob:subcolor} restricted to rooted subtrees are rooted subsolutions.
+\end{prop}
+
+The proof is ``by definition,'' but is written out here for completeness.
+
+\begin{proof}
+  Let $\subcol$ be a solution to Problem~\ref{prob:subcolor}.
+  Let $T$ be a rooted subtree, and $e$ be the edge above $T$.
+  Pick a color $c$ as follows.
+  $|\subcolt(e)|$ must be one or zero by definition of convexity.
+  If it is a single element, let $c$ be that element.
+  If it is empty, then find the shortest path from $e$ to some edge $e'$ with an assigned color in $\subcolt$; set $c$ to be that color.
+  Let $X$ be the colors of $\subcol$ intersected with $\cut(T)$.
+  Let $\altcol$ be a subsolution for $T$, $X$, and $c$.
+
+  $\altcol$ must be the same size as $\subcol|_T$, $\subcol$ restricted to the leaves of $T$.
+  Indeed, replacing the restriction of $\subcol$ to the leaves of $T$ with $\altcol$ will result in a convex coloring, showing that $\altcol$ cannot be bigger than $\subcol|_T$.
+  Also, $\subcol|_T$ satisfies the first two conditions of Definition~\ref{defn:subsolution} and so cannot be bigger than $\altcol$.
+\end{proof}
+
+\begin{defn}
+  Define a solution map for a rooted subtree $T$ to be a map
   \[
-  \phi: 2^{\cut(T)} \rightarrow \subcolS_{L(T)}(\col)
+    \varphi: \cut(T) \times 2^{\cut(T)} \rightarrow \subcolST
   \]
-  to be a map from subsets of $\cut(T)$ to their correspoinding subsolutions.
+  to be a map from above colors and subsets of $\cut(T)$ to their correspoinding subsolutions.
 \end{defn}
-From the above definition of a subsolution, $\phi(Y)$ will be a leaf coloring with each of the colors in $Y$ in its image.
+We emphasize that the image of a subsolution map $\varphi(c,X)$ must contain $X$, and that this inclusion may be strict.
+
+
+\subsubsection{Recursion}
 
 \begin{prop}
 Problem~\ref{prob:subcolor} can be solved for a rooted colored tree $(S, \col)$ with $n$ leaves in $O(n 2^{\bad(\col)})$ time.
