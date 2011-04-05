@@ -10,6 +10,7 @@
 \newcommand{\colorS}{\mathcal{C}}
 \newcommand{\subcolS}{\mathsf{Sub}}
 \newcommand{\subcolST}{\subcolS_{L(T)}}
+\newcommand{\subunion}{\sqcup}
 \newcommand{\treecut}{\Psi}
 \newcommand{\cut}{\kappa}
 \newcommand{\bad}{\beta}
@@ -129,13 +130,14 @@ If the tree is not rooted, root it arbitrarily.
 
 \begin{defn}
   \label{defn:subsolution}
-  Given a rooted subtree $T$ of a rooted colored tree $(S, \col)$, define a subsolution for a rooted subtree $T$, $X \subset \cut(T)$, and $c \in \cut(X)$ to be an element $\subcol \in \subcolST$ such that
+  Given a rooted subtree $T$ of a rooted colored tree $(S, \col)$, define a subsolution for a rooted subtree $T$, $X \subset \cut(T)$, and $c \in X$ to be an element $\subcol \in \subcolST$ such that
   \begin{itemize}
     \item $\subcol$ is convex with above color $c$
     \item the range of $\subcol$ intersected with $K$ is $X$
     \item $\subcol$ is a subcoloring of maximal size among such subcolorings.
   \end{itemize}
 \end{defn}
+The color $c$ will be called the ``above'' color.
 
 \begin{prop}
   \label{prop:subsolution}
@@ -160,70 +162,63 @@ The proof is ``by definition,'' but is written out here for completeness.
 \end{proof}
 
 \begin{defn}
+  Let $\Delta(T) = \{(c,X) \in \cut(T) \times 2^{\cut(T)} | c \in X\}$.
   Define a solution map for a rooted subtree $T$ to be a map
   \[
-    \varphi: \cut(T) \times 2^{\cut(T)} \rightarrow \subcolST
+    \varphi: \Delta(T) \rightarrow \subcolST
   \]
   to be a map from above colors and subsets of $\cut(T)$ to their correspoinding subsolutions.
 \end{defn}
 We emphasize that the image of a subsolution map $\varphi(c,X)$ must contain $X$, and that this inclusion may be strict.
 
+Given two solution maps on disjoint subtrees, there is a well-defined notion of combining these solution maps which we denote $\subunion$.
+
 
 \subsubsection{Recursion}
 
 \begin{prop}
-Problem~\ref{prob:subcolor} can be solved for a rooted colored tree $(S, \col)$ with $n$ leaves in $O(n 2^{\bad(\col)})$ time.
+Problem~\ref{prob:subcolor} can be solved for a rooted colored tree $(S, \col)$ with $n$ leaves in $O(n \, \bad(\col) \, (d-1)^{\bad(\col)-1})$ time.
 \end{prop}
 
 \begin{proof}
+
+A solution will be constructed by making subsolution maps for every rooted subtree of $S$.
+This will give a solution to Problem~\ref{prob:subcolor} by Proposition~\ref{prop:subsolution}.
 
 The proof will proceed by constructing solution maps for all subtrees $T$ of $S$ by recursion.
 In fact, we will show that the solution map for a given internal node can be constructed from the maps for the nodes below it in time $2^{\bad(\col)}$;
 this will demonstrate the proposition because there are $O(n)$ internal nodes and the leaf solution maps are trivial.
 
-For the recursion, assume that subtree $T$ is composed of two rooted subtrees $T_1$ and $T_2$.
+Fix a rooted subtree $T$ of $S$.
+Let $e$ be the edge above $T$, and say that the direct descendants of the root edge of $T$ are subtrees $T_1,\ldots,T_r$.
+By recursion, we assume that $\varphi_i$ has been found for each $T_i$.
 
-The correctness of the recursion is simple: every optimal solution can be broken down into elements of solution maps for the subtrees.
-Let $K = \cut(T)$, $K_1 = \cut(T_1)$ and $K_2 = \cut(T_2)$.
-By the recursion, these rooted trees $T_1$ and $T_2$ have solution maps $\phi_1$ and $\phi_2$, respectively.
+To define $\varphi(c,X)$, recall that by Proposition~\ref{prop:subsolution} every solution is composed of subsolutions.
+Therefore a $\varphi(c,X)$ can be found by finding the optimal $(c_1,X_1),\ldots,(c_r,X_r)$ such that $\varphi_1(c_1,X_1) \subunion \cdots \subunion \varphi_r(c_r,X_r)$ is legal and is of maximal size.
+Let
+\[
+  B = \bigcup_{i,j} \left( \cut(T_i) \cap \cut(T_j) \right),
+\]
+which will be called the ``between'' colors.
 
-We would like to find a solution $\phi(Y)$ for any $Y \in 2^K$.
-This solution will be determined by considering $Y_1 \subset K_1$ and $Y_2 \subset K_2$ such that $Y = (Y_1 \cup Y_2) \cap K$.
-The map $\phi(Y_1) \sqcup \phi(Y_2)$ is well defined exactly when $|Y_1 \cap Y_2| \leq 1$.
-Once these choices are made the value of $\phi(Y)$.
-The optimal choice of $Y_1$ and $Y_2$ will be the one that maximizes the size of $\phi(Y_1) \sqcup \phi(Y_2)$.
-Every optimal solution can be expressed in this form by definition.
+To find the optimal $(c_i, X_i)$, assign each $b$ of $B \cup \{c\}$ in turn to be the central node color.
+Given this choice, any color found in only one of the subtrees should be assigned to that subtree, i.e. $X_i \setminus B = K_i \cap (X \setminus B)$.
+Given these choices, we need to select the elements of $X_i \cap B$ such that
+\[
+  \bigcup_{i} (X_i \cap B) = X \cap B
+\]
+and $X_i \cap X_j \subset \{b\}$ for each $i$ and $j$.
+That is, every color in $(X \cap B) \setminus \{b\}$ must occur exactly once in the union of the $X_i$.
+To find the optimal such choice, simply try every assignment of the $(X \cap B) \setminus \{b\}$ to the $X_i$, and for each assignment pick at least one of the $X_i$ to have $b$ in it.
 
-Rather than looking for an optimal solution for a given $Y$, we will evaluate every legal $Y_1$ and $Y_2$ and assign the value of that pair to the corresponding $Y$.
-If $Y_1$ and $Y_2$ are disjoint, then set $Y$ to be $(Y_1 \cup Y_2) \cap K$: anything in them can be used.
-If $Y_1$ and $Y_2$ intersect in a single element $c$, then set $Y$ to $\{c\} \cap K$.
-Note that in this latter case we have $Y_1 = Y_2 = \{c\}$.
+Algorithmically, fill out a matrix with the $r$ subtrees as rows and the colors of $(X \cap B) \setminus \{b\}$ as the columns.
+Put a gap at $(i,j)$ if the color $j$ does not appear in subtree $i$.
+Then assign ones and zeroes such that the column sums are exactly one.
 
-A naive implementation of this recursion will check every subset of $Y_1$ and $Y_2$; therefore every node is going to have complexity $O(2^{2 \bad(\col)})$.
-This is sub-optimal.
-Indeed, for cases when $Y_1$ and $Y_2$ are disjoint, we can divide the possible $Y$ into $Y_1 \symmdiff Y_2$ and $Y_1 \cap Y_2$.
-The elements of $Y_1 \symmdiff Y_2$ come ``for free'': we can add them or take them away at will.
-Thus we need to find the optimal partition of $Y_1 \cap Y_2 \cap K$ (for the $\cap K$ we don't need to worry about things which are only common to $Y_1$ and $Y_2$ and don't appear other places); this is $O(2^{\bad(\col)})$ but shouldn't be bad.
-One can cover the cases when $Y_1$ and $Y_2$ are not disjoint by iterating $Y$ through the single-element sets of $Y_1 \cap Y_2$.
-
+The upper bound for the number of subtrees is $d-1$, and these sets are of at most of size $\bad-1$.
+In principle we must investigate every disjoint subset of size $d-1$; the number of these subsets is bounded above by $(d-1)^{\bad-1}$.
+The choice for $b$ adds on another coefficent of $\bad$ to the outside, and we must do this at every internal node, of which there are $n$.
 \end{proof}
-
-% This corresponds with the original definition of $Y$:
-% \begin{lemma}
-% \[
-%   (Y_1 \cup Y_2) \cap K = (C_1 \cup C_2) \cap K
-% \]
-% \end{lemma}
-% \begin{proof}
-%   $\subset$ is clear.
-%   For $\supset$, say a $c \in C_1 \cap K$.
-%   Thus $c \in L(T) \setminus (C_1 \cup C_2)$, and thus $c \in K_1$.
-% \end{proof}
-
-% $C_1 \cap C_2 \subset K_1 \cap K_2$ because anything in both is in each of the cut sets.
-% $C_1 \cap C_2 \supset K_1 \cap K_2$ because anything in each of the cut sets must be in each of $C_1$ and $C_2$.
-% So they are equal.
-% Thus $Y_1 \cap Y_2 = C_1 \cap C_2$.
 
 
 \section{Computational matters}
