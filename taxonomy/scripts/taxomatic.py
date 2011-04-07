@@ -60,6 +60,8 @@ log = logging
 
 import Taxonomy
 from Taxonomy.package import manifest_name, package_contents, write_config
+from Taxonomy import __version__
+
 
 class SimpleHelpFormatter(IndentedHelpFormatter):
     """Format help with indented section bodies.
@@ -118,7 +120,7 @@ def main():
         sys.exit(1)
 
     parser = OptionParser(usage='',
-                          version="$Id$",
+                          version=__version__,
                           formatter=SimpleHelpFormatter())
 
     parser.set_defaults(
