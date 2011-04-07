@@ -3,10 +3,8 @@ import json, sys, os, string, argparse, subprocess, re
 from string import Template
 from Bio import SeqIO, AlignIO
 
-# TODO: Fix error associated with SeqRecord; see issue https://github.com/fhcrc/taxtastic/issues#issue/16
-
-# from Bio.Seq import Seq, SeqRecord
 from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 class Alignment(object):
     """
