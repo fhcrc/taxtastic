@@ -23,6 +23,7 @@
 \newcommand{\opt}[1]{\overset{\circ}{#1}}
 \newcommand{\mlst}{\operatorname{mlst}}
 \newcommand{\Bell}{\operatorname{Bell}}
+\newcommand{\diam}{\operatorname{diam}}
 
 % others' notation
 \newcommand{\nbadcolors}{n_c^*}
@@ -37,13 +38,15 @@
 
 \begin{document}
 
-% \section{Introduction}
-% explain induced subtree and rooted subtree
-% L(T), E(T), N(T)
-% power set notation
+\section{Introduction}
+
+explain induced subtree and rooted subtree
+
+Given a tree $T$, let $N(T), E(T), and L(T)$ denote the nodes, edges, and leaves of $T$.
+
+Given a set $S$, let $2^S$ denote the set of subsets of $S$.
 
 \section{Finding a tree that does not violate taxonomic assignments}
-Define minimal deletion to be the minimal number of taxa that have to be deleted in order to have a tree that is concordant with the taxonomic assignments.
 
 \subsection{Agreement with a complete taxonomic tree}
 This is the same as MCST, and is hard (french)
@@ -72,7 +75,7 @@ Define the badness $\bad(\col)$ of a coloring $\col$ to be $\max_{e \in E(T)} |\
 We say that a coloring is convex if it has badness equal to zero or one.
 
 \begin{defn}
-  A subcoloring of a leaf coloring is a coloring $\nu: G \rightarrow C$ for $G \subset F$ such that $\nu$ agrees with $\col$ on the domain of $\nu$.
+  A subcoloring of a leaf coloring $\chi: F \rightarrow C$ is a coloring $\nu: G \rightarrow C$ with $G \subset F$ such that $\nu$ agrees with $\col$ on the domain of $\nu$.
   Let $\subcolS(\col)$ be the set of subcolorings of a given coloring $\col$.
   Let $\subcolS_D(\col)$ be the set of subcolorings with domain $D$.
 \end{defn}
@@ -114,7 +117,7 @@ Because of this fixing, we will omit the specification of the coloring $\col$.
 If the tree is not rooted, root it arbitrarily.
 
 \begin{defn}
-  Given $T$ be a rooted subtree of $S$, define $\cut(T)$ to be the colors of $\col$ cut by the root edge of $T$ as it sits inside $S$.
+  Given $T$ a rooted subtree of $S$, define $\cut(T)$ to be the colors of $\col$ cut by the root edge of $T$ as it sits inside $S$.
 \end{defn}
 
 %%% For a rooted subtree $T$ we say that a subcoloring in
@@ -130,14 +133,13 @@ If the tree is not rooted, root it arbitrarily.
 
 \begin{defn}
   \label{defn:subsolution}
-  Given a rooted subtree $T$ of a rooted colored tree $(S, \col)$, define a subsolution for a rooted subtree $T$, $X \subset \cut(T)$, and $c \in X$ to be an element $\subcol \in \subcolST$ such that
+  Given a rooted subtree $T$ of a rooted colored tree $(S, \col)$, define a subsolution for a rooted subtree $T$, $X \subset \cut(T)$, and $c \in \cut(T)$ to be an element $\subcol \in \subcolST$ such that
   \begin{itemize}
     \item $\subcol$ is convex with above color $c$
     \item the range of $\subcol$ intersected with $K$ is $X$
     \item $\subcol$ is a subcoloring of maximal size among such subcolorings.
   \end{itemize}
 \end{defn}
-The color $c$ will be called the ``above'' color.
 
 \begin{prop}
   \label{prop:subsolution}
@@ -148,28 +150,30 @@ The proof is ``by definition,'' but is written out here for completeness.
 
 \begin{proof}
   Let $\subcol$ be a solution to Problem~\ref{prob:subcolor}.
-  Let $T$ be a rooted subtree, and $e$ be the edge above $T$.
+  Let $T$ be a rooted subtree, and let $e$ be the edge above $T$.
   Pick a color $c$ as follows.
   $|\subcolt(e)|$ must be one or zero by definition of convexity.
   If it is a single element, let $c$ be that element.
   If it is empty, then find the shortest path from $e$ to some edge $e'$ with an assigned color in $\subcolt$; set $c$ to be that color.
+
   Let $X$ be the colors of $\subcol$ intersected with $\cut(T)$.
   Let $\altcol$ be a subsolution for $T$, $X$, and $c$.
 
-  $\altcol$ must be the same size as $\subcol|_T$, $\subcol$ restricted to the leaves of $T$.
+  $\altcol$ must be the same size as $\subcol$ restricted to the leaves of $T$ (denoted $\subcol|_T$).
   Indeed, replacing the restriction of $\subcol$ to the leaves of $T$ with $\altcol$ will result in a convex coloring, showing that $\altcol$ cannot be bigger than $\subcol|_T$.
   Also, $\subcol|_T$ satisfies the first two conditions of Definition~\ref{defn:subsolution} and so cannot be bigger than $\altcol$.
 \end{proof}
 
 \begin{defn}
-  Let $\Delta(T) = \{(c,X) \in \cut(T) \times 2^{\cut(T)} | c \in X\}$.
   Define a solution map for a rooted subtree $T$ to be a map
   \[
-    \varphi: \Delta(T) \rightarrow \subcolST
+    \varphi: \cut(T) \times 2^{\cut(T)} \rightarrow \subcolST
   \]
-  to be a map from above colors and subsets of $\cut(T)$ to their correspoinding subsolutions.
+  to be a map from above colors and subsets of $\cut(T)$ to their corresponding subsolutions.
 \end{defn}
-We emphasize that the image of a subsolution map $\varphi(c,X)$ must contain $X$, and that this inclusion may be strict.
+We emphasize that the image of a subsolution map $\varphi(c,X)$ must contain $X$, and that this inclusion may be strict (i.e. if there are colors that appear only in $T$).
+% Note that it is not enough to just look at the c such that c \in X: imagine a rooted caterpillar that is all red except for a blue at the very end.
+% There the optimal is to delete that blue when c = blue and X = {red}.
 
 Given two solution maps on disjoint subtrees, there is a well-defined notion of combining these solution maps which we denote $\subunion$.
 
@@ -177,7 +181,8 @@ Given two solution maps on disjoint subtrees, there is a well-defined notion of 
 \subsubsection{Recursion}
 
 \begin{prop}
-Problem~\ref{prob:subcolor} can be solved for a rooted colored tree $(S, \col)$ with $n$ leaves in $O(n \, \bad(\col) \, (d-1)^{\bad(\col)-1})$ time.
+Say $S$ is a tree such that each node has at most $d$ descendants, and $\col$ is a leaf coloring of $T$ of badness $\beta$.
+Problem~\ref{prob:subcolor} can be solved for $(S, \col)$ with $n$ leaves in $O(n \, \bad \, 2^d \, d^{\bad-1})$ time.
 \end{prop}
 
 \begin{proof}
@@ -191,69 +196,86 @@ this will demonstrate the proposition because there are $O(n)$ internal nodes an
 
 Fix a rooted subtree $T$ of $S$.
 Let $e$ be the edge above $T$, and say that the direct descendants of the root edge of $T$ are subtrees $T_1,\ldots,T_r$.
-By recursion, we assume that $\varphi_i$ has been found for each $T_i$.
-
-To define $\varphi(c,X)$, recall that by Proposition~\ref{prop:subsolution} every solution is composed of subsolutions.
-Therefore a $\varphi(c,X)$ can be found by finding the optimal $(c_1,X_1),\ldots,(c_r,X_r)$ such that $\varphi_1(c_1,X_1) \subunion \cdots \subunion \varphi_r(c_r,X_r)$ is legal and is of maximal size.
+By recursion, we assume that a $\varphi_i$ has been found for each $T_i$.
 Let
 \[
   B = \bigcup_{i,j} \left( \cut(T_i) \cap \cut(T_j) \right),
 \]
 which will be called the ``between'' colors.
 
+To define $\varphi(c,X)$, recall that by Proposition~\ref{prop:subsolution} every solution is composed of subsolutions.
+Therefore a $\varphi(c,X)$ can be found by finding the optimal $(c_1,X_1),\ldots,(c_r,X_r)$ such that $\varphi_1(c_1,X_1) \subunion \cdots \subunion \varphi_r(c_r,X_r)$ is legal and is of maximal size.
+
 To find the optimal $(c_i, X_i)$, assign each $b$ of $B \cup \{c\}$ in turn to be the central node color.
-Given this choice, any color found in only one of the subtrees should be assigned to that subtree, i.e. $X_i \setminus B = K_i \cap (X \setminus B)$.
+Note that any color found in only one of the subtrees should be assigned to that subtree, i.e. $X_i \setminus B = K_i \cap (X \setminus B)$.
 Given these choices, we need to select the elements of $X_i \cap B$ such that
 \[
   \bigcup_{i} (X_i \cap B) = X \cap B
 \]
 and $X_i \cap X_j \subset \{b\}$ for each $i$ and $j$.
 That is, every color in $(X \cap B) \setminus \{b\}$ must occur exactly once in the union of the $X_i$.
-To find the optimal such choice, simply try every assignment of the $(X \cap B) \setminus \{b\}$ to the $X_i$, and for each assignment pick at least one of the $X_i$ to have $b$ in it.
+To find the optimal such choice, simply try every assignment of the $(X \cap B) \setminus \{b\}$ to the $X_i$; for every such assignment pick the assignment of $b$ to some set of $X_i$ maximizing the size of the resulting coloring.
 
 Algorithmically, fill out a matrix with the $r$ subtrees as rows and the colors of $(X \cap B) \setminus \{b\}$ as the columns.
 Put a gap at $(i,j)$ if the color $j$ does not appear in subtree $i$.
 Then assign ones and zeroes such that the column sums are exactly one.
 
-The upper bound for the number of subtrees is $d-1$, and these sets are of at most of size $\bad-1$.
-In principle we must investigate every disjoint subset of size $d-1$; the number of these subsets is bounded above by $(d-1)^{\bad-1}$.
-The choice for $b$ adds on another coefficent of $\bad$ to the outside, and we must do this at every internal node, of which there are $n$.
+The upper bound for the number of subtrees is $d$, and these sets $X_i$ are of size at most $\bad$.
+In principle we must investigate every disjoint subset $B \setminus \{b\}$; the number of these subsets is bounded above by $d^{\bad}$.
+The choice for $b$ adds on another coefficent of $\bad$ to the outside, and the optimal assignment of $b$ to the $X_i$ gives another coefficient of $2^\bad$.
+This procedure must be performed at every internal node, of which there are $n-1$.
 \end{proof}
-
-
-\section{Computational matters}
 
 Rerooting at the max $K$ will reduce the amount of computation.
 
 \section{Taxonomic rerooting}
 
+We would like to find a rooting for a phylogenetic tree that is concordant with the taxonomy, i.e. such that the root of the tree is a node at the highest taxonomic level.
+If the phylogeny and the taxonomy agree at the highest level divisions, there will be only one such node.
+We show here that this node can be found in a number of steps that scales linear with the number of taxa.
+
 Given a taxonomic identifier $u$, let $\rk(u)$ be the rank of $u$ in the taxonomic hierarchy.
 Given a set of taxonomic identifiers $U$, let $\mrca(U)$ denote the most recent common ancestor of the identifiers in $U$.
 By an abuse of notation, we also let $\rk(U)$ signify $\rk(\mrca(U))$.
 
+The following lemma is clear.
 \begin{lemma}
   \[
   \rk(A \cup B) \geq \max(\rk(A),\rk(B))
   \]
+\qed
 \end{lemma}
 
-Given $x$ a node of $T$, say $\phi(x;T)$ are the trees obtained by deleting $x$ from $T$.
-Define $\subrk(x;T)$ to be $\max_{S \in L(\treecut(x;T))} \rk(S)$.
+Given $x$ a node of $T$, say $\treecut(x;T)$ are the trees obtained by deleting $x$ from $T$.
+Define $\subrk(x;T)$ to be $\max_{S \in L(\treecut(x;T))} \rk(S)$, the maximum rank of the root nodes of the subtrees of $T$ when rooted at $x$.
 
-Let
-\[
-\minsubrk(T) = \min_{x \in N(T)} \subrk(x;T)
-\]
+\begin{defn}
+  A node $y \in N(T)$ is a \emph{taxonomic root} of $T$ if
+  \[
+    \subrk(y;T) = \min_{x \in N(T)} \subrk(x;T)
+  \]
+  The rank of such a node will be denoted $\minsubrk(T)$.
+\end{defn}
 
-Given $x \in N(T)$, let ${A_1,\cdots,A_n} = \treecut(x;T)$, and that
-\[
-  (a_1,\cdots,a_n) = (\rk(A_1), \cdots, \rk(A_n))
-\]
-assume WLOG that $a_1 \leq a_2 \leq \cdots \leq a_n$.
+Let $\diam(T)$ be the diameter of $T$.
 
-There are two cases: $a_{n-1} = a_n$ and $a_{n-1} < a_n$.
-In the first case, we know that $\minsubrk(T) = a_{n-1} = a_n$ because any direction we travel will leave one of the $a_i$'s intact, which will act as a lower bound for $\minsubrk(T)$.
-In the second case, $a_{n-1} \leq \minsubrk(T)$ but $\minsubrk(T)$ but may be less than $a_n$, which we can discover by moving towards it.
+\begin{prop}
+A taxonomic root for a tree $T$ with $n$ leaves can be found by an algorithm which makes at most $\diam(T)$ steps.
+\end{prop}
+
+\begin{proof}
+  Start at an arbitrary $x \in N(T)$.
+  Let ${A_1,\cdots,A_n} = \treecut(x;T)$, and let
+  \[
+    (a_1,\cdots,a_n) = (\rk(A_1), \cdots, \rk(A_n))
+  \]
+  assume WLOG that $a_1 \leq a_2 \leq \cdots \leq a_n$.
+
+  There are two cases: $a_{n-1} = a_n$ and $a_{n-1} < a_n$.
+  In the first case, we know that $\minsubrk(T) = a_{n-1} = a_n$ because any direction we travel will leave one of the $a_i$'s intact, which will act as a lower bound for $\minsubrk(T)$.
+  In the second case, $a_{n-1} \leq \minsubrk(T)$ but $\minsubrk(T)$ but may be less than $a_n$, which we can discover by moving towards it.
+  Because stepping in this direction never backtracks, this algorithm can make at most $\diam(T)$ steps.
+\end{proof}
 
 
 \end{document}
