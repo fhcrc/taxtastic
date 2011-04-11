@@ -1,4 +1,3 @@
-import ConfigParser
 import logging
 import os
 import time
@@ -10,13 +9,14 @@ from collections import defaultdict
 
 log = logging
 
-PACKAGE_VERSION = 0
+FORMAT_VERSION = '1.0' 
 
-manifest_name = 'CONTENTS.json'
-phylo_model_file = 'phylo_model.json'
+MANIFEST_NAME = 'CONTENTS.json'
+PHYLO_MODEL_FILE = 'phylo_model.json'
 
-package_contents = {
-    'metadata':['create_date','author','description','package_version','empirical_frequencies'],
+PACKAGE_CONTENTS = {
+    'metadata':['create_date','author','description','package_version',
+                'empirical_frequencies','locus','format_version'],
     'files':['tree_file','tree_stats','aln_fasta','aln_sto',
              'profile','seq_info','taxonomy','mask','phylo_model_file'],
     'md5':[]
@@ -54,44 +54,57 @@ class Refpkg:
         pass
 
         
-def create(options,
-           manifest_name=manifest_name,
-           package_contents=package_contents,
-           phylo_model_file=phylo_model_file):
+def create(arguments,
+           manifest_name=MANIFEST_NAME,
+           package_contents=PACKAGE_CONTENTS,
+           phylo_model_file=PHYLO_MODEL_FILE,
+           format_version=FORMAT_VERSION):
 
     """
     Create the reference package (a directory with a manifest named
     `manifest_name`).
 
-     * options - output of optparse.OptionParser.parse_args (or
+     * arguments - output of argparse.ArgumentParser.parse_args (or
        presumably any other object with the required attributes:
        [TODO: list required attributes here])
-     * manifest_name - name of the JSON-format manifest file. Uses
-       Taxonomy.package.manifest_name by default.
-     * package_contents - A dict defining sections and contents of
-       each. Uses Taxonomy.package.package_contents by default.
-     * phylo_model_file - Names the JSON format file containing the
-       phylo model data; uses Taxonomy.package.phylo_model_file by default.
+     * MANIFEST_NAME - name of the JSON-format manifest file. Uses
+       taxonomy.package.MANIFEST_NAME by default.
+     * PACKAGE_CONTENTS - A dict defining sections and contents of
+       each. Uses taxonomy.package.PACKAGE_CONTENTS by default.
+     * PHYLO_MODEL_FILE - Names the JSON format file containing the
+       PHYLO MODEL DATA; uses taxonomy.package.PHYLO_MODEL_FILE by default.
     """
 
-    pkg_dir = options.package_name
+    pkg_dir = arguments.package_name
 
     os.mkdir(pkg_dir)
     manifest = os.path.join(pkg_dir, manifest_name)
     optdict = defaultdict(dict)
+
+    # Add fields and values for the metadata section.
     optdict['metadata']['create_date'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    # locus is required
+    optdict['metadata']['locus'] = arguments.locus
+    # format_version is a module-level constant
+    optdict['metadata']['format_version'] = format_version
+    if arguments.description:
+        optdict['metadata']['description'] = arguments.description
+    if arguments.author:
+        optdict['metadata']['author'] = arguments.author
+    if arguments.package_version:
+        optdict['metadata']['package_version'] = arguments.package_version
 
     # phylo_model_file is part of the package, but not a command-line
     # argument; write out the phylo model file in JSON format, but
     # only if tree_stats was specified as an argument.
-    if options.tree_stats:
+    if arguments.tree_stats:
         phylo_model_pth = os.path.join(pkg_dir, phylo_model_file)
 
-        parser = StatsParser(options.tree_stats)
+        parser = StatsParser(arguments.tree_stats)
         success = parser.parse_stats_data()
 
         if not success:
-            raise ConfigError("Unable to create %s from %s." % (phylo_model_pth, options.tree_stats))
+            raise ConfigError("Unable to create %s from %s." % (phylo_model_pth, arguments.tree_stats))
 
         parser.write_stats_json(phylo_model_pth)
 
@@ -105,7 +118,7 @@ def create(options,
         if fname == 'phylo_model_file':
             continue
 
-        pth = getattr(options, fname)
+        pth = getattr(arguments, fname)
         if pth:
             shutil.copy(pth, pkg_dir)
             optdict['files'][fname] = os.path.split(pth)[1]
@@ -321,7 +334,7 @@ class StatsParser(object):
 
         regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of nucleotides substitution:\s+(\w+).*Number of categories:\s+(\d+).*Gamma shape parameter:\s+(\d+\.\d+).*A <-> C\s+(\d+\.\d+).*A <-> G\s+(\d+\.\d+).*A <-> T\s+(\d+\.\d+).*C <-> G\s+(\d+\.\d+).*C <-> T\s+(\d+\.\d+).*G <-> T\s+(\d+\.\d+)',
                            re.M|re.DOTALL)
-        re_datatype = re.compile('.*Nucleotides frequencies.*', re.M|re.DOTALL)
+        #re_datatype = re.compile('.*Nucleotides frequencies.*', re.M|re.DOTALL)
 
         if (regex.match(self.input_text)):
             self.stats_values['program'] = regex.match(self.input_text).group(1) # program

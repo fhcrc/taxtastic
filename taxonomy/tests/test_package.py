@@ -4,17 +4,12 @@ import sys
 import os
 import unittest
 import logging
-import itertools
-import sqlite3
-import shutil
-import time
 import pprint
 import config
-import Taxonomy
 import collections
 import json
 
-from Taxonomy.package import StatsParser
+from taxonomy.package import StatsParser
 
 log = logging
 
