@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """\
-taxomatic.py
-============
+taxtastic
+=========
 
 Usage: %prog action <options>
 
@@ -22,6 +22,19 @@ log = logging
 PROG = os.path.basename(__file__)
 DESCRIPTION = 'To Be Named -- Creation, validation, and modification of ' + \
               'reference packages for use with `pplacer` and related software.'
+
+# Noah: do we need to do this check or is the sqlalchemy requirement in 
+# setup.py sufficient?
+try:
+    from sqlalchemy import create_engine
+except ImportError:
+    create_engine = None
+    print("\n\nWarning: this script requires the sqlalchemy package for " + \
+          "some features; see \"Installation section in the taxtastic " + \
+          "documentation for more details.\" \n")
+else:
+    from sqlalchemy.exc import IntegrityError
+
 
 def main():
     """
@@ -151,7 +164,62 @@ def parse_arguments(action_arguments=None):
     # End check sub-command
 
     # Begin taxtable sub-command
-    # TODO: Merge in code from taxtable.py and move from optparse to argparse.
+    parser_help = subparsers.add_parser('taxtable', help='Create a CSV ' + \
+        'file describing lineages for a set of taxa')
+
+    parser.add_argument('-a', '--add-new-nodes', dest='new_nodes', 
+        help='An optional Excel (.xls) spreadsheet (requires xlrd) or ' + \
+             'csv-format file defining nodes to add to the taxonomy. ' + \
+             'Mandatory fields include "tax_id","parent_id","rank",' + \
+             '"tax_name"; optional fields include "source_name", ' + \
+             '"source_id". Other columns are ignored.')
+
+    parser.add_argument('-d', '--database-file',
+        action='store', dest='dbfile', default='ncbi_taxonomy.db',
+        help='Filename of sqlite database [%(default)s].'), 
+        metavar='FILENAME')
+
+    parser.add_argument('-D', '--dest-dir', action='store', 
+        dest='dest_dir', help='Name of output directory. If --out-file ' + \
+             'is an absolute path, the path provided takes precedence ' + \
+             'for that file. [default is the current directory]', 
+        metavar='PATH')
+
+    parser.add_argument('-o', '--out-file',
+        action='store', dest='out_file', type='string',
+        help='Output file containing lineages for the specified taxa ' + \
+             '(csv fomat); writes to stdout if unspecified', 
+        metavar='FILENAME')
+
+    parser.add_argument('-N', '--new-database', action='store_true',
+        dest='new_database', default=False, help='Include this ' + \
+             'option to overwrite an existing database and reload with ' + \
+             'taxonomic data (from the downloaded archive plus additional ' + \
+             'files if provided). [default %(default)s]')
+
+    parser.add_argument('-S', '--source-name', dest='source_name', 
+        default='unknown', help='Names the source for new nodes. ' + \
+                '[default %(default)s]')
+
+    parser.add_argument('-t', '--tax-ids', dest='taxids', 
+        help='Specifies the taxids to include. Taxids may be ' + \
+             'provided in one of two ways: 1) as a comma delimited list ' + \
+             'on the command line (eg, '-t taxid1,taxid2'); or 2) as the ' + \
+             'name of a file containing a whitespace-delimited list of ' + \
+             'tax_ids (ie, separated by tabs, spaces, or newlines; lines ' + \
+             'beginning with "#" are ignored). May be omitted if ' + \
+             '--tax-names is used instead.')
+
+    parser.add_argument("-n", "--tax-names", dest="taxnames", help=xws("""
+        An optional file identifing taxa in the form of taxonomic
+        names. Names are matched against both primary names and
+        synonyms. Lines beginning with "#" are ignored. Taxa
+        identified here will be added to those specified using
+        --tax-ids.
+    """))
+
+
+
     # End taxtable sub-command
 
     # With the exception of 'help', all subcommands can share a  
@@ -162,6 +230,9 @@ def parse_arguments(action_arguments=None):
         subparser.add_argument('-v', '--verbose', action='count', dest='verbose', 
             help='Increase verbosity of screen output (eg, -v is verbose,' + \
                  '-vv more so)', default=0)
+        parser.add_argument("-q", "--quiet", action="store_true", dest="quiet",
+            help="Suppress output destined for stderr")
+
 
     # Determine we have called ourself (e.g. "help <action>")
     # Set arguments to display help if parameter is set
