@@ -3,9 +3,7 @@ import sys, os, string, argparse, re
 
 # Insert one level above project directory to path for testing.
 
-#sys.path.insert(0, "../..")
-#from taxonomy.alignment import Alignment
-from Taxonomy.alignment import Alignment
+from taxtastic.alignment import Alignment
 
 
 def main():

@@ -18,6 +18,7 @@ import sys
 import os
 import logging
 from taxtastic import package, __version__ as version
+from taxtastic.taxonomy import Taxonomy
 
 log = logging
 PROG = os.path.basename(__file__)
@@ -87,10 +88,10 @@ def main():
         dbname = arguments.dbfile if pth else os.path.join(arguments.dest_dir, fname)
 
         if not os.access(dbname, os.F_OK) or arguments.new_database:
-            zfile = taxtastic.ncbi.fetch_data(dest_dir=arguments.dest_dir, new=False)
+            zfile = Taxonomy.ncbi.fetch_data(dest_dir=arguments.dest_dir, new=False)
             log.warning('creating new database in %s using data in %s' % (dbname, zfile))
-            con = taxtastic.ncbi.db_connect(dbname, new=True)
-            taxtastic.ncbi.db_load(con, zfile)
+            con = Taxonomy.ncbi.db_connect(dbname, new=True)
+            Taxonomy.ncbi.db_load(con, zfile)
             con.close()
         else:
             log.warning('using taxonomy defined in %s' % dbname)
@@ -99,12 +100,12 @@ def main():
             sys.exit('sqlalchemy is required, exiting.')
 
         engine = create_engine('sqlite:///%s' % dbname, echo = arguments.verbose > 1)
-        tax = taxtastic.taxtastic(engine, taxtastic.ncbi.ranks)
+        tax = taxtastic.Taxonomy(engine, Taxonomy.ncbi.ranks)
 
         # add nodes if necessary
         if arguments.new_nodes:
             log.warning('adding new nodes')
-            new_nodes = taxtastic.utils.get_new_nodes(arguments.new_nodes)
+            new_nodes = Taxonomy.utils.get_new_nodes(arguments.new_nodes)
             for d in new_nodes:
                 if arguments.source_name:
                     d['source_name'] = arguments.source_name
@@ -329,7 +330,6 @@ def parse_arguments(action_arguments=None):
         parse_arguments(action_arguments=[str(arguments.action[0]), '-h'])
 
     return action, arguments
-
 
 
 if __name__ == '__main__':

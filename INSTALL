@@ -35,14 +35,14 @@ docutils is required only to compile docs::
  cd docutils-0.7 && \
  python setup.py install
 
-taxonomy package
+taxtastic package
 ----------------
 
 This package is located in github within the taxtastic project. Create
 a local repository and install as follows::
 
  git clone git@github.com:nhoffman/taxtastic.git
- cd taxtastic/taxonomy
+ cd taxtastic/taxtastic
  python setup.py install
 
-This will put taxomatic.py and taxtable.py in the same directory as your python installation.
+This will put taxtastic.py in the same directory as your python installation.
