@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 """\
-taxtastic
-=========
+taxtastic.py
+============
 
 Usage: %prog action <options>
 
 Creation, validation, and modification of reference packages for use
-with `pplacer` and related software.
+with `pplacer` and related software.  Can create also CSV files 
+describing lineages for a set of taxa.
 
 Use `taxomatic.py -h` or `taxomatic.py --help` to print help text.
 """
@@ -16,7 +17,7 @@ import argparse
 import sys
 import os
 import logging
-from taxonomy import package, __version__ as version
+from taxtastic import package, __version__ as version
 
 log = logging
 PROG = os.path.basename(__file__)
@@ -56,15 +57,100 @@ def main():
     # set up logging
     logging.basicConfig(file=sys.stdout, format=logformat, level=loglevel)
 
-    try:
-        if hasattr(package, action):
-            getattr(package, action)(arguments)
+    # suppress output to stderr if --quiet specified
+    if options.quiet:
+        # Adapted from Alex Martelli's example on stackoverflow.com
+        @contextlib.contextmanager
+        def suppress_stderr():
+            saved = sys.stderr
+            class DevNull(object):
+                def write(self, _): pass
+            sys.stderr = DevNull()
+            yield
+            sys.stderr = saved
+        sys.stderr = suppress_stderr()
+
+    # Do things based on action / specified sub-command.
+    if action == 'create':
+        try:
+            if hasattr(package, action):
+                getattr(package, action)(arguments)
+            else:
+                log.error('Sorry: the %s action is not yet implemented' % action)
+                sys.exit(1)
+        except OSError:
+            log.error('A package named "%s" already exists' % arguments.package_name)
+            sys.exit(2)
+
+    elif action == 'taxtable':
+        pth, fname = os.path.split(arguments.dbfile)
+        dbname = arguments.dbfile if pth else os.path.join(arguments.dest_dir, fname)
+
+        if not os.access(dbname, os.F_OK) or arguments.new_database:
+            zfile = taxtastic.ncbi.fetch_data(dest_dir=arguments.dest_dir, new=False)
+            log.warning('creating new database in %s using data in %s' % (dbname, zfile))
+            con = taxtastic.ncbi.db_connect(dbname, new=True)
+            taxtastic.ncbi.db_load(con, zfile)
+            con.close()
         else:
-            log.error('Sorry: the %s action is not yet implemented' % action)
-            sys.exit(1)
-    except OSError:
-        log.error('A package named "%s" already exists' % arguments.package_name)
-        sys.exit(2)
+            log.warning('using taxonomy defined in %s' % dbname)
+
+        if not create_engine:
+            sys.exit('sqlalchemy is required, exiting.')
+
+        engine = create_engine('sqlite:///%s' % dbname, echo = arguments.verbose > 1)
+        tax = taxtastic.taxtastic(engine, taxtastic.ncbi.ranks)
+
+        # add nodes if necessary
+        if arguments.new_nodes:
+            log.warning('adding new nodes')
+            new_nodes = taxtastic.utils.get_new_nodes(arguments.new_nodes)
+            for d in new_nodes:
+                if arguments.source_name:
+                    d['source_name'] = arguments.source_name
+                    try:
+                        tax.add_node(**d)
+                    except IntegrityError:
+                        log.info('node with tax_id %(tax_id)s already exists' % d)
+
+        # get a list of taxa
+        taxa = set()
+
+        taxids = arguments.taxids
+        if taxids:
+            if os.access(taxids, os.F_OK):
+                log.warning('reading tax_ids from %s' % taxids)
+                for line in getlines(taxids):
+                    taxa.update(set(line.split()))
+            else:
+                taxa = set([x.strip() for x in taxids.split(',')])
+
+        taxnames = arguments.taxnames
+        if taxnames:
+            for tax_name in getlines(taxnames):
+                tax_id, primary_name, is_primary = tax.primary_from_name(tax_name)
+                taxa.add(tax_id)
+                if not is_primary:
+                    log.warning('%(tax_id)8s  %(tax_name)40s -(primary name)-> %(primary_name)s' % locals())
+
+        log.warning('calculating lineages for %s taxa' % len(taxa))
+        for taxid in taxa:
+            log.warning('adding %s' % taxid)        
+            
+            tax.lineage(taxid)
+
+        if arguments.out_file:
+            pth, fname = os.path.split(arguments.out_file)
+            csvname = arguments.out_file if pth else os.path.join(arguments.dest_dir, fname)
+            log.warning('writing %s' % csvname)
+            csvfile = open(csvname, 'w')
+        else:
+            csvfile = sys.stdout
+
+        tax.write_table(None, csvfile = csvfile)
+
+        engine.dispose()
+
 
 
 def parse_arguments(action_arguments=None):
@@ -125,7 +211,7 @@ def parse_arguments(action_arguments=None):
 
     parser_create.add_argument('-P', '--package-name', 
         action='store', dest='package_name',
-        default='./taxonomy.refpkg', metavar='PATH',
+        default='./taxtastic.refpkg', metavar='PATH',
         help='Name of output directory [default %(default)s]')
 
     parser_create.add_argument("-r", "--package-version",
@@ -159,67 +245,62 @@ def parse_arguments(action_arguments=None):
         #help='Verify that a reference package is intact and valid')
     parser_check.add_argument('-P', '--package-name', 
         action='store', dest='package_name',
-        default='./taxonomy.refpkg', metavar='PATH',
-        help='Name of output directory. [default %(default)s]')
+        default='./taxtastic.refpkg', metavar='PATH',
+        help='Name of output directory [default %(default)s]')
     # End check sub-command
 
     # Begin taxtable sub-command
-    parser_help = subparsers.add_parser('taxtable', help='Create a CSV ' + \
+    parser_taxtable = subparsers.add_parser('taxtable', help='Create a CSV ' + \
         'file describing lineages for a set of taxa')
 
-    parser.add_argument('-a', '--add-new-nodes', dest='new_nodes', 
+    parser_taxtable.add_argument('-a', '--add-new-nodes', dest='new_nodes', 
         help='An optional Excel (.xls) spreadsheet (requires xlrd) or ' + \
              'csv-format file defining nodes to add to the taxonomy. ' + \
              'Mandatory fields include "tax_id","parent_id","rank",' + \
              '"tax_name"; optional fields include "source_name", ' + \
              '"source_id". Other columns are ignored.')
 
-    parser.add_argument('-d', '--database-file',
+    parser_taxtable.add_argument('-d', '--database-file',
         action='store', dest='dbfile', default='ncbi_taxonomy.db',
-        help='Filename of sqlite database [%(default)s].'), 
+        help='Filename of sqlite database [%(default)s].', 
         metavar='FILENAME')
 
-    parser.add_argument('-D', '--dest-dir', action='store', 
-        dest='dest_dir', help='Name of output directory. If --out-file ' + \
+    parser_taxtable.add_argument('-D', '--dest-dir', action='store',
+        default='.', dest='dest_dir', metavar='PATH',
+        help='Name of output directory. If --out-file ' + \
              'is an absolute path, the path provided takes precedence ' + \
-             'for that file. [default is the current directory]', 
-        metavar='PATH')
+             'for that file. [default is the current directory]')
 
-    parser.add_argument('-o', '--out-file',
-        action='store', dest='out_file', type='string',
+    parser_taxtable.add_argument('-o', '--out-file',
+        action='store', dest='out_file', metavar='FILENAME',
         help='Output file containing lineages for the specified taxa ' + \
-             '(csv fomat); writes to stdout if unspecified', 
-        metavar='FILENAME')
+             '(csv fomat); writes to stdout if unspecified')
 
-    parser.add_argument('-N', '--new-database', action='store_true',
+    parser_taxtable.add_argument('-n', '--tax-names', dest='taxnames', 
+        help='An optional file identifing taxa in the form of taxonomic ' + \
+             'names. Names are matched against both primary names and ' + \
+             'synonyms. Lines beginning with "#" are ignored. Taxa ' + \
+             'identified here will be added to those specified using ' + \
+             '--tax-ids')
+
+    parser_taxtable.add_argument('-N', '--new-database', action='store_true',
         dest='new_database', default=False, help='Include this ' + \
              'option to overwrite an existing database and reload with ' + \
              'taxonomic data (from the downloaded archive plus additional ' + \
              'files if provided). [default %(default)s]')
 
-    parser.add_argument('-S', '--source-name', dest='source_name', 
+    parser_taxtable.add_argument('-S', '--source-name', dest='source_name', 
         default='unknown', help='Names the source for new nodes. ' + \
                 '[default %(default)s]')
 
-    parser.add_argument('-t', '--tax-ids', dest='taxids', 
+    parser_taxtable.add_argument('-t', '--tax-ids', dest='taxids', 
         help='Specifies the taxids to include. Taxids may be ' + \
              'provided in one of two ways: 1) as a comma delimited list ' + \
-             'on the command line (eg, '-t taxid1,taxid2'); or 2) as the ' + \
+             'on the command line (eg, "-t taxid1,taxid2"); or 2) as the ' + \
              'name of a file containing a whitespace-delimited list of ' + \
              'tax_ids (ie, separated by tabs, spaces, or newlines; lines ' + \
              'beginning with "#" are ignored). May be omitted if ' + \
-             '--tax-names is used instead.')
-
-    parser.add_argument("-n", "--tax-names", dest="taxnames", help=xws("""
-        An optional file identifing taxa in the form of taxonomic
-        names. Names are matched against both primary names and
-        synonyms. Lines beginning with "#" are ignored. Taxa
-        identified here will be added to those specified using
-        --tax-ids.
-    """))
-
-
-
+             '--tax-names is used instead')
     # End taxtable sub-command
 
     # With the exception of 'help', all subcommands can share a  
@@ -230,8 +311,8 @@ def parse_arguments(action_arguments=None):
         subparser.add_argument('-v', '--verbose', action='count', dest='verbose', 
             help='Increase verbosity of screen output (eg, -v is verbose,' + \
                  '-vv more so)', default=0)
-        parser.add_argument("-q", "--quiet", action="store_true", dest="quiet",
-            help="Suppress output destined for stderr")
+        subparser.add_argument('-q', '--quiet', action='store_true', dest='quiet',
+            help='Suppress output destined for stderr')
 
 
     # Determine we have called ourself (e.g. "help <action>")
