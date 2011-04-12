@@ -9,6 +9,7 @@ import sqlite3
 
 import config
 import taxtastic
+import taxtastic.ncbi
 from taxtastic.errors import OperationalError, IntegrityError
 
 log = logging

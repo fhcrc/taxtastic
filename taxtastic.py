@@ -59,7 +59,7 @@ def main():
     logging.basicConfig(file=sys.stdout, format=logformat, level=loglevel)
 
     # suppress output to stderr if --quiet specified
-    if options.quiet:
+    if arguments.quiet:
         # Adapted from Alex Martelli's example on stackoverflow.com
         @contextlib.contextmanager
         def suppress_stderr():
