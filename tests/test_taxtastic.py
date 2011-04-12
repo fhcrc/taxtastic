@@ -17,7 +17,7 @@ log = logging
 outputdir = path.abspath(config.outputdir)
 datadir = path.abspath(config.datadir)
 
-TestScriptBase.executable = './taxtest.py'
+TestScriptBase.executable = './taxtastic.py'
 TestScriptBase.outputdir = outputdir
         
 class TestHelp(TestScriptBase):

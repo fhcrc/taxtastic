@@ -14,17 +14,17 @@ used to run all tests, with optional flags controlling verbosity::
 Individual unit tests can be run using `./testone` using the package
 hierarchy in the tests directory::
 
-  % ./testone tests.test_taxtest.TestHelp.test01 
-  --> ./taxtest.py -h
+  % ./testone tests.test_taxtastic.TestHelp.test01 
+  --> ./taxtastic.py -h
   .
   ----------------------------------------------------------------------
   Ran 1 test in 0.219s
 
   OK
 
-  % ./testone -v tests.test_taxtest.TestHelp.test01
-  test01 (tests.test_taxtest.TestHelp) ... WARNING test_taxtest 35 --> ./taxtest.py -h
-  INFO test_taxtest 37 usage: taxtest.py [-h] [-V] {create,help,check} ...
+  % ./testone -v tests.test_taxtastic.TestHelp.test01
+  test01 (tests.test_taxtastic.TestHelp) ... WARNING test_taxtastic 35 --> ./taxtastic.py -h
+  INFO test_taxtastic 37 usage: taxtastic.py [-h] [-V] {create,help,check} ...
 
   To Be Named -- Creation, validation, and modification of reference packages
   for use with `pplacer` and related software.
