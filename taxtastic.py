@@ -18,6 +18,7 @@ import sys
 import os
 import logging
 from taxtastic import package, __version__ as version
+import taxtastic.ncbi
 from taxtastic.taxonomy import Taxonomy
 
 log = logging
@@ -88,10 +89,11 @@ def main():
         dbname = arguments.dbfile if pth else os.path.join(arguments.dest_dir, fname)
 
         if not os.access(dbname, os.F_OK) or arguments.new_database:
-            zfile = Taxonomy.ncbi.fetch_data(dest_dir=arguments.dest_dir, new=False)
+            zfile = taxtastic.ncbi.fetch_data(dest_dir=arguments.dest_dir, 
+                clobber=True)
             log.warning('creating new database in %s using data in %s' % (dbname, zfile))
-            con = Taxonomy.ncbi.db_connect(dbname, new=True)
-            Taxonomy.ncbi.db_load(con, zfile)
+            con = taxtastic.ncbi.db_connect(dbname, clobber=False)
+            taxtastic.ncbi.db_load(con, zfile)
             con.close()
         else:
             log.warning('using taxonomy defined in %s' % dbname)
@@ -100,7 +102,7 @@ def main():
             sys.exit('sqlalchemy is required, exiting.')
 
         engine = create_engine('sqlite:///%s' % dbname, echo = arguments.verbose > 1)
-        tax = taxtastic.Taxonomy(engine, Taxonomy.ncbi.ranks)
+        tax = Taxonomy(engine, taxtastic.ncbi.ranks)
 
         # add nodes if necessary
         if arguments.new_nodes:
