@@ -89,7 +89,7 @@ def main():
         dbname = arguments.dbfile if pth else os.path.join(arguments.dest_dir, fname)
 
         if not os.access(dbname, os.F_OK) or arguments.new_database:
-            zfile = taxtastic.ncbi.fetch_data(dest_dir=arguments.dest_dir, 
+            zfile, downloaded = taxtastic.ncbi.fetch_data(dest_dir=arguments.dest_dir,
                 clobber=True)
             log.warning('creating new database in %s using data in %s' % (dbname, zfile))
             con = taxtastic.ncbi.db_connect(dbname, clobber=False)

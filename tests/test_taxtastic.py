@@ -67,3 +67,20 @@ class TestCreate(TestScriptBase):
         
         # fails the second time because package already exists
         self.cmd_fails('create -P %(package)s -l 16s')
+
+
+class TestTaxTable(TestScriptBase):
+    """
+    Unit tests for the taxtable sub-command.
+    """
+    def test01(self):
+        """
+        Minimal test that downloads ncbi taxdump and create a taxonomy db.
+        """
+        self.cmd_ok('taxtable')
+
+    def test02(self):
+        """
+        Invalid arguments should cause a failure.
+        """
+        self.cmd_fails('taxtable --not-an-argument')
