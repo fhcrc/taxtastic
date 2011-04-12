@@ -5,7 +5,7 @@ import unittest
 import logging
 
 import config
-import taxonomy
+import taxtastic
 
 log = logging
 
@@ -23,8 +23,8 @@ class TestWhereWeAre(unittest.TestCase):
     def testPackageLocation(self):
         """
         We're assuming that unit tests are being run using local
-        version of the taxonomy package. Fail otherwise.
+        version of the taxtastic package. Fail otherwise.
         """
         
-        self.assertTrue(taxonomy.__file__.startswith('taxonomy/__init__.py'))
+        self.assertTrue(taxtastic.__file__.startswith('taxtastic/__init__.py'))
                 

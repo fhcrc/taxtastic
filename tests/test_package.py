@@ -9,7 +9,7 @@ import config
 import collections
 import json
 
-from taxonomy.package import StatsParser
+from taxtastic.package import StatsParser
 
 log = logging
 

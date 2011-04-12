@@ -11,21 +11,22 @@ from sqlalchemy import create_engine
 import config
 from config import funcname, mkdir, rmdir
 
-import taxonomy
-from taxonomy import Taxonomy
+import taxtastic
+from taxtastic.taxonomy import Taxonomy
+import taxtastic.ncbi
 
 log = logging
 
 def create_db(outputdir, startover):
     
     # download if missing or startover is True
-    zfile, downloaded = taxonomy.ncbi.fetch_data(dest_dir = outputdir, clobber = startover)
+    zfile, downloaded = taxtastic.ncbi.fetch_data(dest_dir = outputdir, clobber = startover)
     dbname = path.join(outputdir, 'taxonomy.db')
 
     # read existing databse unless startover if True
-    con = taxonomy.ncbi.db_connect(dbname, clobber = startover)
+    con = taxtastic.ncbi.db_connect(dbname, clobber = startover)
     log.warning('loading %s' % dbname)
-    taxonomy.ncbi.db_load(con, zfile)
+    taxtastic.ncbi.db_load(con, zfile)
     con.close()
         
     return zfile, dbname
@@ -43,7 +44,7 @@ class TestTaxonomyInit(unittest.TestCase):
     def setUp(self):
         self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -59,7 +60,7 @@ class TestGetLineagePrivate(unittest.TestCase):
     def setUp(self):
         self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -88,7 +89,7 @@ class TestGetMerged(unittest.TestCase):
     def setUp(self):
         self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -108,7 +109,7 @@ class TestTaxNameSearch(unittest.TestCase):
     def setUp(self):
         self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo) # echo=echo
-        self.tax = Taxonomy(self.engine, taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -133,7 +134,7 @@ class TestSynonyms(unittest.TestCase):
     def setUp(self):
         self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo) # echo=echo
-        self.tax = Taxonomy(self.engine, taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -151,7 +152,7 @@ class TestGetLineagePublic(unittest.TestCase):
     def setUp(self):
         self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -209,7 +210,7 @@ class TestTaxTable(unittest.TestCase):
     def setUp(self):
         self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
         self.fname = os.path.join(outputdir, self.funcname)+'.csv'
         log.info('writing to ' + self.fname)
 
@@ -245,7 +246,7 @@ class TestMethods(unittest.TestCase):
     def setUp(self):
         self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
