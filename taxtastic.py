@@ -7,7 +7,7 @@ taxtastic.py
 Usage: %prog action <options>
 
 Creation, validation, and modification of reference packages for use
-with `pplacer` and related software.  Can create also CSV files 
+with `pplacer` and related software.  Can also create CSV files 
 describing lineages for a set of taxa.
 
 Use `taxomatic.py -h` or `taxomatic.py --help` to print help text.
