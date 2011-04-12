@@ -22,7 +22,7 @@ from taxtastic.taxonomy import Taxonomy
 
 log = logging
 PROG = os.path.basename(__file__)
-DESCRIPTION = 'To Be Named -- Creation, validation, and modification of ' + \
+DESCRIPTION = 'taxtastic.py -- Creation, validation, and modification of ' + \
               'reference packages for use with `pplacer` and related software.'
 
 # Noah: do we need to do this check or is the sqlalchemy requirement in 
