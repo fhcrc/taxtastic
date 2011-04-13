@@ -54,6 +54,8 @@ When degree is bounded, it is polynomial, but is otherwise NP-complete \cite{Hei
 
 \subsection{Agreement with leaf taxonomic assignments}
 
+\subsubsection{Introduction}
+
 For the purposes of this paper, a ``color set'' will be an arbitrary finite set.
 A node coloring of a tree $S$ is defined to be a mapping from a subset of the nodes of the tree to the colors.
 A leaf coloring is defined to be a node coloring with domain a subset of the leaves.
@@ -89,26 +91,30 @@ For two colorings $\col_1$ and $\col_2$ with disjoint domains we can make a colo
   Given a leaf coloring $\col$ on a tree $T$, find a largest convex subcoloring in $\subcolS(\col)$.
 \end{problem}
 
-% \subsubsection{Hardness}
-% Given a set of leaf taxonomic assignments, we would like to find the maximum-sized set of taxa which is compatible with the phylogenetic tree.
-% Call this the maximum agreement subset of taxa.
-%
-% We can reduce it to a minimal recoloring in the sense of Moran and Snir.
-% Assume we are given a tree with leaf coloring, and we know a minimal leaf deletion.
-% Then we can construct a minimal leaf recoloring by just taking the color of the first ancestor for each deleted leaf.
-%
-% \begin{prop}
-%   A minimal deletion and ancestral leaf recoloring gives a minimal leaf recoloring.
-% \end{prop}
+\subsubsection{Previous work}
+The foundational work in this area was done by Moran and Snir \cite{MoranSnirConvexApprox07,MoranSnirConvexHard08}.
+Their work is phrased in terms of ``convex recoloring,'' i.e. finding the minimal number of changes in a coloring in order to obtain one that is convex.
+The recoloring definition allows replacement of one color with another as well as ``uncoloring'': the replacement of a color with no color at all.
 
-\subsubsection{Fixed parameter tractability}
-% Using their more general framework, \cite{moranSnirRecoloringApprox05} have shown that the problem admits a FPT solution.
-Their solution is $O(n^4 \nbadcolors \Bell(\nbadcolors))$, where $\nbadcolors$ is the number of ``bad'' colors, i.e. the number of colors which violate convexity (if we take the induced coloring on the tree, then cut by it, then $\nbadcolors$ is the number of colors which exist in more than one connected component).
+It is not difficult to see that it suffices to consider just uncolorings.
+Indeed, any minimal recoloring can be turned into a convex uncoloring of the same cardinality by uncoloring all of the colors that get changed.
+Conversely, any uncoloring can be turned into a convex recoloring by taking, for every uncolored node, the color of the closest colored node.
+For this reason, we simply consider subcolorings in this paper.
+
+Moran and Snir investigate both the case of leaf coloring investigated here as well as the case of coloring all of the nodes of a tree.
+They also consider non-uniform recoloring cost functions.
+In all settings, they demonstrate that the relevant recoloring problem is NP-hard.
+They also demonstrate fixed parameter tractablity (FPT) of the problems.
+
+Their solution to the leaf recoloring problem is $O(n^4 \nbadcolors \Bell(\nbadcolors))$, where $\nbadcolors$ is the number of ``bad'' colors,
+i.e. the number of colors which violate convexity (if we take the induced coloring on the tree, then cut by it, then
+$\nbadcolors$ is the number of colors which exist in more than one connected component).
+In fact, an inspection of their proof reveals that their algorithm is $O(n \, d^3 \, \nbadcolors \, \Bell(\nbadcolors))$,
 Note that this algorithm is polynomial in $n$ and exponential in the total number of colors which violate convexity.
 
-In this section we describe a fixed parameter algorithm that is exponential in a local quantity rather than the global number of bad colors.
-It is not a general improvement over their bound, but rather a better bound for the more specific problem investigated here.
-
+Here we describe a fixed parameter algorithm that is exponential in a local quantity rather than the global number of bad colors.
+As shown in Proposition~\ref{prop:FPT}, there is a $O(n \, d^3 \, \bad \, \Bell(\bad))$, where now $\bad$ is the ``badness'' of the coloring described above.
+The algorithm is very similar to theirs, but it is easier to use notation specialized to the case considered here rather than adopting their more general setting.
 
 \subsubsection{Subsolution maps}
 
@@ -119,13 +125,6 @@ If the tree is not rooted, root it arbitrarily.
 \begin{defn}
   Given $T$ a rooted subtree of $S$, define $\cut(T)$ to be the colors of $\col$ cut by the root edge of $T$ as it sits inside $S$.
 \end{defn}
-
-%%% For a rooted subtree $T$ we say that a subcoloring in
-% \begin{defn}
-%   Let $\subcol$ be a solution of Problem~\ref{prob:subcolor} for $(S, \col)$ and $T$ a rooted subtree of $S$.
-%   Now, the image $C = \subcol(L(T))$ is a subset of $\cut(T)$.
-%   The subcoloring restricted to $L(T)$ must be optimal for the colored rooted tree $(T, \col \|_{L(T)})$.
-% \end{defn}
 
 \begin{defn}
   For a rooted subtree $T$ we say that a subcoloring $\subcol$ in $\subcolST$ is convex on $T$ for above color $c$ if $\subcol$ is convex for $T$ when a leaf of color $c$ is attached to the root of $T$.
@@ -181,8 +180,9 @@ Given two solution maps on disjoint subtrees, there is a well-defined notion of 
 \subsubsection{Recursion}
 
 \begin{prop}
+\label{prop:FPT}
 Say $S$ is a tree such that each node has at most $d$ descendants, and $\col$ is a leaf coloring of $T$ of badness $\beta$.
-Problem~\ref{prob:subcolor} can be solved for $(S, \col)$ with $n$ leaves in $O(n \, \bad \, 2^d \, d^{\bad-1})$ time.
+Problem~\ref{prob:subcolor} can be solved for $(S, \col)$ with $n$ leaves in $O(n \, d^3 \, \bad \, Bell(\bad))$ time.
 \end{prop}
 
 \begin{proof}
@@ -277,5 +277,7 @@ A taxonomic root for a tree $T$ with $n$ leaves can be found by an algorithm whi
   Because stepping in this direction never backtracks, this algorithm can make at most $\diam(T)$ steps.
 \end{proof}
 
+\bibliography{algotax}
+\bibliographystyle{plain}
 
 \end{document}
