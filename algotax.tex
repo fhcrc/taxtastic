@@ -277,6 +277,52 @@ A taxonomic root for a tree $T$ with $n$ leaves can be found by an algorithm whi
   Because stepping in this direction never backtracks, this algorithm can make at most $\diam(T)$ steps.
 \end{proof}
 
+
+
+\section{Restricted maximal tree length subset selection}
+
+Given a tree $T$, integers $k \ge r > 1$, and a collection of subsets $S_1, \cdots, S_r$, we consider the question of finding a tree of maximal length among all taxon subsets of size $k$ such that we pick at least one element of each $S_i$.
+
+We showed that clades are $O(n)$, trimmed clades are $O(nk^2)$, and
+disjoint sets are $O(n^2 \log^2 n)$ if one set is connected,
+$O(n^3 \log^2 n)$ otherwise.
+
+\subsection{Clade case}
+Goal:
+Given a tree $T$ and specified clades in the tree $S_1,\cdots, S_\ell$, pick a maximally diverse set of $k \ge \ell$ sequences such that one sequence is chosen from every of the $S_i$.
+
+Algorithm:
+in each clade, start by picking the farthest sequence from the root of each clade.
+Then greedily pick the rest of the sequences to maximize the PD.
+
+Proof:
+If the number of taxa to select in a given rooted clade is pre-determined, then we can apply the greedy algorithm to that clade to get a maximal PD subset.
+This would begin by selecting the taxon furthest from the root.
+Any maximal PD subset would also maximize the rooted PD for each of the chosen clades, given the optimal choice of the number of taxa to select from each of the clades.
+We will call a choice of how many taxa to select from each designated clade a class.
+We can maximize over classes and over PD given a the class, and by the argument above maximizing over PD given a class can always be done by starting with the farthest sequences from the root of each of the clades.
+
+
+
+\section{Maximum length agreement subtree}
+
+One may also have a number of rooted trees in the confidence set and want to find the common subtree with maximal total total tree length.
+That is, given a collection of trees $T_1,\cdots,T_k$ to find a subset of the taxa $Q$ such that the $S_i = T_i \|_Q$ are topologically identical, and the total tree length of the $S_i$ is maximized over all such restrictions.
+Define the $\mlst$ to be this total tree length.
+
+Given a tree $T$ which contains the rooted triple $ab|c$, define $\ell_T(ab|c)$ to be the length of the path in $T$ from the common ancestor of $a$ and $b$ in $T$ to the common ancestor of $a$ and $c$ in $T$.
+Given this definition, the key recursion is
+\begin{lemma}
+  \[
+  \mlst(a,b) =
+  \max \left\{ \sum_i \ell_{T_i} (ax|b) + mlst(a,x) : x \in A \right\} +
+  \max \left\{ \sum_i \ell_{T_i} (by|a) + mlst(b,y) : y \in B \right\}
+  \]
+  where $A = {x: ax|b \in R} \cup {a}$ and $B = {y: by|a \in R} \cup {b}$.
+\end{lemma}
+
+
+
 \bibliography{algotax}
 \bibliographystyle{plain}
 

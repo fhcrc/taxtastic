@@ -1,10 +1,7 @@
 
-===========================================
-Taxonomic algorithms for sequence selection
-===========================================
+# Taxonomic algorithms for sequence selection
 
-Introduction
-============
+## Introduction
 - In order to do phylogenetic placement, we need a reference tree.
 - In order to make such a tree, we need to choose a set of taxa.
 - A good reference set is one which is correct and allows us to accurately classify query sequences
@@ -24,8 +21,7 @@ Introduction
   - taxa have low delta values
   - tree is an agreement subtree of trees in the credible set
 
-Ref set selection goal
-----------------------
+### Ref set selection goal
 We don't want an enormous tree with everything in it because
 
 * don't want disproportionate representation
@@ -33,16 +29,14 @@ We don't want an enormous tree with everything in it because
 * in the future this problem will get even worse
 * why include something that you will never see?
 
-A priori selection criteria
----------------------------
+### A priori selection criteria
 * have as few placements as possible on the branches proximal to the given one
 * shortest average pendant branch length for placements
 * as many placements as possible end up on the leaves
 * "widest" set of taxa, with deepest MRCA
 * remove mislabeled taxa
 
-Potentially implementable selection criteria
---------------------------------------------
+### Potentially implementable selection criteria
 * max PD
   * is maximum expected pairwise PD the same as max total PD?
 * for "widest", we could try to maximize the expected depth of the MRCA of the selected taxa
@@ -50,9 +44,8 @@ Potentially implementable selection criteria
 * we could maximize expected pairwise node distance
   * this would bias things towards heavily sampled taxa, as those taxa would have lots of nodes
 
-Usage scenarios
----------------
-* what are all of the lineages associated with a given tax_id
+### Usage scenarios
+* what are all of the lineages associated with a given taxid
 * merge locally generated sequences with previous reference set
 * converting one set of names to another using a synonym table indicating the preferred name
 * update taxonomic table to a new taxonomy (could involve reclassification of tax ids)
@@ -62,73 +55,18 @@ Usage scenarios
 
 
 Research questions
-------------------
 * Say we take a given model of tree shape. Can we prove that a given means of selecting taxa minimizes the expected branch length to the "reference" tree?
 * If we have a number of trees in the credible set, can we take an agreement subtree which has high PD, or some other desirable criterion?
 
 
 
 
-Finding a maximally diverse yet reliable tree
----------------------------------------------
-
-Restricted maximal tree length subset selection
-===============================================
-Given a tree $T$, integers $k \ge r > 1$, and a collection of subsets $S_1, \cdots, S_r$, we consider the question of finding a tree of maximal length among all taxon subsets of size $k$ such that we pick at least one element of each $S_i$.
-
-Overview:
-* clades are $O(n)$
-* trimmed clades are $O(nk^2)$
-* disjoint sets are $O(n^2 log^2 n)$ if one set is connected, $O(n^3 log^2 n)$ otherwise
-
-
-Clade case
-~~~~~~~~~~
-goal:
-Given a tree $T$ and specified clades in the tree $S_1,\cdots, S_\ell$, pick a maximally diverse set of $k \ge \ell$ sequences such that one sequence is chosen from every of the $S_i$.
-
-algorithm:
-in each clade, start by picking the farthest sequence from the root of each clade.
-Then greedily pick the rest of the sequences to maximize the PD.
-
-proof:
-If the number of taxa to select in a given rooted clade is pre-determined, then we can apply the greedy algorithm to that clade to get a maximal PD subset.
-This would begin by selecting the taxon furthest from the root.
-Any maximal PD subset would also maximize the rooted PD for each of the chosen clades, given the optimal choice of the number of taxa to select from each of the clades.
-We will call a choice of how many taxa to select from each designated clade a class.
-We can maximize over classes and over PD given a the class, and by the argument above maximizing over PD given a class can always be done by starting with the farthest sequences from the root of each of the clades.
-
-
-
-Maximum length agreement subtree
-================================
-One may also have a number of rooted trees in the confidence set and want to find the common subtree with maximal total total tree length.
-That is, given a collection of trees $T_1,\cdots,T_k$ to find a subset of the taxa $Q$ such that the $S_i = T_i \|_Q$ are topologically identical, and the total tree length of the $S_i$ is maximized over all such restrictions.
-Define the $\mlst$ to be this total tree length.
-
-Given a tree $T$ which contains the rooted triple $ab|c$, define $\ell_T(ab|c)$ to be the length of the path in $T$ from the common ancestor of $a$ and $b$ in $T$ to the common ancestor of $a$ and $c$ in $T$.
-Given this definition, the key recursion is
-\begin{lemma}
-  \[
-  \mlst(a,b) =
-  \max \left\{ \sum_i \ell_{T_i} (ax|b) + mlst(a,x) : x \in A \right\} +
-  \max \left\{ \sum_i \ell_{T_i} (by|a) + mlst(b,y) : y \in B \right\}
-  \]
-  where $A = {x: ax|b \in R} \cup {a}$ and $B = {y: by|a \in R} \cup {b}$.
-\end{lemma}
-
-
 Attic
 =====
-- Use UCLUST then take one from each cluster
 - split compatibility idea:
   - take all of the splits of the trees in the credible set, each of which are equipped with a distance
   - warm up idea: take the largest (in terms of weight sum) compatible subset of splits for our tree topology
   - can select a set of taxa with the same idea as follows:
     - selection of a taxon subset gives a projection on splits, and throw away the splits which project to something trivial
     - then select splits to maximize the total weight, such that the projection of the collection of splits is compatible
-
-
-
-
 
