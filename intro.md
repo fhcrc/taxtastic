@@ -60,13 +60,3 @@ Research questions
 
 
 
-
-Attic
-=====
-- split compatibility idea:
-  - take all of the splits of the trees in the credible set, each of which are equipped with a distance
-  - warm up idea: take the largest (in terms of weight sum) compatible subset of splits for our tree topology
-  - can select a set of taxa with the same idea as follows:
-    - selection of a taxon subset gives a projection on splits, and throw away the splits which project to something trivial
-    - then select splits to maximize the total weight, such that the projection of the collection of splits is compatible
-
