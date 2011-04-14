@@ -10,7 +10,7 @@ import glob
 from taxtastic.__init__ import __version__
 
 # all files with .py extension in top level are assumed to be scripts
-scripts = list(set(glob.glob('*.py')) - set(['setup.py']))
+scripts = ['taxit'] + list(set(glob.glob('*.py')) - set(['setup.py']))
                
 params = {'author': 'Noah Hoffman',
           'author_email': 'ngh2@uw.edu',
