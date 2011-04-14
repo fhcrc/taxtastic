@@ -54,7 +54,7 @@ We don't want an enormous tree with everything in it because
 * add "off target" sequences as well as contaminant sequences
 
 
-Research questions
+## Research questions
 * Say we take a given model of tree shape. Can we prove that a given means of selecting taxa minimizes the expected branch length to the "reference" tree?
 * If we have a number of trees in the credible set, can we take an agreement subtree which has high PD, or some other desirable criterion?
 
