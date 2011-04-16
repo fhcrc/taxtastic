@@ -1,3 +1,4 @@
+import collections
 import algotax
 
 _leaf_numbers = {}
@@ -83,6 +84,40 @@ def color_edges(root):
             if e_ != e.cut_colors:
                 stack.append((e.bottom, okayed))
                 e.cut_colors = e_
+
+def color_clades(tree):
+    parents = {tree.root: None}
+    cut_colors = collections.defaultdict(set)
+    stack = [('down', tree.root, None)]
+    while stack:
+        phase, cur, color = stack.pop()
+        if phase == 'down':
+            if not cur.clades:
+                stack.append(('up', cur, cur.name))
+            else:
+                for child in cur.clades:
+                    parents[child] = cur
+                    stack.append(('down', child, None))
+        elif phase == 'up':
+            if cur is None or color in cut_colors[cur]:
+                continue
+            cut_colors[cur].add(color)
+            stack.append(('up', parents[cur], color))
+
+    # This isn't actually generalized to >2 children.
+    # It's just shorter this way.
+    stack = [(tree.root, set())]
+    while stack:
+        node, okayed = stack.pop()
+        if not node.clades:
+            continue
+        okayed = intersection(cut_colors[e] for e in node.clades) | okayed
+        for e in node.clades:
+            e_ = cut_colors[e] & okayed
+            if e_ != cut_colors[e]:
+                stack.append((e, okayed))
+                cut_colors[e] = e_
+    return cut_colors
 
 def main():
     root = build_tree([
