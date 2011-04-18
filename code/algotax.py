@@ -1,4 +1,4 @@
-from collections import defaultdict
+import collections
 from itertools import combinations
 
 def union(it):
@@ -6,6 +6,52 @@ def union(it):
     for x in it:
         ret.update(x)
     return ret
+
+def intersection(it):
+    ret = None
+    for x in it:
+        if ret is None:
+            ret = set(x)
+        else:
+            ret.intersection_update(x)
+    return ret or set()
+
+CladeMetadata = collections.namedtuple(
+    'CladeMetadata', 'parents colors cut_colors')
+
+def color_clades(tree, colors):
+    parents = {tree.root: None}
+    cut_colors = collections.defaultdict(set)
+    stack = [('down', tree.root, None)]
+    while stack:
+        phase, cur, color = stack.pop()
+        if phase == 'down':
+            if not cur.clades:
+                stack.append(('up', cur, cur.name))
+            else:
+                for child in cur.clades:
+                    parents[child] = cur
+                    stack.append(('down', child, None))
+        elif phase == 'up':
+            if cur is None or color in cut_colors[cur]:
+                continue
+            cut_colors[cur].add(color)
+            stack.append(('up', parents[cur], color))
+
+    # This isn't actually generalized to >2 children.
+    # It's just shorter this way.
+    stack = [(tree.root, set())]
+    while stack:
+        node, okayed = stack.pop()
+        if not node.clades:
+            continue
+        okayed = intersection(cut_colors[e] for e in node.clades) | okayed
+        for e in node.clades:
+            e_ = cut_colors[e] & okayed
+            if e_ != cut_colors[e]:
+                stack.append((e, okayed))
+                cut_colors[e] = e_
+    return CladeMetadata(parents, colors, cut_colors)
 
 def walk(cur, metadata):
     parents, colors, cut_colors = metadata
@@ -17,7 +63,7 @@ def walk(cur, metadata):
     else:
         K = cut_colors[cur]
 
-    ret = defaultdict(dict)
+    ret = collections.defaultdict(dict)
 
     if not cur.clades:
         if K:
@@ -44,7 +90,7 @@ def walk(cur, metadata):
     nontrivial_phis = [phi_i for phi_i in phi if not phi_i.get(None)]
 
     for c in K:
-        ret_c = defaultdict(list)
+        ret_c = collections.defaultdict(list)
         def aux(phis, used_colors, accum):
             # Base case; we've reached the end of the list.
             if not phis:
