@@ -7,28 +7,30 @@ def union(it):
         ret.update(x)
     return ret
 
-def walk(cur):
+def walk(cur, metadata):
+    parents, colors, cut_colors = metadata
     # The root node `T` has no `K(T)`, and choosing a `c` for that case makes
     # no sense. However, there still might be a `B`, so we fudge `K` to
     # preserve generality.
-    if cur.parent is None:
+    if parents[cur] is None:
         K = None,
     else:
-        K = cur.parent.cut_colors
+        K = cut_colors[cur]
 
     ret = defaultdict(dict)
 
-    if cur.is_leaf:
+    if not cur.clades:
         if K:
-            assert len(K) == 1 and cur.color in K
-            ret[cur.color][frozenset([cur.color])] = {cur}
+            color = colors[cur]
+            assert len(K) == 1 and color in K
+            ret[color][frozenset([color])] = {cur}
         else:
             ret[None] = {cur}
         return ret
 
-    phi = [walk(x.bottom) for x in cur.children]
-    B = union(a.cut_colors & b.cut_colors
-        for a, b in combinations(cur.children, 2))
+    phi = [walk(x, metadata) for x in cur.clades]
+    B = union(cut_colors[a] & cut_colors[b]
+        for a, b in combinations(cur.clades, 2))
 
     # Trivial nodes are nodes below an edge with no cut colors.
     trivial_nodes = union(x.get(None, []) for x in phi)
@@ -77,7 +79,7 @@ def walk(cur):
             for X_i, T_is in ret_c.iteritems()}
 
     # Un-fudge the results if we're working on a root node.
-    if cur.parent is None:
+    if parents[cur] is None:
         return ret[None]
 
     return ret

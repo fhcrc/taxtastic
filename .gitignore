@@ -1,2 +1,1 @@
-.sconsign.dblite
-_build/
+*.py[co]
