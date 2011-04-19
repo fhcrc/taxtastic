@@ -2,12 +2,16 @@ import collections
 from itertools import combinations
 
 def union(it):
+    "Take the union of an iterable of sets."
+
     ret = set()
     for x in it:
         ret.update(x)
     return ret
 
 def intersection(it):
+    "Take the intersection of an iterable of sets."
+
     ret = None
     for x in it:
         if ret is None:
@@ -20,6 +24,8 @@ CladeMetadata = collections.namedtuple(
     'CladeMetadata', 'parents colors cut_colors')
 
 def color_clades(tree, colors):
+    "Given a biopython tree and colors of its leaves, color its edges."
+
     parents = {tree.root: None}
     cut_colors = collections.defaultdict(set)
     stack = [('down', tree.root, None)]
@@ -54,6 +60,8 @@ def color_clades(tree, colors):
     return CladeMetadata(parents, colors, cut_colors)
 
 def walk(cur, metadata):
+    "Walk a biopython clade, determining the optimal convex subcoloring."
+
     parents, colors, cut_colors = metadata
     # The root node `T` has no `K(T)`, and choosing a `c` for that case makes
     # no sense. However, there still might be a `B`, so we fudge `K` to
