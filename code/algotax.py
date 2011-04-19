@@ -33,7 +33,9 @@ def color_clades(tree, colors):
         phase, cur, color = stack.pop()
         if phase == 'down':
             if not cur.clades:
-                stack.append(('up', cur, cur.name))
+                if cur not in colors:
+                    continue
+                stack.append(('up', cur, colors[cur]))
             else:
                 for child in cur.clades:
                     parents[child] = cur
@@ -44,14 +46,13 @@ def color_clades(tree, colors):
             cut_colors[cur].add(color)
             stack.append(('up', parents[cur], color))
 
-    # This isn't actually generalized to >2 children.
-    # It's just shorter this way.
     stack = [(tree.root, set())]
     while stack:
         node, okayed = stack.pop()
         if not node.clades:
             continue
-        okayed = intersection(cut_colors[e] for e in node.clades) | okayed
+        okayed = union(cut_colors[a] & cut_colors[b]
+            for a, b in combinations(node.clades, 2)) | okayed
         for e in node.clades:
             e_ = cut_colors[e] & okayed
             if e_ != cut_colors[e]:
@@ -63,9 +64,8 @@ def walk(cur, metadata):
     "Walk a biopython clade, determining the optimal convex subcoloring."
 
     parents, colors, cut_colors = metadata
-    # The root node `T` has no `K(T)`, and choosing a `c` for that case makes
-    # no sense. However, there still might be a `B`, so we fudge `K` to
-    # preserve generality.
+    # Choosing None for `c` basically means 'coalesce disjoint colorings',
+    # which is what we want to do at the root node.
     if parents[cur] is None:
         K = None,
     else:
@@ -79,23 +79,18 @@ def walk(cur, metadata):
             assert len(K) == 1 and color in K
             ret[color][frozenset([color])] = {cur}
         else:
-            ret[None] = {cur}
+            ret[None][frozenset()] = {cur}
         return ret
 
     phi = [walk(x, metadata) for x in cur.clades]
     B = union(cut_colors[a] & cut_colors[b]
         for a, b in combinations(cur.clades, 2))
 
-    # Trivial nodes are nodes below an edge with no cut colors.
-    trivial_nodes = union(x.get(None, []) for x in phi)
-
-    # If there were no cut colors, we don't need to do anything.
+    # As above, we want to coalesce the colorings. Since this edge isn't
+    # colored, the different possibilities don't matter to edges above it; just
+    # choose the best possibility.
     if not K:
-        ret[None] = trivial_nodes
-        return ret
-
-    # These phis will never matter, so there's no point in considering them.
-    nontrivial_phis = [phi_i for phi_i in phi if not phi_i.get(None)]
+        K = None,
 
     for c in K:
         ret_c = collections.defaultdict(list)
@@ -106,12 +101,7 @@ def walk(cur, metadata):
                 return
 
             phi_i, phi_rest = phis[0], phis[1:]
-            for b in B | {c}:
-                # The other part of the generality fudging mentioned above.
-                # Since we always take the union of `B` and `{c}`, just ignore
-                # the case where we pick the dummy `c`.
-                if b is None:
-                    continue
+            for b in B | {c, None}:
                 X_is = phi_i[b]
 
                 # One possible solution is to ignore this `phi` completely.
@@ -121,19 +111,26 @@ def walk(cur, metadata):
                     # Ignore a subcoloring if it's empty (which we've already
                     # handled) or it contains already-used colors (not counting
                     # `b`).
-                    if not X_i or X_i & used_colors > {b}:
+                    if b is not None and X_i & used_colors > {b}:
                         continue
                     aux(phi_rest, used_colors | X_i, accum | phi_i[b][X_i])
 
-        aux(nontrivial_phis, set(), set())
+        aux(phi, set(), set())
 
         # For each `X_i`, the optimal `T_i` is the one with the most nodes in
-        # it. Trivial nodes also will fit into any subtree, so add them back.
-        ret[c] = {X_i: max(T_is, key=len) | trivial_nodes
-            for X_i, T_is in ret_c.iteritems()}
+        # it.
+        ret[c] = {X_i: max(T_is, key=len) for X_i, T_is in ret_c.iteritems()}
 
-    # Un-fudge the results if we're working on a root node.
+    # If this is the parent node, it's more useful to be back the coalesced
+    # results than something mapping to them.
     if parents[cur] is None:
         return ret[None]
+
+    # Otherwise if there were no cut colors, the only relevant data is the
+    # biggest set of nodes, so prune everything else out.
+    elif ret.get(None):
+        total = max(ret[None].itervalues(), key=len)
+        ret.clear()
+        ret[None][frozenset()] = total
 
     return ret
