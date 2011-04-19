@@ -50,6 +50,11 @@ def main(refpkg_path):
         print '  possibilities:'
         for k in sorted(results, key=results.get):
             print '    %d [%s]' % (len(results[k]), '; '.join(k) or '(none)')
+            if not k:
+                continue
+            cut_nodes = set(tree.get_terminals()) - results[k]
+            for nodename in sorted(node.name for node in cut_nodes):
+                print '      %s' % (nodename)
         print '    %d [whole set]' % (len(clade_map),)
 
 if __name__ == '__main__':
