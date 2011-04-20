@@ -134,3 +134,27 @@ def walk(cur, metadata):
         ret[None][frozenset()] = total
 
     return ret
+
+Ranking = collections.namedtuple('Ranking', 'rank node')
+
+def reroot(cur, rp):
+    name_map = dict(rp.db.cursor().execute("""
+        SELECT seqname, tax_id
+        FROM   sequences
+    """))
+    rank_map = dict(rp.db.cursor().execute("""
+        SELECT tax_id, rank_order
+        FROM   taxa
+               JOIN ranks USING (rank)
+    """))
+    def subrk_min(t):
+        return rank_map[rp.most_recent_common_ancestor(
+            *set(name_map[n.name] for n in t.get_terminals()))]
+    while True:
+        if len(cur.clades) < 2:
+            return cur
+
+        ranks = sorted(Ranking(subrk_min(n), n) for n in cur)
+        if ranks[0].rank == ranks[1].rank:
+            return cur
+        cur = ranks[0].node
