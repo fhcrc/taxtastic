@@ -20,12 +20,19 @@ def main(argv):
         description='find discordance in a reference package')
     parser.add_argument('refpkg', nargs=1,
         help='the reference package to operate on')
-    parser.add_argument('-o', '--outdir',
-        help='if specified, write discordance trees in phyloxml format '
-        'to this directory')
-    parser.add_argument('-s', '--summary',
+    parser.add_argument('-d', '--discordance', metavar='FILE',
+        type=argparse.FileType('wb'),
+        help='write a phyloxml discordance tree to the provided path')
+    parser.add_argument('-t', '--tax-tree', metavar='FILE',
+        type=argparse.FileType('rb'),
+        help='use a tree as provided by `guppy ref_tree`')
+    verbosity = parser.add_mutually_exclusive_group()
+    verbosity.add_argument('-s', '--summary',
         action='store_const', dest='verbosity', const=1, default=2,
         help='show only a summary instead of the full output')
+    verbosity.add_argument('-q', '--quiet',
+        action='store_const', dest='verbosity', const=0,
+        help='produce no output')
 
     args = parser.parse_args(argv)
     def out(level, msg='', *params):
@@ -35,10 +42,11 @@ def main(argv):
 
     rp = refpkg.Refpkg(args.refpkg[0])
 
-    sio = StringIO()
-    Phylo.convert(rp.resource('tree_file', 'rU'), 'newick', sio, 'phyloxml')
-    sio.seek(0)
-    tree = Phylo.read(sio, 'phyloxml')
+    if args.tax_tree:
+        tree = next(Phylo.parse(args.tax_tree, 'phyloxml'))
+    else:
+        tree = Phylo.read(rp.resource('tree_file', 'rU'), 'newick')
+        tree = tree.as_phyloxml()
 
     rp.load_db()
     curs = rp.db.cursor()
@@ -84,13 +92,17 @@ def main(argv):
         counter = itertools.count()
         discordance_tree = None
         for k in sorted(results, key=results.get):
-            p('    %d [%s]', len(results[k]), '; '.join(k) or '(none)')
+            p('    %d (%d) [%s]',
+                len(results[k]),
+                len(results[k]) - len(clade_map),
+                '; '.join(k) or '(none)')
             if not k:
                 continue
 
-            if args.outdir:
+            if args.discordance:
                 # XXX find a better method of doing this
                 discordance_tree = copy.deepcopy(tree)
+                discordance_tree.name = '%s: %s' % (rank, '; '.join(k))
 
             cut_nodes = set(tree.get_terminals()) - results[k]
             for node in sorted(cut_nodes, key=operator.attrgetter('name')):
@@ -104,18 +116,12 @@ def main(argv):
 
             if not discordance_tree:
                 continue
-            fname = 'discordance-%s-%d.xml' % (rank, next(counter))
-            Phylo.write(
-                discordance_tree, os.path.join(args.outdir, fname), 'phyloxml')
-            discordance_trees.append(fname)
+            discordance_trees.append(discordance_tree)
 
         p('    %d [whole set]', len(clade_map))
-    if discordance_trees:
-        if args.verbosity > 1:
-            out(1)
-        out(1, 'discordance trees written:')
-        for d in discordance_trees:
-            out(1, '  %s', d)
+
+    if args.discordance:
+        Phylo.write(discordance_trees, args.discordance, 'phyloxml')
 
 if __name__ == '__main__':
     main(sys.argv[1:])
