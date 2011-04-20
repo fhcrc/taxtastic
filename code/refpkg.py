@@ -68,7 +68,8 @@ class _IntermediateTaxon(object):
 class Refpkg(object):
     def __init__(self, path):
         self.path = path
-        self.contents = json.load(self.file_resource('CONTENTS.json', 'rU'))
+        with self.file_resource('CONTENTS.json', 'rU') as fobj:
+            self.contents = json.load(fobj)
         self.db = None
 
     file_factory = open
@@ -78,13 +79,24 @@ class Refpkg(object):
     def resource(self, name, *mode):
         return self.file_resource(self.contents['files'][name], *mode)
 
-    def verify(self, name):
+    def _digest_resource(self, name):
         md5 = hashlib.md5()
-        fobj = self.resource(name, 'rb')
-        for block in iter(lambda: fobj.read(4096), ''):
-            md5.update(block)
-        if md5.hexdigest() != self.contents['md5'][name]:
+        with self.resource(name, 'rb') as fobj:
+            for block in iter(lambda: fobj.read(4096), ''):
+                md5.update(block)
+        return md5.hexdigest()
+
+    def verify(self, name):
+        if self.contents['md5'][name] != self._digest_resource(name):
             raise VerificationFailed(name)
+
+    def rehash(self, name):
+        digest = self._digest_resource(name)
+        self.contents['md5'][name] = digest
+
+    def save(self):
+        with self.file_resource('CONTENTS.json', 'w') as fobj:
+            json.dump(self.contents, fobj, indent=2)
 
     def load_db(self):
         db = sqlite3.connect(':memory:')
