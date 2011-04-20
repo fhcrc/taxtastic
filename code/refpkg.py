@@ -8,6 +8,9 @@ import csv
 class VerificationFailed(Exception):
     pass
 
+class NoAncestor(Exception):
+    pass
+
 class OnUpdate(object):
     def __init__(self, proxied):
         self.proxied = proxied
@@ -119,15 +122,11 @@ class Refpkg(object):
 
         curs.execute("""
             CREATE VIEW parents AS
-            SELECT t1.tax_id AS child,
-                   t2.tax_id AS parent
-            FROM   taxa AS t1
-                   JOIN hierarchy AS h1
-                     ON t1.tax_id = h1.tax_id
-                   JOIN hierarchy AS h2
+            SELECT h1.tax_id AS child,
+                   h2.tax_id AS parent
+            FROM   hierarchy h1
+                   JOIN hierarchy h2
                      ON h1.lft BETWEEN h2.lft AND h2.rgt
-                   JOIN taxa AS t2
-                     ON t2.tax_id = h2.tax_id
         """)
 
         taxon_map = {}
@@ -158,3 +157,34 @@ class Refpkg(object):
 
         db.commit()
         self.db = db
+
+    def most_recent_common_ancestor(self, t1, t2):
+        cursor = self.db.cursor()
+        cursor.execute("""
+            SELECT t3.tax_id
+            FROM   taxa t1
+                   JOIN parents p1
+                     ON t1.tax_id = p1.child
+                   JOIN parents p2 USING (parent)
+                   JOIN taxa t2
+                     ON t2.tax_id = p2.child
+                   JOIN taxa t3
+                     ON t3.tax_id = parent
+                   JOIN ranks r
+                     ON t3.rank = r.rank
+            WHERE  t1.tax_id = ?
+                   AND t2.tax_id = ?
+            ORDER  BY rank_order DESC
+            LIMIT  1
+        """, (t1, t2))
+
+        res = cursor.fetchall()
+        if res:
+            (res,), = res
+        else:
+            raise NoAncestor()
+        return res
+
+if __name__ == '__main__':
+    import sys
+    rp = Refpkg(sys.argv[1])
