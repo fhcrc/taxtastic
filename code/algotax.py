@@ -121,17 +121,16 @@ def walk(cur, metadata):
         # it.
         ret[c] = {X_i: max(T_is, key=len) for X_i, T_is in ret_c.iteritems()}
 
-    # If this is the parent node, it's more useful to be back the coalesced
-    # results than something mapping to them.
-    if parents[cur] is None:
-        return ret[None]
-
-    # Otherwise if there were no cut colors, the only relevant data is the
-    # biggest set of nodes, so prune everything else out.
-    elif ret.get(None):
+    # If there were no cut colors, the only relevant data is the biggest set of
+    # nodes, so prune everything else out.
+    if ret.get(None):
         total = max(ret[None].itervalues(), key=len)
         ret.clear()
         ret[None][frozenset()] = total
+
+    # If this is the parent node, return just the biggest set of nodes.
+    if parents[cur] is None:
+        return ret[None][frozenset()]
 
     return ret
 
@@ -150,6 +149,7 @@ def reroot(cur, rp):
     def subrk_min(t):
         return rank_map[rp.most_recent_common_ancestor(
             *set(name_map[n.name] for n in t.get_terminals()))]
+
     while True:
         if len(cur.clades) < 2:
             return cur

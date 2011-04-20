@@ -45,7 +45,8 @@ def main(argv):
     if args.tax_tree:
         tree = next(Phylo.parse(args.tax_tree, 'phyloxml'))
     else:
-        tree = Phylo.read(rp.resource('tree_file', 'rU'), 'newick')
+        with rp.resource('tree_file', 'rU') as fobj:
+            tree = Phylo.read(fobj, 'newick')
         tree = tree.as_phyloxml()
 
     rp.load_db()
@@ -71,6 +72,7 @@ def main(argv):
     """)
 
     discordance_trees = []
+    discordance_tree = None
     for rank, in rank_order:
         seq_colors = rank_map[rank]
         if not seq_colors:
@@ -87,38 +89,26 @@ def main(argv):
             continue
 
         p('  badness: %d', badness)
-        results = algotax.walk(tree.root, metadata)
-        p('  possibilities:')
-        counter = itertools.count()
-        discordance_tree = None
-        for k in sorted(results, key=results.get):
-            p('    %d (%d) [%s]',
-                len(results[k]),
-                len(results[k]) - len(clade_map),
-                '; '.join(k) or '(none)')
-            if not k:
-                continue
+        result = algotax.walk(tree.root, metadata)
+        p('  discordance: %d', len(clade_map) - len(result))
+        if args.discordance:
+            # XXX find a better method of doing this
+            discordance_tree = copy.deepcopy(tree)
+            discordance_tree.name = rank
 
-            if args.discordance:
-                # XXX find a better method of doing this
-                discordance_tree = copy.deepcopy(tree)
-                discordance_tree.name = '%s: %s' % (rank, '; '.join(k))
-
-            cut_nodes = set(tree.get_terminals()) - results[k]
-            for node in sorted(cut_nodes, key=operator.attrgetter('name')):
-                p('      %s', node.name)
-
-                if not discordance_tree:
-                    continue
-                node = discordance_tree.find_any(name=node.name)
-                node.color = BranchColor(255, 0, 0)
-                node.width = 5
+        cut_nodes = set(tree.get_terminals()) - result
+        for node in sorted(cut_nodes, key=operator.attrgetter('name')):
+            p('    %s', node.name)
 
             if not discordance_tree:
                 continue
-            discordance_trees.append(discordance_tree)
+            node = discordance_tree.find_any(name=node.name)
+            node.color = BranchColor(255, 0, 0)
+            node.width = 5
 
-        p('    %d [whole set]', len(clade_map))
+        if not discordance_tree:
+            continue
+        discordance_trees.append(discordance_tree)
 
     if args.discordance:
         Phylo.write(discordance_trees, args.discordance, 'phyloxml')
