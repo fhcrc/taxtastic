@@ -158,25 +158,21 @@ class Refpkg(object):
         db.commit()
         self.db = db
 
-    def most_recent_common_ancestor(self, t1, t2):
+    def most_recent_common_ancestor(self, *ts):
         cursor = self.db.cursor()
+        qmarks = ', '.join('?' * len(ts))
         cursor.execute("""
-            SELECT t3.tax_id
-            FROM   taxa t1
-                   JOIN parents p1
-                     ON t1.tax_id = p1.child
-                   JOIN parents p2 USING (parent)
-                   JOIN taxa t2
-                     ON t2.tax_id = p2.child
-                   JOIN taxa t3
-                     ON t3.tax_id = parent
-                   JOIN ranks r
-                     ON t3.rank = r.rank
-            WHERE  t1.tax_id = ?
-                   AND t2.tax_id = ?
+            SELECT parent
+            FROM   parents
+                   JOIN taxa
+                     ON parent = taxa.tax_id
+                   JOIN ranks USING (rank)
+            WHERE  child IN (%s)
+            GROUP  BY parent
+            HAVING COUNT(*) = ?
             ORDER  BY rank_order DESC
             LIMIT  1
-        """, (t1, t2))
+        """ % qmarks, ts + (len(ts),))
 
         res = cursor.fetchall()
         if res:
