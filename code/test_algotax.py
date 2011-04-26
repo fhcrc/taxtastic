@@ -92,3 +92,36 @@ class AlgotaxWalkTest3(unittest.TestCase, AlgotaxWalkTestMixin):
 class AlgotaxWalkTest4(unittest.TestCase, AlgotaxWalkTestMixin):
     tree = '(((A,B),B),(A,A))'
     convex_tree_size = 4
+
+class RerootingTestMixin(object):
+    @classmethod
+    def setup_class(cls):
+        cls.parsed_tree = Phylo.read(StringIO(cls.tree), 'newick')
+        cls.mrcas = {n: int(n.branch_length)
+            for n in cls.parsed_tree.get_terminals()}
+        cls.new_root = algotax.reroot(cls.parsed_tree.root, cls.mrcas.get)
+
+    setUpClass = setup_class
+
+    def test_rerooting(self):
+        root_number = next(e
+            for e, n in enumerate(
+                self.parsed_tree.find_clades(order='postorder'))
+            if n is self.new_root)
+        self.assertEqual(root_number, self.root_number)
+
+class RerootingTest1(unittest.TestCase, RerootingTestMixin):
+    tree = '(0,0)'
+    root_number = 2
+
+class RerootingTest2(unittest.TestCase, RerootingTestMixin):
+    tree = '(0,(2,2)0)'
+    root_number = 3
+
+class RerootingTest3(unittest.TestCase, RerootingTestMixin):
+    tree = '(6,(2,((7,7)3,(7,7)3)0),6)'
+    root_number = 8
+
+class RerootingTest4(unittest.TestCase, RerootingTestMixin):
+    tree = '((((6,7)4,5)2,3)0,1)'
+    root_number = 0
