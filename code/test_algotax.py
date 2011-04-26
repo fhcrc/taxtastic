@@ -72,6 +72,8 @@ class AlgotaxWalkTestMixin(ColoredTreeTestMixin):
         super(AlgotaxWalkTestMixin, cls).setup_class()
         cls.nodeset = algotax.walk(cls.parsed_tree.root, cls.metadata)
 
+    setUpClass = setup_class
+
     def test_walk(self):
         self.assertEqual(len(self.nodeset), self.convex_tree_size)
 
