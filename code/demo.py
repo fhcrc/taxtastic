@@ -81,14 +81,16 @@ def main(argv):
         colors = {clade_map[seq]: color for seq, color in seq_colors}
         p('calculating for %s (|coloring| is %d)', rank, len(colors))
         metadata = algotax.color_clades(tree, colors)
-        badness = sum(len(cut) - 1
+        badness = [len(cut) - 1
             for node, cut in metadata.cut_colors.iteritems()
-            if len(cut) > 1 and node != tree.root)
-        if not badness:
+            if node != tree.root and len(cut) > 1]
+        max_badness = max(badness) if badness else 0
+        tot_badness = sum(badness)
+        if not max_badness:
             p('  completely convex; skipping')
             continue
 
-        p('  badness: %d', badness)
+        p('  badness: %d max, %d tot', max_badness, tot_badness)
         result = algotax.walk(tree.root, metadata)
         p('  discordance: %d', len(clade_map) - len(result))
         if args.discordance:
