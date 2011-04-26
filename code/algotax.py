@@ -58,16 +58,19 @@ def color_clades(tree, colors):
             if e_ != cut_colors[e]:
                 stack.append((e, okayed))
                 cut_colors[e] = e_
+
     return CladeMetadata(parents, colors, cut_colors)
 
 def walk(cur, metadata):
     "Walk a biopython clade, determining the optimal convex subcoloring."
 
     parents, colors, cut_colors = metadata
-    # Choosing None for `c` basically means 'coalesce disjoint colorings',
-    # which is what we want to do at the root node.
+
+    # The root node is reported to cut every color that crosses the root, but
+    # we want to treat the root node as if it doesn't cut any color because we
+    # only want the best set of nodes from the root.
     if parents[cur] is None:
-        K = None,
+        K = set()
     else:
         K = cut_colors[cur]
 
@@ -78,6 +81,7 @@ def walk(cur, metadata):
             color = colors[cur]
             assert len(K) == 1 and color in K
             ret[color][frozenset([color])] = {cur}
+            ret[None][frozenset([color])] = {cur}
         else:
             ret[None][frozenset()] = {cur}
         return ret
@@ -86,36 +90,32 @@ def walk(cur, metadata):
     B = union(cut_colors[a] & cut_colors[b]
         for a, b in combinations(cur.clades, 2))
 
-    # As above, we want to coalesce the colorings. Since this edge isn't
-    # colored, the different possibilities don't matter to edges above it; just
-    # choose the best possibility.
-    if not K:
-        K = None,
-
-    for c in K:
+    for c in K | {None}:
         ret_c = collections.defaultdict(list)
-        def aux(phis, used_colors, accum):
-            # Base case; we've reached the end of the list.
-            if not phis:
-                ret_c[frozenset(used_colors)].append(accum)
-                return
+        for b in B | {c}:
+            def aux(phis, used_colors, accum):
+                # Base case; we've reached the end of the list.
+                if not phis:
+                    ret_c[frozenset(used_colors)].append(accum)
+                    return
 
-            phi_i, phi_rest = phis[0], phis[1:]
-            for b in B | {c, None}:
+                phi_i, phi_rest = phis[0], phis[1:]
                 X_is = phi_i[b]
 
                 # One possible solution is to ignore this `phi` completely.
                 aux(phi_rest, used_colors, accum)
 
-                for X_i in phi_i[b]:
-                    # Ignore a subcoloring if it's empty (which we've already
-                    # handled) or it contains already-used colors (not counting
-                    # `b`).
-                    if b is not None and X_i & used_colors > {b}:
-                        continue
-                    aux(phi_rest, used_colors | X_i, accum | phi_i[b][X_i])
+                if not X_is:
+                    X_is = phi_i[None]
 
-        aux(phi, set(), set())
+                for X_i in X_is:
+                    if (X_i & used_colors) - {b}:
+                        continue
+                    if b != c and c in X_i:
+                        continue
+                    aux(phi_rest, used_colors | X_i, accum | X_is[X_i])
+
+            aux(phi, set(), set())
 
         # For each `X_i`, the optimal `T_i` is the one with the most nodes in
         # it.
@@ -123,7 +123,7 @@ def walk(cur, metadata):
 
     # If there were no cut colors, the only relevant data is the biggest set of
     # nodes, so prune everything else out.
-    if ret.get(None):
+    if not K:
         total = max(ret[None].itervalues(), key=len)
         ret.clear()
         ret[None][frozenset()] = total
