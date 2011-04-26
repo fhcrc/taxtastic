@@ -18,7 +18,7 @@ def main(argv):
     rp.load_db()
     with rp.resource('tree_file', 'rU') as fobj:
         tree = Phylo.read(fobj, 'newick')
-    root = algotax.reroot(tree.root, rp)
+    root = algotax.reroot_from_rp(tree.root, rp)
     tree.root_with_outgroup(root)
     with rp.resource('tree_file', 'w') as fobj:
         Phylo.write(tree, fobj, 'newick')

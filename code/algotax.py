@@ -136,7 +136,7 @@ def walk(cur, metadata):
 
 Ranking = collections.namedtuple('Ranking', 'rank node')
 
-def reroot(cur, rp):
+def reroot_from_rp(root, rp):
     name_map = dict(rp.db.cursor().execute("""
         SELECT seqname, tax_id
         FROM   sequences
@@ -150,6 +150,9 @@ def reroot(cur, rp):
         return rank_map[rp.most_recent_common_ancestor(
             *set(name_map[n.name] for n in t.get_terminals()))]
 
+    return reroot(root, subrk_min)
+
+def reroot(cur, subrk_min):
     while True:
         if len(cur.clades) < 2:
             return cur
