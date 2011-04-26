@@ -10,7 +10,10 @@ class ColoredTreeTestMixin(object):
         cls.colors = {n: n.name for n in cls.parsed_tree.get_terminals()}
         cls.metadata = algotax.color_clades(cls.parsed_tree, cls.colors)
 
-    setUpClass = setup_class
+    @classmethod
+    def setUpClass(cls):
+        super(ColoredTreeTestMixin, cls).setUpClass()
+        cls.setup_class()
 
 class CladeColorTestMixin(ColoredTreeTestMixin):
     def test_parents(self):
@@ -41,7 +44,7 @@ class CladeColorTestMixin(ColoredTreeTestMixin):
                     rev_numbering[node] in nodes,
                     color in self.metadata.cut_colors[node])
 
-class CladeColorTest1(unittest.TestCase, CladeColorTestMixin):
+class CladeColorTest1(CladeColorTestMixin, unittest.TestCase):
     tree = '((A,A),(B,B))'
     cut_colors = {
         'A': {0, 1},
@@ -49,14 +52,14 @@ class CladeColorTest1(unittest.TestCase, CladeColorTestMixin):
         None: {2, 5},
     }
 
-class CladeColorTest2(unittest.TestCase, CladeColorTestMixin):
+class CladeColorTest2(CladeColorTestMixin, unittest.TestCase):
     tree = '((A,B),((A,B),A))'
     cut_colors = {
         'A': {0, 2, 7, 5, 3, 6},
         'B': {1, 2, 7, 5, 4},
     }
 
-class CladeColorTest3(unittest.TestCase, CladeColorTestMixin):
+class CladeColorTest3(CladeColorTestMixin, unittest.TestCase):
     tree = '(((A,B),(C,D)),(A,B),(C,A))'
     cut_colors = {
         'A': {0, 2, 6, 9, 7, 12, 11},
@@ -77,19 +80,19 @@ class AlgotaxWalkTestMixin(ColoredTreeTestMixin):
     def test_walk(self):
         self.assertEqual(len(self.nodeset), self.convex_tree_size)
 
-class AlgotaxWalkTest1(unittest.TestCase, AlgotaxWalkTestMixin):
+class AlgotaxWalkTest1(AlgotaxWalkTestMixin, unittest.TestCase):
     tree = '((A,A),(B,B))'
     convex_tree_size = 4
 
-class AlgotaxWalkTest2(unittest.TestCase, AlgotaxWalkTestMixin):
+class AlgotaxWalkTest2(AlgotaxWalkTestMixin, unittest.TestCase):
     tree = '((A,B),(A,B))'
     convex_tree_size = 3
 
-class AlgotaxWalkTest3(unittest.TestCase, AlgotaxWalkTestMixin):
+class AlgotaxWalkTest3(AlgotaxWalkTestMixin, unittest.TestCase):
     tree = '(((A,B),(A,B)),(C,C))'
     convex_tree_size = 5
 
-class AlgotaxWalkTest4(unittest.TestCase, AlgotaxWalkTestMixin):
+class AlgotaxWalkTest4(AlgotaxWalkTestMixin, unittest.TestCase):
     tree = '(((A,B),B),(A,A))'
     convex_tree_size = 4
 
@@ -101,7 +104,10 @@ class RerootingTestMixin(object):
             for n in cls.parsed_tree.get_terminals()}
         cls.new_root = algotax.reroot(cls.parsed_tree.root, cls.mrcas.get)
 
-    setUpClass = setup_class
+    @classmethod
+    def setUpClass(cls):
+        super(RerootingTestMixin, cls).setUpClass()
+        cls.setup_class()
 
     def test_rerooting(self):
         root_number = next(e
@@ -110,18 +116,18 @@ class RerootingTestMixin(object):
             if n is self.new_root)
         self.assertEqual(root_number, self.root_number)
 
-class RerootingTest1(unittest.TestCase, RerootingTestMixin):
+class RerootingTest1(RerootingTestMixin, unittest.TestCase):
     tree = '(0,0)'
     root_number = 2
 
-class RerootingTest2(unittest.TestCase, RerootingTestMixin):
+class RerootingTest2(RerootingTestMixin, unittest.TestCase):
     tree = '(0,(2,2)0)'
     root_number = 3
 
-class RerootingTest3(unittest.TestCase, RerootingTestMixin):
+class RerootingTest3(RerootingTestMixin, unittest.TestCase):
     tree = '(6,(2,((7,7)3,(7,7)3)0),6)'
     root_number = 8
 
-class RerootingTest4(unittest.TestCase, RerootingTestMixin):
+class RerootingTest4(RerootingTestMixin, unittest.TestCase):
     tree = '((((6,7)4,5)2,3)0,1)'
     root_number = 0
