@@ -96,11 +96,15 @@ def getlines(fname):
                 yield line.strip()
                 
 
-def mkdir(dirpath):
+def mkdir(dirpath, clobber = False):
     """
     Create a (potentially existing) directory without errors. Raise
-    OSError if directory can't be created.
+    OSError if directory can't be created. If clobber is True, remove
+    dirpath if it exists.
     """
+
+    if clobber:
+        rmdir(dirpath)
     
     try:
         os.mkdir(dirpath)
