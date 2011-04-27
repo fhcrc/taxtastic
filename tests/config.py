@@ -12,36 +12,8 @@ log = logging
 def funcname(idstr):
     return '.'.join(idstr.split('.')[1:])
 
-def mkdir(dirpath):
-    """
-    Create a (potentially existing) directory without errors. Raise
-    OSError if directory can't be created.
-    """
-    
-    try:
-        os.mkdir(dirpath)
-    except OSError, msg:
-        log.warning(msg)
+from taxtastic.utils import mkdir, rmdir
 
-    if not path.exists(dirpath):
-        raise OSError('Failed to create %s' % dirpath)
-
-    return dirpath
-    
-def rmdir(dirpath):
-    """
-    Remove a (potentially missing) directory without errors. Raise
-    OSError if directory can't be removed.
-    """
-
-    try:
-        shutil.rmtree(dirpath)
-    except OSError, msg:
-        log.warning(msg)
-
-    if path.exists(dirpath):
-        raise OSError('Failed to remove %s' % dirpath)
-    
 class TestScriptBase(unittest.TestCase):
 
     """
