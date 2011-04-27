@@ -138,7 +138,11 @@ def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber = False):
     return con
 
 def db_load(con, archive, root_name='root', maxrows=None):
-
+    """
+    Load data from zip archive into database identified by con. Data
+    is not loaded if target tables already contain data.
+    """
+    
     try:    
         # nodes
         rows = read_nodes(
