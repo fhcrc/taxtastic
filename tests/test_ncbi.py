@@ -2,6 +2,7 @@
 
 import sys
 import os
+from os import path
 import unittest
 import logging
 import shutil
@@ -11,99 +12,87 @@ import config
 import taxtastic
 import taxtastic.ncbi
 from taxtastic.errors import OperationalError, IntegrityError
+from taxtastic.utils import mkdir, rmdir
 
 log = logging
 
 module_name = os.path.split(sys.argv[0])[1].rstrip('.py')
 outputdir = os.path.abspath(config.outputdir)
 datadir = os.path.abspath(config.datadir)
-
-def newdir(path):
-    """
-    Create a new directory "path", deleting an existing directory if
-    necessary.
-    """
-
-    shutil.rmtree(path, ignore_errors = True)
-    os.makedirs(path)
+ncbi_master_db = config.ncbi_master_db
+ncbi_data = config.ncbi_data
     
-class TestFetchData(unittest.TestCase):
-    def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
-        self.outdir = os.path.join(outputdir, self.funcname)
-        newdir(self.outdir)
-        _, self.zfilename = os.path.split(taxtastic.ncbi.ncbi_data_url)
+# class TestFetchData(unittest.TestCase):
+#     def setUp(self):
+#         self.funcname = '_'.join(self.id().split('.')[-2:])
+#         self.outdir = os.path.join(outputdir, self.funcname)
+#         newdir(self.outdir)
+#         _, self.zfilename = os.path.split(taxtastic.ncbi.ncbi_data_url)
         
-    def test01(self):
-        zfile = os.path.join(self.outdir, self.zfilename)        
-        fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir)
+#     def test01(self):
+#         zfile = os.path.join(self.outdir, self.zfilename)        
+#         fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir)
 
-        # file is downloaded the first time
-        self.assertTrue(downloaded)
-        self.assertTrue(os.path.isfile(fout))
-        self.assertTrue(zfile == fout)
+#         # file is downloaded the first time
+#         self.assertTrue(downloaded)
+#         self.assertTrue(os.path.isfile(fout))
+#         self.assertTrue(zfile == fout)
 
-        # ... but not the second time
-        fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir)
-        self.assertFalse(downloaded)
+#         # ... but not the second time
+#         fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir)
+#         self.assertFalse(downloaded)
 
-        # ... unless clobber = True
-        fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir, clobber=True)
-        self.assertTrue(downloaded)
-
+#         # ... unless clobber = True
+#         fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir, clobber=True)
+#         self.assertTrue(downloaded)
         
 class TestDbconnect(unittest.TestCase):
 
     def setUp(self):
         self.funcname = '_'.join(self.id().split('.')[-2:])
-        self.dbname = os.path.join(outputdir, self.funcname + '.db')
-        log.info(self.dbname)
 
     def test01(self):
-        with taxtastic.ncbi.db_connect(self.dbname, clobber = True) as con:
+        with taxtastic.ncbi.db_connect(ncbi_master_db, clobber = False) as con:
             cur = con.cursor()
             cur.execute('select name from sqlite_master where type = "table"')
             tables = set(i for j in cur.fetchall() for i in j) # flattened
             self.assertTrue(set(['nodes','names','merged','source']).issubset(tables))
-
-        # connection object is returned is schema already exists
-        con = taxtastic.ncbi.db_connect(self.dbname, clobber = False)
         
 class TestLoadData(unittest.TestCase):
 
+    maxrows = 10
+    
     def setUp(self):
         self.funcname = '_'.join(self.id().split('.')[-2:])
-        self.zfile = os.path.join(outputdir, 'taxdmp.zip')
-        # reuse this after the first download
-        _ , downloaded = taxtastic.ncbi.fetch_data(dest_dir = outputdir)
-        self.dbname = os.path.join(outputdir, self.funcname + '.db')
-        try:
-            os.remove(self.dbname)
-        except OSError:
-            pass
-        
+        self.outdir = path.join(outputdir, self.funcname)
+        self.dbname = os.path.join(self.outdir, 'taxonomy.db')
+        mkdir(self.outdir, clobber = True)
+                
     def test01(self):
-        maxrows = 10
-        with taxtastic.ncbi.db_connect(self.dbname, clobber = False) as con:
-            taxtastic.ncbi.db_load(con, self.zfile, maxrows = maxrows)
+        # we should be starting from scratch
+        self.assertFalse(path.isfile(self.dbname))
+
+        with taxtastic.ncbi.db_connect(self.dbname) as con:
+            taxtastic.ncbi.db_load(con, ncbi_data, maxrows = self.maxrows)
             cur = con.cursor()
             cur.execute('select * from names')
-            self.assertTrue(len(list(cur.fetchall())) == maxrows)
-            
+            self.assertTrue(len(list(cur.fetchall())) == self.maxrows)
+
+        # test clobber argument
         with taxtastic.ncbi.db_connect(self.dbname, clobber = True) as con:
-            taxtastic.ncbi.db_load(con, self.zfile, maxrows = 10)
+            taxtastic.ncbi.db_load(con, ncbi_data, maxrows = self.maxrows)
             cur = con.cursor()
             cur.execute('select * from names')
-            self.assertTrue(len(list(cur.fetchall())) == maxrows)
+            self.assertTrue(len(list(cur.fetchall())) == self.maxrows)
 
             # shouldn't be able to load data a second time, so number
             # of rows should not change
             taxtastic.ncbi.db_load(
                 con = con,
-                archive = self.zfile,
-                maxrows = 10)
+                archive = ncbi_data,
+                maxrows = self.maxrows)
             cur.execute('select * from names')
-            self.assertTrue(len(list(cur.fetchall())) == maxrows)
+            self.assertTrue(len(list(cur.fetchall())) == self.maxrows)
 
 
             

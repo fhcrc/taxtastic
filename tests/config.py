@@ -12,6 +12,7 @@ log = logging
 def funcname(idstr):
     return '.'.join(idstr.split('.')[1:])
 
+from taxtastic import ncbi
 from taxtastic.utils import mkdir, rmdir
 
 class TestScriptBase(unittest.TestCase):
@@ -88,3 +89,12 @@ outputdir = 'test_output'
 
 mkdir(outputdir)
 
+# download ncbi taxonomy data and create a database if necessary; use
+# this database for all non-destructive, non-modifying tests. For
+# modifying tests, make a copy of the database.
+ncbi_data, downloaded = ncbi.fetch_data(dest_dir=outputdir, clobber=False)
+ncbi_master_db = path.join(outputdir, 'ncbi_master.db')
+with ncbi.db_connect(ncbi_master_db, clobber = False) as con:
+    log.info('using %s for all tests' % ncbi_master_db)
+    ncbi.db_load(con, ncbi_data)
+    
