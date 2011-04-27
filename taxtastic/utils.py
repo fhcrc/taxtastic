@@ -91,3 +91,35 @@ def getlines(fname):
             if line.strip() and not line.startswith('#'):
                 yield line.strip()
                 
+
+def mkdir(dirpath):
+    """
+    Create a (potentially existing) directory without errors. Raise
+    OSError if directory can't be created.
+    """
+    
+    try:
+        os.mkdir(dirpath)
+    except OSError, msg:
+        log.debug(msg)
+
+    if not path.exists(dirpath):
+        raise OSError('Failed to create %s' % dirpath)
+
+    return dirpath
+    
+def rmdir(dirpath):
+    """
+    Remove a (potentially missing) directory without errors. Raise
+    OSError if directory can't be removed.
+    """
+
+    try:
+        shutil.rmtree(dirpath)
+    except OSError, msg:
+        log.debug(msg)
+
+    if path.exists(dirpath):
+        raise OSError('Failed to remove %s' % dirpath)
+
+                
