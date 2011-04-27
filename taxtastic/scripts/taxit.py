@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """\
-taxtastic.py
-============
+taxit
+=====
 
 Usage: %prog action <options>
 
@@ -19,8 +19,10 @@ import logging
 from taxtastic import subcommands, __version__ as version
 
 PROG = os.path.basename(__file__)
-DESCRIPTION = 'taxtastic.py -- Creation, validation, and modification of ' + \
-              'reference packages for use with `pplacer` and related software.'
+DESCRIPTION = """
+Creation, validation, and modification of reference packages for use
+with `pplacer` and related software.
+""".strip()
 
 def main(argv):
     action, arguments = parse_arguments(argv)
@@ -31,7 +33,7 @@ def main(argv):
         2: logging.INFO,
         3: logging.DEBUG,
     }.get(arguments.verbosity, logging.DEBUG)
-
+    
     if arguments.verbosity > 1:
         logformat = '%(levelname)s %(module)s %(lineno)s %(message)s'
     else:

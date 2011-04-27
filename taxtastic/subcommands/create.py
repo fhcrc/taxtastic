@@ -9,6 +9,9 @@ import re
 import json
 from collections import defaultdict
 
+from taxtastic import utils
+from taxtastic import package
+
 log = logging.getLogger(__name__)
 
 FORMAT_VERSION = '1.0'
@@ -30,73 +33,6 @@ PACKAGE_CONTENTS = {
 
 class ConfigError(Exception):
     pass
-
-def create(arguments):
-    """
-    Create the reference package (a directory with a manifest named
-    `manifest_name`).
-
-     * arguments - output of argparse.ArgumentParser.parse_args (or
-       presumably any other object with the required attributes:
-       [TODO: list required attributes here])
-     * MANIFEST_NAME - name of the JSON-format manifest file. Uses
-       taxonomy.package.MANIFEST_NAME by default.
-     * PACKAGE_CONTENTS - A dict defining sections and contents of
-       each. Uses taxonomy.package.PACKAGE_CONTENTS by default.
-     * PHYLO_MODEL_FILE - Names the JSON format file containing the
-       PHYLO MODEL DATA; uses taxonomy.package.PHYLO_MODEL_FILE by default.
-    """
-
-    pkg_dir = arguments.package_name
-
-    os.mkdir(pkg_dir)
-    manifest = os.path.join(pkg_dir, manifest_name)
-    optdict = defaultdict(dict)
-
-    # Add fields and values for the metadata section.
-    optdict['metadata']['create_date'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    # locus is required
-    optdict['metadata']['locus'] = arguments.locus
-    # format_version is a module-level constant
-    optdict['metadata']['format_version'] = format_version
-    if arguments.description:
-        optdict['metadata']['description'] = arguments.description
-    if arguments.author:
-        optdict['metadata']['author'] = arguments.author
-    if arguments.package_version:
-        optdict['metadata']['package_version'] = arguments.package_version
-
-    # phylo_model_file is part of the package, but not a command-line
-    # argument; write out the phylo model file in JSON format, but
-    # only if tree_stats was specified as an argument.
-    if arguments.tree_stats:
-        phylo_model_pth = os.path.join(pkg_dir, phylo_model_file)
-
-        parser = StatsParser(arguments.tree_stats)
-        success = parser.parse_stats_data()
-
-        if not success:
-            raise ConfigError("Unable to create %s from %s." % (phylo_model_pth, arguments.tree_stats))
-
-        parser.write_stats_json(phylo_model_pth)
-
-        optdict['files']['phylo_model_file'] = phylo_model_file
-        optdict['md5']['phylo_model_file'] = \
-        hashlib.md5(open(phylo_model_pth).read()).hexdigest()
-
-
-    # copy all provided files into the package directory
-    for fname in package_contents['files']:
-        if fname == 'phylo_model_file':
-            continue
-
-        pth = getattr(arguments, fname)
-        if pth:
-            shutil.copy(pth, pkg_dir)
-            optdict['files'][fname] = os.path.split(pth)[1]
-            optdict['md5'][fname] = hashlib.md5(open(pth).read()).hexdigest()
-
-    write_config(fname=manifest, optdict=optdict)
 
 class StatsParser(object):
     """
@@ -350,6 +286,10 @@ def build_parser(parser):
         action="store", dest="author",
         help='Person who created the reference package', metavar='NAME')
 
+    parser.add_argument("-c", "--clobber",
+        action="store_true", dest="clobber", default = False,
+        help= 'Delete an existing reference package.')
+    
     parser.add_argument("-d", "--description",
         action="store", dest="description",
         help='An arbitrary description field', metavar='TEXT')
@@ -405,5 +345,75 @@ def build_parser(parser):
              '"tax_id","parent_id","rank","tax_name" followed by a column ' + \
              'defining tax_id at each rank starting with root', metavar='FILE')
 
+        
 def action(args):
-    pass
+    """
+    Create the reference package (a directory with a manifest named
+    `manifest_name`).
+
+     * args - output of argparse.ArgumentParser.parse_args (or
+       presumably any other object with the required attributes:
+       [TODO: list required attributes here])
+     * MANIFEST_NAME - name of the JSON-format manifest file. Uses
+       taxonomy.package.MANIFEST_NAME by default.
+     * PACKAGE_CONTENTS - A dict defining sections and contents of
+       each. Uses taxonomy.package.PACKAGE_CONTENTS by default.
+     * PHYLO_MODEL_FILE - Names the JSON format file containing the
+       PHYLO MODEL DATA; uses taxonomy.package.PHYLO_MODEL_FILE by default.
+    """
+
+    pkg_dir = args.package_name
+
+    if args.clobber:
+        utils.rmdir(pkg_dir)
+
+    os.mkdir(pkg_dir)
+
+    manifest = os.path.join(pkg_dir, MANIFEST_NAME)
+    optdict = defaultdict(dict)
+
+    # Add fields and values for the metadata section.
+    optdict['metadata']['create_date'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    # locus is required
+    optdict['metadata']['locus'] = args.locus
+    # format_version is a module-level constant
+    optdict['metadata']['format_version'] = FORMAT_VERSION
+    if args.description:
+        optdict['metadata']['description'] = args.description
+    if args.author:
+        optdict['metadata']['author'] = args.author
+    if args.package_version:
+        optdict['metadata']['package_version'] = args.package_version
+
+    # phylo_model_file is part of the package, but not a command-line
+    # argument; write out the phylo model file in JSON format, but
+    # only if tree_stats was specified as an argument.
+    if args.tree_stats:
+        phylo_model_pth = os.path.join(pkg_dir, PHYLO_MODEL_FILE)
+
+        parser = StatsParser(args.tree_stats)
+        success = parser.parse_stats_data()
+
+        if not success:
+            raise ConfigError("Unable to create %s from %s." % (phylo_model_pth, args.tree_stats))
+
+        parser.write_stats_json(phylo_model_pth)
+
+        optdict['files']['phylo_model_file'] = PHYLO_MODEL_FILE
+        optdict['md5']['phylo_model_file'] = \
+            hashlib.md5(open(phylo_model_pth).read()).hexdigest()
+
+    # copy all provided files into the package directory
+    for fname in PACKAGE_CONTENTS['files']:
+        if fname == 'phylo_model_file':
+            continue
+
+        pth = getattr(args, fname)
+        if pth:
+            shutil.copy(pth, pkg_dir)
+            optdict['files'][fname] = os.path.split(pth)[1]
+            optdict['md5'][fname] = hashlib.md5(open(pth).read()).hexdigest()
+
+    package.write_config(fname=manifest, optdict=optdict)
+
+

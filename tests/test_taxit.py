@@ -64,8 +64,11 @@ class TestCreate(TestScriptBase):
         self.cmd_ok('create -P %(package)s -l 16s')
         self.assertTrue(path.exists(self.package))
         self.assertTrue(path.exists(path.join(self.package,'CONTENTS.json')))
+
+        # test the --clobber option
+        self.cmd_ok('create -P %(package)s -l 16s --clobber')
         
-        # fails the second time because package already exists
+        # fails without --clobber because package already exists
         self.cmd_fails('create -P %(package)s -l 16s')
 
 
