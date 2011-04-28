@@ -16,9 +16,8 @@ from taxtastic.utils import mkdir, rmdir
 
 log = logging
 
-module_name = os.path.split(sys.argv[0])[1].rstrip('.py')
-outputdir = os.path.abspath(config.outputdir)
-datadir = os.path.abspath(config.datadir)
+outputdir = config.outputdir
+datadir = config.datadir
 ncbi_master_db = config.ncbi_master_db
 ncbi_data = config.ncbi_data
     
@@ -57,17 +56,19 @@ class TestDbconnect(unittest.TestCase):
             cur.execute('select name from sqlite_master where type = "table"')
             tables = set(i for j in cur.fetchall() for i in j) # flattened
             self.assertTrue(set(['nodes','names','merged','source']).issubset(tables))
-        
-class TestLoadData(unittest.TestCase):
 
-    maxrows = 10
-    
+class TestBase(unittest.TestCase):
+
     def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+        self.funcname = '.'.join(self.id().split('.')[-1:])
         self.outdir = path.join(outputdir, self.funcname)
         self.dbname = os.path.join(self.outdir, 'taxonomy.db')
         mkdir(self.outdir, clobber = True)
-                
+    
+class TestLoadData(TestBase):
+
+    maxrows = 10
+                    
     def test01(self):
         # we should be starting from scratch
         self.assertFalse(path.isfile(self.dbname))

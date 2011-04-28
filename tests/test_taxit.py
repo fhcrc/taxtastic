@@ -14,12 +14,12 @@ from config import TestScriptBase, rmdir
 
 log = logging
 
-outputdir = path.abspath(config.outputdir)
-datadir = path.abspath(config.datadir)
+datadir = config.datadir
 
 TestScriptBase.executable = './taxit'
-TestScriptBase.outputdir = outputdir
-        
+TestScriptBase.outputdir = config.outputdir
+TestScriptBase.ncbi_master_db = config.ncbi_master_db
+
 class TestHelp(TestScriptBase):
 
     def test01(self):
@@ -76,11 +76,11 @@ class TestTaxTable(TestScriptBase):
     """
     Unit tests for the taxtable sub-command.
     """
-    def test01(self):
-        """
-        Minimal test that downloads ncbi taxdump and create a taxonomy db.
-        """
-        self.cmd_ok('taxtable')
+    # def test01(self):
+    #     """
+    #     Minimal test: a existing database is opened and that's it.
+    #     """
+    #     self.cmd_ok('taxtable --database-file %(ncbi_master_db)s')
 
     def test02(self):
         """

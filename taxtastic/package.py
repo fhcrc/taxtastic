@@ -229,9 +229,8 @@ class StatsParser(object):
                 if not regex.match(self.input_text):
                     empirical_frequencies = False          
         else:
-            print "Warning: phyml stats files don't specify empirical or " + \
-                  "model frequencies; assuming empirical."
-
+            log.info("phyml stats files don't specify empirical or "
+                     "model frequencies; assuming empirical.")
 
         return empirical_frequencies
 

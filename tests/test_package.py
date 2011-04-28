@@ -2,6 +2,7 @@
 
 import sys
 import os
+from os import path
 import unittest
 import logging
 import pprint
@@ -10,6 +11,7 @@ import collections
 import json
 
 from taxtastic.package import StatsParser
+from taxtastic.utils import mkdir
 
 log = logging
 
@@ -28,7 +30,8 @@ test_paths = [os.path.join(datadir, f) for f in test_files]
 class TestStatsParser(unittest.TestCase):
 
     def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+        _, self.funcname = self.id().split('.', 1)
+        self.outdir = path.join(outputdir, self.funcname)        
 
     def testRead(self):
         """
@@ -60,14 +63,12 @@ class TestStatsParser(unittest.TestCase):
         Verify that JSON output can be written for each input file -
         no checks of content here.
         """
+
+        mkdir(self.outdir, clobber = True)
+
         for f in test_files:
             infile = os.path.join(datadir, f)
-            outfile = os.path.join(outputdir, f)+'.json'
-            try:
-                os.remove(outfile)
-            except OSError:
-                pass
-
+            outfile = os.path.join(self.outdir, f) + '.json'
             parser = StatsParser(infile)
             parser.parse_stats_data()
             parser.write_stats_json(outfile)
