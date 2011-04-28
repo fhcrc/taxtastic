@@ -1,5 +1,9 @@
 import datetime
 import logging
+import shutil
+import os
+import csv
+from os import path
 
 log = logging
 
@@ -90,4 +94,40 @@ def getlines(fname):
         for line in f:
             if line.strip() and not line.startswith('#'):
                 yield line.strip()
+                
+
+def mkdir(dirpath, clobber = False):
+    """
+    Create a (potentially existing) directory without errors. Raise
+    OSError if directory can't be created. If clobber is True, remove
+    dirpath if it exists.
+    """
+
+    if clobber:
+        rmdir(dirpath)
+    
+    try:
+        os.mkdir(dirpath)
+    except OSError, msg:
+        log.debug(msg)
+
+    if not path.exists(dirpath):
+        raise OSError('Failed to create %s' % dirpath)
+
+    return dirpath
+    
+def rmdir(dirpath):
+    """
+    Remove a (potentially missing) directory without errors. Raise
+    OSError if directory can't be removed.
+    """
+
+    try:
+        shutil.rmtree(dirpath)
+    except OSError, msg:
+        log.debug(msg)
+
+    if path.exists(dirpath):
+        raise OSError('Failed to remove %s' % dirpath)
+
                 

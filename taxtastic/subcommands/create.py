@@ -1,3 +1,5 @@
+"""Creates a reference package"""
+
 import logging
 import os
 import time
@@ -7,124 +9,30 @@ import re
 import json
 from collections import defaultdict
 
-log = logging
+from taxtastic import utils
+from taxtastic import package
 
-FORMAT_VERSION = '1.0' 
+log = logging.getLogger(__name__)
+
+FORMAT_VERSION = '1.0'
 
 MANIFEST_NAME = 'CONTENTS.json'
 PHYLO_MODEL_FILE = 'phylo_model.json'
 
 PACKAGE_CONTENTS = {
-    'metadata':['create_date','author','description','package_version',
-                'empirical_frequencies','locus','format_version'],
-    'files':['tree_file','tree_stats','aln_fasta','aln_sto',
-             'profile','seq_info','taxonomy','mask','phylo_model_file'],
-    'md5':[]
-    }
-
-def write_config(fname, optdict):
-    """
-    * fname - name of config file
-    * optdict - a dictionary with sections for keys and nested dictionaries
-      { option : value } for top-level values.
-    """
-
-    log.info('writing %s' % fname)
-    with open(fname, 'w+') as config_file:
-        config_file.write(json.dumps(optdict, indent=2) + '\n')
+    'metadata': [
+        'create_date', 'author', 'description', 'package_version',
+        'empirical_frequencies', 'locus', 'format_version',
+    ],
+    'files': [
+        'tree_file', 'tree_stats', 'aln_fasta', 'aln_sto',
+        'profile', 'seq_info', 'taxonomy', 'mask', 'phylo_model_file',
+    ],
+    'md5': []
+}
 
 class ConfigError(Exception):
     pass
-
-
-# Read in a tree stats files and extract some data to be written to a JSON phylo model file.
-def write_tree_stats_json(parser, phylo_model_file):
-    parser.write_stats_json(phylo_model_file)
-
-class Refpkg:
-    """
-    Class for reading and validating reference packages.
-    """
-
-    def __init__(self, refpkg):
-        """
-        * refpkg - path to a reference package directory
-        """
-    
-        pass
-
-        
-def create(arguments,
-           manifest_name=MANIFEST_NAME,
-           package_contents=PACKAGE_CONTENTS,
-           phylo_model_file=PHYLO_MODEL_FILE,
-           format_version=FORMAT_VERSION):
-
-    """
-    Create the reference package (a directory with a manifest named
-    `manifest_name`).
-
-     * arguments - output of argparse.ArgumentParser.parse_args (or
-       presumably any other object with the required attributes:
-       [TODO: list required attributes here])
-     * MANIFEST_NAME - name of the JSON-format manifest file. Uses
-       taxonomy.package.MANIFEST_NAME by default.
-     * PACKAGE_CONTENTS - A dict defining sections and contents of
-       each. Uses taxonomy.package.PACKAGE_CONTENTS by default.
-     * PHYLO_MODEL_FILE - Names the JSON format file containing the
-       PHYLO MODEL DATA; uses taxonomy.package.PHYLO_MODEL_FILE by default.
-    """
-
-    pkg_dir = arguments.package_name
-
-    os.mkdir(pkg_dir)
-    manifest = os.path.join(pkg_dir, manifest_name)
-    optdict = defaultdict(dict)
-
-    # Add fields and values for the metadata section.
-    optdict['metadata']['create_date'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    # locus is required
-    optdict['metadata']['locus'] = arguments.locus
-    # format_version is a module-level constant
-    optdict['metadata']['format_version'] = format_version
-    if arguments.description:
-        optdict['metadata']['description'] = arguments.description
-    if arguments.author:
-        optdict['metadata']['author'] = arguments.author
-    if arguments.package_version:
-        optdict['metadata']['package_version'] = arguments.package_version
-
-    # phylo_model_file is part of the package, but not a command-line
-    # argument; write out the phylo model file in JSON format, but
-    # only if tree_stats was specified as an argument.
-    if arguments.tree_stats:
-        phylo_model_pth = os.path.join(pkg_dir, phylo_model_file)
-
-        parser = StatsParser(arguments.tree_stats)
-        success = parser.parse_stats_data()
-
-        if not success:
-            raise ConfigError("Unable to create %s from %s." % (phylo_model_pth, arguments.tree_stats))
-
-        parser.write_stats_json(phylo_model_pth)
-
-        optdict['files']['phylo_model_file'] = phylo_model_file
-        optdict['md5']['phylo_model_file'] = \
-        hashlib.md5(open(phylo_model_pth).read()).hexdigest()
-
-
-    # copy all provided files into the package directory
-    for fname in package_contents['files']:
-        if fname == 'phylo_model_file':
-            continue
-
-        pth = getattr(arguments, fname)
-        if pth:
-            shutil.copy(pth, pkg_dir)
-            optdict['files'][fname] = os.path.split(pth)[1]
-            optdict['md5'][fname] = hashlib.md5(open(pth).read()).hexdigest()
-
-    write_config(fname=manifest, optdict=optdict)
 
 class StatsParser(object):
     """
@@ -207,16 +115,16 @@ class StatsParser(object):
 
     def is_empirical(self):
         """
-        Determine if empirical base frequencies were used.  Defaults to true 
+        Determine if empirical base frequencies were used.  Defaults to true
         unless proven otherwise.  Only matches RaxML-generated files.
         """
         # Default to Ture for empirical_frequencies, unless proven otherwise.
         empirical_frequencies = True
 
 
-        # Determine if the file type is RaxML.  If nucleotides, leave 
-        # empirical_frequencies true.  Otherwise look for the 
-        # string "Empirical Base Frequencies".  If it isn't there, 
+        # Determine if the file type is RaxML.  If nucleotides, leave
+        # empirical_frequencies true.  Otherwise look for the
+        # string "Empirical Base Frequencies".  If it isn't there,
         # empirical_frequencies gets set to false.
         if self.file_type.startswith('raxml'):
             # empirical_frequencies will always be true for nucleotides.
@@ -227,10 +135,11 @@ class StatsParser(object):
                         re.M|re.DOTALL)
 
                 if not regex.match(self.input_text):
-                    empirical_frequencies = False          
+                    empirical_frequencies = False
         else:
-            log.info("phyml stats files don't specify empirical or "
-                     "model frequencies; assuming empirical.")
+            print "Warning: phyml stats files don't specify empirical or " + \
+                  "model frequencies; assuming empirical."
+
 
         return empirical_frequencies
 
@@ -368,5 +277,143 @@ class StatsParser(object):
             return True
         else:
             return False
+
+
+
+
+def build_parser(parser):
+    parser.add_argument("-a", "--author",
+        action="store", dest="author",
+        help='Person who created the reference package', metavar='NAME')
+
+    parser.add_argument("-c", "--clobber",
+        action="store_true", dest="clobber", default = False,
+        help= 'Delete an existing reference package.')
+    
+    parser.add_argument("-d", "--description",
+        action="store", dest="description",
+        help='An arbitrary description field', metavar='TEXT')
+
+    parser.add_argument("-f", "--aln-fasta",
+        action="store", dest="aln_fasta",
+        help='Multiple alignment in fasta format', metavar='FILE')
+
+    parser.add_argument("-i", "--seq-info",
+        action="store", dest="seq_info",
+        help='CSV format file describing the aligned reference ' + \
+             'sequences, minimally containing the fields "seqname" ' + \
+             'and "tax_id"', metavar='FILE')
+
+    parser.add_argument("-l", "--locus",
+        action="store", dest="locus", required=True,
+        help='The locus described by the reference package', metavar='LOCUS')
+
+    parser.add_argument("-m", "--mask",
+        action="store", dest="mask",
+        help='Text file containing a mask', metavar='FILE')
+
+    parser.add_argument("-p", "--profile",
+        action="store", dest="profile",
+        help='Alignment profile', metavar='FILE')
+
+    parser.add_argument('-P', '--package-name',
+        action='store', dest='package_name',
+        default='./taxtastic.refpkg', metavar='PATH',
+        help='Name of output directory [default %(default)s]')
+
+    parser.add_argument("-r", "--package-version",
+        action="store", dest="package_version",
+        help='Release version for the reference package', metavar='VERSION')
+
+    parser.add_argument("-s", "--tree-stats",
+        action="store", dest="tree_stats",
+        help='File containing tree statistics (for example ' + \
+             'RAxML_info.whatever")', metavar='FILE')
+
+    parser.add_argument("-S", "--aln-sto",
+        action="store", dest="aln_sto",
+        help='Multiple alignment in Stockholm format', metavar='FILE')
+
+    parser.add_argument("-t", "--tree-file",
+        action="store", dest="tree_file",
+        help='Phylogenetic tree in newick format',
+        metavar='FILE')
+
+    parser.add_argument("-T", "--taxonomy",
+        action="store", dest="taxonomy",
+        help='CSV format file defining the taxonomy. Fields include ' + \
+             '"tax_id","parent_id","rank","tax_name" followed by a column ' + \
+             'defining tax_id at each rank starting with root', metavar='FILE')
+
+        
+def action(args):
+    """
+    Create the reference package (a directory with a manifest named
+    `manifest_name`).
+
+     * args - output of argparse.ArgumentParser.parse_args (or
+       presumably any other object with the required attributes:
+       [TODO: list required attributes here])
+     * MANIFEST_NAME - name of the JSON-format manifest file. Uses
+       taxonomy.package.MANIFEST_NAME by default.
+     * PACKAGE_CONTENTS - A dict defining sections and contents of
+       each. Uses taxonomy.package.PACKAGE_CONTENTS by default.
+     * PHYLO_MODEL_FILE - Names the JSON format file containing the
+       PHYLO MODEL DATA; uses taxonomy.package.PHYLO_MODEL_FILE by default.
+    """
+
+    pkg_dir = args.package_name
+
+    if args.clobber:
+        utils.rmdir(pkg_dir)
+
+    os.mkdir(pkg_dir)
+
+    manifest = os.path.join(pkg_dir, MANIFEST_NAME)
+    optdict = defaultdict(dict)
+
+    # Add fields and values for the metadata section.
+    optdict['metadata']['create_date'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    # locus is required
+    optdict['metadata']['locus'] = args.locus
+    # format_version is a module-level constant
+    optdict['metadata']['format_version'] = FORMAT_VERSION
+    if args.description:
+        optdict['metadata']['description'] = args.description
+    if args.author:
+        optdict['metadata']['author'] = args.author
+    if args.package_version:
+        optdict['metadata']['package_version'] = args.package_version
+
+    # phylo_model_file is part of the package, but not a command-line
+    # argument; write out the phylo model file in JSON format, but
+    # only if tree_stats was specified as an argument.
+    if args.tree_stats:
+        phylo_model_pth = os.path.join(pkg_dir, PHYLO_MODEL_FILE)
+
+        parser = StatsParser(args.tree_stats)
+        success = parser.parse_stats_data()
+
+        if not success:
+            raise ConfigError("Unable to create %s from %s." % (phylo_model_pth, args.tree_stats))
+
+        parser.write_stats_json(phylo_model_pth)
+
+        optdict['files']['phylo_model_file'] = PHYLO_MODEL_FILE
+        optdict['md5']['phylo_model_file'] = \
+            hashlib.md5(open(phylo_model_pth).read()).hexdigest()
+
+    # copy all provided files into the package directory
+    for fname in PACKAGE_CONTENTS['files']:
+        if fname == 'phylo_model_file':
+            continue
+
+        pth = getattr(args, fname)
+        if pth:
+            shutil.copy(pth, pkg_dir)
+            optdict['files'][fname] = os.path.split(pth)[1]
+            optdict['md5'][fname] = hashlib.md5(open(pth).read()).hexdigest()
+
+    package.write_config(fname=manifest, optdict=optdict)
 
 
