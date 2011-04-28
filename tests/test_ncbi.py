@@ -95,11 +95,5 @@ class TestLoadData(unittest.TestCase):
             self.assertTrue(len(list(cur.fetchall())) == self.maxrows)
 
 
-            
-    # def test02(self):
-    #     with taxtastic.ncbi.db_connect(self.dbname, clobber = True) as con:
-    #         taxtastic.ncbi.db_load(con, self.zfile)
-
-
 
 

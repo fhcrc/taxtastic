@@ -17,37 +17,26 @@ import taxtastic.ncbi
 
 log = logging
 
-def create_db(outputdir, startover):
-    
-    # download if missing or startover is True
-    zfile, downloaded = taxtastic.ncbi.fetch_data(dest_dir = outputdir, clobber = startover)
-    dbname = path.join(outputdir, 'taxonomy.db')
-
-    # read existing databse unless startover if True
-    con = taxtastic.ncbi.db_connect(dbname, clobber = startover)
-    log.warning('loading %s' % dbname)
-    taxtastic.ncbi.db_load(con, zfile)
-    con.close()
-        
-    return zfile, dbname
-
 module = path.split(path.splitext(__file__)[0])[1]
 outputdir = mkdir(path.join(config.outputdir, module))
 datadir = config.datadir
 
 echo = False
 
-zfile, dbname = create_db(outputdir, startover = False)
+zfile = config.ncbi_data
+dbname = config.ncbi_master_db
 
-class TestTaxonomyInit(unittest.TestCase):
 
+class TestBase(unittest.TestCase):
+    
     def setUp(self):
-        self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
         self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
+    
+class TestTaxonomyInit(TestBase):
 
     def test01(self):
         self.tax._node('2')
@@ -55,15 +44,7 @@ class TestTaxonomyInit(unittest.TestCase):
     def test02(self):
         self.assertRaises(KeyError, self.tax._node, 'buh')
 
-class TestGetLineagePrivate(unittest.TestCase):
-
-    def setUp(self):
-        self.funcname = funcname(self.id())
-        self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
-
-    def tearDown(self):
-        self.engine.dispose()
+class TestGetLineagePrivate(TestBase):
 
     def test01(self):
         lineage = self.tax._get_lineage('1')
@@ -84,15 +65,7 @@ class TestGetLineagePrivate(unittest.TestCase):
         self.assertFalse(tax_id in self.tax.cached)
         self.assertRaises(KeyError, self.tax._get_lineage, tax_id)
 
-class TestGetMerged(unittest.TestCase):
-
-    def setUp(self):
-        self.funcname = funcname(self.id())
-        self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
-
-    def tearDown(self):
-        self.engine.dispose()
+class TestGetMerged(TestBase):
 
     def test01(self):
         tax_id = '1378'
@@ -104,15 +77,7 @@ class TestGetMerged(unittest.TestCase):
         merged = self.tax._get_merged(tax_id)
         self.assertFalse(merged is None)
 
-class TestTaxNameSearch(unittest.TestCase):
-
-    def setUp(self):
-        self.funcname = funcname(self.id())
-        self.engine = create_engine('sqlite:///%s' % dbname, echo=echo) # echo=echo
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
-
-    def tearDown(self):
-        self.engine.dispose()
+class TestTaxNameSearch(TestBase):
 
     def test01(self):
         tax_id, tax_name, is_primary = self.tax.primary_from_name('Gemella')
@@ -129,15 +94,7 @@ class TestTaxNameSearch(unittest.TestCase):
         self.assertFalse(is_primary)
 
 
-class TestSynonyms(unittest.TestCase):
-
-    def setUp(self):
-        self.funcname = funcname(self.id())
-        self.engine = create_engine('sqlite:///%s' % dbname, echo=echo) # echo=echo
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
-
-    def tearDown(self):
-        self.engine.dispose()
+class TestSynonyms(TestBase):
 
     def test01(self):
         synonyms = self.tax.synonyms(tax_id='1378')
@@ -147,15 +104,7 @@ class TestSynonyms(unittest.TestCase):
 
 
 
-class TestGetLineagePublic(unittest.TestCase):
-
-    def setUp(self):
-        self.funcname = funcname(self.id())
-        self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
-
-    def tearDown(self):
-        self.engine.dispose()
+class TestGetLineagePublic(TestBase):
 
     def test01(self):
         lineage = self.tax.lineage('1')
@@ -205,17 +154,40 @@ class TestGetLineagePublic(unittest.TestCase):
     #     lineage = self.tax.lineage(tax_id=tax_id)
         
         
-class TestTaxTable(unittest.TestCase):
+class TestMethods(TestBase):
 
+    def test01(self):
+        taxname = self.tax.primary_from_id('1280')
+        self.assertTrue(taxname == 'Staphylococcus aureus')
+
+    def test02(self):
+        self.assertRaises(KeyError, self.tax.primary_from_id, 'buh')
+
+    def test03(self):
+        res = self.tax.add_source(name='new source', description='really new!')
+        res = self.tax.add_source(name='new source', description='really new!')
+        self.assertTrue(res == (2, False))
+
+
+    # def test04(self):
+    #     self.tax.add_node(tax_id = "186802_1",
+    #                       parent_id = "186802",
+    #                       rank = "species",
+    #                       source_name = "Fredricks Lab",
+    #                       tax_name = 'BVAB1')
+
+
+class TestWriteTable(TestBase):
+    """
+    test tax.write_table - note that this method produces output.
+
+    TODO: write output to subdirectory named for the test method
+    """
+    
     def setUp(self):
+        super(TestWriteTable, self).setUp()
         self.funcname = funcname(self.id())
-        self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
         self.fname = os.path.join(outputdir, self.funcname)+'.csv'
-        log.info('writing to ' + self.fname)
-
-    def tearDown(self):
-        self.engine.dispose()
 
     def test02(self):
         tax_id = '1280' # staph aureus
@@ -241,33 +213,5 @@ class TestTaxTable(unittest.TestCase):
 
 
 
-class TestMethods(unittest.TestCase):
 
-    def setUp(self):
-        self.funcname = funcname(self.id())
-        self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
-
-    def tearDown(self):
-        self.engine.dispose()
-
-    def test01(self):
-        taxname = self.tax.primary_from_id('1280')
-        self.assertTrue(taxname == 'Staphylococcus aureus')
-
-    def test02(self):
-        self.assertRaises(KeyError, self.tax.primary_from_id, 'buh')
-
-    def test03(self):
-        res = self.tax.add_source(name='new source', description='really new!')
-        res = self.tax.add_source(name='new source', description='really new!')
-        self.assertTrue(res == (2, False))
-
-
-    # def test04(self):
-    #     self.tax.add_node(tax_id = "186802_1",
-    #                       parent_id = "186802",
-    #                       rank = "species",
-    #                       source_name = "Fredricks Lab",
-    #                       tax_name = 'BVAB1')
-
+        
