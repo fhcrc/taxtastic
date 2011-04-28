@@ -67,16 +67,28 @@ class _IntermediateTaxon(object):
 
 class Refpkg(object):
     def __init__(self, path):
+        """
+        Initialize from refpkg directory located at path.
+        """
+
         self.path = path
         with self.file_resource('CONTENTS.json', 'rU') as fobj:
             self.contents = json.load(fobj)
         self.db = None
 
+    # can be stubbed out to provide an alternative mechanism for
+    # providing data (eg for testing)
     file_factory = open
+
     def file_resource(self, resource, *mode):
         return self.file_factory(os.path.join(self.path, resource), *mode)
 
     def resource(self, name, *mode):
+        """
+        Returns named file object opened with mode. File name must be
+        defined in manifest.
+        """
+        
         return self.file_resource(self.contents['files'][name], *mode)
 
     def _digest_resource(self, name):
@@ -95,6 +107,10 @@ class Refpkg(object):
         self.contents['md5'][name] = digest
 
     def save(self):
+        """
+        Writes the manifest.
+        """
+
         with self.file_resource('CONTENTS.json', 'w') as fobj:
             json.dump(self.contents, fobj, indent=2)
 
