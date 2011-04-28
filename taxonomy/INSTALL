@@ -41,7 +41,7 @@ taxonomy package
 This package is located in github within the taxtastic project. Create
 a local repository and install as follows::
 
- git clone git@github.com:nhoffman/taxtastic.git
+ git clone git@github.com:fhcrc/taxtastic.git
  cd taxtastic/taxonomy
  python setup.py install
 
