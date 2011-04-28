@@ -14,11 +14,10 @@ from config import TestScriptBase, rmdir
 
 log = logging
 
-datadir = config.datadir
-
 TestScriptBase.executable = './taxit'
 TestScriptBase.outputdir = config.outputdir
-TestScriptBase.ncbi_master_db = config.ncbi_master_db
+TestScriptBase.taxdb = config.ncbi_master_db
+TestScriptBase.datadir = config.datadir
 
 class TestHelp(TestScriptBase):
 
@@ -79,14 +78,40 @@ class TestTaxTable(TestScriptBase):
     """
     Unit tests for the taxtable sub-command.
     """
-    # def test01(self):
-    #     """
-    #     Minimal test: a existing database is opened and that's it.
-    #     """
-    #     self.cmd_ok('taxtable --database-file %(ncbi_master_db)s')
 
-    def test02(self):
+    def setUp(self):
+        self.outfile = path.join(self.mkoutdir(), 'taxtable.csv')
+
+    def test01(self):
         """
         Invalid arguments should cause a failure.
         """
         self.cmd_fails('taxtable --not-an-argument')
+        self.assertFalse(path.isfile(self.outfile))
+        
+    def test02(self):
+        """ Minimal test: a existing database is opened and that's it."""
+        self.cmd_ok('taxtable -d %(taxdb)s > %(outfile)s')
+        self.assertTrue(path.isfile(self.outfile))
+        
+    def test03(self):
+        """ Minimal test: a existing database is opened and that's it."""
+        self.cmd_ok('taxtable -d %(taxdb)s -o %(outfile)s')
+        self.assertTrue(path.isfile(self.outfile))
+
+    def test04(self):
+        """Specify a single tax_id"""
+        self.cmd_ok('taxtable -d %(taxdb)s -o %(outfile)s -t 180164')
+        self.assertTrue(path.isfile(self.outfile))
+        
+    def test05(self):
+        """Specify more than one tax_id"""
+        self.cmd_ok('taxtable -d %(taxdb)s -o %(outfile)s -t 180164,166486')
+        self.assertTrue(path.isfile(self.outfile))
+
+    def test06(self):
+        """taxids using an input file"""
+        self.cmd_ok('taxtable -d %(taxdb)s -o %(outfile)s -t %(datadir)s/taxids1.txt')
+        self.assertTrue(path.isfile(self.outfile))
+        
+
