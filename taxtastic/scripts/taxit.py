@@ -1,15 +1,8 @@
 #!/usr/bin/env python
-"""\
-taxit
-=====
 
-Usage: %prog action <options>
-
+"""
 Creation, validation, and modification of reference packages for use
-with `pplacer` and related software.  Can also create CSV files
-describing lineages for a set of taxa.
-
-Use `taxomatic.py -h` or `taxomatic.py --help` to print help text.
+with `pplacer` and related software.
 """
 
 import argparse
@@ -19,10 +12,7 @@ import logging
 from taxtastic import subcommands, __version__ as version
 
 PROG = os.path.basename(__file__)
-DESCRIPTION = """
-Creation, validation, and modification of reference packages for use
-with `pplacer` and related software.
-""".strip()
+DESCRIPTION = __doc__.strip()
 
 def main(argv):
     action, arguments = parse_arguments(argv)
@@ -51,7 +41,7 @@ def parse_arguments(argv):
     parser = argparse.ArgumentParser(description=DESCRIPTION, prog=PROG)
 
     parser.add_argument('-V', '--version', action='version',
-        version='%(prog)s v' + version,
+        version='taxit v' + version,
         help='Print the version number and exit')
 
     parser.add_argument('-v', '--verbose',
