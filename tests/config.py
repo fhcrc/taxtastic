@@ -15,7 +15,53 @@ def funcname(idstr):
 from taxtastic import ncbi
 from taxtastic.utils import mkdir, rmdir
 
-class TestScriptBase(unittest.TestCase):
+# set verbosity of logging output
+try:
+    logflag = re.findall(r'-[vq]+\b', ' '.join(sys.argv[1:]))[0]
+except IndexError:
+    logflag = ''
+
+logging.basicConfig(
+    file = sys.stdout,
+    format = '%(levelname)s %(module)s %(lineno)s %(message)s' \
+        if logflag.startswith('-v') else '%(message)s',
+    level = {'-q':logging.ERROR,
+             '':logging.WARNING,
+             '-v': logging.INFO,
+             '-vv': logging.DEBUG}[logflag]
+    )
+
+# module data
+datadir = 'testfiles'
+outputdir = 'test_output'
+
+mkdir(outputdir)
+
+class TestBase(unittest.TestCase):
+    """
+    Base class for unit tests
+    """
+    
+    outputdir = outputdir    
+
+    def outdir(self):
+        """
+        Name an outputdir as outpudir/module.class.method
+        """
+        funcname = '.'.join(self.id().split('.')[-3:])
+        return path.join(self.outputdir, funcname)
+
+    def mkoutdir(self, clobber = True):
+        """
+        Create output directory (destructively if clobber is True)
+        """
+
+        outdir = self.outdir()
+        mkdir(outdir, clobber)
+        return outdir
+
+    
+class TestScriptBase(TestBase):
 
     """
     Base class for unit tests of scripts distributed with this
@@ -33,7 +79,6 @@ class TestScriptBase(unittest.TestCase):
     """
     
     executable = None
-    outputdir = None
     
     def __getitem__(self, i):
         """
@@ -58,37 +103,7 @@ class TestScriptBase(unittest.TestCase):
     def cmd_fails(self, cmd=None, args=None):
         status, output = self.wrap_cmd(cmd, args)
         self.assertFalse(status == 0)
-
-    def setUp(self):
-        self.funcname = '.'.join(self.id().split('.')[1:])
-        self.package = path.join(self.outputdir, self.funcname)
-
-    def tearDown(self):
-        pass
-
-
-# set verbosity of logging output
-try:
-    logflag = re.findall(r'-[vq]+\b', ' '.join(sys.argv[1:]))[0]
-except IndexError:
-    logflag = ''
-
-logging.basicConfig(
-    file = sys.stdout,
-    format = '%(levelname)s %(module)s %(lineno)s %(message)s' \
-        if logflag.startswith('-v') else '%(message)s',
-    level = {'-q':logging.ERROR,
-             '':logging.WARNING,
-             '-v': logging.INFO,
-             '-vv': logging.DEBUG}[logflag]
-    )
-
-# module data
-datadir = 'testfiles'
-outputdir = 'test_output'
-
-mkdir(outputdir)
-
+    
 # download ncbi taxonomy data and create a database if necessary; use
 # this database for all non-destructive, non-modifying tests. For
 # modifying tests, make a copy of the database.

@@ -52,24 +52,27 @@ class TestHelp(TestScriptBase):
         
 class TestCreate(TestScriptBase):
 
+    def setUp(self):
+        self.packagename = path.join(self.mkoutdir(), 'refpkg')
+        rmdir(self.packagename)
+        
     def test01(self):
-        self.cmd_fails('create -P %(package)s')
+        self.cmd_fails('create -P %(packagename)s')
 
     def test02(self):
         """
         Create a minimal package.
         """
         
-        rmdir(self.package)
-        self.cmd_ok('create -P %(package)s -l 16s')
-        self.assertTrue(path.exists(self.package))
-        self.assertTrue(path.exists(path.join(self.package,'CONTENTS.json')))
+        self.cmd_ok('create -P %(packagename)s -l 16s')
+        self.assertTrue(path.exists(self.packagename))
+        self.assertTrue(path.exists(path.join(self.packagename,'CONTENTS.json')))
 
         # test the --clobber option
-        self.cmd_ok('create -P %(package)s -l 16s --clobber')
+        self.cmd_ok('create -P %(packagename)s -l 16s --clobber')
         
         # fails without --clobber because package already exists
-        self.cmd_fails('create -P %(package)s -l 16s')
+        self.cmd_fails('create -P %(packagename)s -l 16s')
 
 
 class TestTaxTable(TestScriptBase):

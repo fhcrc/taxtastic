@@ -6,12 +6,14 @@ from os import path
 import unittest
 import logging
 import pprint
-import config
 import collections
 import json
 
 from taxtastic.package import StatsParser
 from taxtastic.utils import mkdir
+
+import config
+from config import TestBase
 
 log = logging
 
@@ -27,11 +29,7 @@ test_files = ['phyml_aa_stats.txt',
 
 test_paths = [os.path.join(datadir, f) for f in test_files]
 
-class TestStatsParser(unittest.TestCase):
-
-    def setUp(self):
-        _, self.funcname = self.id().split('.', 1)
-        self.outdir = path.join(outputdir, self.funcname)        
+class TestStatsParser(TestBase):
 
     def testRead(self):
         """
@@ -64,11 +62,11 @@ class TestStatsParser(unittest.TestCase):
         no checks of content here.
         """
 
-        mkdir(self.outdir, clobber = True)
-
+        outdir = self.mkoutdir()
+        
         for f in test_files:
             infile = os.path.join(datadir, f)
-            outfile = os.path.join(self.outdir, f) + '.json'
+            outfile = os.path.join(outdir, f) + '.json'
             parser = StatsParser(infile)
             parser.parse_stats_data()
             parser.write_stats_json(outfile)

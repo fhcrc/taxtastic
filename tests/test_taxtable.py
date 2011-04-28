@@ -9,7 +9,7 @@ import logging
 from sqlalchemy import create_engine
 
 import config
-from config import funcname, mkdir, rmdir
+from config import mkdir, rmdir, TestBase
 
 import taxtastic
 from taxtastic.taxonomy import Taxonomy
@@ -17,8 +17,6 @@ import taxtastic.ncbi
 
 log = logging
 
-module = path.split(path.splitext(__file__)[0])[1]
-outputdir = mkdir(path.join(config.outputdir, module))
 datadir = config.datadir
 
 echo = False
@@ -26,8 +24,7 @@ echo = False
 zfile = config.ncbi_data
 dbname = config.ncbi_master_db
 
-
-class TestBase(unittest.TestCase):
+class TaxTableSetup(TestBase):
     
     def setUp(self):
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
@@ -36,7 +33,7 @@ class TestBase(unittest.TestCase):
     def tearDown(self):
         self.engine.dispose()
     
-class TestTaxonomyInit(TestBase):
+class TestTaxonomyInit(TaxTableSetup):
 
     def test01(self):
         self.tax._node('2')
@@ -44,7 +41,7 @@ class TestTaxonomyInit(TestBase):
     def test02(self):
         self.assertRaises(KeyError, self.tax._node, 'buh')
 
-class TestGetLineagePrivate(TestBase):
+class TestGetLineagePrivate(TaxTableSetup):
 
     def test01(self):
         lineage = self.tax._get_lineage('1')
@@ -65,7 +62,7 @@ class TestGetLineagePrivate(TestBase):
         self.assertFalse(tax_id in self.tax.cached)
         self.assertRaises(KeyError, self.tax._get_lineage, tax_id)
 
-class TestGetMerged(TestBase):
+class TestGetMerged(TaxTableSetup):
 
     def test01(self):
         tax_id = '1378'
@@ -77,7 +74,7 @@ class TestGetMerged(TestBase):
         merged = self.tax._get_merged(tax_id)
         self.assertFalse(merged is None)
 
-class TestTaxNameSearch(TestBase):
+class TestTaxNameSearch(TaxTableSetup):
 
     def test01(self):
         tax_id, tax_name, is_primary = self.tax.primary_from_name('Gemella')
@@ -94,7 +91,7 @@ class TestTaxNameSearch(TestBase):
         self.assertFalse(is_primary)
 
 
-class TestSynonyms(TestBase):
+class TestSynonyms(TaxTableSetup):
 
     def test01(self):
         synonyms = self.tax.synonyms(tax_id='1378')
@@ -104,7 +101,7 @@ class TestSynonyms(TestBase):
 
 
 
-class TestGetLineagePublic(TestBase):
+class TestGetLineagePublic(TaxTableSetup):
 
     def test01(self):
         lineage = self.tax.lineage('1')
@@ -154,7 +151,7 @@ class TestGetLineagePublic(TestBase):
     #     lineage = self.tax.lineage(tax_id=tax_id)
         
         
-class TestMethods(TestBase):
+class TestMethods(TaxTableSetup):
 
     def test01(self):
         taxname = self.tax.primary_from_id('1280')
@@ -177,41 +174,30 @@ class TestMethods(TestBase):
     #                       tax_name = 'BVAB1')
 
 
-class TestWriteTable(TestBase):
+class TestWriteTable(TaxTableSetup):
     """
     test tax.write_table - note that this method produces output.
-
-    TODO: write output to subdirectory named for the test method
     """
     
     def setUp(self):
         super(TestWriteTable, self).setUp()
-        self.funcname = funcname(self.id())
-        self.fname = os.path.join(outputdir, self.funcname)+'.csv'
+        self.fname = path.join(self.mkoutdir(), 'taxtab') + '.csv'
+        self.file = open(self.fname, 'w')
 
+    def tearDown(self):
+        self.tax.write_table(taxa=None, csvfile=self.file)
+        self.file.close()
+        self.assertTrue(path.isfile(self.fname))        
+        
     def test02(self):
         tax_id = '1280' # staph aureus
         lineage = self.tax.lineage(tax_id)
-
-        with open(self.fname,'w') as fout:
-            self.tax.write_table(taxa=None, csvfile=fout)
-
+        
     def test03(self):
         tax_id = '1378' # Gemella; lineage has two successive no_rank taxa
         lineage = self.tax.lineage(tax_id)
-
-        with open(self.fname,'w') as fout:
-            self.tax.write_table(taxa=None, csvfile=fout)
 
     def test04(self):
         tax_id = '1378' # Gemella; lineage has two successive no_rank taxa
         for tax_id in ['1378','1280','131110']:
             lineage = self.tax.lineage(tax_id)
-
-        with open(self.fname,'w') as fout:
-            self.tax.write_table(taxa=None, csvfile=fout)
-
-
-
-
-        

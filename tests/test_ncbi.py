@@ -8,11 +8,13 @@ import logging
 import shutil
 import sqlite3
 
-import config
 import taxtastic
 import taxtastic.ncbi
 from taxtastic.errors import OperationalError, IntegrityError
 from taxtastic.utils import mkdir, rmdir
+
+import config
+from config import TestBase
 
 log = logging
 
@@ -45,30 +47,23 @@ ncbi_data = config.ncbi_data
 #         fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir, clobber=True)
 #         self.assertTrue(downloaded)
         
-class TestDbconnect(unittest.TestCase):
-
-    def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+class TestDbconnect(TestBase):
 
     def test01(self):
-        with taxtastic.ncbi.db_connect(ncbi_master_db, clobber = False) as con:
+        with taxtastic.ncbi.db_connect(ncbi_master_db) as con:
             cur = con.cursor()
             cur.execute('select name from sqlite_master where type = "table"')
             tables = set(i for j in cur.fetchall() for i in j) # flattened
             self.assertTrue(set(['nodes','names','merged','source']).issubset(tables))
-
-class TestBase(unittest.TestCase):
-
-    def setUp(self):
-        self.funcname = '.'.join(self.id().split('.')[-1:])
-        self.outdir = path.join(outputdir, self.funcname)
-        self.dbname = os.path.join(self.outdir, 'taxonomy.db')
-        mkdir(self.outdir, clobber = True)
     
 class TestLoadData(TestBase):
 
     maxrows = 10
-                    
+
+    def setUp(self):
+        outdir = self.mkoutdir()
+        self.dbname = os.path.join(outdir, 'taxonomy.db')
+    
     def test01(self):
         # we should be starting from scratch
         self.assertFalse(path.isfile(self.dbname))
@@ -94,7 +89,3 @@ class TestLoadData(TestBase):
                 maxrows = self.maxrows)
             cur.execute('select * from names')
             self.assertTrue(len(list(cur.fetchall())) == self.maxrows)
-
-
-
-
