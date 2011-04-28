@@ -80,3 +80,14 @@ def get_new_nodes(fname):
     return rows
 
 
+def getlines(fname):
+    """
+    Returns iterator of whitespace-stripped lines in file, omitting
+    blank lines and lines beginning with '#'
+    """
+    
+    with open(fname) as f:
+        for line in f:
+            if line.strip() and not line.startswith('#'):
+                yield line.strip()
+                

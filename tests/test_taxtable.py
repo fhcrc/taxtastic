@@ -2,41 +2,49 @@
 
 import sys
 import os
+from os import path
 import unittest
 import logging
-import itertools
-import sqlite3
-import shutil
-import time
-import pprint
 
 from sqlalchemy import create_engine
 
 import config
-import Taxonomy
+from config import funcname, mkdir, rmdir
+
+import taxtastic
+from taxtastic.taxonomy import Taxonomy
+import taxtastic.ncbi
 
 log = logging
 
-module_name = os.path.split(sys.argv[0])[1].rstrip('.py')
-outputdir = os.path.abspath(config.outputdir)
-datadir = os.path.abspath(config.datadir)
+def create_db(outputdir, startover):
+    
+    # download if missing or startover is True
+    zfile, downloaded = taxtastic.ncbi.fetch_data(dest_dir = outputdir, clobber = startover)
+    dbname = path.join(outputdir, 'taxonomy.db')
 
-dbname = os.path.join(outputdir, 'taxtable_test.db')
+    # read existing databse unless startover if True
+    con = taxtastic.ncbi.db_connect(dbname, clobber = startover)
+    log.warning('loading %s' % dbname)
+    taxtastic.ncbi.db_load(con, zfile)
+    con.close()
+        
+    return zfile, dbname
+
+module = path.split(path.splitext(__file__)[0])[1]
+outputdir = mkdir(path.join(config.outputdir, module))
+datadir = config.datadir
+
 echo = False
 
-startover = False
-zfile = Taxonomy.ncbi.fetch_data(dest_dir=outputdir, new=startover)
-if startover or not os.path.isfile(dbname):
-    con = Taxonomy.ncbi.db_connect(dbname, new=True)
-    Taxonomy.ncbi.db_load(con, zfile)
-    con.close()
+zfile, dbname = create_db(outputdir, startover = False)
 
 class TestTaxonomyInit(unittest.TestCase):
 
     def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+        self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy.Taxonomy(self.engine, Taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -50,9 +58,9 @@ class TestTaxonomyInit(unittest.TestCase):
 class TestGetLineagePrivate(unittest.TestCase):
 
     def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+        self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy.Taxonomy(self.engine, Taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -79,9 +87,9 @@ class TestGetLineagePrivate(unittest.TestCase):
 class TestGetMerged(unittest.TestCase):
 
     def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+        self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy.Taxonomy(self.engine, Taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -99,9 +107,9 @@ class TestGetMerged(unittest.TestCase):
 class TestTaxNameSearch(unittest.TestCase):
 
     def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+        self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo) # echo=echo
-        self.tax = Taxonomy.Taxonomy(self.engine, Taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -124,9 +132,9 @@ class TestTaxNameSearch(unittest.TestCase):
 class TestSynonyms(unittest.TestCase):
 
     def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+        self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo) # echo=echo
-        self.tax = Taxonomy.Taxonomy(self.engine, Taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
@@ -142,15 +150,16 @@ class TestSynonyms(unittest.TestCase):
 class TestGetLineagePublic(unittest.TestCase):
 
     def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+        self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy.Taxonomy(self.engine, Taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
 
     def test01(self):
         lineage = self.tax.lineage('1')
+
         self.assertTrue(lineage['root'] == '1')
         self.assertTrue(lineage['rank'] == 'root')
 
@@ -189,19 +198,19 @@ class TestGetLineagePublic(unittest.TestCase):
         # lineage = self.tax.lineage(tax_id)
         # self.assertTrue(lineage['rank'] == 'genus')
 
-    def test07(self):
-        tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
-        lineage = self.tax.lineage(tax_id=tax_id)
+    # def test07(self):
+    #     ## TODO: handle deprecated tax_ids
 
-
-
+    #     tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
+    #     lineage = self.tax.lineage(tax_id=tax_id)
+        
         
 class TestTaxTable(unittest.TestCase):
 
     def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+        self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy.Taxonomy(self.engine, Taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
         self.fname = os.path.join(outputdir, self.funcname)+'.csv'
         log.info('writing to ' + self.fname)
 
@@ -235,9 +244,9 @@ class TestTaxTable(unittest.TestCase):
 class TestMethods(unittest.TestCase):
 
     def setUp(self):
-        self.funcname = '_'.join(self.id().split('.')[-2:])
+        self.funcname = funcname(self.id())
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy.Taxonomy(self.engine, Taxonomy.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()

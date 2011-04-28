@@ -6,11 +6,7 @@ taxtable.py
 
 Usage: %prog <options>
 
-Notes
------
-
-
-
+Create a csv file describing lineages for a set of taxa.
 
 Command line options
 --------------------
