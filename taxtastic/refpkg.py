@@ -88,7 +88,7 @@ class Refpkg(object):
         Returns named file object opened with mode. File name must be
         defined in manifest.
         """
-        
+
         return self.file_resource(self.contents['files'][name], *mode)
 
     def _digest_resource(self, name):
@@ -143,8 +143,8 @@ class Refpkg(object):
         curs.execute("""
             CREATE TABLE hierarchy (
               tax_id TEXT REFERENCES taxa (tax_id) PRIMARY KEY NOT NULL,
-              lft INT NOT NULL,
-              rgt INT NOT NULL
+              lft INT NOT NULL UNIQUE,
+              rgt INT NOT NULL UNIQUE
             )
         """)
 
@@ -187,6 +187,50 @@ class Refpkg(object):
         self.db = db
 
     def most_recent_common_ancestor(self, *ts):
+        if len(ts) > 200:
+            res = self._large_mrca(ts)
+        else:
+            res = self._small_mrca(ts)
+
+        if res:
+            (res,), = res
+        else:
+            raise NoAncestor()
+        return res
+
+    def _large_mrca(self, ts):
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+            DROP TABLE IF EXISTS _mrca_temp
+        """)
+
+        cursor.execute("""
+            CREATE TEMPORARY TABLE _mrca_temp(
+                child TEXT PRIMARY KEY REFERENCES taxa (tax_id) NOT NULL
+            )
+        """)
+
+        cursor.executemany("""
+            INSERT INTO _mrca_temp
+            VALUES (?)
+        """, ((tid,) for tid in ts))
+        cursor.execute("""
+            SELECT parent
+            FROM   _mrca_temp
+                   JOIN parents USING (child)
+                   JOIN taxa
+                     ON parent = taxa.tax_id
+                   JOIN ranks USING (rank)
+            GROUP  BY parent
+            HAVING COUNT(*) = ?
+            ORDER  BY rank_order DESC
+            LIMIT  1
+        """, (len(ts),))
+
+        return cursor.fetchall()
+
+    def _small_mrca(self, ts):
         cursor = self.db.cursor()
         qmarks = ', '.join('?' * len(ts))
         cursor.execute("""
@@ -202,12 +246,7 @@ class Refpkg(object):
             LIMIT  1
         """ % qmarks, ts + (len(ts),))
 
-        res = cursor.fetchall()
-        if res:
-            (res,), = res
-        else:
-            raise NoAncestor()
-        return res
+        return cursor.fetchall()
 
 if __name__ == '__main__':
     import sys
