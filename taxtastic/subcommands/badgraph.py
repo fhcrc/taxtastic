@@ -3,6 +3,7 @@
 from Bio import Phylo
 
 from collections import Counter, defaultdict
+from itertools import combinations
 import argparse
 import csv
 import sys
@@ -18,11 +19,12 @@ def build_parser(parser):
 
 def action(args):
     args.outfile = csv.writer(args.outfile)
-    args.outfile.writerow(['rank', 'name', 'leaves', 'edges'])
+    args.outfile.writerow(['rank', 'name', 'leaves', 'mrca_leaves'])
     rp = refpkg.Refpkg(args.refpkg[0])
     rp.load_db()
     with rp.resource('tree_file', 'rU') as fobj:
         tree = Phylo.read(fobj, 'newick')
+    clade_map = {c.name: c for c in tree.get_terminals()}
 
     curs = rp.db.cursor()
     seq_colors = curs.execute("""
@@ -49,22 +51,26 @@ def action(args):
         seq_colors = rank_map[rank]
         if not seq_colors:
             continue
-        clade_map = {c.name: c for c in tree.get_terminals()}
         colors = {}
         color_leaf_counts = Counter()
         for seq, color in seq_colors:
             colors[clade_map[seq]] = color
             color_leaf_counts[color] += 1
         metadata = algotax.color_clades(tree, colors)
-        color_edge_counts = Counter()
-        for edge_colors in metadata.cut_colors.itervalues():
-            color_edge_counts += Counter(edge_colors)
+        mrcas = {}
+        for clade in tree.find_elements(order='level'):
+            if clade is tree:
+                continue
+            colors_crossing = algotax.union(
+                metadata.cut_colors[a] & metadata.cut_colors[b]
+                for a, b in combinations(clade.clades, 2))
+            for color in colors_crossing:
+                mrcas.setdefault(color, clade)
 
-        for color in (color_leaf_counts.viewkeys() |
-                      color_edge_counts.viewkeys()):
+        for color in color_leaf_counts.viewkeys() & mrcas.viewkeys():
             args.outfile.writerow([
                 rank,
                 color,
                 color_leaf_counts[color],
-                color_edge_counts[color]
+                mrcas[color].count_terminals(),
             ])
