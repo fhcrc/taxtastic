@@ -5,10 +5,13 @@ from Bio import Phylo
 from collections import Counter, defaultdict
 from itertools import combinations
 import argparse
+import logging
 import csv
 import sys
 
 from taxtastic import algotax, refpkg
+
+log = logging.getLogger(__name__)
 
 def build_parser(parser):
     parser.add_argument('refpkg', nargs=1,
@@ -18,6 +21,7 @@ def build_parser(parser):
         help='the name of the csv file to write out')
 
 def action(args):
+    log.info('loading reference package')
     args.outfile = csv.writer(args.outfile)
     args.outfile.writerow(['rank', 'name', 'leaves', 'mrca_leaves'])
     rp = refpkg.Refpkg(args.refpkg[0])
@@ -48,12 +52,16 @@ def action(args):
     """)
 
     for rank, in rank_order:
+        log.info('processing rank %s', rank)
         seq_colors = rank_map[rank]
         if not seq_colors:
             continue
         colors = {}
         color_leaf_counts = Counter()
         for seq, color in seq_colors:
+            if seq not in clade_map:
+                logging.warn('sequence %r not found in the taxonomy', seq)
+                continue
             colors[clade_map[seq]] = color
             color_leaf_counts[color] += 1
         metadata = algotax.color_clades(tree, colors)
