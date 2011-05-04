@@ -1,0 +1,25 @@
+digraph G {
+        edge [penwidth=1.2 arrowhead=none]
+        node [style=filled]
+        { node [fillcolor="#ff6666"]
+                0 3 6
+        }
+        { node [fillcolor="#6666ff"]
+                1 4
+        }
+        { edge [color="#ff0000"]
+                2 -> 0
+                5 -> 3
+                7 -> 6
+                8 -> 2
+                8 -> 7
+                7 -> 5
+        }
+        { edge [color="#0000ff"]
+                2 -> 1
+                5 -> 4
+                8 -> 2
+                8 -> 7
+                7 -> 5
+        }
+}

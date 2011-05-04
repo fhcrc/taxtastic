@@ -1,0 +1,8 @@
+digraph G {
+        edge [arrowsize=0.6 labeldistance=2.0 labelangle=-40]
+        4 [penwidth=2]
+        4 -> 0 [headlabel="0"]
+        4 -> 3 [headlabel="0"]
+        3 -> 1 [headlabel="2"]
+        3 -> 2 [headlabel="2"]
+}
