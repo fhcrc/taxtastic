@@ -101,7 +101,7 @@ class RerootingTestMixin(object):
     def setup_class(cls):
         cls.parsed_tree = Phylo.read(StringIO(cls.tree), 'newick')
         cls.mrcas = {n: int(n.branch_length)
-            for n in cls.parsed_tree.get_terminals()}
+            for n in cls.parsed_tree.find_clades()}
         cls.new_root = algotax.reroot(cls.parsed_tree.root, cls.mrcas.get)
 
     @classmethod
@@ -122,7 +122,7 @@ class RerootingTest1(RerootingTestMixin, unittest.TestCase):
 
 class RerootingTest2(RerootingTestMixin, unittest.TestCase):
     tree = '(0,(2,2)0)'
-    root_number = 3
+    root_number = 4
 
 class RerootingTest3(RerootingTestMixin, unittest.TestCase):
     tree = '(6,(2,((7,7)3,(7,7)3)0),6)'
