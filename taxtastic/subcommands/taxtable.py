@@ -2,7 +2,7 @@
 
 from taxtastic import ncbi
 from taxtastic.taxonomy import Taxonomy
-from taxtastic.utils import getlines
+from taxtastic.utils import getlines, get_new_nodes
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
@@ -82,7 +82,7 @@ def action(arguments):
     # add nodes if necessary
     if arguments.new_nodes:
         log.warning('adding new nodes')
-        new_nodes = Taxonomy.utils.get_new_nodes(arguments.new_nodes)
+        new_nodes = get_new_nodes(arguments.new_nodes)
         for d in new_nodes:
             if arguments.source_name:
                 d['source_name'] = arguments.source_name
