@@ -1,5 +1,8 @@
 import collections
+import logging
 from itertools import combinations
+
+log = logging.getLogger(__name__)
 
 def union(it):
     "Take the union of an iterable of sets."
@@ -147,8 +150,10 @@ def reroot_from_rp(root, rp):
                JOIN ranks USING (rank)
     """))
     def subrk_min(t):
-        return rank_map[rp.most_recent_common_ancestor(
-            *set(name_map[n.name] for n in t.get_terminals()))]
+        mrca = rp.most_recent_common_ancestor(
+            *set(name_map[n.name] for n in t.get_terminals()))
+        logging.debug("mrca for %r is %r", t, mrca)
+        return rank_map[mrca]
 
     return reroot(root, subrk_min)
 
@@ -158,6 +163,7 @@ def reroot(cur, subrk_min):
             return cur
 
         ranks = sorted(Ranking(subrk_min(n), n) for n in cur)
+        logging.debug("rankings: %r", ranks)
         if ranks[0].rank == ranks[1].rank:
             return cur
         cur = ranks[0].node
