@@ -1,0 +1,17 @@
+digraph G {
+        edge [arrowsize=0.6 labeldistance=2.0 labelangle=-40]
+        8 [penwidth=2]
+        11 -> 0 [headlabel="6"]
+        11 -> 10 [headlabel="6"]
+        11 -> 9 [headlabel="1"]
+        9 -> 1 [headlabel="2"]
+        9 -> 8 [headlabel="0"]
+        8 -> 4 [headlabel="3"]
+        8 -> 7 [headlabel="3"]
+        { edge [headlabel="7"]
+                4 -> 2
+                4 -> 3
+                7 -> 5
+                7 -> 6
+        }
+}
