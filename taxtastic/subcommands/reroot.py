@@ -31,6 +31,8 @@ def action(args):
         return
     log.info('saving reference package')
     with rp.resource('tree_file', 'w') as fobj:
-        Phylo.write(tree, fobj, 'newick')
+        Phylo.write(tree, fobj, 'newick',
+                    branchlengths_only=True,
+                    format_branchlength=lambda bl: '%0.6f' % (bl,))
     rp.rehash('tree_file')
     rp.save()
