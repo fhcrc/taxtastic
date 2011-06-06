@@ -1,5 +1,7 @@
 """Reroots a reference package"""
+import tempfile
 import logging
+import os
 
 from Bio import Phylo
 
@@ -30,9 +32,11 @@ def action(args):
     if args.pretend:
         return
     log.info('saving reference package')
-    with rp.resource('tree_file', 'w') as fobj:
+    fd, name = tempfile.mkstemp()
+    with os.fdopen(fd, 'w') as fobj:
         Phylo.write(tree, fobj, 'newick',
                     branchlengths_only=True,
                     format_branch_length='%0.6f')
+    os.rename(name, rp.resource_path('tree_file'))
     rp.rehash('tree_file')
     rp.save()
