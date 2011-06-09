@@ -32,7 +32,7 @@ def action(args):
     if args.pretend:
         return
     log.info('saving reference package')
-    fd, name = tempfile.mkstemp()
+    fd, name = tempfile.mkstemp(dir=args.refpkg[0])
     with os.fdopen(fd, 'w') as fobj:
         Phylo.write(tree, fobj, 'newick',
                     branchlengths_only=True,
