@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 import os.path
 import sys
+from textwrap import dedent
 
 import logging
 log = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ def build_parser(parser):
              'option to overwrite an existing database and reload with '
              'taxonomic data (from the downloaded archive plus additional '
              'files if provided). [default %(default)s]')
-
+        
     parser.add_argument('-S', '--source-name', dest='source_name',
         default='unknown', help='Names the source for new nodes. '
                 '[default %(default)s]')
@@ -62,20 +63,31 @@ def build_parser(parser):
              'beginning with "#" are ignored). May be omitted if '
              '--tax-names is used instead')
 
+    parser.add_argument('-z', '--clobber-zipfile', action='store_true',
+                        dest='clobber_zipfile', default=False,
+                        help = dedent("""Download a new zip archive
+                        containing NCBI taxonomy even if one already
+                        exists [default %(default)s]""")
+                        )
+    
 def action(arguments):
     pth, fname = os.path.split(arguments.dbfile)
     dbname = arguments.dbfile if pth else os.path.join(arguments.dest_dir, fname)
 
+    zfile, downloaded = ncbi.fetch_data(
+        dest_dir = arguments.dest_dir,
+        clobber = arguments.clobber_zipfile)
+
     if not os.access(dbname, os.F_OK) or arguments.new_database:
-        zfile, downloaded = ncbi.fetch_data(dest_dir=arguments.dest_dir,
-            clobber=True)
         log.warning('creating new database in %s using data in %s' % (dbname, zfile))
-        con = ncbi.db_connect(dbname, clobber=False)
+        con = ncbi.db_connect(dbname, clobber=True)
         ncbi.db_load(con, zfile)
         con.close()
     else:
         log.warning('using taxonomy defined in %s' % dbname)
 
+    sys.exit()
+        
     engine = create_engine('sqlite:///%s' % dbname, echo=arguments.verbosity > 2)
     tax = Taxonomy(engine, ncbi.ranks)
 
