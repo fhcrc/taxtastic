@@ -14,45 +14,34 @@ import logging
 log = logging.getLogger(__name__)
 
 def build_parser(parser):
-    parser.add_argument('-a', '--add-new-nodes', dest='new_nodes',
+
+    input_group = parser.add_argument_group(
+        "Input options").add_mutually_exclusive_group()
+
+    input_group.add_argument('-a', '--add-new-nodes', dest='new_nodes',
         help='An optional Excel (.xls) spreadsheet (requires xlrd) or '
              'csv-format file defining nodes to add to the taxonomy. '
              'Mandatory fields include "tax_id","parent_id","rank",'
              '"tax_name"; optional fields include "source_name", '
              '"source_id". Other columns are ignored.')
 
-    parser.add_argument('-d', '--database-file',
+    input_group.add_argument('-d', '--database-file',
         action='store', dest='dbfile', default='ncbi_taxonomy.db',
         help='Filename of sqlite database [%(default)s].',
         metavar='FILENAME')
 
-    parser.add_argument('-D', '--dest-dir', action='store',
-        default='.', dest='dest_dir', metavar='PATH',
-        help='Name of output directory. If --out-file '
-             'is an absolute path, the path provided takes precedence '
-             'for that file. [default is the current directory]')
-
-    parser.add_argument('-o', '--out-file',
-        action='store', dest='out_file', metavar='FILENAME',
-        help='Output file containing lineages for the specified taxa '
-             '(csv fomat); writes to stdout if unspecified')
-
-    parser.add_argument('-n', '--tax-names', dest='taxnames',
+    input_group.add_argument('-n', '--tax-names', dest='taxnames',
         help='An optional file identifing taxa in the form of taxonomic '
              'names. Names are matched against both primary names and '
              'synonyms. Lines beginning with "#" are ignored. Taxa '
              'identified here will be added to those specified using '
              '--tax-ids')
 
-    parser.add_argument('-N', '--new-database', action='store_true',
+    input_group.add_argument('-N', '--new-database', action='store_true',
         dest='new_database', default=False, help='Include this '
              'option to overwrite an existing database and reload with '
              'taxonomic data (from the downloaded archive plus additional '
              'files if provided). [default %(default)s]')
-        
-    parser.add_argument('-S', '--source-name', dest='source_name',
-        default='unknown', help='Names the source for new nodes. '
-                '[default %(default)s]')
 
     parser.add_argument('-t', '--tax-ids', dest='taxids',
         help='Specifies the taxids to include. Taxids may be '
@@ -62,6 +51,25 @@ def build_parser(parser):
              'tax_ids (ie, separated by tabs, spaces, or newlines; lines '
              'beginning with "#" are ignored). May be omitted if '
              '--tax-names is used instead')
+
+    
+    output_group = parser.add_argument_group(
+        "Output options").add_mutually_exclusive_group()
+
+    output_group.add_argument('-D', '--dest-dir', action='store',
+        default='.', dest='dest_dir', metavar='PATH',
+        help='Name of output directory. If --out-file '
+             'is an absolute path, the path provided takes precedence '
+             'for that file. [default is the current directory]')
+    
+    output_group.add_argument('-o', '--out-file',
+        action='store', dest='out_file', metavar='FILENAME',
+        help='Output file containing lineages for the specified taxa '
+             '(csv fomat); writes to stdout if unspecified')
+        
+    parser.add_argument('-S', '--source-name', dest='source_name',
+        default='unknown', help='Names the source for new nodes. '
+                '[default %(default)s]')
 
     parser.add_argument('-z', '--clobber-zipfile', action='store_true',
                         dest='clobber_zipfile', default=False,
@@ -85,8 +93,6 @@ def action(arguments):
         con.close()
     else:
         log.warning('using taxonomy defined in %s' % dbname)
-
-    sys.exit()
         
     engine = create_engine('sqlite:///%s' % dbname, echo=arguments.verbosity > 2)
     tax = Taxonomy(engine, ncbi.ranks)
