@@ -1,4 +1,4 @@
-commands = 'check', 'create', 'taxtable', 'convexify', 'reroot', 'badgraph'
+commands = 'check', 'create', 'taxtable', 'convexify', 'reroot', 'badgraph', 'taxids'
 
 def itermodules(root=__name__):
     for command in commands:
