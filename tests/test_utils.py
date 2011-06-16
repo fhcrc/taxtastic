@@ -41,19 +41,38 @@ if hasattr(taxtastic.utils, 'read_spreadsheet'):
 ## TODO: need to test creation of new nodes with csv (as opposed to xls) output
 class TestGetNewNodes(unittest.TestCase):
 
+    xlrd_is_installed = hasattr(taxtastic.utils, 'read_spreadsheet')
+    
     def setUp(self):
         self.funcname = '_'.join(self.id().split('.')[-2:])
 
     def tearDown(self):
         pass
 
-    if hasattr(taxtastic.utils, 'read_spreadsheet'):
-        def test01(self):
+    def test01(self):
+        if self.xlrd_is_installed:
             rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
             check = lambda val: isinstance(val, str) and '.' not in val
             self.assertTrue(all([check(row['parent_id']) for row in rows]))
-    else:
-        def test02(self):
-            self.assertRaises(AttributeError, taxtastic.utils.get_new_nodes,
-                              os.path.join(datadir,'new_taxa.xls'))
+        else:
+            self.assertTrue(True)
+            
+    def test02(self):
+        if not self.xlrd_is_installed:        
+            self.assertRaises(
+                AttributeError, taxtastic.utils.get_new_nodes,
+                os.path.join(datadir,'new_taxa.xls'))
+        else:
+            self.assertTrue(True)
+            
+    def test03(self):
+        rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.csv'))
+        check = lambda val: isinstance(val, str) and '.' not in val
+        self.assertTrue(all([check(row['parent_id']) for row in rows]))
 
+    def test04(self):
+        rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa_mac.csv'))
+        check = lambda val: isinstance(val, str) and '.' not in val
+        self.assertTrue(all([check(row['parent_id']) for row in rows]))
+        
+            

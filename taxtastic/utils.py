@@ -29,9 +29,10 @@ if xlrd:
 
     def read_spreadsheet(filename, fmts=None):
         """
-        Read excel spreadsheet, performing type coersion as specified in
-        fmts (dict keyed by column name returning either a formatting
-        string or a function such as str, int, float, etc).
+        Read excel spreadsheet, performing type coersion as specified
+        in fmts (dict keyed by column name returning either a
+        formatting string or a function such as str, int, float,
+        etc). Returns (list headers, iter rows)
         """
 
         w = xlrd.open_workbook(filename)
@@ -64,20 +65,24 @@ if xlrd:
 
             lines.append(d)
 
-        return headers, lines
+        return headers, iter(lines)
 
 def get_new_nodes(fname):
+    """
+    Return an iterator of dicts given either an .xls spreadsheet or
+    .csv-format file.
+    """
+
     if fname.endswith('.xls'):
-        if xlrd:
-            headers, rows = read_spreadsheet(
-                fname,
-                fmts={'tax_id':'%i', 'parent_id':'%i' }
-                )
-        else:
+        if not xlrd:
             raise AttributeError('xlrd not installed: cannot parse .xls files.')
+
+        fmts = {'tax_id':'%i', 'parent_id':'%i'}
+        headers, rows = read_spreadsheet(fname, fmts)
     elif fname.endswith('.csv'):
-        reader = csv.DictReader(fname)
-        rows = (d for d in reader if d['tax_id'])
+        with open(fname, 'rU') as infile:
+            reader = list(csv.DictReader(infile))
+            rows = (d for d in reader if d['tax_id'])
     else:
         raise ValueError('Error: %s must be in .csv or .xls format')
 
