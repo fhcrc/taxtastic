@@ -261,24 +261,27 @@ class StatsParser(object):
         else:
             return False
 
+
     def _parse_phyml_aa(self):
         """
         Parse PhyML output file - AA
         """
 
-        regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of amino acids substitution:\s+(\w+).*',
+        regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of amino acids substitution:\s+(\w+).*Discrete gamma model:\s+(\w+)',
                            re.M|re.DOTALL)
 
         if (regex.match(self.input_text)):
             self.stats_values['program'] = regex.match(self.input_text).group(1) # program
             self.stats_values['subs_model'] = regex.match(self.input_text).group(2) # subs_model
-            self.stats_values['ras_model'] = None # gamma is not present
+            gamma_model = regex.match(self.input_text).group(3)
+            if gamma_model.lower() == 'yes':
+                self.stats_values['ras_model'] = 'gamma'
+            else:
+                self.stats_values['ras_model'] = None # gamma is not present
             self.stats_values['datatype'] = 'AA' # datatype
             return True
         else:
             return False
-
-
 
 
 def build_parser(parser):
