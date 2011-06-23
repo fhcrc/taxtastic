@@ -96,6 +96,10 @@ class AlgotaxWalkTest4(AlgotaxWalkTestMixin, unittest.TestCase):
     tree = '(((A,B),B),(A,A))'
     convex_tree_size = 4
 
+class AlgotaxWalkTest5(AlgotaxWalkTestMixin, unittest.TestCase):
+    tree = '(A,(A,(B,C)))'
+    convex_tree_size = 4
+
 class RerootingTestMixin(object):
     @classmethod
     def setup_class(cls):
