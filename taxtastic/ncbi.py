@@ -123,7 +123,7 @@ def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber = False):
             os.remove(dbname)
         except OSError:
             pass
-        
+
     con = sqlite3.connect(dbname)
     cur = con.cursor()
 
@@ -134,7 +134,7 @@ def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber = False):
             log.debug(cmd)
     except sqlite3.OperationalError as err:
         log.info(err)
-        
+
     return con
 
 def db_load(con, archive, root_name='root', maxrows=None):
@@ -142,8 +142,8 @@ def db_load(con, archive, root_name='root', maxrows=None):
     Load data from zip archive into database identified by con. Data
     is not loaded if target tables already contain data.
     """
-    
-    try:    
+
+    try:
         # nodes
         rows = read_nodes(
             rows=read_archive(archive, 'nodes.dmp'),
@@ -163,14 +163,14 @@ def db_load(con, archive, root_name='root', maxrows=None):
 
     except sqlite3.IntegrityError, err:
         raise IntegrityError(err)
-        
+
 def do_insert(con, tablename, rows, maxrows=None, add = True):
 
     """
     Insert rows into a table. Do not perform the insert if
     add is False and table already contains data.
     """
-    
+
     cur = con.cursor()
 
     cur.execute('select count(*) from "%s" where rowid < 2' % tablename)
@@ -179,7 +179,7 @@ def do_insert(con, tablename, rows, maxrows=None, add = True):
     if not add and has_data:
         log.info('Table "%s" already contains data; load not performed.' % tablename)
         return False
-        
+
     # pop first row to determine number of columns
     row = rows.next()
     cmd = 'INSERT INTO "%s" VALUES (%s)' % (tablename, ', '.join(['?']*len(row)))
@@ -204,7 +204,7 @@ def fetch_data(dest_dir='.', clobber=False, url=ncbi_data_url):
     * dest_dir - directory in which to save output files (created if necessary).
     * clobber - don't download if False and target of url exists in dest_dir
     * url - url to archive; default is ncbi.ncbi_data_url
-    
+
     Returns (fname, downloaded), where fname is the name of the
     downloaded zip archive, and downloaded is True if a new files was
     downloaded, false otherwise.
@@ -227,7 +227,7 @@ def fetch_data(dest_dir='.', clobber=False, url=ncbi_data_url):
         downloaded = True
         log.warning('downloading %(url)s to %(fout)s' % locals())
         urllib.urlretrieve(url, fout)
-        
+
     zfile = zipfile.ZipFile(fout, 'r')
     log.debug('contents of %s: \n%s' % (fout, pprint.pformat(zfile.namelist()) ))
 

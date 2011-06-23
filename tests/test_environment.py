@@ -25,6 +25,6 @@ class TestWhereWeAre(unittest.TestCase):
         We're assuming that unit tests are being run using local
         version of the taxtastic package. Fail otherwise.
         """
-        
+
         self.assertTrue(taxtastic.__file__.startswith('taxtastic/__init__.py'))
-                
+

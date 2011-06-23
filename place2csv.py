@@ -59,7 +59,7 @@ def xws(s):
 #                 data = []
 #                 count = counter(1)
 #             else:
-#                 spl = line.split()[:-1]                
+#                 spl = line.split()[:-1]
 #                 tax_id = spl[-1]
 #                 spl[-1] = tax_id.split('*')[1] if tax_id != 'none' else None
 #                 data.append([seqname, str(count.next())] + spl)
@@ -77,14 +77,14 @@ def read(fname):
 
     placements = data['placements']
 
-    yield ['name','hit'] + data['fields']    
+    yield ['name','hit'] + data['fields']
     for d in placements:
         name = d['n']
         hit = itertools.count(1)
         for p in d['p']:
             yield name + [hit.next()] + p
 
-            
+
 def main():
 
     usage = textwrap.dedent(__doc__)
@@ -136,10 +136,10 @@ def main():
         print('Error: an input file is required.\n')
         parser.print_usage()
         exit(1)
-        
+
     fout = open(options.outfile, 'w') if options.outfile else sys.stdout
     writer = csv.writer(fout, quoting=csv.QUOTE_NONNUMERIC, delimiter=',')
     writer.writerows(read(fname))
-    
+
 if __name__ == '__main__':
     main()
