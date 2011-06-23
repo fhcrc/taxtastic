@@ -269,6 +269,8 @@ class StatsParser(object):
 
         regex = re.compile('.*---\s+(PhyML .*?)\s+ ---.*Model of amino acids substitution:\s+(\w+).*Discrete gamma model:\s+(\w+)',
                            re.M|re.DOTALL)
+        gamma_info = re.compile('.*Number of categories:\s+(\d+).*Gamma shape parameter:\s+(\d+\.\d+)',
+                                re.M|re.DOTALL)
 
         if (regex.match(self.input_text)):
             self.stats_values['program'] = regex.match(self.input_text).group(1) # program
@@ -276,12 +278,18 @@ class StatsParser(object):
             gamma_model = regex.match(self.input_text).group(3)
             if gamma_model.lower() == 'yes':
                 self.stats_values['ras_model'] = 'gamma'
+                self.stats_values['gamma']['n_cats'] = int(gamma_info.match(self.input_text).group(1))
+                self.stats_values['gamma']['alpha'] = float(gamma_info.match(self.input_text).group(2)) # alpha
             else:
                 self.stats_values['ras_model'] = None # gamma is not present
             self.stats_values['datatype'] = 'AA' # datatype
             return True
         else:
             return False
+
+            
+
+
 
 
 def build_parser(parser):
