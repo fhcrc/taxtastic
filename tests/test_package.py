@@ -63,7 +63,7 @@ class TestStatsParser(TestBase):
         """
 
         outdir = self.mkoutdir()
-        
+
         for f in test_files:
             infile = os.path.join(datadir, f)
             outfile = os.path.join(outdir, f) + '.json'

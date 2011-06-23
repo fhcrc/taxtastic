@@ -287,7 +287,7 @@ class StatsParser(object):
         else:
             return False
 
-            
+
 
 
 
@@ -300,7 +300,7 @@ def build_parser(parser):
     parser.add_argument("-c", "--clobber",
         action="store_true", dest="clobber", default = False,
         help= 'Delete an existing reference package.')
-    
+
     parser.add_argument("-d", "--description",
         action="store", dest="description",
         help='An arbitrary description field', metavar='TEXT')
@@ -356,7 +356,7 @@ def build_parser(parser):
              '"tax_id","parent_id","rank","tax_name" followed by a column ' + \
              'defining tax_id at each rank starting with root', metavar='FILE')
 
-        
+
 def action(args):
     """
     Create the reference package (a directory with a manifest named

@@ -22,16 +22,16 @@ outputdir = config.outputdir
 datadir = config.datadir
 ncbi_master_db = config.ncbi_master_db
 ncbi_data = config.ncbi_data
-    
+
 # class TestFetchData(unittest.TestCase):
 #     def setUp(self):
 #         self.funcname = '_'.join(self.id().split('.')[-2:])
 #         self.outdir = os.path.join(outputdir, self.funcname)
 #         newdir(self.outdir)
 #         _, self.zfilename = os.path.split(taxtastic.ncbi.ncbi_data_url)
-        
+
 #     def test01(self):
-#         zfile = os.path.join(self.outdir, self.zfilename)        
+#         zfile = os.path.join(self.outdir, self.zfilename)
 #         fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir)
 
 #         # file is downloaded the first time
@@ -46,7 +46,7 @@ ncbi_data = config.ncbi_data
 #         # ... unless clobber = True
 #         fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir, clobber=True)
 #         self.assertTrue(downloaded)
-        
+
 class TestDbconnect(TestBase):
 
     def test01(self):
@@ -55,7 +55,7 @@ class TestDbconnect(TestBase):
             cur.execute('select name from sqlite_master where type = "table"')
             tables = set(i for j in cur.fetchall() for i in j) # flattened
             self.assertTrue(set(['nodes','names','merged','source']).issubset(tables))
-    
+
 class TestLoadData(TestBase):
 
     maxrows = 10
@@ -63,7 +63,7 @@ class TestLoadData(TestBase):
     def setUp(self):
         outdir = self.mkoutdir()
         self.dbname = os.path.join(outdir, 'taxonomy.db')
-    
+
     def test01(self):
         # we should be starting from scratch
         self.assertFalse(path.isfile(self.dbname))

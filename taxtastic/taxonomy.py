@@ -146,9 +146,9 @@ class Taxonomy(object):
                 raise ValueError('There is more than one value for merged.old_tax_id = "%s"' % old_tax_id)
             else:
                 output = output[0][0]
-            
+
         return output
-    
+
     def _get_lineage(self, tax_id, _level=0):
         """
         Returns cached lineage from self.cached or recursively builds
