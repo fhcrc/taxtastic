@@ -1,10 +1,12 @@
 """Reroots a reference package"""
+import tempfile
+import logging
+import os
 
 from Bio import Phylo
 
 from taxtastic import algotax, refpkg
 
-import logging
 log = logging.getLogger(__name__)
 
 def build_parser(parser):
@@ -30,7 +32,11 @@ def action(args):
     if args.pretend:
         return
     log.info('saving reference package')
-    with rp.resource('tree_file', 'w') as fobj:
-        Phylo.write(tree, fobj, 'newick')
+    fd, name = tempfile.mkstemp(dir=args.refpkg[0])
+    with os.fdopen(fd, 'w') as fobj:
+        Phylo.write(tree, fobj, 'newick',
+                    branchlengths_only=True,
+                    format_branch_length='%0.6f')
+    os.rename(name, rp.resource_path('tree_file'))
     rp.rehash('tree_file')
     rp.save()

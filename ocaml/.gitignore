@@ -1,9 +1,0 @@
-bin
-_build
-common_src
-pplacer_src
-tags
-*.mltop
-*.top
-.toplevel_history
-test

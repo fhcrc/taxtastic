@@ -80,8 +80,14 @@ class Refpkg(object):
     # providing data (eg for testing)
     file_factory = open
 
+    def file_resource_path(self, resource):
+        return os.path.join(self.path, resource)
+
     def file_resource(self, resource, *mode):
-        return self.file_factory(os.path.join(self.path, resource), *mode)
+        return self.file_factory(self.file_resource_path(resource), *mode)
+
+    def resource_path(self, name):
+        return self.file_resource_path(self.contents['files'][name])
 
     def resource(self, name, *mode):
         """
@@ -89,7 +95,7 @@ class Refpkg(object):
         defined in manifest.
         """
 
-        return self.file_resource(self.contents['files'][name], *mode)
+        return self.file_factory(self.resource_path(name), *mode)
 
     def _digest_resource(self, name):
         md5 = hashlib.md5()
