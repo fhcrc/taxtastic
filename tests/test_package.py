@@ -22,6 +22,7 @@ outputdir = os.path.abspath(config.outputdir)
 datadir = os.path.abspath(config.datadir)
 
 test_files = ['phyml_aa_stats.txt',
+              'phyml_aa_gamma_stats.txt',
               'phyml_dna_stats.txt',
               'RAxML_info.re-estimated',
               'RAxML_info.aa',
@@ -53,7 +54,7 @@ class TestStatsParser(TestBase):
             parser.parse_stats_data()
             values = parser.get_stats_values()
             self.assertTrue(isinstance(values, collections.defaultdict))
-            # values shoud not be empty
+            # values should not be empty
             self.assertTrue(bool(dict(values)))
 
     def testWriteStatsJson(self):
