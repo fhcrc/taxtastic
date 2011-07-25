@@ -15,6 +15,9 @@ def build_parser(parser):
     parser.add_argument('-p', '--pretend',
         action='store_true', default=False,
         help="don't save the rerooted tree; just attempt the rerooting.")
+    parser.add_argument('--ignore-missing-sequences',
+        action='store_true', default=False,
+        help="ignore sequences found in the ref tree with no taxonomic information")
 
 def action(args):
     log.info('loading reference package')
@@ -23,7 +26,7 @@ def action(args):
     with rp.resource('tree_file', 'rU') as fobj:
         tree = Phylo.read(fobj, 'newick')
     log.info('rerooting')
-    root = algotax.reroot_from_rp(tree.root, rp)
+    root = algotax.reroot_from_rp(tree.root, rp, args.ignore_missing_sequences)
     if log.isEnabledFor(logging.DEBUG):
         log.debug('new root is %d steps from the old root',
                   len(tree.get_path(root)))
