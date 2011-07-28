@@ -9,7 +9,7 @@ from collections import defaultdict
 
 log = logging
 
-FORMAT_VERSION = '1.0'
+FORMAT_VERSION = '1.1'
 
 MANIFEST_NAME = 'CONTENTS.json'
 PHYLO_MODEL_FILE = 'phylo_model.json'
@@ -17,8 +17,8 @@ PHYLO_MODEL_FILE = 'phylo_model.json'
 PACKAGE_CONTENTS = {
     'metadata':['create_date','author','description','package_version',
                 'empirical_frequencies','locus','format_version'],
-    'files':['tree_file','tree_stats','aln_fasta','aln_sto',
-             'profile','seq_info','taxonomy','mask','phylo_model_file'],
+    'files':['tree','tree_stats','aln_fasta','aln_sto',
+             'profile','seq_info','taxonomy','mask','phylo_model'],
     'md5':[]
     }
 
