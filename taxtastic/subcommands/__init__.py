@@ -6,6 +6,7 @@ commands = [
     'create',
     'new_database',
     'reroot',
+    'update',
     'taxids',
     'taxtable',
     ]
