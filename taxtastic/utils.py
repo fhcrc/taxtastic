@@ -21,7 +21,7 @@ if xlrd:
             val = datetime.datetime(*timetup)
         elif cell_obj.ctype == xlrd.XL_CELL_TEXT:
             # coerce to pain text from unicode
-            val = str(cell_obj.value)
+            val = str(cell_obj.value).strip()
         else:
             val = cell_obj.value
 
