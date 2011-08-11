@@ -8,6 +8,7 @@ import logging
 import shutil
 import commands
 import re
+import json
 
 import config
 from config import TestScriptBase, rmdir
@@ -18,6 +19,8 @@ TestScriptBase.executable = './taxit'
 TestScriptBase.outputdir = config.outputdir
 TestScriptBase.taxdb = config.ncbi_master_db
 TestScriptBase.datadir = config.datadir
+
+import taxtastic.package
 
 class TestHelp(TestScriptBase):
 
@@ -65,8 +68,15 @@ class TestCreate(TestScriptBase):
 
         self.cmd_ok('create -P %(packagename)s -l 16s')
         self.assertTrue(path.exists(self.packagename))
-        self.assertTrue(path.exists(path.join(self.packagename,'CONTENTS.json')))
 
+        contents_json = path.join(self.packagename,'CONTENTS.json') 
+        self.assertTrue(path.exists(contents_json))
+
+        with open(contents_json) as f:
+            contents = json.load(f)
+
+        self.assertTrue(contents['metadata']['format_version'] == taxtastic.package.FORMAT_VERSION)
+        
         # test the --clobber option
         self.cmd_ok('create -P %(packagename)s -l 16s --clobber')
 

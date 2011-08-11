@@ -14,23 +14,6 @@ from taxtastic import package
 
 log = logging.getLogger(__name__)
 
-FORMAT_VERSION = '1.0'
-
-MANIFEST_NAME = 'CONTENTS.json'
-PHYLO_MODEL_FILE = 'phylo_model.json'
-
-PACKAGE_CONTENTS = {
-    'metadata': [
-        'create_date', 'author', 'description', 'package_version',
-        'empirical_frequencies', 'locus', 'format_version',
-    ],
-    'files': [
-        'tree_file', 'tree_stats', 'aln_fasta', 'aln_sto',
-        'profile', 'seq_info', 'taxonomy', 'mask', 'phylo_model_file',
-    ],
-    'md5': []
-}
-
 class ConfigError(Exception):
     pass
 
@@ -346,7 +329,7 @@ def build_parser(parser):
         help='Multiple alignment in Stockholm format', metavar='FILE')
 
     parser.add_argument("-t", "--tree-file",
-        action="store", dest="tree_file",
+        action="store", dest="tree",
         help='Phylogenetic tree in newick format',
         metavar='FILE')
 
@@ -369,8 +352,8 @@ def action(args):
        taxonomy.package.MANIFEST_NAME by default.
      * PACKAGE_CONTENTS - A dict defining sections and contents of
        each. Uses taxonomy.package.PACKAGE_CONTENTS by default.
-     * PHYLO_MODEL_FILE - Names the JSON format file containing the
-       PHYLO MODEL DATA; uses taxonomy.package.PHYLO_MODEL_FILE by default.
+     * PHYLO_MODEL - Names the JSON format file containing the
+       PHYLO MODEL DATA; uses taxonomy.package.PHYLO_MODEL by default.
     """
 
     pkg_dir = args.package_name
@@ -380,7 +363,7 @@ def action(args):
 
     os.mkdir(pkg_dir)
 
-    manifest = os.path.join(pkg_dir, MANIFEST_NAME)
+    manifest = os.path.join(pkg_dir, package.MANIFEST_NAME)
     optdict = defaultdict(dict)
 
     # Add fields and values for the metadata section.
@@ -388,7 +371,7 @@ def action(args):
     # locus is required
     optdict['metadata']['locus'] = args.locus
     # format_version is a module-level constant
-    optdict['metadata']['format_version'] = FORMAT_VERSION
+    optdict['metadata']['format_version'] = package.FORMAT_VERSION
     if args.description:
         optdict['metadata']['description'] = args.description
     if args.author:
@@ -396,11 +379,11 @@ def action(args):
     if args.package_version:
         optdict['metadata']['package_version'] = args.package_version
 
-    # phylo_model_file is part of the package, but not a command-line
+    # phylo_model is part of the package, but not a command-line
     # argument; write out the phylo model file in JSON format, but
     # only if tree_stats was specified as an argument.
     if args.tree_stats:
-        phylo_model_pth = os.path.join(pkg_dir, PHYLO_MODEL_FILE)
+        phylo_model_pth = os.path.join(pkg_dir, package.PHYLO_MODEL)
 
         parser = StatsParser(args.tree_stats)
         success = parser.parse_stats_data()
@@ -410,13 +393,13 @@ def action(args):
 
         parser.write_stats_json(phylo_model_pth)
 
-        optdict['files']['phylo_model_file'] = PHYLO_MODEL_FILE
-        optdict['md5']['phylo_model_file'] = \
+        optdict['files']['phylo_model'] = package.PHYLO_MODEL
+        optdict['md5']['phylo_model'] = \
             hashlib.md5(open(phylo_model_pth).read()).hexdigest()
 
     # copy all provided files into the package directory
-    for fname in PACKAGE_CONTENTS['files']:
-        if fname == 'phylo_model_file':
+    for fname in package.PACKAGE_CONTENTS['files']:
+        if fname == 'phylo_model':
             continue
 
         pth = getattr(args, fname)

@@ -12,13 +12,29 @@ log = logging
 FORMAT_VERSION = '1.1'
 
 MANIFEST_NAME = 'CONTENTS.json'
-PHYLO_MODEL_FILE = 'phylo_model.json'
+PHYLO_MODEL = 'phylo_model.json'
 
 PACKAGE_CONTENTS = {
-    'metadata':['create_date','author','description','package_version',
-                'empirical_frequencies','locus','format_version'],
-    'files':['tree','tree_stats','aln_fasta','aln_sto',
-             'profile','seq_info','taxonomy','mask','phylo_model'],
+    'metadata':[
+        'author',
+        'create_date',
+        'description',
+        'empirical_frequencies',
+        'format_version'
+        'locus',
+        'package_version',
+        ],
+    'files':[
+        'aln_fasta',
+        'aln_sto',
+        'mask',
+        'phylo_model',
+        'profile',
+        'seq_info',
+        'taxonomy',
+        'tree',
+        'tree_stats',
+        ],
     'md5':[]
     }
 
@@ -38,8 +54,8 @@ class ConfigError(Exception):
 
 
 # Read in a tree stats files and extract some data to be written to a JSON phylo model file.
-def write_tree_stats_json(parser, phylo_model_file):
-    parser.write_stats_json(phylo_model_file)
+def write_tree_stats_json(parser, phylo_model):
+    parser.write_stats_json(phylo_model)
 
 class Refpkg:
     """
@@ -57,7 +73,7 @@ class Refpkg:
 def create(arguments,
            manifest_name=MANIFEST_NAME,
            package_contents=PACKAGE_CONTENTS,
-           phylo_model_file=PHYLO_MODEL_FILE,
+           phylo_model=PHYLO_MODEL,
            format_version=FORMAT_VERSION):
 
     """
@@ -71,8 +87,8 @@ def create(arguments,
        taxonomy.package.MANIFEST_NAME by default.
      * PACKAGE_CONTENTS - A dict defining sections and contents of
        each. Uses taxonomy.package.PACKAGE_CONTENTS by default.
-     * PHYLO_MODEL_FILE - Names the JSON format file containing the
-       PHYLO MODEL DATA; uses taxonomy.package.PHYLO_MODEL_FILE by default.
+     * PHYLO_MODEL - Names the JSON format file containing the
+       PHYLO MODEL DATA; uses taxonomy.package.PHYLO_MODEL by default.
     """
 
     pkg_dir = arguments.package_name
@@ -94,11 +110,11 @@ def create(arguments,
     if arguments.package_version:
         optdict['metadata']['package_version'] = arguments.package_version
 
-    # phylo_model_file is part of the package, but not a command-line
+    # phylo_model is part of the package, but not a command-line
     # argument; write out the phylo model file in JSON format, but
     # only if tree_stats was specified as an argument.
     if arguments.tree_stats:
-        phylo_model_pth = os.path.join(pkg_dir, phylo_model_file)
+        phylo_model_pth = os.path.join(pkg_dir, phylo_model)
 
         parser = StatsParser(arguments.tree_stats)
         success = parser.parse_stats_data()
@@ -108,14 +124,14 @@ def create(arguments,
 
         parser.write_stats_json(phylo_model_pth)
 
-        optdict['files']['phylo_model_file'] = phylo_model_file
-        optdict['md5']['phylo_model_file'] = \
+        optdict['files']['phylo_model'] = phylo_model
+        optdict['md5']['phylo_model'] = \
         hashlib.md5(open(phylo_model_pth).read()).hexdigest()
 
 
     # copy all provided files into the package directory
     for fname in package_contents['files']:
-        if fname == 'phylo_model_file':
+        if fname == 'phylo_model':
             continue
 
         pth = getattr(arguments, fname)
