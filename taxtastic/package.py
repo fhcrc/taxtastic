@@ -9,7 +9,7 @@ from collections import defaultdict
 
 log = logging
 
-FORMAT_VERSION = '1.0' 
+FORMAT_VERSION = '1.1'
 
 MANIFEST_NAME = 'CONTENTS.json'
 PHYLO_MODEL_FILE = 'phylo_model.json'
@@ -17,8 +17,8 @@ PHYLO_MODEL_FILE = 'phylo_model.json'
 PACKAGE_CONTENTS = {
     'metadata':['create_date','author','description','package_version',
                 'empirical_frequencies','locus','format_version'],
-    'files':['tree_file','tree_stats','aln_fasta','aln_sto',
-             'profile','seq_info','taxonomy','mask','phylo_model_file'],
+    'files':['tree','tree_stats','aln_fasta','aln_sto',
+             'profile','seq_info','taxonomy','mask','phylo_model'],
     'md5':[]
     }
 
@@ -50,10 +50,10 @@ class Refpkg:
         """
         * refpkg - path to a reference package directory
         """
-    
+
         pass
 
-        
+
 def create(arguments,
            manifest_name=MANIFEST_NAME,
            package_contents=PACKAGE_CONTENTS,
@@ -207,16 +207,16 @@ class StatsParser(object):
 
     def is_empirical(self):
         """
-        Determine if empirical base frequencies were used.  Defaults to true 
+        Determine if empirical base frequencies were used.  Defaults to true
         unless proven otherwise.  Only matches RaxML-generated files.
         """
         # Default to Ture for empirical_frequencies, unless proven otherwise.
         empirical_frequencies = True
 
 
-        # Determine if the file type is RaxML.  If nucleotides, leave 
-        # empirical_frequencies true.  Otherwise look for the 
-        # string "Empirical Base Frequencies".  If it isn't there, 
+        # Determine if the file type is RaxML.  If nucleotides, leave
+        # empirical_frequencies true.  Otherwise look for the
+        # string "Empirical Base Frequencies".  If it isn't there,
         # empirical_frequencies gets set to false.
         if self.file_type.startswith('raxml'):
             # empirical_frequencies will always be true for nucleotides.
@@ -227,7 +227,7 @@ class StatsParser(object):
                         re.M|re.DOTALL)
 
                 if not regex.match(self.input_text):
-                    empirical_frequencies = False          
+                    empirical_frequencies = False
         else:
             log.info("phyml stats files don't specify empirical or "
                      "model frequencies; assuming empirical.")

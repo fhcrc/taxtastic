@@ -51,7 +51,7 @@ def build_parser(parser):
         action='store', dest='dbfile', default='ncbi_taxonomy.db',
         help='Filename of sqlite database [%(default)s].',
         metavar='FILE', required = True)
-    
+
     input_group = parser.add_argument_group(
         "Input options").add_mutually_exclusive_group()
 

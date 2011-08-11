@@ -95,7 +95,7 @@ def getlines(fname):
     blank lines, lines beginning with '#', and line contents following
     the first '#' character.
     """
-    
+
     with open(fname) as f:
         for line in f:
             if line.strip() and not line.startswith('#'):
@@ -110,7 +110,7 @@ def mkdir(dirpath, clobber = False):
 
     if clobber:
         rmdir(dirpath)
-    
+
     try:
         os.mkdir(dirpath)
     except OSError, msg:
@@ -120,7 +120,7 @@ def mkdir(dirpath, clobber = False):
         raise OSError('Failed to create %s' % dirpath)
 
     return dirpath
-    
+
 def rmdir(dirpath):
     """
     Remove a (potentially missing) directory without errors. Raise
@@ -135,4 +135,4 @@ def rmdir(dirpath):
     if path.exists(dirpath):
         raise OSError('Failed to remove %s' % dirpath)
 
-                
+

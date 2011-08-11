@@ -23,7 +23,7 @@ def main(argv):
         2: logging.INFO,
         3: logging.DEBUG,
     }.get(arguments.verbosity, logging.DEBUG)
-    
+
     if arguments.verbosity > 1:
         logformat = '%(levelname)s %(module)s %(lineno)s %(message)s'
     else:

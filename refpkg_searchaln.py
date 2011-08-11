@@ -16,10 +16,10 @@ def main():
     profile_version = arguments.profile_version
     reference_package = arguments.refpkg[0]
     sequence_file = arguments.seqfile[0]
-    min_length = arguments.min_length   
+    min_length = arguments.min_length
     search_options = arguments.search_options
 
-    align = Alignment(reference_package=reference_package, 
+    align = Alignment(reference_package=reference_package,
                       out_prefix=out_prefix,
                       profile_version=profile_version,
                       min_length=min_length,
@@ -28,8 +28,8 @@ def main():
 
     hmmsearch_output_file = [ align.hmmer_search(search_options=search_options,
                               sequence_file=sequence_file) ]
- 
-    # Create alignment with hmmer for the file containing 
+
+    # Create alignment with hmmer for the file containing
     # recruited sequences.
     align.hmmer_align(sequence_files=hmmsearch_output_file,
                       frag=True, ref=False,
@@ -46,7 +46,7 @@ def parse_arguments():
     parser.add_argument('-o', '--outprefix', required=True, dest='out_prefix', help='Output file prefix. ' + \
                         'Defaults to refpkg_prefix.sequence_file_prefix.  Currently only works ' + \
                         'with a single sequence file')
-    parser.add_argument('--min-length', dest='min_length', type=int, default=1, metavar='N', 
+    parser.add_argument('--min-length', dest='min_length', type=int, default=1, metavar='N',
                         help='minimum sequence length. Defaults to 1.')
     parser.add_argument('--profileversion', dest='profile_version', default=r"\d+",
                         help='Integer or regular expression matching a profile version or version. ' + \

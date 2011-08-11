@@ -19,7 +19,7 @@ def build_parser(parser):
         metavar = 'FILE',
         required = True,
         help = 'Name of the sqlite database file')
-    
+
     parser.add_argument(
         '-N', '--new-nodes',
         dest = 'new_nodes',
@@ -30,7 +30,7 @@ def build_parser(parser):
         taxonomy.  Mandatory fields include "tax_id", "parent_id",
         "rank", "tax_name"; optional fields include "source_name",
         "source_id". Other columns are ignored.""")
-             
+
     parser.add_argument(
         '-S', '--source-name',
         dest='source_name',
@@ -38,11 +38,11 @@ def build_parser(parser):
         help="""Identifies the source for new nodes (will override
         "source_name" in the input provided by
         `--new-nodes`). [%(default)s]""")
-    
+
 def action(args):
 
 
-    dbname = args.database_file        
+    dbname = args.database_file
     new_nodes = args.new_nodes
     source_name = args.source_name
 
@@ -60,5 +60,5 @@ def action(args):
                 log.info('node with tax_id %(tax_id)s already exists' % d)
             else:
                 log.info('added new node with tax_id %(tax_id)s' % d)
-                
+
     engine.dispose()

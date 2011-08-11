@@ -25,14 +25,14 @@ zfile = config.ncbi_data
 dbname = config.ncbi_master_db
 
 class TaxTableSetup(TestBase):
-    
+
     def setUp(self):
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
         self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
 
     def tearDown(self):
         self.engine.dispose()
-    
+
 class TestTaxonomyInit(TaxTableSetup):
 
     def test01(self):
@@ -149,8 +149,8 @@ class TestGetLineagePublic(TaxTableSetup):
 
     #     tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
     #     lineage = self.tax.lineage(tax_id=tax_id)
-        
-        
+
+
 class TestMethods(TaxTableSetup):
 
     def test01(self):
@@ -178,7 +178,7 @@ class TestWriteTable(TaxTableSetup):
     """
     test tax.write_table - note that this method produces output.
     """
-    
+
     def setUp(self):
         super(TestWriteTable, self).setUp()
         self.fname = path.join(self.mkoutdir(), 'taxtab') + '.csv'
@@ -187,12 +187,12 @@ class TestWriteTable(TaxTableSetup):
     def tearDown(self):
         self.tax.write_table(taxa=None, csvfile=self.file)
         self.file.close()
-        self.assertTrue(path.isfile(self.fname))        
-        
+        self.assertTrue(path.isfile(self.fname))
+
     def test02(self):
         tax_id = '1280' # staph aureus
         lineage = self.tax.lineage(tax_id)
-        
+
     def test03(self):
         tax_id = '1378' # Gemella; lineage has two successive no_rank taxa
         lineage = self.tax.lineage(tax_id)

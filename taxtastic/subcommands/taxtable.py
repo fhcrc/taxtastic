@@ -29,7 +29,7 @@ def build_parser(parser):
     input_group.add_argument(
         '-n', '--tax-names',
         dest = 'taxnames',
-        metavar = 'FILE',                             
+        metavar = 'FILE',
         help="""A file identifing taxa in the form of taxonomic
         names. Names are matched against both primary names and
         synonyms. Lines beginning with "#" are ignored. Taxa
@@ -47,7 +47,7 @@ def build_parser(parser):
 
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
-    
+
     output_group.add_argument(
         '-o', '--out-file',
         dest='out_file',
@@ -56,10 +56,10 @@ def build_parser(parser):
         metavar='FILE',
         help="""Output file containing lineages for the specified taxa
         in csv format; writes to stdout if unspecified""")
-            
+
 def action(args):
 
-    dbname = args.database_file        
+    dbname = args.database_file
     taxids = args.taxids
     taxnames = args.taxnames
     csvfile = args.out_file

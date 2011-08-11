@@ -41,8 +41,8 @@ class TestBase(unittest.TestCase):
     """
     Base class for unit tests
     """
-    
-    outputdir = outputdir    
+
+    outputdir = outputdir
 
     def outdir(self):
         """
@@ -60,7 +60,7 @@ class TestBase(unittest.TestCase):
         mkdir(outdir, clobber)
         return outdir
 
-    
+
 class TestScriptBase(TestBase):
 
     """
@@ -69,17 +69,17 @@ class TestScriptBase(TestBase):
 
       from config import TestScriptBase
       TestScriptBase.executable = './script_name.py'
-      TestScriptBase.outputdir = 'path/to/somewhere' 
-      
+      TestScriptBase.outputdir = 'path/to/somewhere'
+
       class TestSomething(TestScriptBase):
 
           def test01(self):
               self.cmd_ok('--help')
-    
+
     """
-    
+
     executable = None
-    
+
     def __getitem__(self, i):
         """
         Enables string formatting, eg:
@@ -103,7 +103,7 @@ class TestScriptBase(TestBase):
     def cmd_fails(self, cmd=None, args=None):
         status, output = self.wrap_cmd(cmd, args)
         self.assertFalse(status == 0)
-    
+
 # download ncbi taxonomy data and create a database if necessary; use
 # this database for all non-destructive, non-modifying tests. For
 # modifying tests, make a copy of the database.
@@ -112,4 +112,4 @@ ncbi_master_db = path.join(outputdir, 'ncbi_master.db')
 with ncbi.db_connect(ncbi_master_db, clobber = False) as con:
     log.info('using %s for all tests' % ncbi_master_db)
     ncbi.db_load(con, ncbi_data)
-    
+

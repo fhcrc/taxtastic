@@ -42,7 +42,7 @@ if hasattr(taxtastic.utils, 'read_spreadsheet'):
 class TestGetNewNodes(unittest.TestCase):
 
     xlrd_is_installed = hasattr(taxtastic.utils, 'read_spreadsheet')
-    
+
     def setUp(self):
         self.funcname = '_'.join(self.id().split('.')[-2:])
 
@@ -56,15 +56,15 @@ class TestGetNewNodes(unittest.TestCase):
             self.assertTrue(all([check(row['parent_id']) for row in rows]))
         else:
             self.assertTrue(True)
-            
+
     def test02(self):
-        if not self.xlrd_is_installed:        
+        if not self.xlrd_is_installed:
             self.assertRaises(
                 AttributeError, taxtastic.utils.get_new_nodes,
                 os.path.join(datadir,'new_taxa.xls'))
         else:
             self.assertTrue(True)
-            
+
     def test03(self):
         rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.csv'))
         check = lambda val: isinstance(val, str) and '.' not in val
@@ -74,5 +74,5 @@ class TestGetNewNodes(unittest.TestCase):
         rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa_mac.csv'))
         check = lambda val: isinstance(val, str) and '.' not in val
         self.assertTrue(all([check(row['parent_id']) for row in rows]))
-        
-            
+
+

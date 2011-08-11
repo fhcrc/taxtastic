@@ -23,14 +23,14 @@ def build_parser(parser):
         metavar = 'PATH',
         help = """Name of the directory into which to download the zip
         archive. [default is the same directory as the database file]""")
-    
+
     parser.add_argument(
         '-x', '--clobber', action = 'store_true',
         dest = 'clobber', default = False,
         help = """Download a new zip archive containing NCBI taxonomy
         and/or re-create the database even if one or both already
         exists. [%(default)s]""")
-    
+
 def action(args):
 
     dbname = args.database_file
@@ -49,4 +49,4 @@ def action(args):
         con.close()
     else:
         log.warning('taxonomy database already exists in %s' % dbname)
-        
+

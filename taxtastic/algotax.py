@@ -139,7 +139,7 @@ def walk(cur, metadata):
 
 Ranking = collections.namedtuple('Ranking', 'rank node')
 
-def reroot_from_rp(root, rp):
+def reroot_from_rp(root, rp, ignore_missing_sequences=False):
     name_map = dict(rp.db.cursor().execute("""
         SELECT seqname, tax_id
         FROM   sequences
@@ -151,7 +151,8 @@ def reroot_from_rp(root, rp):
     """))
     def subrk_min(t):
         mrca = rp.most_recent_common_ancestor(
-            *set(name_map[n.name] for n in t.get_terminals()))
+            *set(name_map[n.name] for n in t.get_terminals()
+                 if not ignore_missing_sequences or n.name in name_map))
         logging.debug("mrca for %r is %r", t, mrca)
         return rank_map[mrca]
 
