@@ -4,6 +4,7 @@
 import os
 import unittest
 import logging
+import pprint
 
 import config
 import taxtastic
@@ -49,6 +50,16 @@ class TestGetNewNodes(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def check_parent_id(self, rows):
+        check = lambda val: isinstance(val, str) and '.' not in val        
+        self.assertTrue(all([check(d['parent_id']) for d in rows]))
+
+    def check_children(self, rows):
+        for d in rows:
+            if 'children' in d:
+                val = d['children']
+                self.assertTrue(val and isinstance(val, list))
+                    
     def test01(self):
         if self.xlrd_is_installed:
             rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
@@ -66,13 +77,13 @@ class TestGetNewNodes(unittest.TestCase):
             self.assertTrue(True)
 
     def test03(self):
-        rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.csv'))
-        check = lambda val: isinstance(val, str) and '.' not in val
-        self.assertTrue(all([check(row['parent_id']) for row in rows]))
+        rows = list(taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.csv')))
+        self.check_parent_id(rows)
+        self.check_children(rows)
 
     def test04(self):
-        rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa_mac.csv'))
-        check = lambda val: isinstance(val, str) and '.' not in val
-        self.assertTrue(all([check(row['parent_id']) for row in rows]))
+        rows = list(taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa_mac.csv')))
+        self.check_parent_id(rows)
+        
 
 

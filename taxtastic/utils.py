@@ -86,8 +86,17 @@ def get_new_nodes(fname):
     else:
         raise ValueError('Error: %s must be in .csv or .xls format')
 
-    return rows
 
+    # for now, children are provided as a semicolon-delimited list
+    # within a cell (yes, yuck). We need to convert thit into a list
+    # if present.
+    for d in rows:
+        if 'children' in d:
+            if d['children']:
+                d['children'] = [x.strip() for x in d['children'].split(';')]
+            else:
+                del d['children']
+        yield d
 
 def getlines(fname):
     """

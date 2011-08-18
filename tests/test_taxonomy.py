@@ -16,6 +16,7 @@ from config import mkdir, rmdir, TestBase
 import taxtastic
 from taxtastic.taxonomy import Taxonomy
 import taxtastic.ncbi
+import taxtastic.utils
 
 log = logging
 
@@ -43,24 +44,25 @@ class TestAddNode(TestTaxonomyBase):
 
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
+        log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddNode, self).setUp()
 
     def tearDown(self):
         pass
 
-    # def test01(self):
-    #     self.tax.add_node(
-    #         tax_id = '1578_1',
-    #         parent_id = '1578',
-    #         rank = 'species_group',
-    #         tax_name = 'Lactobacillus helveticis/crispatus',
-    #         source_id = 2            
-    #         )
+    def test01(self):
+        self.tax.add_node(
+            tax_id = '1578_1',
+            parent_id = '1578',
+            rank = 'species_group',
+            tax_name = 'Lactobacillus helveticis/crispatus',
+            source_id = 2            
+            )
 
-    #     lineage = self.tax.lineage('1578_1')
-    #     self.assertTrue(lineage['tax_id'] == '1578_1')
-    #     self.assertTrue(lineage['tax_name'] == 'Lactobacillus helveticis/crispatus')
+        lineage = self.tax.lineage('1578_1')
+        self.assertTrue(lineage['tax_id'] == '1578_1')
+        self.assertTrue(lineage['tax_name'] == 'Lactobacillus helveticis/crispatus')
 
     def test02(self):
 
@@ -87,3 +89,21 @@ class TestAddNode(TestTaxonomyBase):
             self.assertTrue(lineage['parent_id'] == new_taxid)        
 
         
+    def test03(self):
+        rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
+        for d in rows:
+            d['source_id'] = 2
+            self.tax.add_node(**d)
+
+        new_taxid = '1578_1'
+        new_taxname = 'Lactobacillus helveticis/crispatus'
+        children = ['47770', # crispatus
+                    '1587'] # helveticus
+        lineage = self.tax.lineage(new_taxid)
+
+        self.assertTrue(lineage['tax_id'] == new_taxid)
+        self.assertTrue(lineage['tax_name'] == new_taxname)
+
+        for taxid in children:
+            lineage = self.tax.lineage(taxid)
+            self.assertTrue(lineage['parent_id'] == new_taxid)        

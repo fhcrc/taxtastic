@@ -292,6 +292,10 @@ class Taxonomy(object):
 
     def add_node(self, tax_id, parent_id, rank, tax_name, children = None, source_id=None, source_name=None, **kwargs):
 
+        """
+        Add a node to the taxonomy.
+        """
+        
         if not (source_id or source_name):
             raise ValueError('Taxonomy.add_node requires source_id or source_name')
 
