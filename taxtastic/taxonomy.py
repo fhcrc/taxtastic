@@ -290,7 +290,7 @@ class Taxonomy(object):
 
         return source_id, success
 
-    def add_node(self, tax_id, parent_id, rank, tax_name, source_id=None, source_name=None, **kwargs):
+    def add_node(self, tax_id, parent_id, rank, tax_name, children = None, source_id=None, source_name=None, **kwargs):
 
         if not (source_id or source_name):
             raise ValueError('Taxonomy.add_node requires source_id or source_name')
@@ -307,6 +307,11 @@ class Taxonomy(object):
                                              tax_name = tax_name,
                                              is_primary = 1)
 
+        if children:
+            for child in children:
+                ret = self.nodes.update(self.nodes.c.tax_id == child, {'parent_id':tax_id})
+                ret.execute()
+                
         lineage = self.lineage(tax_id)
 
         log.debug(lineage)
