@@ -2,6 +2,7 @@ import datetime
 import logging
 import shutil
 import os
+import re
 import csv
 from os import path
 
@@ -144,4 +145,43 @@ def rmdir(dirpath):
     if path.exists(dirpath):
         raise OSError('Failed to remove %s' % dirpath)
 
+def try_set_fields(d, regex, text, hook=lambda x: x):
+    v = re.search(regex, text, re.MULTILINE)
+    if v:
+        d.update(dict([(key,hook(val)) for key,val 
+                       in v.groupdict().iteritems()]))
+    return d
+    
 
+def parse_raxml(handle):
+    """Parse RAxML's summary output.
+
+    *handle* should be an open file handle containing the RAxML
+    output.  It is parsed and a dictionary returned.
+    """
+    s = ''.join(handle.readlines())
+    result = {}
+    try_set_fields(result, r'(?P<program>RAxML version [0-9.]+)', s)
+    try_set_fields(result, r'(?P<datatype>DNA|RNA|AA)', s)
+    result['empirical_frequencies'] = not(result['datatype'] == 'AA') or \
+        re.search('Empirical Base Frequencies', s) != None
+    try_set_fields(result, r'Substitution Matrix: (?P<subs_model>\w+)', s)
+    rates = {}
+    try_set_fields(rates,
+                   (r"rates\[0\] ac ag at cg ct gt: "
+                    r"(?P<ac>[0-9.]+) (?P<ag>[0-9.]+) (?P<at>[0-9.]+) "
+                    r"(?P<cg>[0-9.]+) (?P<ct>[0-9.]+) (?P<gt>[0-9.]+)"), s, hook=float)
+    try_set_fields(rates, r'rate A <-> C: (?P<ac>[0-9.]+)', s, hook=float)
+    try_set_fields(rates, r'rate A <-> G: (?P<ag>[0-9.]+)', s, hook=float)
+    try_set_fields(rates, r'rate A <-> T: (?P<at>[0-9.]+)', s, hook=float)
+    try_set_fields(rates, r'rate C <-> G: (?P<cg>[0-9.]+)', s, hook=float)
+    try_set_fields(rates, r'rate C <-> T: (?P<ct>[0-9.]+)', s, hook=float)
+    try_set_fields(rates, r'rate G <-> T: (?P<gt>[0-9.]+)', s, hook=float)
+    if len(rates) > 0: 
+        result['subs_rates'] = rates
+    result['gamma'] = {'n_cats': 4}
+    try_set_fields(result['gamma'],
+                   r"alpha[\[\]0-9]*: (?P<alpha>[0-9.]+)", s, hook=float)
+    result['ras_model'] = 'gamma'
+    return result
+    
