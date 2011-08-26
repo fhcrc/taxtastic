@@ -34,6 +34,7 @@ PACKAGE_CONTENTS = {
         'taxonomy',
         'tree',
         'tree_stats',
+        'readme',
         ],
     'md5':[]
     }

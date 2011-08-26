@@ -315,6 +315,11 @@ def build_parser(parser):
         default='./taxtastic.refpkg', metavar='PATH',
         help='Name of output directory [default %(default)s]')
 
+    parser.add_argument("-R", "--readme",
+                        action="store", dest="readme",
+                        help="README file describing the reference package",
+                        metavar="FILE")
+
     parser.add_argument("-r", "--package-version",
         action="store", dest="package_version",
         help='Release version for the reference package', metavar='VERSION')
