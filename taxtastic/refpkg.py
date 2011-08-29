@@ -92,7 +92,7 @@ class Refpkg(object):
         # isvalid method, but I want that to work at any time on the
         # RefPkg object, so it must have the RefPkg's manifest already
         # in place.
-        self.path = path
+        self.path = os.path.abspath(path)
         if not(os.path.exists(path)):
             os.mkdir(path)
             with open(os.path.join(path, self._manifest_name), 'w') as h:
@@ -151,7 +151,20 @@ class Refpkg(object):
                         (found_md5, expected_md5)
         return False
 
-    def reread(self):
+    def _sync_to_disk(self):
+        """Write any changes made on Refpkg to disk.
+
+        Other methods of Refpkg that alter the contents of the package
+        will call this method themselves.  Generally you should never
+        have to call it by hand.  The only exception would be if
+        another program has changed the Refpkg on disk while your
+        program is running and you want to force your version over it.
+        Otherwise it should only be called by other methods of refpkg.
+        """
+        with open(os.path.join(self.path, self._manifest_name), 'w') as h:
+            json.dump(self.contents, h)
+
+    def _sync_from_disk(self):
         """Read any changes made on disk to this Refpkg.
 
         This is necessary if other programs are making changes to the
@@ -162,6 +175,10 @@ class Refpkg(object):
         error = self.isinvalid()
         if error:
             raise ValueError("Refpkg is invalid: %s" % error)
+
+    def update_metadata(self, key, value):
+        """Set *key* in the metadata to *value*."""
+        self.contents['metadata'][key] = value
 
     def update_file(self, key, new_path):
         """Insert file *new_path* into the Refpkg under *key*.
@@ -182,31 +199,17 @@ class Refpkg(object):
         shutil.copyfile(new_path, os.path.join(self.path, filename))
         self.contents['files'][key] = filename
         self.contents['md5'][key] = md5_value
-        self.write_contents()
+        self._sync_to_disk()
         return (key, md5_value)
 
-    def write_contents(self):
-        with open(os.path.join(self.path, self._manifest_name), 'w') as h:
-            json.dump(self.contents, h)
+    def file_path(self, key):
+        if not(key in self.contents['files']):
+            raise ValueError("No such resource key %s in refpkg" % key)
+        return os.path.join(self.path, self.contents['files'][key])
 
-    def file_resource_path(self, resource):
-        return os.path.join(self.path, resource)
-
-    def file_resource(self, resource, *mode):
-        return open(self.file_resource_path(resource), *mode)
-
-    def rehash(self, name):
-        """Recalculate the MD5 sum of *name* in the refpkg.
-        """
-        self.contents['md5'][name] = md5file(os.path.join(self.path, name))
-
-    def save(self):
-        """Write the updated manifest to disk.
-        """
-        with self.file_resource('CONTENTS.json', 'w') as fobj:
-            json.dump(self.contents, fobj, indent=2)
+    def file_md5(self, key):
+        if not(key in self.contents['md5']):
+            raise ValueError("No such resource key %s in refpkg" % key)
+        return self.contents['md5'][key]
 
 
-if __name__ == '__main__':
-    import sys
-    rp = Refpkg(sys.argv[1])

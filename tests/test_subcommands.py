@@ -19,7 +19,7 @@ class TestUpdate(unittest.TestCase):
                 refpkg=pkg_path
                 changes = ['meep='+test_file, 'hilda='+test_file]
             update.action(_Args())
-            r.reread()
+            r._sync_from_disk()
             self.assertEqual(r.contents['files']['meep'], 'bv_refdata.csv')
             self.assertEqual(r.contents['files']['hilda'], 'bv_refdata.csv1')
         finally:
