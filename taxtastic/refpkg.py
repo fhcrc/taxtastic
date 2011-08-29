@@ -1,9 +1,18 @@
 import itertools
 import hashlib
-import os.path
+import shutil
+import os
 import sqlite3
 import json
 import csv
+
+def md5file(path):
+    md5 = hashlib.md5()
+    with open(path) as h:
+        for block in iter(lambda: h.read(4096), ''):
+            md5.update(block)
+    return md5.hexdigest()
+
 
 class VerificationFailed(Exception):
     pass
@@ -66,193 +75,137 @@ class _IntermediateTaxon(object):
             search_stack.append((node, node.children.copy()))
 
 class Refpkg(object):
+    _manifest_name = 'CONTENTS.json'
+    _manifest_template = {'metadata': {},
+                        'files': {},
+                        'md5': {}}
+
     def __init__(self, path):
-        """
-        Initialize from refpkg directory located at path.
-        """
+        """Create a reference to a new or existing RefPkg at *path*.
 
+        If there is already a RefPkg at *path*, a reference is
+        returned to that RefPkg.  If *path* does not exist, then an
+        empty RefPkg is created.
+        """
+        # The logic of __init__ is complicated by having to check for
+        # validity of a refpkg.  Much of its can be dispatched to the
+        # isvalid method, but I want that to work at any time on the
+        # RefPkg object, so it must have the RefPkg's manifest already
+        # in place.
         self.path = path
-        with self.file_resource('CONTENTS.json', 'rU') as fobj:
-            self.contents = json.load(fobj)
-        self.db = None
+        if not(os.path.exists(path)):
+            os.mkdir(path)
+            with open(os.path.join(path, self._manifest_name), 'w') as h:
+                json.dump(self._manifest_template, h)
+        if not(os.path.isdir(path)):
+            raise ValueError("%s is not a valid RefPkg" % (path,))
+        # Try to load the Refpkg and check that it's valid
+        manifest_path = os.path.join(path, self._manifest_name)
+        if not(os.path.isfile(manifest_path)):
+            raise ValueError(("%s is not a valid RefPkg - "
+                              "could not find manifest file %s") % \
+                                 (path, self._manifest_name))
+        with open(manifest_path) as h:
+            self.contents = json.load(h)
+        error = self.isinvalid()
+        if error:
+            raise ValueError("%s is not a valid RefPkg: %s" % (path, error))
 
-    # can be stubbed out to provide an alternative mechanism for
-    # providing data (eg for testing)
-    file_factory = open
+
+    def isinvalid(self):
+        """Check if this RefPkg is invalid.
+
+        Valid means that it contains a properly named manifest, and
+        each of the files described in the manifest exists and has the
+        proper MD5 hashsum.
+
+        If the Refpkg is valid, isinvalid returns False.  Otherwise it
+        returns a nonempty string describing the error.
+        """
+        # Contains a manifest file
+        if not(os.path.isfile(os.path.join(self.path, self._manifest_name))):
+            return "No manifest file %s found" % self._manifest_name
+        # Manifest file contains the proper keys
+        for k in self._manifest_template.keys():
+            if not(k in self.contents):
+                return "Manifest file missing key %s" % k
+            if not(isinstance(self.contents[k], dict)):
+                return "Key %s in manifest did not refer to a dictionary" % k
+        # MD5 keys and filenames are in one to one correspondence
+        if self.contents['files'].keys() != self.contents['md5'].keys():
+            return ("Files and MD5 sums in manifest do not "
+                    "match (files: %s, MD5 sums: %s)") % \
+                    (self.contents['files'].keys(), 
+                     self.contents['md5'].keys())
+        # All files in the manifest exist and match the MD5 sums
+        for key,filename in self.contents['files'].iteritems():
+            expected_md5 = self.contents['md5'][key]
+            filepath = os.path.join(self.path, filename)
+            if not(os.path.exists(filepath)):
+                return "File %s referred to by key %s not found in refpkg" % \
+                    (filename, key)
+            found_md5 = md5file(filepath)
+            if found_md5 != expected_md5:
+                return ("File %s referred to by key %s did "
+                        "not match its MD5 sum (found: %s, expected %s)") % \
+                        (found_md5, expected_md5)
+        return False
+
+    def reread(self):
+        """Read any changes made on disk to this Refpkg.
+
+        This is necessary if other programs are making changes to the
+        Refpkg on disk and your program must be synchronized to them.
+        """
+        with open(os.path.join(self.path, self._manifest_name)) as h:
+            self.contents = json.load(h)
+        error = self.isinvalid()
+        if error:
+            raise ValueError("Refpkg is invalid: %s" % error)
+
+    def update_file(self, key, new_path):
+        """Insert file *new_path* into the Refpkg under *key*.
+
+        The filename of *new_path* will be preserved in the Refpkg
+        unless it would conflict with a previously existing file, in
+        which case a suffix is appended which makes it unique.  Any
+        file previously referred to by *key* is deleted.
+        """
+        if not(os.path.isfile(new_path)):
+            raise ValueError("Cannot update Refpkg with file %s" % (new_path,))
+        md5_value = md5file(new_path)
+        filename = os.path.basename(new_path)
+        while os.path.exists(os.path.join(self.path, filename)):
+            filename += "1"
+        if key in self.contents['files']:
+            os.unlink(os.path.join(self.path, self.contents['files'][key]))
+        shutil.copyfile(new_path, os.path.join(self.path, filename))
+        self.contents['files'][key] = filename
+        self.contents['md5'][key] = md5_value
+        self.write_contents()
+        return (key, md5_value)
+
+    def write_contents(self):
+        with open(os.path.join(self.path, self._manifest_name), 'w') as h:
+            json.dump(self.contents, h)
 
     def file_resource_path(self, resource):
         return os.path.join(self.path, resource)
 
     def file_resource(self, resource, *mode):
-        return self.file_factory(self.file_resource_path(resource), *mode)
-
-    def resource_path(self, name):
-        return self.file_resource_path(self.contents['files'][name])
-
-    def resource(self, name, *mode):
-        """
-        Returns named file object opened with mode. File name must be
-        defined in manifest.
-        """
-
-        return self.file_factory(self.resource_path(name), *mode)
-
-    def _digest_resource(self, name):
-        md5 = hashlib.md5()
-        with self.resource(name, 'rb') as fobj:
-            for block in iter(lambda: fobj.read(4096), ''):
-                md5.update(block)
-        return md5.hexdigest()
-
-    def verify(self, name):
-        if self.contents['md5'][name] != self._digest_resource(name):
-            raise VerificationFailed(name)
+        return open(self.file_resource_path(resource), *mode)
 
     def rehash(self, name):
-        digest = self._digest_resource(name)
-        self.contents['md5'][name] = digest
+        """Recalculate the MD5 sum of *name* in the refpkg.
+        """
+        self.contents['md5'][name] = md5file(os.path.join(self.path, name))
 
     def save(self):
+        """Write the updated manifest to disk.
         """
-        Writes the manifest.
-        """
-
         with self.file_resource('CONTENTS.json', 'w') as fobj:
             json.dump(self.contents, fobj, indent=2)
 
-    def load_db(self):
-        db = sqlite3.connect(':memory:')
-        curs = db.cursor()
-
-        curs.execute("""
-            CREATE TABLE ranks (
-              rank TEXT PRIMARY KEY NOT NULL,
-              rank_order INT
-            )
-        """)
-
-        curs.execute("""
-            CREATE TABLE taxa (
-              tax_id TEXT PRIMARY KEY NOT NULL,
-              tax_name TEXT NOT NULL,
-              rank TEXT REFERENCES ranks (rank) NOT NULL
-            )
-        """)
-
-        curs.execute("""
-            CREATE TABLE sequences (
-              seqname TEXT PRIMARY KEY NOT NULL,
-              tax_id TEXT REFERENCES taxa (tax_id) NOT NULL
-            )
-        """)
-
-        curs.execute("""
-            CREATE TABLE hierarchy (
-              tax_id TEXT REFERENCES taxa (tax_id) PRIMARY KEY NOT NULL,
-              lft INT NOT NULL UNIQUE,
-              rgt INT NOT NULL UNIQUE
-            )
-        """)
-
-        curs.execute("""
-            CREATE VIEW parents AS
-            SELECT h1.tax_id AS child,
-                   h2.tax_id AS parent
-            FROM   hierarchy h1
-                   JOIN hierarchy h2
-                     ON h1.lft BETWEEN h2.lft AND h2.rgt
-        """)
-
-        taxon_map = {}
-        reader = csv.DictReader(self.resource('taxonomy', 'rU'))
-        for row in reader:
-            parent = taxon_map.get(row['parent_id'])
-            taxon = _IntermediateTaxon(
-                row['tax_id'], parent, row['rank'], row['tax_name'])
-            taxon_map[taxon.tax_id] = taxon
-
-        counter = itertools.count(1).next
-        def on_pop(parent):
-            if parent is not None:
-                parent.rgt = counter()
-        for node in taxon_map['1'].iterate_children(on_pop=on_pop):
-            node.lft = counter()
-
-        curs.executemany("INSERT INTO ranks (rank_order, rank) VALUES (?, ?)",
-            enumerate(reader._fieldnames[4:]))
-        curs.executemany("INSERT INTO taxa VALUES (?, ?, ?)",
-            ((t.tax_id, t.tax_name, t.rank) for t in taxon_map.itervalues()))
-        curs.executemany("INSERT INTO hierarchy VALUES (?, ?, ?)",
-            ((t.tax_id, t.lft, t.rgt) for t in taxon_map.itervalues()))
-
-        reader = csv.DictReader(self.resource('seq_info', 'rU'))
-        curs.executemany("INSERT INTO sequences VALUES (?, ?)",
-            ((row['seqname'], row['tax_id']) for row in reader))
-
-        db.commit()
-        self.db = db
-
-    def most_recent_common_ancestor(self, *ts):
-        if len(ts) > 200:
-            res = self._large_mrca(ts)
-        else:
-            res = self._small_mrca(ts)
-
-        if res:
-            (res,), = res
-        else:
-            raise NoAncestor()
-        return res
-
-    def _large_mrca(self, ts):
-        cursor = self.db.cursor()
-
-        cursor.execute("""
-            DROP TABLE IF EXISTS _mrca_temp
-        """)
-
-        cursor.execute("""
-            CREATE TEMPORARY TABLE _mrca_temp(
-                child TEXT PRIMARY KEY REFERENCES taxa (tax_id) NOT NULL
-            )
-        """)
-
-        cursor.executemany("""
-            INSERT INTO _mrca_temp
-            VALUES (?)
-        """, ((tid,) for tid in ts))
-        cursor.execute("""
-            SELECT parent
-            FROM   _mrca_temp
-                   JOIN parents USING (child)
-                   JOIN taxa
-                     ON parent = taxa.tax_id
-                   JOIN ranks USING (rank)
-            GROUP  BY parent
-            HAVING COUNT(*) = ?
-            ORDER  BY rank_order DESC
-            LIMIT  1
-        """, (len(ts),))
-
-        return cursor.fetchall()
-
-    def _small_mrca(self, ts):
-        cursor = self.db.cursor()
-        qmarks = ', '.join('?' * len(ts))
-        cursor.execute("""
-            SELECT parent
-            FROM   parents
-                   JOIN taxa
-                     ON parent = taxa.tax_id
-                   JOIN ranks USING (rank)
-            WHERE  child IN (%s)
-            GROUP  BY parent
-            HAVING COUNT(*) = ?
-            ORDER  BY rank_order DESC
-            LIMIT  1
-        """ % qmarks, ts + (len(ts),))
-
-        return cursor.fetchall()
 
 if __name__ == '__main__':
     import sys
