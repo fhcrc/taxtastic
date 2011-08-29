@@ -85,17 +85,18 @@ class TestRefpkg(unittest.TestCase):
             md5_value = refpkg.md5file(test_file)
             self.assertEqual(r.update_file('a', test_file),
                              ('a', md5_value))
+            # Make sure it's properly written
             with open(os.path.join(r.path, r._manifest_name)) as h:
                 self.assertEqual(json.load(h), r.contents)
+
             self.assertTrue('a' in r.contents['files'])
-            self.assertEqual(r.contents['files']['a'], test_name)
-            self.assertEqual(r.contents['md5']['a'], md5_value)
+            self.assertEqual(r.file_name('a'), test_name)
+            self.assertEqual(r.file_md5('a'), md5_value)
 
             self.assertEqual(r.update_file('b', test_file),
                              ('b', md5_value))
-            self.assertTrue('b' in r.contents['files'])
-            self.assertEqual(r.contents['files']['b'], test_name + '1')
-            self.assertEqual(r.contents['md5']['b'], md5_value)
+            self.assertEqual(r.file_name('b'), test_name + '1')
+            self.assertEqual(r.file_md5('b'), md5_value)
 
             test_file2 = '../testfiles/taxids1.txt'
             md5_value2 = refpkg.md5file(test_file2)
@@ -104,6 +105,20 @@ class TestRefpkg(unittest.TestCase):
                              ('a', md5_value2))
             self.assertFalse(os.path.exists(os.path.join(r.path, test_name)))
             
+        finally:
+            shutil.rmtree(scratch)
+
+    def test_update_metadata(self):
+        scratch = tempfile.mkdtemp()
+        try:
+            pkg_path = os.path.join(scratch, 'test.refpkg')
+            r = refpkg.Refpkg(pkg_path)
+            self.assertEqual(r.update_metadata('a', 'boris'), None)
+            self.assertEqual(r.update_metadata('a', 'meep'), 'boris')
+            with open(os.path.join(r.path, r._manifest_name)) as h:
+                self.assertEqual(json.load(h), r.contents)
+            self.assertEqual(r.metadata('a'), 'meep')
+            self.assertEqual(r.metadata('b'), None)
         finally:
             shutil.rmtree(scratch)
 

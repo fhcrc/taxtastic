@@ -18,12 +18,30 @@ class TestUpdate(unittest.TestCase):
             class _Args(object):
                 refpkg=pkg_path
                 changes = ['meep='+test_file, 'hilda='+test_file]
+                metadata = False
             update.action(_Args())
             r._sync_from_disk()
             self.assertEqual(r.contents['files']['meep'], 'bv_refdata.csv')
             self.assertEqual(r.contents['files']['hilda'], 'bv_refdata.csv1')
         finally:
             shutil.rmtree(scratch)
+
+    def test_metadata_action(self):
+        scratch = tempfile.mkdtemp()
+        try:
+            pkg_path = os.path.join(scratch, 'test.refpkg')
+            r = refpkg.Refpkg(pkg_path)
+            class _Args(object):
+                refpkg=pkg_path
+                changes = ['meep=boris', 'hilda=vrrp']
+                metadata = True
+            update.action(_Args())
+            r._sync_from_disk()
+            self.assertEqual(r.metadata('meep'), 'boris')
+            self.assertEqual(r.metadata('hilda'), 'vrrp')
+        finally:
+            shutil.rmtree(scratch)
+        
 
 if __name__ == '__main__':
     unittest.main()

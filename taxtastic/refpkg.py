@@ -176,9 +176,19 @@ class Refpkg(object):
         if error:
             raise ValueError("Refpkg is invalid: %s" % error)
 
+    def metadata(self, key):
+        return self.contents['metadata'].get(key)
+
     def update_metadata(self, key, value):
-        """Set *key* in the metadata to *value*."""
+        """Set *key* in the metadata to *value*.
+
+        Returns the previous value of *key*, or None if the key was
+        not previously set.
+        """
+        old_value = self.contents['metadata'].get(key)
         self.contents['metadata'][key] = value
+        self._sync_to_disk()
+        return old_value
 
     def update_file(self, key, new_path):
         """Insert file *new_path* into the Refpkg under *key*.
@@ -202,12 +212,18 @@ class Refpkg(object):
         self._sync_to_disk()
         return (key, md5_value)
 
-    def file_path(self, key):
+    def file_abspath(self, key):
+        """Return the absolute path to the file referenced by *key*."""
+        return os.path.join(self.path, self.file_name(key))
+
+    def file_name(self, key):
+        """Return the name of the file referenced by *key* in the refpkg."""
         if not(key in self.contents['files']):
             raise ValueError("No such resource key %s in refpkg" % key)
-        return os.path.join(self.path, self.contents['files'][key])
+        return self.contents['files'][key]
 
     def file_md5(self, key):
+        """Return the MD5 sum of the file reference by *key*."""
         if not(key in self.contents['md5']):
             raise ValueError("No such resource key %s in refpkg" % key)
         return self.contents['md5'][key]
