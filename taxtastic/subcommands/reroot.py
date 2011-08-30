@@ -10,32 +10,14 @@ from taxtastic import refpkg
 log = logging.getLogger(__name__)
 
 def build_parser(parser):
-    parser.add_argument('refpkg', nargs=1,
-        help='the reference package to operate on')
-    parser.add_argument('--rppr',
-        action='store', default='rppr',
-        help="specify the rppr binary to call to perform the rerooting")
+    parser.add_argument('refpkg', action='store', metavar='refpkg',
+                        help='the reference package to operate on')
+    parser.add_argument('--rppr', action='store', default=None,
+                        help="specify the rppr binary to call to perform the rerooting")
     parser.add_argument('-p', '--pretend',
-        action='store_true', default=False,
-        help="don't save the rerooted tree; just attempt the rerooting.")
+                        action='store_true', default=False,
+                        help="don't save the rerooted tree; just attempt the rerooting.")
 
 def action(args):
-    refpkg_name, = args.refpkg
-    rp = refpkg.Refpkg(refpkg_name)
-    fd, name = tempfile.mkstemp(dir=refpkg_name)
-    os.close(fd)
-    try:
-        subprocess.check_call([args.rppr, 'reroot',
-                               '-c', refpkg_name, '-o', name])
-    except:
-        os.unlink(name)
-        raise
-
-    if args.pretend:
-        os.unlink(name)
-        return
-
-    shutil.copystat(name, rp.resource_path('tree'))
-    os.rename(name, rp.resource_path('tree'))
-    rp.rehash('tree')
-    rp.save()
+    r = refpkg.Refpkg(args.refpkg)
+    r.reroot(rppr=args.rppr, pretend=args.pretend)

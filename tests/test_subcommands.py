@@ -6,7 +6,7 @@ import os
 
 sys.path.insert(1, '../')
 from taxtastic import refpkg
-from taxtastic.subcommands import update
+from taxtastic.subcommands import update, create
 
 class TestUpdate(unittest.TestCase):
     def test_action(self):
@@ -41,7 +41,37 @@ class TestUpdate(unittest.TestCase):
             self.assertEqual(r.metadata('hilda'), 'vrrp')
         finally:
             shutil.rmtree(scratch)
-        
+
+class TestCreate(unittest.TestCase):
+    def test_create(self):
+        scratch = tempfile.mkdtemp()
+        class _Args(object):
+            clobber = True
+            locus = 'Nowhere'
+            description = 'A description'
+            author = 'Boris the Mad Baboon'
+            package_version = '0.3'
+            package_name = os.path.join(scratch, 'test.refpkg')
+            tree_stats = None
+            aln_fasta = None
+            aln_sto = None
+            phylo_model = None
+            seq_info = None
+            mask = None
+            profile = None
+            readme = None
+            tree = None
+            taxonomy = None
+        try:
+            create.action(_Args())
+            r = refpkg.Refpkg(_Args().package_name)
+            self.assertEqual(r.metadata('locus'), 'Nowhere')
+            self.assertEqual(r.metadata('description'), 'A description')
+            self.assertEqual(r.metadata('author'), 'Boris the Mad Baboon')
+            self.assertEqual(r.metadata('package_version'), '0.3')
+            self.assertEqual(r.metadata('format_version'), '1.1')
+        finally:
+            shutil.rmtree(scratch)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,75 @@
+IMPORTANT WARNING: Alignment column 1 contains only undetermined values which will be treated as missing data
+
+IMPORTANT WARNING
+Found 1 column that contains only undetermined values which will be treated as missing data.
+Normally these columns should be excluded from the analysis.
+
+An alignment file with undetermined columns removed has already
+been printed to file lactobacillus2.pylip.reduced
+
+
+This is RAxML version 7.2.8 released by Alexandros Stamatakis in October 2010.
+
+With greatly appreciated code contributions by:
+Andre Aberer (TUM)
+Simon Berger (TUM)
+John Cazes (TACC)
+Michael Ott (TUM)
+Nick Pattengale (UNM)
+Wayne Pfeiffer (SDSC)
+Akifumi S. Tanabe (Univ. Tsukuba)
+
+
+Alignment has 680 distinct alignment patterns
+
+Proportion of gaps and completely undetermined characters in this alignment: 15.29%
+
+RAxML rapid hill-climbing mode
+
+Using 1 distinct models/data partitions with joint branch length optimization
+
+
+Executing 1 inferences on the original alignment using 1 distinct randomized MP trees
+
+All free model parameters will be estimated by RAxML
+GAMMA model of rate heteorgeneity, ML estimate of alpha-parameter
+
+GAMMA Model parameters will be estimated up to an accuracy of 0.1000000000 Log Likelihood units
+
+Partition: 0
+Alignment Patterns: 680
+Name: No Name Provided
+DataType: DNA
+Substitution Matrix: GTR
+
+
+
+
+RAxML was called as follows:
+
+raxmlHPC-PTHREADS-SSE3 -T 12 -m GTRGAMMA -n lactobacillus2 -s lactobacillus2.pylip 
+
+
+Testing which likelihood implementation to use
+Standard Implementation full tree traversal time: 0.001592
+Subtree Equality Vectors for gap columns full tree traversal time: 0.001612
+... using standard implementation
+
+Inference[0]: Time 2.325967 GAMMA-based likelihood -10321.357130, best rearrangement setting 5
+alpha[0]: 0.195784 rates[0] ac ag at cg ct gt: 0.714994 2.036664 1.297057 0.270932 3.233718 1.000000 
+
+
+Conducting final model optimizations on all 1 trees under GAMMA-based models ....
+
+Inference[0] final GAMMA-based Likelihood: -10320.208985 tree written to file /shared/silo_researcher/Matsen_F/MatsenGrp/micro_refset/refset-new/build/targets/lactobacillus2/RAxML_result.lactobacillus2
+
+
+Starting final GAMMA-based thorough Optimization on tree 0 likelihood -10320.208985 .... 
+
+Final GAMMA-based Score of best tree -10320.208985
+
+Program execution info written to /shared/silo_researcher/Matsen_F/MatsenGrp/micro_refset/refset-new/build/targets/lactobacillus2/RAxML_info.lactobacillus2
+Best-scoring ML tree written to: /shared/silo_researcher/Matsen_F/MatsenGrp/micro_refset/refset-new/build/targets/lactobacillus2/RAxML_bestTree.lactobacillus2
+
+Overall execution time: 4.474516 secs or 0.001243 hours or 0.000052 days
+

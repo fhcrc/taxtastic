@@ -122,6 +122,26 @@ class TestRefpkg(unittest.TestCase):
         finally:
             shutil.rmtree(scratch)
 
+    def test_reroot(self):
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/toreroot.refpkg')
+        try:
+            r = refpkg.Refpkg('../testfiles/toreroot.refpkg')
+            r.reroot()
+            self.assertEqual('cd6431ed636ddb12b83ea0e4f9713bee',
+                             r.file_md5('tree'))
+        finally:
+            shutil.rmtree('../testfiles/toreroot.refpkg')
+
+    def test_pretend_reroot(self):
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/toreroot.refpkg')     
+        try:
+            r = refpkg.Refpkg('../testfiles/toreroot.refpkg')
+            r.reroot(pretend=True)
+            self.assertEqual('2f11faa616fc7f04d7694436b5cca05f',
+                             r.file_md5('tree'))
+        finally:
+            shutil.rmtree('../testfiles/toreroot.refpkg')
+
 
 if __name__ == '__main__':
     unittest.main()

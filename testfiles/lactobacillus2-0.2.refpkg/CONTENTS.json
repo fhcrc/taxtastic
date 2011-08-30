@@ -1,0 +1,29 @@
+{
+  "files": {
+    "profile": "bacteria16S_508_mod5.cm", 
+    "phylo_model": "phylo_model.json", 
+    "taxonomy": "taxtable.csv", 
+    "tree": "RAxML_result.lactobacillus2", 
+    "aln_fasta": "chosen.fasta", 
+    "seq_info": "chosen.csv", 
+    "aln_sto": "lactobacillus2.sto", 
+    "tree_stats": "RAxML_info.lactobacillus2"
+  }, 
+  "md5": {
+    "profile": "7b36841cae1db2a2c4d60ea44db4aba9", 
+    "phylo_model": "f288a37a50b2a113110185fbc8f48028", 
+    "taxonomy": "9bc2edc9c67801c4a9acd7e166144f4a", 
+    "tree": "2f11faa616fc7f04d7694436b5cca05f", 
+    "aln_fasta": "fd8a198c0215f3577f9b083da87128bb", 
+    "seq_info": "230bfb5a78075a012e114bef635a4b18", 
+    "aln_sto": "6420db16bded3a5b119b16e2972be66e", 
+    "tree_stats": "2e57e7e56708f4b31db8025ef99722ef"
+  }, 
+  "metadata": {
+    "package_version": "0.2", 
+    "author": "Noah Hoffman <ngh2@uw.edu>, Sujatha Srinivasan <ssriniva@fhcrc.org>, Erick Matsen <matsen@fhcrc.org>", 
+    "create_date": "2011-08-18 14:50:39", 
+    "format_version": "1.1", 
+    "locus": "16S rRNA gene"
+  }
+}

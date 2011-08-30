@@ -4,12 +4,15 @@ taxtastic/refpkg.py
 Implements an object, Refpkg, for the creation and manipulation of
 reference packages for pplacer.
 """
+import subprocess
 import itertools
+import tempfile
 import hashlib
 import shutil
 import os
 import sqlite3
 import json
+import time
 import csv
 
 def md5file(path):
@@ -20,11 +23,15 @@ def md5file(path):
     return md5.hexdigest()
 
 
+def manifest_template():
+    return {'metadata': {'create_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                         'format_version': '1.1'},
+            'files': {},
+            'md5': {}}
+
+
 class Refpkg(object):
     _manifest_name = 'CONTENTS.json'
-    _manifest_template = {'metadata': {},
-                        'files': {},
-                        'md5': {}}
 
     def __init__(self, path):
         """Create a reference to a new or existing RefPkg at *path*.
@@ -42,7 +49,7 @@ class Refpkg(object):
         if not(os.path.exists(path)):
             os.mkdir(path)
             with open(os.path.join(path, self._manifest_name), 'w') as h:
-                json.dump(self._manifest_template, h)
+                json.dump(manifest_template(), h)
         if not(os.path.isdir(path)):
             raise ValueError("%s is not a valid RefPkg" % (path,))
         # Try to load the Refpkg and check that it's valid
@@ -72,7 +79,7 @@ class Refpkg(object):
         if not(os.path.isfile(os.path.join(self.path, self._manifest_name))):
             return "No manifest file %s found" % self._manifest_name
         # Manifest file contains the proper keys
-        for k in self._manifest_template.keys():
+        for k in manifest_template().keys():
             if not(k in self.contents):
                 return "Manifest file missing key %s" % k
             if not(isinstance(self.contents[k], dict)):
@@ -174,4 +181,25 @@ class Refpkg(object):
             raise ValueError("No such resource key %s in refpkg" % key)
         return self.contents['md5'][key]
 
-
+    def reroot(self, rppr=None, pretend=False):
+        """Reroot the phylogenetic tree in the Refpkg."""
+        fd, name = tempfile.mkstemp()
+        os.close(fd)
+        try:
+            # Use a specific path to rppr, otherwise rely on $PATH
+            subprocess.check_call([rppr or 'rppr', 'reroot',
+                                   '-c', self.path, '-o', name])
+            if not(pretend):
+                self.update_file('tree', name)
+        finally:
+            os.unlink(name)
+        
+    def update_phylo_model(self, raxml_stats):
+        fd, name = tempfile.mkstemp()
+        os.close(fd)
+        try:
+            with open(name, 'w') as phylo_model, open(raxml_stats) as h:
+                json.dump(utils.parse_raxml(h), phylo_model)
+            self.update_file('phylo_model', name)
+        finally:
+            os.unlink(name)
