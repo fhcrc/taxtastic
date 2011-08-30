@@ -20,66 +20,6 @@ def md5file(path):
     return md5.hexdigest()
 
 
-class VerificationFailed(Exception):
-    pass
-
-class NoAncestor(Exception):
-    pass
-
-class OnUpdate(object):
-    def __init__(self, proxied):
-        self.proxied = proxied
-        self.setter = None
-
-    def __get__(self, inst, cls):
-        if inst is None:
-            return self
-        return getattr(inst, self.proxied)
-
-    def __set__(self, inst, value):
-        if self.setter:
-            self.setter(inst, value)
-        setattr(inst, self.proxied, value)
-
-    def __call__(self, f):
-        self.setter = f
-        return self
-
-class _IntermediateTaxon(object):
-    def __init__(self, tax_id, parent, rank, tax_name):
-        self.children = set()
-        self.tax_id = tax_id
-        self.parent = parent
-        self.rank = rank
-        self.tax_name = tax_name
-
-    _parent = _adjacent_to = None
-
-    @OnUpdate('_parent')
-    def parent(self, p):
-        if self.parent is not None:
-            self.parent.children.discard(self)
-        if p is not None:
-            p.children.add(self)
-
-    @OnUpdate('_adjacent_to')
-    def adjacent_to(self, n):
-        if n is not None:
-            self.parent = n.parent
-
-    def iterate_children(self, on_pop=None, including_self=True):
-        search_stack = [(None, set([self]))]
-        while search_stack:
-            if not search_stack[-1][1]:
-                parent, _ = search_stack.pop()
-                if on_pop:
-                    on_pop(parent)
-                continue
-            node = search_stack[-1][1].pop()
-            if node is not self or including_self:
-                yield node
-            search_stack.append((node, node.children.copy()))
-
 class Refpkg(object):
     _manifest_name = 'CONTENTS.json'
     _manifest_template = {'metadata': {},
