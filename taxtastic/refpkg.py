@@ -1,3 +1,9 @@
+"""
+taxtastic/refpkg.py
+
+Implements an object, Refpkg, for the creation and manipulation of
+reference packages for pplacer.
+"""
 import itertools
 import hashlib
 import shutil
