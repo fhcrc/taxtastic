@@ -37,6 +37,39 @@ def manifest_template():
             'rollforward': None}
 
 
+# The transaction and rollback/rollforward system used by Refpkg uses
+# a data structure from purely functional programming called a zipper.
+# The current state is augmented with an ordered list of previous
+# states and an orderd list of subsequent states.  Rolling back to a
+# previous state of the refpkg means pushing the current state onto
+# the ordered list of subsequent states, and popping the first of the
+# previous states to become the new current state.  Rolling forward
+# again runs in just the opposite direction.
+
+# The log is maintained only on the current state to save space.  This
+# slightly complicates Refpkg.rollback and Refpkg.rollforward.  Log
+# messages for rollforward transactions are stored with the future
+# states to make keeping the log up to date simple.
+
+# In order to have a sensible set of states, we want compound commands
+# to only produce a single state.  That is handled by this transaction
+# decorator.  Since Refpkgs are already not threadsafe, we can use the
+# Refpkg itself to hold the current transaction.  If there is no
+# transaction, then we start one, and only that outermost transaction
+# will write a log message.  Further, that outer most command will be
+# reverted as a whole.  Logging is set by calling self._log(msg), but
+# it must be the last command run which might contain transaction
+# decorated calls!  Thus
+#
+#  self.update_metadata(...)
+#  self._log(...)
+#
+# works properly, but
+#  self._log(...)
+#  self.update_metadata(...)
+#
+# does not.  The update_metadata call will overwrite the log that was
+# set by _log.
 
 @decorator
 def transaction(f, self, *args, **kwargs):
@@ -50,6 +83,7 @@ def transaction(f, self, *args, **kwargs):
             self.contents['log'].insert(0, self.current_transaction['log'])
             self.contents['rollback'] = copy.deepcopy(self.current_transaction['rollback'])
             self.contents['rollback'].pop('log')
+            self.contents['rollforward'] = None # We can't roll forward anymore
             self._sync_to_disk()
             return r
         except Exception, e:
@@ -256,8 +290,11 @@ class Refpkg(object):
             os.unlink(name)
 
     def rollback(self):
-        # Pull out log, put top entry in rollforward along with current JSON
-        # Copy top of rollback to current, and insert rest of log into it
+        """Revert the previous modification to the refpkg.
+        """
+        # This is slightly complicated because of Python's freakish
+        # assignment semantics and because we don't store multiple
+        # copies of the log.
         if self.contents['rollback'] == None:
             raise ValueError("No operation to roll back on refpkg")
         future_msg = self.contents['log'][0]
@@ -269,6 +306,8 @@ class Refpkg(object):
         self.contents[u'rollforward'] = [future_msg, rollforward]
 
     def rollforward(self):
+        """Restore a reverted modification to the refpkg.
+        """
         if self.contents['rollforward'] == None:
             raise ValueError("No operation to roll forward on refpkg")
         new_log_message = self.contents['rollforward'][0]

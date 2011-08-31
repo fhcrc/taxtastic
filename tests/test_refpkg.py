@@ -192,6 +192,12 @@ class TestRefpkg(unittest.TestCase):
             self.assertEqual(v0, v3)
             r.rollforward()
             self.assertEqual(v1, r.contents)
+
+            # We shouldn't be able to roll forward after running an unrelated operation
+            r.rollback()
+            r.update_metadata('boris', 'hilda')
+            self.assertRaises(ValueError,
+                              lambda: r.rollforward())
         finally:
             shutil.rmtree('../testfiles/test.refpkg')
         
