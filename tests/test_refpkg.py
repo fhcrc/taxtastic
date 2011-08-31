@@ -2,6 +2,7 @@ import unittest
 import tempfile
 import shutil
 import json
+import copy
 import sys
 import os
 
@@ -23,7 +24,7 @@ class TestRefpkg(unittest.TestCase):
         try:
             pkg_path = os.path.join(scratch, 'test.refpkg')
             r = refpkg.Refpkg(pkg_path)
-            self.assertEqual(r.contents, refpkg.Refpkg._manifest_template)
+            self.assertEqual(r.contents, refpkg.manifest_template())
             self.assertEqual(os.listdir(pkg_path), ['CONTENTS.json'])
         finally:
             shutil.rmtree(scratch)
@@ -51,6 +52,9 @@ class TestRefpkg(unittest.TestCase):
                 print >>h, "Hello, world!"
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
                 json.dump({'metadata': {}, 
+                           'log': [],
+                           'rollback': None,
+                           'rollforward': None,
                            'files': {'meep': 'boris'},
                            'md5': {'meep': 0}},
                           h)
@@ -68,6 +72,7 @@ class TestRefpkg(unittest.TestCase):
                 print >>h, "Hello, world!"
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
                 json.dump({'metadata': {}, 
+                           'log': [], 'rollback': None, 'rollforward': None,
                            'files': {'meep': 'boris', 'hilda': 'boris'},
                            'md5': {'meep': 0}},
                           h)
@@ -129,6 +134,7 @@ class TestRefpkg(unittest.TestCase):
             r.reroot()
             self.assertEqual('cd6431ed636ddb12b83ea0e4f9713bee',
                              r.file_md5('tree'))
+            self.assertEqual(r.log(), ['Rerooting refpkg'])
         finally:
             shutil.rmtree('../testfiles/toreroot.refpkg')
 
@@ -141,6 +147,54 @@ class TestRefpkg(unittest.TestCase):
                              r.file_md5('tree'))
         finally:
             shutil.rmtree('../testfiles/toreroot.refpkg')
+
+    def test_transaction(self):
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/test.refpkg')     
+        try:
+            r = refpkg.Refpkg('../testfiles/test.refpkg')
+            self.assertEqual(r.update_metadata('author', 'Boris and Hilda'), 
+                             "Noah Hoffman <ngh2@uw.edu>, Sujatha Srinivasan <ssriniva@fhcrc.org>, Erick Matsen <matsen@fhcrc.org>")
+            self.assertEqual(r.current_transaction, None)
+            self.assertEqual(r.log(), 
+                             ['Updated metadata: author=Boris and Hilda'])
+            self.assertTrue(isinstance(r.contents['rollback'], dict))
+            self.assertFalse('log' in r.contents['rollback'])
+        finally:
+            shutil.rmtree('../testfiles/test.refpkg')
+
+    def test_failed_transaction(self):
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/test.refpkg')     
+        try:
+            r = refpkg.Refpkg('../testfiles/test.refpkg')
+            v = copy.deepcopy(r.contents)
+            self.assertRaises(Exception, 
+                              lambda: r.update_file('tiddlywinks', 
+                                                    '/path/to/nonexistant/thing'))
+            self.assertEqual(v, r.contents)
+        finally:
+            shutil.rmtree('../testfiles/test.refpkg')
+
+    def test_rollback(self):
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', 
+                        '../testfiles/test.refpkg')
+        try:
+            r = refpkg.Refpkg('../testfiles/test.refpkg')
+            self.assertRaises(ValueError,
+                              lambda: r.rollback())
+            self.maxDiff = None
+            v0 = copy.deepcopy(r.contents)
+            r.update_metadata('boris', 'meep')
+            v1 = copy.deepcopy(r.contents)
+            r.rollback()
+            v3 = copy.deepcopy(r.contents)
+            v0.pop('rollforward')
+            v3.pop('rollforward')
+            self.assertEqual(v0, v3)
+            r.rollforward()
+            self.assertEqual(v1, r.contents)
+        finally:
+            shutil.rmtree('../testfiles/test.refpkg')
+        
 
 
 if __name__ == '__main__':

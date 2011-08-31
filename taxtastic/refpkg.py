@@ -3,7 +3,10 @@ taxtastic/refpkg.py
 
 Implements an object, Refpkg, for the creation and manipulation of
 reference packages for pplacer.
+
+Note that Refpkg objects are *NOT* thread safe!
 """
+from decorator import decorator
 import subprocess
 import itertools
 import tempfile
@@ -11,6 +14,7 @@ import hashlib
 import shutil
 import os
 import sqlite3
+import copy
 import json
 import time
 import csv
@@ -27,7 +31,33 @@ def manifest_template():
     return {'metadata': {'create_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                          'format_version': '1.1'},
             'files': {},
-            'md5': {}}
+            'md5': {},
+            'log': [],
+            'rollback': None,
+            'rollforward': None}
+
+
+
+@decorator
+def transaction(f, self, *args, **kwargs):
+    if self.current_transaction:
+        f(self, *args, **kwargs)
+    else:
+        self.current_transaction = {'rollback': copy.deepcopy(self.contents), 
+                                    'log': '(Transaction left no log message)'}
+        try:
+            r = f(self, *args, **kwargs)
+            self.contents['log'].insert(0, self.current_transaction['log'])
+            self.contents['rollback'] = copy.deepcopy(self.current_transaction['rollback'])
+            self.contents['rollback'].pop('log')
+            self._sync_to_disk()
+            return r
+        except Exception, e:
+            self.contents = copy.deepcopy(self.current_transaction['rollback'])
+            self.sync_to_disk()
+            raise e
+        finally:
+            self.current_transaction = None
 
 
 class Refpkg(object):
@@ -45,6 +75,7 @@ class Refpkg(object):
         # isvalid method, but I want that to work at any time on the
         # RefPkg object, so it must have the RefPkg's manifest already
         # in place.
+        self.current_transaction = None
         self.path = os.path.abspath(path)
         if not(os.path.exists(path)):
             os.mkdir(path)
@@ -60,10 +91,16 @@ class Refpkg(object):
                                  (path, self._manifest_name))
         with open(manifest_path) as h:
             self.contents = json.load(h)
+
         error = self.isinvalid()
         if error:
             raise ValueError("%s is not a valid RefPkg: %s" % (path, error))
 
+    def _log(self, msg):
+        self.current_transaction['log'] = msg
+
+    def log(self):
+        return self.contents['log']
 
     def isinvalid(self):
         """Check if this RefPkg is invalid.
@@ -79,11 +116,21 @@ class Refpkg(object):
         if not(os.path.isfile(os.path.join(self.path, self._manifest_name))):
             return "No manifest file %s found" % self._manifest_name
         # Manifest file contains the proper keys
-        for k in manifest_template().keys():
+        for k in ['metadata', 'files', 'md5']:
             if not(k in self.contents):
                 return "Manifest file missing key %s" % k
             if not(isinstance(self.contents[k], dict)):
                 return "Key %s in manifest did not refer to a dictionary" % k
+
+        for k in ['rollback', 'rollforward']:
+            if not(k in self.contents):
+                return "Manifest file missing key %s" % k
+            if not(isinstance(self.contents[k], dict)) and self.contents[k] != None:
+                return "Key %s in manifest did not refer to a dictionary or None" % k
+        if not("log" in self.contents):
+            return "Manifest file missing key 'log'"
+        if not(isinstance(self.contents['log'], list)):
+            return "Key 'log' in manifest did not refer to a list"
         # MD5 keys and filenames are in one to one correspondence
         if self.contents['files'].keys() != self.contents['md5'].keys():
             return ("Files and MD5 sums in manifest do not "
@@ -132,6 +179,7 @@ class Refpkg(object):
     def metadata(self, key):
         return self.contents['metadata'].get(key)
 
+    @transaction
     def update_metadata(self, key, value):
         """Set *key* in the metadata to *value*.
 
@@ -140,9 +188,10 @@ class Refpkg(object):
         """
         old_value = self.contents['metadata'].get(key)
         self.contents['metadata'][key] = value
-        self._sync_to_disk()
+        self._log('Updated metadata: %s=%s' % (key,value))
         return old_value
 
+    @transaction
     def update_file(self, key, new_path):
         """Insert file *new_path* into the Refpkg under *key*.
 
@@ -162,7 +211,7 @@ class Refpkg(object):
         shutil.copyfile(new_path, os.path.join(self.path, filename))
         self.contents['files'][key] = filename
         self.contents['md5'][key] = md5_value
-        self._sync_to_disk()
+        self._log('Updated file: %s=%s' % (key,new_path))
         return (key, md5_value)
 
     def file_abspath(self, key):
@@ -181,6 +230,7 @@ class Refpkg(object):
             raise ValueError("No such resource key %s in refpkg" % key)
         return self.contents['md5'][key]
 
+    @transaction
     def reroot(self, rppr=None, pretend=False):
         """Reroot the phylogenetic tree in the Refpkg."""
         fd, name = tempfile.mkstemp()
@@ -193,6 +243,7 @@ class Refpkg(object):
                 self.update_file('tree', name)
         finally:
             os.unlink(name)
+        self._log('Rerooting refpkg')
         
     def update_phylo_model(self, raxml_stats):
         fd, name = tempfile.mkstemp()
@@ -203,3 +254,28 @@ class Refpkg(object):
             self.update_file('phylo_model', name)
         finally:
             os.unlink(name)
+
+    def rollback(self):
+        # Pull out log, put top entry in rollforward along with current JSON
+        # Copy top of rollback to current, and insert rest of log into it
+        if self.contents['rollback'] == None:
+            raise ValueError("No operation to roll back on refpkg")
+        future_msg = self.contents['log'][0]
+        rolledback_log = self.contents['log'][1:]
+        rollforward = copy.deepcopy(self.contents)
+        rollforward.pop('rollback')
+        self.contents = self.contents['rollback']
+        self.contents[u'log'] = rolledback_log
+        self.contents[u'rollforward'] = [future_msg, rollforward]
+
+    def rollforward(self):
+        if self.contents['rollforward'] == None:
+            raise ValueError("No operation to roll forward on refpkg")
+        new_log_message = self.contents['rollforward'][0]
+        new_contents = self.contents['rollforward'][1]
+        new_contents[u'log'] = [new_log_message] + self.contents['log']
+        self.contents.pop('log')
+        self.contents['rollforward'] = None
+        new_contents[u'rollback'] = copy.deepcopy(self.contents)
+        self.contents = new_contents
+
