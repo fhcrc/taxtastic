@@ -6,6 +6,7 @@ reference packages for pplacer.
 
 Note that Refpkg objects are *NOT* thread safe!
 """
+import contextlib
 from decorator import decorator
 import subprocess
 import itertools
@@ -25,6 +26,25 @@ def md5file(path):
         for block in iter(lambda: h.read(4096), ''):
             md5.update(block)
     return md5.hexdigest()
+
+
+@contextlib.contextmanager
+def scratch_file(unlink=True):
+    """Create a temporary file and return its name.
+
+    At the start of the with block a secure, temporary file is created
+    and its name returned.  At the end of the with block it is
+    deleted.
+    """
+    try:
+        (tmp_fd, tmp_name) = tempfile.mkstemp(text=True)
+        os.close(tmp_fd)
+        yield tmp_name
+    except ValueError, v:
+        raise v
+    else:
+        if unlink:
+            os.unlink(tmp_name)
 
 
 def manifest_template():
@@ -88,7 +108,7 @@ def transaction(f, self, *args, **kwargs):
             return r
         except Exception, e:
             self.contents = copy.deepcopy(self.current_transaction['rollback'])
-            self.sync_to_disk()
+            self._sync_to_disk()
             raise e
         finally:
             self.current_transaction = None
@@ -240,8 +260,6 @@ class Refpkg(object):
         filename = os.path.basename(new_path)
         while os.path.exists(os.path.join(self.path, filename)):
             filename += "1"
-        if key in self.contents['files']:
-            os.unlink(os.path.join(self.path, self.contents['files'][key]))
         shutil.copyfile(new_path, os.path.join(self.path, filename))
         self.contents['files'][key] = filename
         self.contents['md5'][key] = md5_value
@@ -267,27 +285,19 @@ class Refpkg(object):
     @transaction
     def reroot(self, rppr=None, pretend=False):
         """Reroot the phylogenetic tree in the Refpkg."""
-        fd, name = tempfile.mkstemp()
-        os.close(fd)
-        try:
+        with scratch_file() as name:
             # Use a specific path to rppr, otherwise rely on $PATH
             subprocess.check_call([rppr or 'rppr', 'reroot',
                                    '-c', self.path, '-o', name])
             if not(pretend):
                 self.update_file('tree', name)
-        finally:
-            os.unlink(name)
         self._log('Rerooting refpkg')
         
     def update_phylo_model(self, raxml_stats):
-        fd, name = tempfile.mkstemp()
-        os.close(fd)
-        try:
+        with scratch_file() as name:
             with open(name, 'w') as phylo_model, open(raxml_stats) as h:
                 json.dump(utils.parse_raxml(h), phylo_model)
             self.update_file('phylo_model', name)
-        finally:
-            os.unlink(name)
 
     def rollback(self):
         """Revert the previous modification to the refpkg.
