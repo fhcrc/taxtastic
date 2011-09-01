@@ -131,19 +131,6 @@ def mkdir(dirpath, clobber = False):
 
     return dirpath
 
-def rmdir(dirpath):
-    """
-    Remove a (potentially missing) directory without errors. Raise
-    OSError if directory can't be removed.
-    """
-
-    try:
-        shutil.rmtree(dirpath)
-    except OSError, msg:
-        log.debug(msg)
-
-    if path.exists(dirpath):
-        raise OSError('Failed to remove %s' % dirpath)
 
 def try_set_fields(d, regex, text, hook=lambda x: x):
     v = re.search(regex, text, re.MULTILINE)
