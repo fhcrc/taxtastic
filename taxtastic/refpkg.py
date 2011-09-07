@@ -146,6 +146,16 @@ class Refpkg(object):
         with open(manifest_path) as h:
             self.contents = json.load(h)
 
+        if not('log' in self.contents):
+            self.contents['log'] = []
+            self._sync_to_disk()
+        if not('rollback' in self.contents):
+            self.contents['rollback'] = None
+            self._sync_to_disk()
+        if not('rollforward' in self.contents):
+            self.contents['rollforward'] = None
+            self._sync_to_disk()
+
         error = self.isinvalid()
         if error:
             raise ValueError("%s is not a valid RefPkg: %s" % (path, error))

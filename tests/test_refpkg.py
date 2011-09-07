@@ -108,7 +108,7 @@ class TestRefpkg(unittest.TestCase):
 
             self.assertEqual(r.update_file('a', test_file2),
                              ('a', md5_value2))
-            self.assertFalse(os.path.exists(os.path.join(r.path, test_name)))
+            self.assertTrue(os.path.exists(os.path.join(r.path, test_name)))
             
         finally:
             shutil.rmtree(scratch)
