@@ -2,7 +2,6 @@ commands = [
     'add_nodes',
     'badgraph',
     'check',
-    'convexify',
     'create',
     'new_database',
     'reroot',
