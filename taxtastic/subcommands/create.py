@@ -91,7 +91,7 @@ def action(args):
         # phylo_model is stored internally in JSON, but is built from a
         # RAxML stats file.  Refpkg provides a special method for handling
         # this.
-        r.update_phylo_model(tree_stats)
+        r.update_phylo_model(args.tree_stats)
 
     for file_name in ['aln_fasta', 'aln_sto', 'mask',
                       'profile', 'seq_info', 'taxonomy', 'tree', 'tree_stats',
