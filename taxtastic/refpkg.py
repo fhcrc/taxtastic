@@ -20,6 +20,8 @@ import json
 import time
 import csv
 
+import utils
+
 def md5file(path):
     md5 = hashlib.md5()
     with open(path) as h:
