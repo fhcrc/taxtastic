@@ -6,10 +6,13 @@ import copy
 import sys
 import os
 
+
 sys.path.insert(1, '../')
 from taxtastic import refpkg
 
 class TestRefpkg(unittest.TestCase):
+    maxDiff = None
+
     def test_fails_on_file_exists(self):
         # Trying to attach to a normal file as a Refpkg should fail.
         self.assertRaises(ValueError, lambda: refpkg.Refpkg('test_refpkg.py'))
@@ -159,6 +162,17 @@ class TestRefpkg(unittest.TestCase):
                              ['Updated metadata: author=Boris and Hilda'])
             self.assertTrue(isinstance(r.contents['rollback'], dict))
             self.assertFalse('log' in r.contents['rollback'])
+
+            original_log = copy.deepcopy(r.log())
+            r.start_transaction()
+            r.update_metadata('boris', 'meep')
+            r.update_metadata('hilda', 'vrrp')
+            r._log("Meep!")
+            r.commit_transaction()
+            self.assertFalse('boris' in r.contents['rollback']['metadata'])
+            self.assertFalse('hilda' in r.contents['rollback']['metadata'])
+            self.assertEqual(r.log(), ["Meep!"]+original_log)
+
         finally:
             shutil.rmtree('../testfiles/test.refpkg')
 
@@ -183,9 +197,24 @@ class TestRefpkg(unittest.TestCase):
                               lambda: r.rollback())
             self.maxDiff = None
             v0 = copy.deepcopy(r.contents)
+            self.assertFalse('boris' in r.contents['metadata'])
+            r.start_transaction()
             r.update_metadata('boris', 'meep')
+            r.update_file('boris', '../testfiles/taxids1.txt')
+            r.commit_transaction()
+            boris_path = r.file_abspath('boris')
+            self.assertTrue('boris' in r.contents['files'])
+            self.assertFalse('boris' in r.contents['rollback']['files'])
+
+            self.assertFalse('boris' in r.contents['rollback']['metadata'])
+            self.assertTrue('boris' in r.contents['metadata'])
+
+
             v1 = copy.deepcopy(r.contents)
             r.rollback()
+            self.assertFalse('boris' in r.contents['files'])
+            self.assertFalse('boris' in r.contents['md5'])
+            self.assertTrue(os.path.exists(boris_path))
             v3 = copy.deepcopy(r.contents)
             v0.pop('rollforward')
             v3.pop('rollforward')
@@ -201,8 +230,31 @@ class TestRefpkg(unittest.TestCase):
         finally:
             shutil.rmtree('../testfiles/test.refpkg')
         
+    def test_strip(self):
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', 
+                        '../testfiles/test.refpkg')
+        try:
+            r = refpkg.Refpkg('../testfiles/test.refpkg')
+            self.assertFalse('boris' in r.contents['files'])
+            r.update_file('boris', '../testfiles/taxids1.txt')
+            boris_path = r.file_abspath('boris')
+            r.rollback()
+            self.assertFalse('boris' in r.contents['files'])
+            original_log= r.log()
+            r.strip()
+
+            self.assertFalse('boris' in r.contents['files'])
+            self.assertEqual(r.log(), ['Stripped refpkg (removed 1 files)'] + original_log)
+            self.assertFalse(os.path.exists(boris_path))
+            self.assertFalse(r.isinvalid())
+            self.assertEqual(len(r.contents['files']), len(os.listdir(r.path))-1)
+
+        finally:
+            shutil.rmtree('../testfiles/test.refpkg')
+
 
 
 if __name__ == '__main__':
     unittest.main()
+
 

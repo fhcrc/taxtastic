@@ -19,6 +19,7 @@ import copy
 import json
 import time
 import csv
+import sys
 
 import utils
 
@@ -96,22 +97,17 @@ def manifest_template():
 @decorator
 def transaction(f, self, *args, **kwargs):
     if self.current_transaction:
-        f(self, *args, **kwargs)
+        return f(self, *args, **kwargs)
     else:
-        self.current_transaction = {'rollback': copy.deepcopy(self.contents), 
-                                    'log': '(Transaction left no log message)'}
+        self.start_transaction()
         try:
             r = f(self, *args, **kwargs)
-            self.contents['log'].insert(0, self.current_transaction['log'])
-            self.contents['rollback'] = copy.deepcopy(self.current_transaction['rollback'])
-            self.contents['rollback'].pop('log')
-            self.contents['rollforward'] = None # We can't roll forward anymore
-            self._sync_to_disk()
+            self.commit_transaction()
             return r
-        except Exception, e:
-            self.contents = copy.deepcopy(self.current_transaction['rollback'])
+        except:
+            self.contents = self.current_transaction['rollback']
             self._sync_to_disk()
-            raise e
+            raise
         finally:
             self.current_transaction = None
 
@@ -188,11 +184,27 @@ class Refpkg(object):
             if not(isinstance(self.contents[k], dict)):
                 return "Key %s in manifest did not refer to a dictionary" % k
 
-        for k in ['rollback', 'rollforward']:
-            if not(k in self.contents):
-                return "Manifest file missing key %s" % k
-            if not(isinstance(self.contents[k], dict)) and self.contents[k] != None:
-                return "Key %s in manifest did not refer to a dictionary or None" % k
+        if not('rollback' in self.contents):
+            return "Manifest file missing key rollback"
+        if not(isinstance(self.contents['rollback'], dict)) and self.contents["rollback"] != None:
+            return ("Key rollback in manifest did not refer to a "
+                    "dictionary or None, found %s") % str(self.contents['rollback'])
+
+        if not('rollforward' in self.contents):
+            return "Manifest file missing key rollforward"
+        if self.contents['rollforward'] != None:
+            if not(isinstance(self.contents['rollforward'], list)):
+                return "Key rollforward was not a list, found %s" % str(self.contents['rollforward'])
+            elif len(self.contents['rollforward']) != 2:
+                return "Key rollforward had wrong length, found %d" % \
+                    len(self.contents['rollforward'])
+            elif not(isinstance(self.contents['rollforward'][0], basestring)):
+                return "Key rollforward's first entry was not a string, found %s" % \
+                    str(self.contents['rollforward'][0])
+            elif not(isinstance(self.contents['rollforward'][1], dict)):
+                return "Key rollforward's second entry was not a dict, found %s" % \
+                    str(self.contents['rollforward'][1])
+
         if not("log" in self.contents):
             return "Manifest file missing key 'log'"
         if not(isinstance(self.contents['log'], list)):
@@ -326,6 +338,7 @@ class Refpkg(object):
         self.contents = self.contents['rollback']
         self.contents[u'log'] = rolledback_log
         self.contents[u'rollforward'] = [future_msg, rollforward]
+        self._sync_to_disk()
 
     def rollforward(self):
         """Restore a reverted modification to the refpkg.
@@ -334,9 +347,46 @@ class Refpkg(object):
             raise ValueError("No operation to roll forward on refpkg")
         new_log_message = self.contents['rollforward'][0]
         new_contents = self.contents['rollforward'][1]
-        new_contents[u'log'] = [new_log_message] + self.contents['log']
-        self.contents.pop('log')
+        new_contents[u'log'] = [new_log_message] + self.contents.pop('log')
         self.contents['rollforward'] = None
         new_contents[u'rollback'] = copy.deepcopy(self.contents)
+        new_contents['rollback'].pop('rollforward')
         self.contents = new_contents
+        self._sync_to_disk()
 
+    def strip(self):
+        """Remove rollbacks, rollforwards, and all non-current files.
+
+        When distributing a refpkg, you probably want to distribute as
+        small a one as possible.  strip removes everything from the
+        refpkg which is not relevant to its current state.
+        """
+        self._sync_from_disk()
+        current_filenames = set(self.contents['files'].values())
+        all_filenames = set(os.listdir(self.path))
+        to_delete = all_filenames.difference(current_filenames)
+        to_delete.discard('CONTENTS.json')
+        for f in to_delete:
+            os.unlink(os.path.join(self.path, f))
+        self.contents['rollback'] = None
+        self.contents['rollforward'] = None
+        self.contents['log'].insert(0, 
+                                    'Stripped refpkg (removed %d files)' % len(to_delete))
+        self._sync_to_disk()
+
+    def start_transaction(self):
+        if self.current_transaction:
+            raise ValueError("There is already a transaction going")
+        else:
+            initial_state = copy.deepcopy(self.contents)
+            self.current_transaction = {'rollback': initial_state,
+                                        'log': '(Transaction left no log message)'}
+
+    def commit_transaction(self):
+        self.current_transaction['rollback'].pop('log')
+        self.current_transaction['rollback'].pop('rollforward')
+        self.contents['log'].insert(0, self.current_transaction['log'])
+        self.contents['rollback'] = self.current_transaction['rollback']
+        self.contents['rollforward'] = None # We can't roll forward anymore
+        self.current_transaction = None
+        self._sync_to_disk()
