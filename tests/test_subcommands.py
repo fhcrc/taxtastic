@@ -1,12 +1,13 @@
 import unittest
 import tempfile
 import shutil
+import copy
 import sys
 import os
 
 sys.path.insert(1, '../')
 from taxtastic import refpkg
-from taxtastic.subcommands import update, create
+from taxtastic.subcommands import update, create, strip, rollback, rollforward
 
 class TestUpdate(unittest.TestCase):
     def test_action(self):
@@ -72,6 +73,85 @@ class TestCreate(unittest.TestCase):
             self.assertEqual(r.metadata('format_version'), '1.1')
         finally:
             shutil.rmtree(scratch)
+
+class TestStrip(unittest.TestCase):
+    def test_strip(self):
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/tostrip.refpkg')
+        try:
+            r = refpkg.Refpkg('../testfiles/tostrip.refpkg')
+            r.update_metadata('boris', 'hilda')
+            r.update_metadata('meep', 'natasha')
+
+            class _Args(object):
+                refpkg = '../testfiles/tostrip.refpkg'
+            strip.action(_Args())
+
+            r._sync_from_disk()
+            self.assertEqual(r.contents['rollback'], None)
+            self.assertEqual(r.contents['rollforward'], None)
+        finally:
+            shutil.rmtree('../testfiles/tostrip.refpkg')
+
+class TestRollback(unittest.TestCase):
+    maxDiff = None
+    def test_rollback(self):
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/tostrip.refpkg')
+        try:
+            r = refpkg.Refpkg('../testfiles/tostrip.refpkg')
+            original_contents = copy.deepcopy(r.contents)
+            r.update_metadata('boris', 'hilda')
+            r.update_metadata('meep', 'natasha')
+            updated_contents = copy.deepcopy(r.contents)
+
+            class _Args(object):
+                refpkg = '../testfiles/tostrip.refpkg'
+                def __init__(self, n):
+                    self.n = n
+
+            self.assertEqual(rollback.action(_Args(3)), 1)
+            r._sync_from_disk()
+            self.assertEqual(r.contents, updated_contents)
+
+            self.assertEqual(rollback.action(_Args(2)), 0)
+            r._sync_from_disk()
+            self.assertEqual(r.contents['metadata'], original_contents['metadata'])
+            self.assertEqual(r.contents['rollback'], None)
+            self.assertNotEqual(r.contents['rollforward'], None)
+        finally:
+            shutil.rmtree('../testfiles/tostrip.refpkg')
+
+
+class TestRollforward(unittest.TestCase):
+    maxDiff = None
+    def test_rollforward(self):
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/tostrip.refpkg')
+        try:
+            r = refpkg.Refpkg('../testfiles/tostrip.refpkg')
+            original_contents = copy.deepcopy(r.contents)
+            r.update_metadata('boris', 'hilda')
+            r.update_metadata('meep', 'natasha')
+            updated_contents = copy.deepcopy(r.contents)
+            r.rollback()
+            r.rollback()
+
+            class _Args(object):
+                refpkg = '../testfiles/tostrip.refpkg'
+                def __init__(self, n):
+                    self.n = n
+
+            self.assertEqual(rollforward.action(_Args(3)), 1)
+            r._sync_from_disk()
+            self.assertEqual(r.contents['metadata'], original_contents['metadata'])
+
+            self.assertEqual(rollforward.action(_Args(2)), 0)
+            r._sync_from_disk()
+            self.assertEqual(r.contents['metadata'], updated_contents['metadata'])
+            self.assertEqual(r.contents['rollforward'], None)
+            self.assertNotEqual(r.contents['rollback'], None)
+        finally:
+            shutil.rmtree('../testfiles/tostrip.refpkg')
+
+    
 
 if __name__ == '__main__':
     unittest.main()

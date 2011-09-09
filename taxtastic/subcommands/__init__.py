@@ -8,6 +8,9 @@ commands = [
     'update',
     'taxids',
     'taxtable',
+    'strip',
+    'rollback',
+    'rollforward',
     ]
 
 def itermodules(root=__name__):
