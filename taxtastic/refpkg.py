@@ -146,7 +146,7 @@ class Refpkg(object):
         if not(os.path.exists(path)):
             os.mkdir(path)
             with open(os.path.join(path, self._manifest_name), 'w') as h:
-                json.dump(manifest_template(), h)
+                json.dump(manifest_template(), h, indent=4)
         if not(os.path.isdir(path)):
             raise ValueError("%s is not a valid RefPkg" % (path,))
         # Try to load the Refpkg and check that it's valid
@@ -254,7 +254,7 @@ class Refpkg(object):
         Otherwise it should only be called by other methods of refpkg.
         """
         with open(os.path.join(self.path, self._manifest_name), 'w') as h:
-            json.dump(self.contents, h)
+            json.dump(self.contents, h, indent=4)
 
     def _sync_from_disk(self):
         """Read any changes made on disk to this Refpkg.
@@ -334,7 +334,7 @@ class Refpkg(object):
     def update_phylo_model(self, raxml_stats):
         with scratch_file() as name:
             with open(name, 'w') as phylo_model, open(raxml_stats) as h:
-                json.dump(utils.parse_raxml(h), phylo_model)
+                json.dump(utils.parse_raxml(h), phylo_model, indent=4)
             self.update_file('phylo_model', name)
 
     def rollback(self):
