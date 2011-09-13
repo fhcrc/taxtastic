@@ -14,7 +14,6 @@
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 commands = [
     'add_nodes',
-    'badgraph',
     'check',
     'create',
     'new_database',
