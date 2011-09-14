@@ -243,6 +243,10 @@ class Taxonomy(object):
         if tax_name:
             tax_id, primary_name, is_primary = self.primary_from_name(tax_name)
 
+        new_tax_id = self._get_merged(tax_id)
+        if new_tax_id:
+            tax_id = new_tax_id
+
         ldict = dict(self._get_lineage(tax_id))
 
         ldict['tax_id'] = tax_id
