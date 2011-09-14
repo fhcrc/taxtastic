@@ -1,3 +1,4 @@
+import contextlib
 import unittest
 import tempfile
 import shutil
@@ -7,7 +8,7 @@ import os
 
 sys.path.insert(1, '../')
 from taxtastic import refpkg
-from taxtastic.subcommands import update, create, strip, rollback, rollforward
+from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable
 
 class TestUpdate(unittest.TestCase):
     def test_action(self):
@@ -71,6 +72,7 @@ class TestCreate(unittest.TestCase):
             self.assertEqual(r.metadata('author'), 'Boris the Mad Baboon')
             self.assertEqual(r.metadata('package_version'), '0.3')
             self.assertEqual(r.metadata('format_version'), '1.1')
+            self.assertEqual(r.contents['rollback'], None)
         finally:
             shutil.rmtree(scratch)
 
@@ -151,7 +153,52 @@ class TestRollforward(unittest.TestCase):
         finally:
             shutil.rmtree('../testfiles/tostrip.refpkg')
 
-    
+
+@contextlib.contextmanager
+def scratch_file(unlink=True):
+    """Create a temporary file and return its name.
+
+    At the start of the with block a secure, temporary file is created
+    and its name returned.  At the end of the with block it is
+    deleted.
+    """
+    try:
+        (tmp_fd, tmp_name) = tempfile.mkstemp(text=True)
+        os.close(tmp_fd)
+        yield tmp_name
+    except ValueError, v:
+        raise v
+    else:
+        if unlink:
+            os.unlink(tmp_name)
+
+
+class TestTaxtable(unittest.TestCase):
+    maxDiff = None
+    def test_taxids(self):
+        with scratch_file() as out:
+            with open(out, 'w') as h:
+                class _Args(object):
+                    database_file = '../testfiles/taxonomy.db'
+                    taxids = '../testfiles/taxids1.txt'
+                    taxnames = None
+                    verbosity = 0
+                    out_file = h
+                self.assertEqual(taxtable.action(_Args()), 0)
+            self.assertEqual(refpkg.md5file(out), '39d9b3c9250403bf2add6c5908f7c620')
+
+    def test_invalid_taxid(self):
+        with scratch_file() as out:
+            with open(out, 'w') as h:
+                class _Args(object):
+                    database_file = '../testfiles/taxonomy.db'
+                    taxids = 'horace,hilda'
+                    taxnames = None
+                    verbosity = 0
+                    out_file = h
+                self.assertEqual(taxtable.action(_Args()), 1)
+        
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -17,6 +17,8 @@
 import logging
 import argparse
 
+import re
+
 from taxtastic import ncbi
 from taxtastic.taxonomy import Taxonomy
 from taxtastic.utils import getlines
@@ -72,41 +74,43 @@ def build_parser(parser):
         in csv format; writes to stdout if unspecified""")
 
 def action(args):
-
-    dbname = args.database_file
-    taxids = args.taxids
-    taxnames = args.taxnames
-    csvfile = args.out_file
-
-    engine = create_engine('sqlite:///%s' % dbname, echo=args.verbosity > 2)
+    engine = create_engine('sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
     tax = Taxonomy(engine, ncbi.ranks)
 
-    # get a list of taxa
-    taxa = set()
+    taxids = set()
 
-    if taxids:
-        if os.access(taxids, os.F_OK):
-            log.warning('reading tax_ids from %s' % taxids)
-            for line in getlines(taxids):
-                taxa.update(set(line.split()))
+    if args.taxids:
+        if os.access(args.taxids, os.F_OK):
+            for line in getlines(args.taxids):
+                taxids.update(set(re.split(r'[\s,;]+', line)))
         else:
-            taxa = set([x.strip() for x in taxids.split(',')])
+            taxids.update([x.strip() for x in re.split(r'[\s,;]+', args.taxids)])
 
-    if taxnames:
-        for tax_name in getlines(taxnames):
-            tax_id, primary_name, is_primary = tax.primary_from_name(tax_name)
-            taxa.add(tax_id)
-            if not is_primary:
-                log.warning(
-                    '%(tax_id)8s  %(tax_name)40s -(primary name)-> %(primary_name)s' \
-                        % locals())
+    if args.taxnames:
+        for taxname in getlines(args.taxnames):
+            for name in re.split(r'\s*[,;]\s*', taxname):
+                tax_id, primary_name, is_primary = tax.primary_from_name(name.strip())
+                taxids.add(tax_id)
 
-    log.warning('calculating lineages for %s taxa' % len(taxa))
-    for taxid in taxa:
-        log.info('adding %s' % taxid)
-        tax.lineage(taxid)
+    # Before digging into lineages, make sure all the taxids exist in
+    # the taxonomy database.
+    valid_taxids = True
+    for t in taxids:
+        try:
+            tax._node(t)
+        except KeyError, k:
+            print >>sys.stderr, "Taxid %s not found in taxonomy." % t
+            valid_taxids = False
+    if not(valid_taxids):
+        print >>sys.stderr, "Some taxids were invalid.  Exiting."
+        return 1 # exits with code 1
 
-    log.warning('writing output to %s' % csvfile.name)
-    tax.write_table(None, csvfile = csvfile)
+    # Extract all the taxids to be exported in the CSV file.
+    taxids_to_export = set()
+    for t in taxids:
+        taxids_to_export.update([y for (x,y) in tax._get_lineage(t)])
+
+    tax.write_table(taxids_to_export, csvfile = args.out_file)
 
     engine.dispose()
+    return 0

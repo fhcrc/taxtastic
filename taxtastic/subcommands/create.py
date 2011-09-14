@@ -93,7 +93,7 @@ def action(args):
         shutil.rmtree(args.package_name)
 
     r = refpkg.Refpkg(args.package_name)
-
+    r.start_transaction()
     r.update_metadata('locus', args.locus) # Locus is required
     if args.description:
         r.update_metadata('description', args.description)
@@ -113,5 +113,9 @@ def action(args):
         path = getattr(args, file_name)
         if path:
             r.update_file(file_name, path)
+    r._log('Loaded initial files into empty refpkg')
+    r.commit_transaction()
+    r.strip()
+    return 0
 
 

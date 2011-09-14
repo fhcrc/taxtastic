@@ -112,6 +112,11 @@ class TestRefpkg(unittest.TestCase):
             self.assertEqual(r.update_file('a', test_file2),
                              ('a', md5_value2))
             self.assertTrue(os.path.exists(os.path.join(r.path, test_name)))
+
+            self.assertRaises(ValueError, lambda: r.update_file('aln_fasta', test_file))
+            self.assertRaises(ValueError, lambda: r.update_file('aln_sto', test_file))
+            self.assertRaises(ValueError, lambda: r.update_file('phylo_model', test_file))
+            self.assertRaises(ValueError, lambda: r.update_file('seq_info', test_file2))
             
         finally:
             shutil.rmtree(scratch)
