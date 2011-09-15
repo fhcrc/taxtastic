@@ -311,7 +311,7 @@ class Refpkg(object):
                     raise ValueError('File %s is not a valid FASTA file' % new_path)
         elif key == 'aln_sto':
             with open(new_path) as h:
-                if h.readline() != '# STOCKHOLM 1.0':
+                if not(h.readline().startswith('# STOCKHOLM')):
                     raise ValueError('File %s is not a valid Stockholm file' % new_path)
         elif key == 'phylo_model':
             with open(new_path) as h:
