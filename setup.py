@@ -18,7 +18,7 @@ params = {'author': 'Noah Hoffman',
           'scripts': scripts,
           'url': 'https://github.com/fhcrc/taxtastic',
           'version': __version__,
-          'requires': ['Python (>= 2.7)', 'sqlalchemy']}
+          'requires': ['Python (>= 2.7)', 'sqlalchemy', 'decorator']}
 
 setup(**params)
 
