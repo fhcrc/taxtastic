@@ -2,4 +2,5 @@
 build/
 _build
 test_output/
-
+html/
+doctrees/

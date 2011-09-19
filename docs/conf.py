@@ -214,5 +214,5 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'taxtastic', u'taxtastic Documentation',
-     [u'Noah Hoffman, Erick Matsen, Brian Hodges'], 1)
+     [u'Noah Hoffman, Erick Matsen, Brian Hodges, Frederick Ross'], 1)
 ]

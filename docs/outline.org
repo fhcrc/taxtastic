@@ -1,0 +1,26 @@
+* Taxtastic
+** Introduction
+Taxtastic combines two pieces of functionality: modifying and extracting from the NCBI taxonomy, and writing refpkgs for use with pplacer
+** Taxonomy
+*** Quickstart
+An example with commands that downloads the NCBI taxonomy to build a database, then runs taxtable to extract a list of IDs and species names, updates the database with some new entries, and extracts a new taxtable from it.  Make it actually runnable.
+*** Creating the database
+*** Updating and altering the taxonomy
+*** Taxtable and extracting subtaxonomies
+** Refpkgs
+*** Overview
+API vs command line for refpkgs.  Prefer the API if you're writing any kind of program.  The purpose of refpkgs.
+*** Anatomy of a refpkg
+CONTENTS.json
+files/md5
+metadata
+log
+rollback/rollforward (and explain zippers)
+*** The API
+Creating a refpkg
+Updating metadata and files
+Rollback/rollforward, and strip
+*** An example with the API
+*** The command line interface
+*** Same example with the command line interface
+
