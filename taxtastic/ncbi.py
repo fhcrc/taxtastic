@@ -242,16 +242,6 @@ def fetch_data(dest_dir='.', clobber=False, url=ncbi_data_url):
         log.warning('downloading %(url)s to %(fout)s' % locals())
         urllib.urlretrieve(url, fout)
 
-    zfile = zipfile.ZipFile(fout, 'r')
-    log.debug('contents of %s: \n%s' % (fout, pprint.pformat(zfile.namelist()) ))
-
-    # expand the readme file
-    # TODO - these file names probably shouldn't be hard-coded
-    destfile = os.path.join(dest_dir, 'taxdump_readme.txt')
-    with open(destfile,'wb') as f:
-        f.write(zfile.read('readme.txt'))
-
-    zfile.close()
     return (fout, downloaded)
 
 def read_archive(archive, fname):
