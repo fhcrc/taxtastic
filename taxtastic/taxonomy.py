@@ -141,8 +141,9 @@ class Taxonomy(object):
         return tax_id, tax_name, bool(is_primary)
 
     def _get_merged(self, old_tax_id):
-        """
-        Returns tax_id into which `old_tax_id` has been merged.
+        """Returns tax_id into which `old_tax_id` has been merged.
+
+        If *old_tax_id* is not obsolete, returns it directly.
 
         CREATE TABLE merged(
         old_tax_id    TEXT,
@@ -160,14 +161,19 @@ class Taxonomy(object):
                 raise ValueError('There is more than one value for merged.old_tax_id = "%s"' % old_tax_id)
             else:
                 output = output[0][0]
+        else:
+            output = old_tax_id
 
         return output
 
-    def _get_lineage(self, tax_id, _level=0):
+    def _get_lineage(self, tax_id, _level=0, merge_obsolete=True):
         """
         Returns cached lineage from self.cached or recursively builds
         lineage of tax_id until the root node is reached.
         """
+        # Be sure we aren't working with an obsolete tax_id
+        if merge_obsolete:
+            tax_id = self._get_merged(tax_id) 
 
         indent = '.'*_level
 
