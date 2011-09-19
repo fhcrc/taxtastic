@@ -257,6 +257,17 @@ class TestRefpkg(unittest.TestCase):
         finally:
             shutil.rmtree('../testfiles/test.refpkg')
 
+    def test_is_ill_formed(self):
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', 
+                        '../testfiles/test.refpkg')
+        try:
+            r = refpkg.Refpkg('../testfiles/test.refpkg')
+            self.assertFalse(r.is_ill_formed())
+            r.update_file('aln_fasta', '../testfiles/little.fasta')
+            self.assertTrue(isinstance(r.is_ill_formed(), basestring))
+
+        finally:
+            shutil.rmtree('../testfiles/test.refpkg')
 
 
 if __name__ == '__main__':

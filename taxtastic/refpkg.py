@@ -35,6 +35,9 @@ import time
 import csv
 import sys
 
+import Bio.SeqIO
+import Bio.Phylo
+
 import utils
 
 def md5file(path):
@@ -423,3 +426,107 @@ class Refpkg(object):
         self.contents['rollforward'] = None # We can't roll forward anymore
         self.current_transaction = None
         self._sync_to_disk()
+
+    def is_ill_formed(self):
+        """Stronger set of checks than isinvalid for Refpkg.
+
+        Checks that FASTA, Stockholm, JSON, and CSV files under known
+        keys are all valid as well as calling isinvalid.  Returns
+        either False or a string describing the error.
+        """
+        m = self.isinvalid()
+        if m:
+            return m
+
+        if not('aln_fasta' in self.contents['files']):
+            return "RefPkg has no key aln_fasta"
+        if not('aln_sto' in self.contents['files']):
+            return "RefPkg has no key aln_sto"
+        if not('seq_info' in self.contents['files']):
+            return "RefPkg has no key seq_info"
+        if not('tree' in self.contents['files']):
+            return "RefPkg has no key tree"
+        if not('taxonomy' in self.contents['files']):
+            return "RefPkg has no key tree"
+        if not('phylo_model' in self.contents['files']):
+            return "RefPkg has no key phylo_model"
+
+        # aln_fasta, seq_info, tree, and aln_sto must be valid FASTA,
+        # CSV, Newick, and Stockholm files, respectively, and describe
+        # the same sequences.
+
+        def nonempty_file(path):
+            return os.stat(self.file_abspath('aln_fasta')).st_size != 0
+
+        if nonempty_file(self.file_abspath('aln_fasta')):
+            with open(self.file_abspath('aln_fasta')) as f:
+                try:
+                    Bio.SeqIO.read(f, 'fasta')
+                except ValueError, v:
+                    if v[0] == 'No records found in handle':
+                        return 'aln_fasta file is not valid FASTA.'
+
+        if nonempty_file(self.file_abspath('seq_info')):
+            with open(self.file_abspath('seq_info')) as f:
+                lines = list(csv.reader(f))
+                lens = [len(l) for l in lines]
+                if not(all([l == lens[0] and l > 1 for l in lens])):
+                    return "seq_info is not valid CSV."
+
+
+        if nonempty_file(self.file_abspath('aln_sto')):
+            with open(self.file_abspath('aln_sto')) as f:
+                try:
+                    Bio.SeqIO.read(f, 'stockholm')
+                except ValueError, v:
+                    if v[0] == 'No records found in handle':
+                        return 'aln_sto file is not valid Stockholm.'
+
+        if nonempty_file(self.file_abspath('tree')):
+            with open(self.file_abspath('tree')) as f:
+                try:
+                    Bio.Phylo.read(f, 'newick')
+                except:
+                    return 'tree file is not valid Newick.'
+
+        with open(self.file_abspath('aln_fasta')) as f:
+            os.stat(self.file_abspath('aln_fasta'))
+        
+        with open(self.file_abspath('aln_fasta')) as f:
+            fasta_names = set([s.id for s in Bio.SeqIO.parse(f, 'fasta')])
+        with open(self.file_abspath('seq_info')) as f:
+            csv_names = set([s[0] for s in csv.reader(f)][1:]) # Remove header with [1:]
+        with open(self.file_abspath('tree')) as f:
+            tree_names = set([n.name for n in 
+                              Bio.Phylo.read(f, 'newick').get_terminals()])
+        with open(self.file_abspath('aln_sto')) as f:
+            sto_names = set([s.id for s in Bio.SeqIO.parse(f, 'stockholm')])
+        d = fasta_names.symmetric_difference(sto_names)
+        if len(d) != 0:
+            return "Names in aln_fasta did not match aln_sto.  Mismatches: " + \
+                ', '.join([str(x) for x in d])
+        d = fasta_names.symmetric_difference(csv_names)
+        if len(d) != 0:
+            return "Names in aln_fasta did not match seq_info.  Mismatches: " + \
+                ', '.join([str(x) for x in d])
+        d = fasta_names.symmetric_difference(tree_names)
+        if len(d) != 0:
+            return "Names in aln_fasta did not match nodes in tree.  Mismatches: " + \
+                ', '.join([str(x) for x in d])
+        
+        # Next make sure that taxonomy is valid CSV, phylo_model is valid JSON
+        with open(self.file_abspath('taxonomy')) as f:
+            lines = list(csv.reader(f))
+            lens = [len(l) for l in lines]
+            if not(all([l == lens[0] and l > 1 for l in lens])):
+                return "Taxonomy is invalid: not all lines had the same number of fields."
+            # I don't try to check if the taxids match up to those
+            # mentioned in aln_fasta, since that would make taxtastic
+            # depend on RefsetInternalFasta in romperroom.
+        with open(self.file_abspath('phylo_model')) as f:
+            try:
+                json.load(f)
+            except ValueError, v:
+                return "phylo_model is not valid JSON."
+
+        return False
