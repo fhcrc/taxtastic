@@ -9,7 +9,7 @@ import logging
 from sqlalchemy import create_engine
 
 import config
-from config import mkdir, rmdir, TestBase
+from config import TestBase
 
 import taxtastic
 from taxtastic.taxonomy import Taxonomy
@@ -144,11 +144,9 @@ class TestGetLineagePublic(TaxTableSetup):
         # lineage = self.tax.lineage(tax_id)
         # self.assertTrue(lineage['rank'] == 'genus')
 
-    # def test07(self):
-    #     ## TODO: handle deprecated tax_ids
-
-    #     tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
-    #     lineage = self.tax.lineage(tax_id=tax_id)
+    def test07(self):
+        tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
+        lineage = self.tax.lineage(tax_id=tax_id)
 
 
 class TestMethods(TaxTableSetup):

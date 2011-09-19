@@ -1,3 +1,4 @@
+
 """Add new nodes to a database containing a taxonomy."""
 # This file is part of taxtastic.
 #

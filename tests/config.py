@@ -1,5 +1,5 @@
 import os
-from os import path
+from os import path, mkdir
 import sys
 import logging
 import re
@@ -13,7 +13,6 @@ def funcname(idstr):
     return '.'.join(idstr.split('.')[1:])
 
 from taxtastic import ncbi
-from taxtastic.utils import mkdir, rmdir
 
 # set verbosity of logging output
 try:
@@ -35,7 +34,8 @@ logging.basicConfig(
 datadir = 'testfiles'
 outputdir = 'test_output'
 
-mkdir(outputdir)
+if not(os.path.exists('../test_output')):
+    mkdir(outputdir)
 
 class TestBase(unittest.TestCase):
     """
