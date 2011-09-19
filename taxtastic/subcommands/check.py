@@ -1,4 +1,9 @@
-"""Not yet implemented"""
+"""
+taxtastic/subcommands/check.py
+
+Run a series of deeper checks on a RefPkg.  This subcommand is a
+wrapper around the Refpkg method is_ill_formed.
+"""
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -13,12 +18,18 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+import taxtastic.refpkg
+
 
 def build_parser(parser):
-    parser.add_argument('-P', '--package-name',
-        action='store', dest='package_name',
-        default='./taxtastic.refpkg', metavar='PATH',
-        help='Name of output directory [default %(default)s]')
+    parser.add_argument('refpkg', action='store', metavar='REFPKG',
+        help='Path to Refpkg to check')
 
 def action(args):
-    return 1
+    r = taxtastic.refpkg.Refpkg(args.refpkg)
+    msg = r.is_ill_formed()
+    if msg:
+        print msg
+        return 1
+    else:
+        return 0

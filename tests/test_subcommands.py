@@ -8,7 +8,7 @@ import os
 
 sys.path.insert(1, '../')
 from taxtastic import refpkg
-from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable
+from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check
 
 class TestUpdate(unittest.TestCase):
     def test_action(self):
@@ -198,7 +198,11 @@ class TestTaxtable(unittest.TestCase):
                     out_file = h
                 self.assertEqual(taxtable.action(_Args()), 1)
         
-
+class TestCheck(unittest.TestCase):
+    def test_runs(self):
+        class _Args(object):
+            refpkg = '../testfiles/lactobacillus2-0.2.refpkg'
+        self.assertEqual(check.action(_Args()), 0)
 
 if __name__ == '__main__':
     unittest.main()
