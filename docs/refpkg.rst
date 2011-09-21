@@ -4,6 +4,55 @@ Creating and manipulating refpkgs
 Quickstart
 ----------
 
+The refpkgs is a container format for keeping all the miscellaneous files required to run ``pplacer`` in one place.  Roughly, it is a directory containing files and JSON file describing the other contents.  Refpkgs can be created and manipulated either from the commandline with subcommands of ``taxit``, or from Python using an API exposed by the module ``taxtastic.refpkg``.
+
+To create an empty refpkg from Python, you would write::
+
+    from taxtastic.refpkg import Refpkg
+
+    r = Refpkg('/path/to/new/refpkg')
+
+If there had already been a refpkg at ``/path/to/new/refpkg``, ``r`` would contain a reference to the existing refpkg afterwards.  If it doesn't exist, it is created.  For historical reasons, the command line interface requires that you specify a locus to be recorded in the refpkg's metadata::
+
+    taxit create -l locus_name -P /path/to/new/refpkg
+
+``taxit create`` takes many other arguments to add particular files that ``pplacer`` expects, but we won't go into them here.  To add a file to a refpkg, we specify a key which it will be added under (refpkgs act as key-value stores) and the file to add.  With the API, this is::
+
+    r.update_file('key', '/path/to/file/to/add')
+
+or from the command line
+
+    taxit update /path/to/refpkg key=/path/to/file/to/add
+
+Either way, ``/path/to/file/to/add`` is copied into the refpkg (and renamed if necessary so as not to collide with files already in the refpkg), and an entry added to the JSON file to assign ``key`` to the file.
+
+Refpkgs also store metadata, in the form of a key-value store of arbitrary strings.  The metadata keys occupy a separate namespace from the file keys, so you can have both a file and a string assigned to the key ``boris`` at the same time.  Setting metadata with the API uses the method ``update_metadata``::
+
+    r.update_metadata('key', 'value to add')
+
+From the command line, use ``taxit update``, but with the ``--metadata`` option::
+
+    taxit update --metadata /path/to/refpkg "key=value to add"
+
+Refpkgs have an undo/redo mechanism.  If you update something incorrectly, you can call the ``rollback`` method of the API or the ``rollback`` subcommand of ``taxit`` to restore the refpkg to its previous state.  An improperly rolled back operation can be rolled forward again with ``rollforward``.  So running the following in the API leaves the refpkg unchanged at the end::
+
+    r.rollback()
+    r.rollforward()
+
+Similarly with ``taxit``::
+
+    taxit rollback /path/to/refpkg
+    taxit rollforward /path/to/refpkg
+
+Before distributing a refpkg, you may want to strip out rollback/rollforward information and any unused files.  The ``strip`` method removes everything not necessary to the current state of the refpkg::
+
+    r.strip()
+
+or from the command line::
+
+    taxit strip /path/to/refpkg
+
+There is a method and a command, both called ``check``, which check if a refpkg is usable as an input to ``pplacer``.  Running ``r.check()`` from Python or ``taxit check /path/to/refpkg`` from the command line will fail, saying that there is no such key ``aln_fasta`` in the refpkg.
 
 The Refpkg format
 -----------------
