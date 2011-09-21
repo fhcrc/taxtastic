@@ -73,8 +73,14 @@ class TestCreate(unittest.TestCase):
             self.assertEqual(r.metadata('package_version'), '0.3')
             self.assertEqual(r.metadata('format_version'), '1.1')
             self.assertEqual(r.contents['rollback'], None)
+
+            args2 = _Args()
+            args2.package_name = '/dev/null'
+            args2.clobber = True
+            self.assertEqual(1, create.action(args2))
         finally:
             shutil.rmtree(scratch)
+
 
 class TestStrip(unittest.TestCase):
     def test_strip(self):

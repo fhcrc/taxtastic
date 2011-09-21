@@ -22,6 +22,7 @@ import shutil
 import hashlib
 import re
 import json
+import sys
 from collections import defaultdict
 
 from taxtastic import refpkg
@@ -90,7 +91,17 @@ def build_parser(parser):
 
 def action(args):
     if args.clobber and os.path.isdir(args.package_name):
-        shutil.rmtree(args.package_name)
+        try:
+            shutil.rmtree(args.package_name)
+        except:
+            print >>sys.stderr, "Failed: Could not delete %s" % args.package_name
+            return 1
+    elif args.clobber and os.path.exists(args.package_name):
+        try:
+            os.unlink(args.package_name)
+        except:
+            print >>sys.stderr, "Failed: Could not delete %s" % args.package_name
+            return 1
 
     r = refpkg.Refpkg(args.package_name)
     r.start_transaction()
