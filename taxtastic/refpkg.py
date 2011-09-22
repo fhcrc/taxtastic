@@ -171,7 +171,7 @@ class Refpkg(object):
             self.contents['rollforward'] = None
             self._sync_to_disk()
 
-        error = self.isinvalid()
+        error = self.is_invalid()
         if error:
             raise ValueError("%s is not a valid RefPkg: %s" % (path, error))
 
@@ -181,14 +181,14 @@ class Refpkg(object):
     def log(self):
         return self.contents['log']
 
-    def isinvalid(self):
+    def is_invalid(self):
         """Check if this RefPkg is invalid.
 
         Valid means that it contains a properly named manifest, and
         each of the files described in the manifest exists and has the
         proper MD5 hashsum.
 
-        If the Refpkg is valid, isinvalid returns False.  Otherwise it
+        If the Refpkg is valid, is_invalid returns False.  Otherwise it
         returns a nonempty string describing the error.
         """
         # Contains a manifest file
@@ -267,12 +267,21 @@ class Refpkg(object):
         """
         with open(os.path.join(self.path, self._manifest_name)) as h:
             self.contents = json.load(h)
-        error = self.isinvalid()
+        error = self.is_invalid()
         if error:
             raise ValueError("Refpkg is invalid: %s" % error)
 
     def metadata(self, key):
+        """Return the metadata value associated to *key*."""
         return self.contents['metadata'].get(key)
+
+    def file_keys(self):
+        """Return a list of all the keys referring to files in this refpkg."""
+        return self.contents['files'].keys()
+
+    def metadata_keys(self):
+        """Return a list of all the keys referring to metadata in this refpkg."""
+        return self.contents['metadata'].keys()
 
     @transaction
     def update_metadata(self, key, value):
@@ -428,13 +437,13 @@ class Refpkg(object):
         self._sync_to_disk()
 
     def is_ill_formed(self):
-        """Stronger set of checks than isinvalid for Refpkg.
+        """Stronger set of checks than is_invalid for Refpkg.
 
         Checks that FASTA, Stockholm, JSON, and CSV files under known
-        keys are all valid as well as calling isinvalid.  Returns
+        keys are all valid as well as calling is_invalid.  Returns
         either False or a string describing the error.
         """
-        m = self.isinvalid()
+        m = self.is_invalid()
         if m:
             return m
 
