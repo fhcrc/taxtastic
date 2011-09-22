@@ -56,8 +56,12 @@ def action(args):
     pairs = [p.split('=',1) for p in args.changes]
     if args.metadata:
         rp = refpkg.Refpkg(args.refpkg)
+        rp.start_transaction()
         for (key,value) in pairs:
             rp.update_metadata(key, value)
+        rp.commit_transaction('Updated metadata: ' + \
+                                  ', '.join(['%s=%s' % (a,b)
+                                             for a,b in pairs]))
     else:
         for (key,filename) in pairs:
             if not(os.path.exists(filename)):
@@ -65,5 +69,10 @@ def action(args):
                 exit(1)
 
         rp = refpkg.Refpkg(args.refpkg)
+        rp.start_transaction()
         for (key,filename) in pairs:
             rp.update_file(key, os.path.abspath(filename))
+        rp.commit_transaction('Updates files: ' + \
+                                  ', '.join(['%s=%s' % (a,b)
+                                             for a,b in pairs]))
+    return 0

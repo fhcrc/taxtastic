@@ -1,35 +1,8 @@
 Detailed ``taxit`` documentation
 ================================
 
-new_database
-------------
+This section gives the detailed documentation on ``taxit``'s subcommands, organized alphabetically.
 
-``taxit new_database [...] -d database_file``
-
-Download the current version of the NCBI taxonomy and load it into ``database_file`` as an SQLite3 database.  If ``database_file`` already exists, it will fail and leave it untouched unless you specify ``-x`` or ``--clobber``.  The NCBI taxonomy will be downloaded into the same directory as ``database_file`` will be created in unless you specify ``-p`` or ``--download-dir``.
-
-Examples::
-
-    # Download the NCBI taxonomy and create taxonomy.db if it does not exist
-    taxit new_database -d taxonomy.db
-    
-    # Force the creation of taxonomy.db in the parent directory, putting
-    # the downloaded NCBI data in /tmp/ncbi.
-    taxit new_database -d ../taxonomy.db -x -p /tmp/ncbi
-
-Arguments:
-
-``-h``
-  Print help and exit.
-
-``-d``, ``--database-file``
-  Specify the file in which the NCBI taxonomy should be written.
-
-``--x``, ``--clobber``
-  Replace ``database_file`` if it already exists.
-
-``-p``, ``--download-dir``
-  Download the NCBI taxonomy into the specified path.  If not specified, the taxonomy will be downloaded into the same directory where the final database will be created.
 
 add_nodes
 ---------
@@ -75,6 +48,218 @@ Arguments:
 ``-S``, ``--source-name``
   Force all the nodes added from this command to have a particular source name.
 
+check
+-----
+
+``taxit check /path/to/refpkg``
+
+Check whether ``/path/to/refpkg`` is a valid input for ``pplacer``, that is, does it have a FASTA file of the reference sequences, a Stockholm file of their multiple alignment, a Newick formatted tree build from the aligned sequences, and all the necessary auxiliary information.
+
+
+create
+------
+
+``taxit create [...] -P refpkg -l "Locus description"``
+
+Create a new refpkg at the location specified by the argument to ``-P`` with locus name ``-l``.  All other fields are used to specify initial metadata and files to add to the refpkg.  If there is already a refpkg at ``refpkg``, this command will fail unless you specify ``-c`` or ``--clobber``.
+
+**General options**
+
+``-c``, ``--clobber``
+  If there is an existing refpkg at the given path, delete it and create a new one.
+``-P``, ``--package-name``
+  Specify the refpkg to create (required).
+
+**Metadata options**
+
+=============================     ===================
+          Option                  Metadata key
+=============================     ===================
+``-a``, ``--author``              ``author``
+``-d``, ``--description``         ``description``
+``-l``, ``--locus``               ``locus``
+``-r``, ``--package-version``     ``package_version``
+=============================     ===================
+
+
+**File options**
+
+=========================     ==============     =====================================
+          Option                File key         Description
+=========================     ==============     =====================================
+``-f``, ``--aln-fasta``       ``aln_fasta``      Reference sequences in FASTA format
+``-i``, ``--seq-info``        ``seq_info``       CSV describing aligned sequences
+``-m``, ``--mask``            ``mask``           Text file containing sequence mask
+``-p``, ``--profile``         ``profile``        Multiple alignment profile
+``-R``, ``--readme``          ``readme``         A README file for the refpkg
+``-s``, ``--tree-stats``      ``tree_stats``     Typically written by the tree builder
+``-S``, ``--aln-sto``         ``aln_sto``        Stockholm file of reference sequences
+``-t``, ``--tree-file``       ``tree``           Phylogenetic tree in Newick format
+``-T``, ``--taxonomy``        ``taxonomy``       CSV file specifying taxonomy
+=========================     ==============     =====================================
+
+Examples::
+
+    # Create a minimal refpkg
+    taxit create -P my_refpkg -l "Some locus name"
+
+    # Create a refpkg with lots of files in it
+    taxit create -P another_refpkg -l "Another locus" \
+        --author "Boris the mad baboon" --package-version 0.3.1 \
+        --aln-fasta seqs.fasta --aln-sto seqs.sto \
+        --tree-file seqs.newick --seq-info seqs.csv \
+        --profile cmalign.profile --tree-stats RAxML.info \
+        --taxonomy taxtable.csv
+
+
+new_database
+------------
+
+``taxit new_database [...] -d database_file``
+
+Download the current version of the NCBI taxonomy and load it into ``database_file`` as an SQLite3 database.  If ``database_file`` already exists, it will fail and leave it untouched unless you specify ``-x`` or ``--clobber``.  The NCBI taxonomy will be downloaded into the same directory as ``database_file`` will be created in unless you specify ``-p`` or ``--download-dir``.
+
+Examples::
+
+    # Download the NCBI taxonomy and create taxonomy.db if it does not exist
+    taxit new_database -d taxonomy.db
+    
+    # Force the creation of taxonomy.db in the parent directory, putting
+    # the downloaded NCBI data in /tmp/ncbi.
+    taxit new_database -d ../taxonomy.db -x -p /tmp/ncbi
+
+Arguments:
+
+``-h``
+  Print help and exit.
+
+``-d``, ``--database-file``
+  Specify the file in which the NCBI taxonomy should be written.
+
+``--x``, ``--clobber``
+  Replace ``database_file`` if it already exists.
+
+``-p``, ``--download-dir``
+  Download the NCBI taxonomy into the specified path.  If not specified, the taxonomy will be downloaded into the same directory where the final database will be created.
+
+reroot
+------
+
+``taxit reroot refpkg``
+
+Calls ``rppr reroot`` to generate a rerooted tree from the tree in ``refpkg`` and writes it back to the refpkg.  The refpkg ``refpkg`` must contain the necessary inputs for ``pplacer`` for this to work.
+
+Examples::
+
+    # Reroot the tree in my_refpkg
+    taxit reroot my_refpkg
+
+    # Try running reroot without modifying the refpkg, using a particular 
+    # version of rppr
+    taxit reroot --rppr ~/local/bin/rppr -p my_refpkg
+
+Arguments:
+
+``--rppr``
+  Specify the path to the ``rppr`` executable to use.
+``-p``, ``--pretend``
+  Calculate the rerooted tree, but don't actually change the tree file in the refpkg.
+
+
+rollback
+--------
+
+``taxit rollback [-n N] refpkg``
+
+Rollback ``N`` operations on ``refpkg`` (default to 1 operation if ``-n`` is omitted).  This is equivalent to calling the ``rollback()`` method of ``taxtastic.refpkg.Refpkg``.  If there are not at least ``N`` operations that can be rolled back, an error is returned and no changes are made to the refpkg.
+
+Examples::
+
+    # Update the author on my_refpkg, then roll back the change so
+    # that it is in the same state it was.
+    taxit update --metadata 'author=Boris the mad baboon'
+    taxit rollback my_refpkg
+
+    # Roll back the last 3 operations on my_refpkg
+    taxit rollback -n 3 my_refpkg
+
+Arguments:
+
+``-n``
+  Give an integer specifying the number of operations to roll back (default: 1)
+
+
+rollforward
+-----------
+
+``taxit rollforward [-n N] refpkg``
+
+Restore the last ``N`` rolled back operations on ``refpkg``, or the last operation if ``-n`` is omitted.  If there are not at least ``N`` operations that can be rolled forward on this refpkg, then an error is returned and no changes are made to the refpkg.
+
+Note that operations can only be rolled forward immediately after being rolled back.  If any operation besides a rollback occurs, all roll forward information is removed.
+
+Examples::
+
+    # Roll back the last operation on my_refpkg, then restore it.
+    taxit rollback my_refpkg
+    taxit rollforward my_refpkg
+
+    # Roll forward the last 3 rollbacks on my_refpkg
+    taxit rollforward -n 3 my_refpkg
+
+Arguments:
+
+``-n``
+  Give an integer specifying the number of operations to roll back (default: 1)
+
+
+
+strip
+-----
+
+``taxit strip refpkg``
+
+Delete everything in the refpkg not relevant to the current state: all files not referred to in the current state and all rollback and rollforward information.  The log is preserved, with a new entry entered indicating that ``refpkg`` was stripped.
+
+Examples::
+
+    taxit update my_refpkg hilda=file1
+
+    # After this, file1 is still in the refpkg, but not referred to
+    # except by the rollback information.
+    taxit update my_refpkg hilda=file2
+
+    # strip deletes file1, and the rollback and rollforward information
+    taxit strip my_refpkg
+
+
+taxids
+------
+
+``taxit taxids -d ncbi_taxonomy.db [-f file_of_names.txt|-n name1,name2,...] [-o taxids.txt]``
+
+Convert a list of taxonomic names into a list of tax_ids.  ``ncbi_taxonomy.db`` must be a database created by ``taxit new_database``, containing a taxonomy.  The names to convert can be specified in a text file with one name per line (the ``-f`` or ``--name-file`` options) or on the command line as a comma delimited list (the ``-n`` of ``--name`` options).
+
+Examples::
+
+    # Look up two species and print their tax_ids to stdout, one per line
+    taxit taxids -d ncbi_database.db -n "Lactobacillus crispati,Lactobacillus helvetii"
+
+    # Read the species from some_names.txt and write their tax_ids to some_taxids.txt
+    taxit taxids -d ncbi_database.db -f some_names.txt -o some_taxids.txt
+
+Arguments:
+
+``-d``, ``--database-file``
+  The taxonomy file to look up names in.  Must be an SQLite3 database as created by ``taxit new_database``. (Required)
+``-f``, ``--name-file``
+  Read names, one per line, from this file to convert to tax_ids.
+``-n``, ``--name``
+  Specify a comma separated list of names to look up in the taxonomy and convert to tax_ids.
+``-o``, ``--out-file``
+  Write the tax_ids looked up in the taxonomy to this file.  (Default: stdout)
+
+
 taxtable
 --------
 
@@ -111,3 +296,29 @@ Arguments:
   Include these tax_ids and all nodes connecting them to the root of the taxonomy in the output.  The argument can be either a filename or a list of tax_ids separated by commas or semicolons.
 ``-o``, ``--out-file``
   Write the output to the given filename instead of stdout.
+
+
+update
+------
+
+``taxit update refpkg [--metadata] "key=some value" ...``
+
+Update ``refpkg`` to set ``key`` to ``some value``.  If ``--metadata`` is specified, the update is done to the metadata.  Otherwise ``some value`` is treated as the path to a file, and that file is updated in ``refpkg``.  An arbitrary of "key=value" pairs can be specified on the command line.  If the same key is specified twice, the later occurrence dominates.
+
+All updates specified to an instance of this command are run as a single operation, and will all be undone by a single rollback.
+
+Examples::
+
+    # Set the author in my_refpkg
+    taxit update my_refpkg --metadata "author=Boris the mad baboon"
+
+    # Set the author and version at once
+    taxit update my_refpkg --metadata "author=Bill" "package_version=1.7.2"
+
+    # Insert a file into the refpkg
+    taxit update my_refpkg "aln_fasta=/path/to/a/file.fasta"
+
+Arguments:
+
+``--metadata``
+  Treat all the updates as changes to metadata, not files.

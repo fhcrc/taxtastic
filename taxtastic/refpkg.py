@@ -176,9 +176,20 @@ class Refpkg(object):
             raise ValueError("%s is not a valid RefPkg: %s" % (path, error))
 
     def _log(self, msg):
+        """Set the log message for this operation.
+
+        When writing transactions that encapsulate several others,
+        pass the log message to the call to ``commit_transaction``
+        instead.
+        """
         self.current_transaction['log'] = msg
 
     def log(self):
+        """Returns the log of this refpkg.
+
+        The log is a list of strings, one per operation, from newest
+        to oldest.
+        """
         return self.contents['log']
 
     def is_invalid(self):
@@ -297,13 +308,22 @@ class Refpkg(object):
 
     @transaction
     def update_file(self, key, new_path):
-        """Insert file *new_path* into the Refpkg under *key*.
+        """Insert file *new_path* into the refpkg under *key*.
 
-        The filename of *new_path* will be preserved in the Refpkg
+        The filename of *new_path* will be preserved in the refpkg
         unless it would conflict with a previously existing file, in
-        which case a suffix is appended which makes it unique.  Any
-        file previously referred to by *key* is deleted.
+        which case a suffix is appended which makes it unique.  The
+        previous file, if there was one, is left in the refpkg.  If
+        you wish to delete it, see the ``strip`` method.
+
+        The full path to the previous file referred to by *key* is
+        returned, or ``None`` if *key* was not previously defined in
+        the refpkg.
         """
+        if key in self.contents['files']:
+            old_path = self.file_abspath(key)
+        else:
+            old_path = None
         if not(os.path.isfile(new_path)):
             raise ValueError("Cannot update Refpkg with file %s" % (new_path,))
         md5_value = md5file(new_path)
@@ -314,6 +334,7 @@ class Refpkg(object):
         self.contents['files'][key] = filename
         self.contents['md5'][key] = md5_value
         self._log('Updated file: %s=%s' % (key,new_path))
+        return old_path
 
         # Many keys require a quick sanity check, for instance to make
         # sure they really are FASTA or Stockholm.  That code goes here.
@@ -353,7 +374,17 @@ class Refpkg(object):
 
     @transaction
     def reroot(self, rppr=None, pretend=False):
-        """Reroot the phylogenetic tree in the Refpkg."""
+        """Reroot the phylogenetic tree.
+
+        This operation calls ``rppr reroot`` to generate the rerooted
+        tree, so you must have ``pplacer`` and its auxiliary tools
+        ``rppr`` and ``guppy`` installed for it to work.  You can
+        specify the path to ``rppr`` by giving it as the *rppr*
+        argument.
+
+        If *pretend* is ``True``, the convexification is run, but the
+        refpkg is not actually updated.
+        """
         with scratch_file() as name:
             # Use a specific path to rppr, otherwise rely on $PATH
             subprocess.check_call([rppr or 'rppr', 'reroot',
@@ -363,6 +394,15 @@ class Refpkg(object):
         self._log('Rerooting refpkg')
         
     def update_phylo_model(self, raxml_stats):
+        """Parse a RAxML log and use it to update ``phylo_model``.
+
+        ``pplacer`` expects its input to include the deatils of the
+        phylogenetic model used for creating a tree in JSON format
+        under the key ``phylo_model``, but no program actually outputs
+        that format.  This function takes the log printed by RAxML,
+        parses it, and inserts an appropriate JSON file into the
+        refpkg.
+        """
         with scratch_file() as name:
             with open(name, 'w') as phylo_model, open(raxml_stats) as h:
                 json.dump(utils.parse_raxml(h), phylo_model, indent=4)
@@ -420,6 +460,13 @@ class Refpkg(object):
         self._sync_to_disk()
 
     def start_transaction(self):
+        """Begin a transaction to group operations on the refpkg.
+
+        All the operations until the next call to
+        ``commit_transaction`` will be recorded as a single operation
+        for rollback and rollforward, and recorded with a single line
+        in the log.
+        """
         if self.current_transaction:
             raise ValueError("There is already a transaction going")
         else:
@@ -427,10 +474,11 @@ class Refpkg(object):
             self.current_transaction = {'rollback': initial_state,
                                         'log': '(Transaction left no log message)'}
 
-    def commit_transaction(self):
+    def commit_transaction(self, log=None):
+        """Commit a transaction, with *log* as the log entry."""
         self.current_transaction['rollback'].pop('log')
         self.current_transaction['rollback'].pop('rollforward')
-        self.contents['log'].insert(0, self.current_transaction['log'])
+        self.contents['log'].insert(0, log and log or self.current_transaction['log'])
         self.contents['rollback'] = self.current_transaction['rollback']
         self.contents['rollforward'] = None # We can't roll forward anymore
         self.current_transaction = None
