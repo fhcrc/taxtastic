@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The Python Refpkg API &mdash; taxtastic v0.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="taxtastic v0.1.0 documentation" href="index.html" />
+    <link rel="next" title="Detailed taxit documentation" href="commands.html" />
+    <link rel="prev" title="Creating and manipulating refpkgs" href="refpkg.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="commands.html" title="Detailed taxit documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="refpkg.html" title="Creating and manipulating refpkgs"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">taxtastic v0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="the-python-refpkg-api">
+<h1>The Python Refpkg API<a class="headerlink" href="#the-python-refpkg-api" title="Permalink to this headline">¶</a></h1>
+<p>Taxtastic provides a Python API for creating and manipulating refpkgs wihtout having to recourse to the command line.  It is entirely based around the <tt class="docutils literal"><span class="pre">Refpkg</span></tt> class in <tt class="docutils literal"><span class="pre">taxtastic.refpkg</span></tt>.  Thus all scripts dealing with refpkgs will include code that looks something like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="kn">import</span> <span class="n">Refpkg</span>
+
+<span class="n">r</span> <span class="o">=</span> <span class="n">Refpkg</span><span class="p">(</span><span class="s">&#39;/path/to/refpkg&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The constructor takes no other arguments.  If the refpkg at <tt class="docutils literal"><span class="pre">/path/to/refpkg</span></tt> already exists, <tt class="docutils literal"><span class="pre">r</span></tt> is attached to it.  If <tt class="docutils literal"><span class="pre">/path/to/refpkg</span></tt> does not exist, a new, empty refpkg is created.  If there is already something at <tt class="docutils literal"><span class="pre">/path/to/refpkg</span></tt>, but it is not a refpkg, <tt class="docutils literal"><span class="pre">Refpkg</span></tt> throws a <tt class="docutils literal"><span class="pre">ValueError</span></tt>.</p>
+<p>The rest of the API is implemented as methods of the <tt class="docutils literal"><span class="pre">Refpkg</span></tt> class.</p>
+<p><strong>Note</strong>: This library is <em>not</em> thread safe!</p>
+<div class="section" id="accessing-refpkg-contents">
+<h2>Accessing refpkg contents<a class="headerlink" href="#accessing-refpkg-contents" title="Permalink to this headline">¶</a></h2>
+<p>Refpkgs are primarily key-value stores for files and metadata.  To find all the keys referring to files or to metadata in a given refpkg, use the methods</p>
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.file_keys">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">file_keys</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.file_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.file_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all the keys referring to files in this refpkg.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.metadata_keys">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">metadata_keys</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.metadata_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.metadata_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all the keys referring to metadata in this refpkg.</p>
+</dd></dl>
+
+<p>For example,:</p>
+<div class="highlight-python"><pre>r = Refpkg('/path/to/new/refpkg')
+r.metadata_keys()
+ --&gt; ['create_date', 'format_version']
+r.update_file('file_key', '/path/to/some/file')
+r.file_keys()
+ --&gt; ['file_key']</pre>
+</div>
+<p>Call the <tt class="docutils literal"><span class="pre">metadata</span></tt> method to retrieve the value of a particular metadata field.</p>
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.metadata">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">metadata</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the metadata value associated to <em>key</em>.</p>
+</dd></dl>
+
+<p>For instance, on the same refpkg as above,:</p>
+<div class="highlight-python"><pre>r.metadata('format_version')
+ --&gt; '1.1'</pre>
+</div>
+<p>There are several methods for retrieving files, depending on whether you want just the name of the file in the repository, a full path to the file, or the file&#8217;s MD5 sum (for integrity checking purposes).</p>
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.file_name">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">file_name</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.file_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.file_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the name of the file referenced by <em>key</em> in the refpkg.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.file_abspath">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">file_abspath</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.file_abspath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.file_abspath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the absolute path to the file referenced by <em>key</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.file_md5">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">file_md5</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.file_md5"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.file_md5" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the MD5 sum of the file reference by <em>key</em>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="checking-refpkg-integrity">
+<h2>Checking refpkg integrity<a class="headerlink" href="#checking-refpkg-integrity" title="Permalink to this headline">¶</a></h2>
+<p>There are two methods for checking a refpkg.  The <tt class="docutils literal"><span class="pre">isinvalid</span></tt> method enforces only that the refpkg is sane: there is a <tt class="docutils literal"><span class="pre">CONTENTS.json</span></tt> file, the MD5 sums listed match the actual files, and other such basics.  The <tt class="docutils literal"><span class="pre">is_ill_formed</span></tt> method is much stronger.  It enforces the necessary structure of a refpkg to be fed to <tt class="docutils literal"><span class="pre">pplacer</span></tt>.</p>
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.is_invalid">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">is_invalid</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.is_invalid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.is_invalid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this RefPkg is invalid.</p>
+<p>Valid means that it contains a properly named manifest, and
+each of the files described in the manifest exists and has the
+proper MD5 hashsum.</p>
+<p>If the Refpkg is valid, is_invalid returns False.  Otherwise it
+returns a nonempty string describing the error.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.is_ill_formed">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">is_ill_formed</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.is_ill_formed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.is_ill_formed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stronger set of checks than is_invalid for Refpkg.</p>
+<p>Checks that FASTA, Stockholm, JSON, and CSV files under known
+keys are all valid as well as calling is_invalid.  Returns
+either False or a string describing the error.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="updating-and-modifying-refpkgs">
+<h2>Updating and modifying refpkgs<a class="headerlink" href="#updating-and-modifying-refpkgs" title="Permalink to this headline">¶</a></h2>
+<p>All updates are made via two methods: <tt class="docutils literal"><span class="pre">update_metadata</span></tt> and <tt class="docutils literal"><span class="pre">update_file</span></tt>.  Each takes a key and a new value to set at that key, and returns the path to the previous value of the key, or <tt class="xref docutils literal"><span class="pre">None</span></tt> if the key was not previously defined in the refpkg.</p>
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.update_metadata">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">update_metadata</tt><big>(</big><em>key</em>, <em>value</em><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.update_metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.update_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set <em>key</em> in the metadata to <em>value</em>.</p>
+<p>Returns the previous value of <em>key</em>, or None if the key was
+not previously set.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.update_file">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">update_file</tt><big>(</big><em>key</em>, <em>new_path</em><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.update_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.update_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert file <em>new_path</em> into the refpkg under <em>key</em>.</p>
+<p>The filename of <em>new_path</em> will be preserved in the refpkg
+unless it would conflict with a previously existing file, in
+which case a suffix is appended which makes it unique.  The
+previous file, if there was one, is left in the refpkg.  If
+you wish to delete it, see the <tt class="docutils literal"><span class="pre">strip</span></tt> method.</p>
+<p>The full path to the previous file referred to by <em>key</em> is
+returned, or <tt class="xref docutils literal"><span class="pre">None</span></tt> if <em>key</em> was not previously defined in
+the refpkg.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="refpkg-history-undo-and-redo">
+<h2>Refpkg history, undo, and redo<a class="headerlink" href="#refpkg-history-undo-and-redo" title="Permalink to this headline">¶</a></h2>
+<p>Each operation performed on a refpkg leaves an entry in a log stored in <tt class="docutils literal"><span class="pre">CONTENTS.json</span></tt>.  You can access this log by calling the <tt class="docutils literal"><span class="pre">log</span></tt> method.</p>
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.log">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">log</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the log of this refpkg.</p>
+<p>The log is a list of strings, one per operation, from newest
+to oldest.</p>
+</dd></dl>
+
+<p>Each operation call also be undone (and redone once undone).  The undo stack is arbitrarily deep so all operations back to the previous call to <tt class="docutils literal"><span class="pre">strip</span></tt> (see below) can be undone.  To undo an operation, call <tt class="docutils literal"><span class="pre">rollback</span></tt>.  To redo it afterwards, call <tt class="docutils literal"><span class="pre">rollforward</span></tt>.  The logs will similarly be updated to stay in sync with the rollback and rollforward of operations.  Note that when you call another operation, all the redo information before that point is removed.  You cannot undo an operation, perform another operation, then redo the first operation.</p>
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.rollback">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">rollback</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.rollback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.rollback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Revert the previous modification to the refpkg.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.rollforward">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">rollforward</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.rollforward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.rollforward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restore a reverted modification to the refpkg.</p>
+</dd></dl>
+
+<p>After performing a lot of operations on a refpkg, there will often be a long undo history, and files no longer referred to in the refpkg&#8217;s current state.  To remove everything not relevant to the refpkg&#8217;s current state other than the log, call the <tt class="docutils literal"><span class="pre">strip</span></tt> method.</p>
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.strip">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">strip</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.strip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.strip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove rollbacks, rollforwards, and all non-current files.</p>
+<p>When distributing a refpkg, you probably want to distribute as
+small a one as possible.  strip removes everything from the
+refpkg which is not relevant to its current state.</p>
+</dd></dl>
+
+<p>You can force a series of operations to be recorded as a single operation for rollback and have a single log entry by calling <tt class="docutils literal"><span class="pre">start_transaction</span></tt> before them, and <tt class="docutils literal"><span class="pre">commit_transaction</span></tt> with the log entry to record when they are done.</p>
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.start_transaction">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">start_transaction</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.start_transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.start_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Begin a transaction to group operations on the refpkg.</p>
+<p>All the operations until the next call to
+<tt class="docutils literal"><span class="pre">commit_transaction</span></tt> will be recorded as a single operation
+for rollback and rollforward, and recorded with a single line
+in the log.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.commit_transaction">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">commit_transaction</tt><big>(</big><em>log=None</em><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.commit_transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.commit_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commit a transaction, with <em>log</em> as the log entry.</p>
+</dd></dl>
+
+<p>For example,</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="kn">import</span> <span class="n">Refpkg</span>
+
+<span class="n">r</span> <span class="o">=</span> <span class="n">Refpkg</span><span class="p">(</span><span class="s">&#39;/path/to/refpkg&#39;</span><span class="p">)</span>
+
+<span class="n">r</span><span class="o">.</span><span class="n">start_transaction</span><span class="p">()</span>
+<span class="n">r</span><span class="o">.</span><span class="n">update_metadata</span><span class="p">(</span><span class="s">&#39;author&#39;</span><span class="p">,</span> <span class="s">&#39;Boris the mad baboon&#39;</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">update_file</span><span class="p">(</span><span class="s">&#39;boris_signature&#39;</span><span class="p">,</span> <span class="s">&#39;/path/to/some/file&#39;</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">commit_transaction</span><span class="p">(</span><span class="s">&quot;Left Boris&#39;s mark!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>would result in a single operation that could be rolled back as one, and leaves the log entry <tt class="docutils literal"><span class="pre">&quot;Left</span> <span class="pre">Boris's</span> <span class="pre">mark!&quot;</span></tt>.</p>
+</div>
+<div class="section" id="pplacer-specific-commands">
+<h2><tt class="docutils literal"><span class="pre">pplacer</span></tt> specific commands<a class="headerlink" href="#pplacer-specific-commands" title="Permalink to this headline">¶</a></h2>
+<p>Finally, the API has three commands which are specific to creating inputs for <tt class="docutils literal"><span class="pre">pplacer</span></tt>.  One of these is <tt class="docutils literal"><span class="pre">check</span></tt>, which was described above.  The other two are:</p>
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.reroot">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">reroot</tt><big>(</big><em>rppr=None</em>, <em>pretend=False</em><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.reroot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.reroot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reroot the phylogenetic tree.</p>
+<p>This operation calls <tt class="docutils literal"><span class="pre">rppr</span> <span class="pre">reroot</span></tt> to generate the rerooted
+tree, so you must have <tt class="docutils literal"><span class="pre">pplacer</span></tt> and its auxiliary tools
+<tt class="docutils literal"><span class="pre">rppr</span></tt> and <tt class="docutils literal"><span class="pre">guppy</span></tt> installed for it to work.  You can
+specify the path to <tt class="docutils literal"><span class="pre">rppr</span></tt> by giving it as the <em>rppr</em>
+argument.</p>
+<p>If <em>pretend</em> is <tt class="xref docutils literal"><span class="pre">True</span></tt>, the convexification is run, but the
+refpkg is not actually updated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="taxtastic.refpkg.Refpkg.update_phylo_model">
+<tt class="descclassname">Refpkg.</tt><tt class="descname">update_phylo_model</tt><big>(</big><em>raxml_stats</em><big>)</big><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.update_phylo_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.update_phylo_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a RAxML log and use it to update <tt class="docutils literal"><span class="pre">phylo_model</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">pplacer</span></tt> expects its input to include the deatils of the
+phylogenetic model used for creating a tree in JSON format
+under the key <tt class="docutils literal"><span class="pre">phylo_model</span></tt>, but no program actually outputs
+that format.  This function takes the log printed by RAxML,
+parses it, and inserts an appropriate JSON file into the
+refpkg.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The Python Refpkg API</a><ul>
+<li><a class="reference internal" href="#accessing-refpkg-contents">Accessing refpkg contents</a></li>
+<li><a class="reference internal" href="#checking-refpkg-integrity">Checking refpkg integrity</a></li>
+<li><a class="reference internal" href="#updating-and-modifying-refpkgs">Updating and modifying refpkgs</a></li>
+<li><a class="reference internal" href="#refpkg-history-undo-and-redo">Refpkg history, undo, and redo</a></li>
+<li><a class="reference internal" href="#pplacer-specific-commands"><tt class="docutils literal"><span class="pre">pplacer</span></tt> specific commands</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="refpkg.html"
+                        title="previous chapter">Creating and manipulating refpkgs</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="commands.html"
+                        title="next chapter">Detailed <tt class="docutils literal docutils literal"><span class="pre">taxit</span></tt> documentation</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/refpkg_api.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="commands.html" title="Detailed taxit documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="refpkg.html" title="Creating and manipulating refpkgs"
+             >previous</a> |</li>
+        <li><a href="index.html">taxtastic v0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Noah Hoffman, Erick Matsen, Brian Hodges.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>
