@@ -15,6 +15,7 @@
 commands = [
     'add_nodes',
     'check',
+    'info',    
     'create',
     'new_database',
     'reroot',
