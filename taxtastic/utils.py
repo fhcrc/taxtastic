@@ -149,10 +149,10 @@ def mkdir(dirpath, clobber = False):
 def try_set_fields(d, regex, text, hook=lambda x: x):
     v = re.search(regex, text, re.MULTILINE)
     if v:
-        d.update(dict([(key,hook(val)) for key,val 
+        d.update(dict([(key,hook(val)) for key,val
                        in v.groupdict().iteritems()]))
     return d
-    
+
 
 def parse_raxml(handle):
     """Parse RAxML's summary output.
@@ -178,11 +178,42 @@ def parse_raxml(handle):
     try_set_fields(rates, r'rate C <-> G: (?P<cg>[0-9.]+)', s, hook=float)
     try_set_fields(rates, r'rate C <-> T: (?P<ct>[0-9.]+)', s, hook=float)
     try_set_fields(rates, r'rate G <-> T: (?P<gt>[0-9.]+)', s, hook=float)
-    if len(rates) > 0: 
+    if len(rates) > 0:
         result['subs_rates'] = rates
     result['gamma'] = {'n_cats': 4}
     try_set_fields(result['gamma'],
                    r"alpha[\[\]0-9]*: (?P<alpha>[0-9.]+)", s, hook=float)
     result['ras_model'] = 'gamma'
     return result
-    
+
+
+JTT_MODEL = 'ML Model: Jones-Taylor-Thorton, CAT approximation with 20 rate categories'
+
+def parse_fasttree(fobj):
+    data = {
+        'empirical_frequencies': True,
+        'datatype': 'DNA',
+        'subs_model': 'GTR',
+        'ras_model': 'Price-CAT',
+        'Price-CAT': {},
+    }
+    for line in fobj:
+        if not line: continue
+        splut = line.split()
+        if splut[0] == 'FastTree':
+            data['program'] = line.strip()
+        elif splut[0] == 'Rates':
+            data['Price-CAT']['Rates'] = map(float, splut[1:])
+        elif splut[0] == 'SiteCategories':
+            data['Price-CAT']['SiteCategories'] = map(int, splut[1:])
+        elif splut[0] == 'NCategories':
+            data['Price-CAT']['n_cats'] = int(splut[1])
+        elif splut[0] == 'GTRRates':
+            data['subs_rates'] = dict(
+                zip(['ac', 'ag', 'at', 'cg', 'ct', 'gt'],
+                    map(float, splut[1:])))
+        elif line.strip() == JTT_MODEL:
+            data['subs_model'] = 'JTT'
+
+    return data
+
