@@ -44,17 +44,14 @@ def action(args):
 
     pkg = refpkg.Refpkg(args.refpkg)    
     tnames = tree_names(pkg)
-    
-    if args.seq_names:    
-        for name in tnames:
-            print name
 
     with open(pkg.file_abspath('aln_sto')) as f:
         seqs = SeqIO.parse(f, 'stockholm')
         snames = [s.id for s in seqs]
 
-    print set(snames) == set(tnames)
-    print pkg.file_abspath('tree')
-    print len(tnames)
-    print pkg.file_abspath('aln_sto')
-    print len(snames)
+    if not set(tnames) == set(snames):
+        sys.exit('Error: sequence names in the Stockholm alignment and tree file differ.')
+        
+    if args.seq_names:    
+        for name in tnames:
+            print name
