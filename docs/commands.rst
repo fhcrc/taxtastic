@@ -243,7 +243,7 @@ Convert a list of taxonomic names into a list of tax_ids.  ``ncbi_taxonomy.db`` 
 Examples::
 
     # Look up two species and print their tax_ids to stdout, one per line
-    taxit taxids -d ncbi_database.db -n "Lactobacillus crispati,Lactobacillus helvetii"
+    taxit taxids -d ncbi_database.db -n "Lactobacillus crispatus,Lactobacillus helveticus"
 
     # Read the species from some_names.txt and write their tax_ids to some_taxids.txt
     taxit taxids -d ncbi_database.db -f some_names.txt -o some_taxids.txt
