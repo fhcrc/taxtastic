@@ -75,7 +75,7 @@ def build_parser(parser):
                         help=('File containing tree statistics (for example '
                               'RAxML_info.whatever")'), metavar='FILE')
     parser.add_argument("-Y", "--stats-type",
-                        action="store", metavar='TYPE',
+                        action="store", metavar='TYPE', default=None,
                         help=('The type of the tree stats file. Can be either "FastTree", '
                               '"RAxML", or unspecified to guess'))
     parser.add_argument("-S", "--aln-sto",
@@ -120,7 +120,7 @@ def action(args):
         # phylo_model is stored internally in JSON, but is built from a
         # RAxML stats file.  Refpkg provides a special method for handling
         # this.
-        r.update_phylo_model(args.stats_type, args.tree_stats)
+        r.update_phylo_model(args.tree_stats, args.stats_type)
 
     for file_name in ['aln_fasta', 'aln_sto', 'mask',
                       'profile', 'seq_info', 'taxonomy', 'tree', 'tree_stats',
