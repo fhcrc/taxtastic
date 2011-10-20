@@ -17,16 +17,9 @@
 import logging
 import shutil
 import os
-import time
-import shutil
-import hashlib
-import re
-import json
 import sys
-from collections import defaultdict
 
 from taxtastic import refpkg
-from taxtastic import utils
 
 log = logging.getLogger(__name__)
 
@@ -132,5 +125,3 @@ def action(args):
     r.commit_transaction()
     r.strip()
     return 0
-
-

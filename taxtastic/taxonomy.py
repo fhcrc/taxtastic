@@ -15,12 +15,11 @@
 import logging
 import csv
 import itertools
-import pprint
 
 log = logging
 
 import sqlalchemy
-from sqlalchemy import MetaData, create_engine, and_
+from sqlalchemy import MetaData, and_
 from sqlalchemy.sql import select
 
 class Taxonomy(object):
@@ -173,7 +172,7 @@ class Taxonomy(object):
         """
         # Be sure we aren't working with an obsolete tax_id
         if merge_obsolete:
-            tax_id = self._get_merged(tax_id) 
+            tax_id = self._get_merged(tax_id)
 
         indent = '.'*_level
 
@@ -319,7 +318,7 @@ class Taxonomy(object):
         """
         Add a node to the taxonomy.
         """
-        
+
         if not (source_id or source_name):
             raise ValueError('Taxonomy.add_node requires source_id or source_name')
 
@@ -339,7 +338,7 @@ class Taxonomy(object):
             for child in children:
                 ret = self.nodes.update(self.nodes.c.tax_id == child, {'parent_id':tax_id})
                 ret.execute()
-                
+
         lineage = self.lineage(tax_id)
 
         log.debug(lineage)

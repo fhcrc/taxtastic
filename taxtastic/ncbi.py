@@ -19,12 +19,11 @@ Methods and variables specific to the NCBI taxonomy.
 import sqlite3
 import itertools
 import logging
-import pprint
 import os
 import urllib
 import zipfile
 
-from errors import OperationalError, IntegrityError
+from errors import IntegrityError
 
 log = logging
 
@@ -163,22 +162,22 @@ def db_load(con, archive, root_name='root', maxrows=None):
             rows=read_archive(archive, 'nodes.dmp'),
             root_name=root_name,
             ncbi_source_id=1)
-        do_insert(con, 'nodes', rows, maxrows, add = False)
+        do_insert(con, 'nodes', rows, maxrows, add=False)
 
         # names
         rows = read_names(
             rows=read_archive(archive, 'names.dmp')
             )
-        do_insert(con, 'names', rows, maxrows, add = False)
+        do_insert(con, 'names', rows, maxrows, add=False)
 
         # merged
         rows = read_archive(archive, 'merged.dmp')
-        do_insert(con, 'merged', rows, maxrows, add = False)
+        do_insert(con, 'merged', rows, maxrows, add=False)
 
     except sqlite3.IntegrityError, err:
         raise IntegrityError(err)
 
-def do_insert(con, tablename, rows, maxrows=None, add = True):
+def do_insert(con, tablename, rows, maxrows=None, add=True):
 
     """
     Insert rows into a table. Do not perform the insert if
