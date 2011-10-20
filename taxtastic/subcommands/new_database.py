@@ -14,21 +14,22 @@
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
-from taxtastic import ncbi
+from taxtastic import ncbi, greengenes
 import os
 from os import path
 import logging
 
 log = logging.getLogger(__name__)
 
+modules = {'ncbi': ncbi, 'greengenes': greengenes}
+
 def build_parser(parser):
 
     parser.add_argument(
         '-d', '--database-file',
         dest = 'database_file',
-        default = 'ncbi_taxonomy.db',
         metavar = 'FILE',
-        help = """Name of the sqlite database file [%(default)s].""")
+        help = """Name of the sqlite database file [TAXSRC_taxonony.db].""")
 
     parser.add_argument(
         '-p', '--download-dir',
@@ -39,6 +40,12 @@ def build_parser(parser):
         archive. [default is the same directory as the database file]""")
 
     parser.add_argument(
+        '-t', '--taxonomy',
+        metavar='TAXSRC',
+        default='ncbi', choices=modules.keys(),
+        help="""Taxonomy database to use [%(default)s].""")
+
+    parser.add_argument(
         '-x', '--clobber', action = 'store_true',
         dest = 'clobber', default = False,
         help = """Download a new zip archive containing NCBI taxonomy
@@ -46,20 +53,25 @@ def build_parser(parser):
         exists. [%(default)s]""")
 
 def action(args):
-
     dbname = args.database_file
+    mod = modules[args.taxonomy]
+
+    # Set default
+    if not args.database_file:
+        args.database_file = '{0}_taxonomy.db'.format(args.taxonomy)
+
     pth, fname = path.split(dbname)
     zip_dest = args.download_dir or pth or '.'
 
-    zfile, downloaded = ncbi.fetch_data(
+    zfile, downloaded = mod.fetch_data(
         dest_dir = zip_dest,
         clobber = args.clobber)
 
     if not os.access(dbname, os.F_OK) or args.clobber:
         log.warning('creating new database in %s using data in %s' % \
                         (dbname, zfile))
-        con = ncbi.db_connect(dbname, clobber=True)
-        ncbi.db_load(con, zfile)
+        con = mod.db_connect(dbname, clobber=True)
+        mod.db_load(con, zfile)
         con.close()
     else:
         log.warning('taxonomy database already exists in %s' % dbname)
