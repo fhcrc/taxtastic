@@ -23,132 +23,32 @@ import os
 import urllib
 import zipfile
 
-from errors import IntegrityError
+from . import taxdb
+from .errors import IntegrityError
+from .taxdb import do_insert
+
 
 log = logging
 
 ncbi_data_url = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
-db_schema = """
--- nodes.dmp specifies additional columns but these are not implemented yet
-CREATE TABLE nodes(
-tax_id        TEXT UNIQUE PRIMARY KEY NOT NULL,
-parent_id     TEXT,
-rank          TEXT,
-embl_code     TEXT,
-division_id   INTEGER,
-source_id     INTEGER DEFAULT 1 -- added to support multiple sources
-);
-
-CREATE TABLE names(
-tax_id        TEXT REFERENCES nodes(tax_id),
-tax_name      TEXT,
-unique_name   TEXT,
-name_class    TEXT,
-is_primary    INTEGER -- not defined in names.dmp
-);
-
-CREATE TABLE merged(
-old_tax_id    TEXT,
-new_tax_id    TEXT REFERENCES nodes(tax_id)
-);
-
--- table "source" supports addition of custom taxa (not provided by NCBI)
-CREATE TABLE source(
-id            INTEGER PRIMARY KEY AUTOINCREMENT,
-name          TEXT UNIQUE,
-description   TEXT
-);
-
+# Schema specific to NCBI taxonomy
+db_schema = taxdb.db_schema + """
 INSERT INTO "source"
   (id, name, description)
 VALUES
   (1, "NCBI", "NCBI taxonomy");
-
--- indices on nodes
-CREATE INDEX nodes_tax_id ON nodes(tax_id);
-CREATE INDEX nodes_parent_id ON nodes(parent_id);
-CREATE INDEX nodes_rank ON nodes(rank);
-
--- indices on names
-CREATE INDEX names_tax_id ON names(tax_id);
-CREATE INDEX names_tax_name ON names(tax_name);
-CREATE INDEX names_is_primary ON names(is_primary);
-CREATE INDEX names_taxid_is_primary ON names(tax_id, is_primary);
-CREATE INDEX names_name_is_primary ON names(tax_name, is_primary);
-
--- CREATE UNIQUE INDEX names_id_name ON names(tax_id, tax_name, is_primary);
-
 """
 
-# define headers in names.dmp, etc (may not correspond to table columns above)
-merged_keys = 'old_tax_id new_tax_id'.split()
+ranks = taxdb.ranks[:]
 
-undefined_rank = 'no_rank'
-root_name = 'root'
-
-# see http://biowarehouse.ai.sri.com/repos/enumerations-loader/data/enumeration_inserts.txt
-_ranks = """
-root
-superkingdom
-kingdom
-subkingdom
-superphylum
-phylum
-subphylum
-superclass
-class
-subclass
-infraclass
-superorder
-order
-suborder
-parvorder
-infraorder
-superfamily
-family
-subfamily
-tribe
-subtribe
-genus
-subgenus
-species group
-species subgroup
-species
-subspecies
-varietas
-forma
-"""
-
-ranks = [k.strip().replace(' ','_') for k in _ranks.splitlines() if k.strip()]
-
-def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber = False):
-
+def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber=False):
     """
     Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
     True and return otherwise. Returns a connection object.
     """
-
-    if clobber:
-        log.info('Creating new database %s' % dbname)
-        try:
-            os.remove(dbname)
-        except OSError:
-            pass
-
-    con = sqlite3.connect(dbname)
-    cur = con.cursor()
-
-    cmds = [cmd.strip() for cmd in schema.split(';') if cmd.strip()]
-    try:
-        for cmd in cmds:
-            cur.execute(cmd)
-            log.debug(cmd)
-    except sqlite3.OperationalError as err:
-        log.info(err)
-
-    return con
+    return taxdb.db_connect(dbname=dbname, schema=schema, clobber=clobber)
 
 def db_load(con, archive, root_name='root', maxrows=None):
     """
@@ -177,37 +77,6 @@ def db_load(con, archive, root_name='root', maxrows=None):
     except sqlite3.IntegrityError, err:
         raise IntegrityError(err)
 
-def do_insert(con, tablename, rows, maxrows=None, add=True):
-
-    """
-    Insert rows into a table. Do not perform the insert if
-    add is False and table already contains data.
-    """
-
-    cur = con.cursor()
-
-    cur.execute('select count(*) from "%s" where rowid < 2' % tablename)
-    has_data = cur.fetchone()[0]
-
-    if not add and has_data:
-        log.info('Table "%s" already contains data; load not performed.' % tablename)
-        return False
-
-    # pop first row to determine number of columns
-    row = rows.next()
-    cmd = 'INSERT INTO "%s" VALUES (%s)' % (tablename, ', '.join(['?']*len(row)))
-    log.info(cmd)
-
-    # put the first row back
-    rows = itertools.chain([row], rows)
-    if maxrows:
-        rows = itertools.islice(rows, maxrows)
-
-    cur.executemany(cmd, rows)
-    con.commit()
-
-    return True
-
 def fetch_data(dest_dir='.', clobber=False, url=ncbi_data_url):
 
     """
@@ -224,24 +93,7 @@ def fetch_data(dest_dir='.', clobber=False, url=ncbi_data_url):
 
     see ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump_readme.txt
     """
-
-    dest_dir = os.path.abspath(dest_dir)
-    try:
-        os.mkdir(dest_dir)
-    except OSError:
-        pass
-
-    fout = os.path.join(dest_dir, os.path.split(url)[-1])
-
-    if os.access(fout, os.F_OK) and not clobber:
-        downloaded = False
-        log.warning('%s exists; not downloading' % fout)
-    else:
-        downloaded = True
-        log.warning('downloading %(url)s to %(fout)s' % locals())
-        urllib.urlretrieve(url, fout)
-
-    return (fout, downloaded)
+    return taxdb.fetch_url(url, dest_dir, clobber)
 
 def read_archive(archive, fname):
     """
