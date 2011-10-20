@@ -19,13 +19,11 @@ Methods and variables specific to the NCBI taxonomy.
 import sqlite3
 import itertools
 import logging
-import os
-import urllib
 import zipfile
 
 from . import taxdb
 from .errors import IntegrityError
-from .taxdb import do_insert
+from .taxdb import do_insert, db_schema
 
 
 log = logging
@@ -33,12 +31,6 @@ log = logging
 ncbi_data_url = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
 # Schema specific to NCBI taxonomy
-db_schema = taxdb.db_schema + """
-INSERT INTO "source"
-  (id, name, description)
-VALUES
-  (1, "NCBI", "NCBI taxonomy");
-"""
 
 ranks = taxdb.ranks[:]
 
@@ -112,7 +104,6 @@ def read_dmp(fname):
         yield line.rstrip('\t|\n').split('\t|\t')
 
 def read_nodes(rows, root_name, ncbi_source_id):
-
     """
     Return an iterator of rows ready to insert into table "nodes".
 

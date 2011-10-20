@@ -55,6 +55,15 @@ name          TEXT UNIQUE,
 description   TEXT
 );
 
+INSERT INTO "source"
+  (id, name, description)
+VALUES
+  (1, "NCBI", "NCBI taxonomy");
+INSERT INTO "source"
+  (id, name, description)
+VALUES
+  (2, "GreenGenes", "GreenGenes taxonomy");
+
 -- indices on nodes
 CREATE INDEX nodes_tax_id ON nodes(tax_id);
 CREATE INDEX nodes_parent_id ON nodes(parent_id);
@@ -135,11 +144,11 @@ def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber=False):
             cur.execute(cmd)
             log.debug(cmd)
     except sqlite3.OperationalError as err:
-        log.info(err)
+        log.warn(err)
 
     return con
 
-def do_insert(con, tablename, rows, maxrows=None, add=True):
+def do_insert(con, tablename, rows, maxrows=None, add=True, colnames=None):
     """
     Insert rows into a table. Do not perform the insert if
     add is False and table already contains data.
@@ -156,7 +165,12 @@ def do_insert(con, tablename, rows, maxrows=None, add=True):
 
     # pop first row to determine number of columns
     row = rows.next()
-    cmd = 'INSERT INTO "%s" VALUES (%s)' % (tablename, ', '.join(['?']*len(row)))
+    if colnames:
+        cmd = 'INSERT INTO "%s" (%s) VALUES (%s)' % (tablename,
+                                         ', '.join(colnames),
+                                         ', '.join(['?'] * len(colnames)))
+    else:
+        cmd = 'INSERT INTO "%s" VALUES (%s)' % (tablename, ', '.join(['?']*len(row)))
     log.info(cmd)
 
     # put the first row back
