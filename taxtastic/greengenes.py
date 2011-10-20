@@ -16,12 +16,15 @@
 Methods and variables specific to the GreenGenes taxonomy.
 """
 import contextlib
+import logging
 import itertools
 import sqlite3
 import tarfile
 
 from . import taxdb
 from .errors import IntegrityError
+
+log = logging
 
 ranks = taxdb.ranks + ['otu']
 
@@ -43,12 +46,20 @@ def _get_source_id(con):
 
 def _load_rows(rows, con):
     """
-    Load GreenGenes taxonomy into database
+    Load GreenGenes taxonomy into database.
+
+    Sequences are labeled with tax_ids starting from GG00000001
+
+    No action is taken if tables are already populated.
     """
     source_id = _get_source_id(con)
     cursor = con.cursor()
+    if taxdb.has_row(cursor, 'nodes') or taxdb.has_row(cursor, 'names'):
+        log.warning("nodes table has data. not updating.")
+        return
 
     count = itertools.count()
+
     def _get_or_insert(name, rank, parent_id, source_id):
         # Check for existence
         cursor.execute("SELECT tax_id from names WHERE tax_name = ?", [name])

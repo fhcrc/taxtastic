@@ -148,6 +148,13 @@ def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber=False):
 
     return con
 
+def has_row(cursor, tablename):
+    """
+    Check if tablename contains any rows
+    """
+    cursor.execute("SELECT * FROM \"{0}\" LIMIT 1".format(tablename))
+    return cursor.fetchone() is not None
+
 def do_insert(con, tablename, rows, maxrows=None, add=True, colnames=None):
     """
     Insert rows into a table. Do not perform the insert if
