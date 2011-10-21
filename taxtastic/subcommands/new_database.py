@@ -53,12 +53,12 @@ def build_parser(parser):
         exists. [%(default)s]""")
 
 def action(args):
-    dbname = args.database_file
-    mod = modules[args.taxonomy]
-
     # Set default
     if not args.database_file:
         args.database_file = '{0}_taxonomy.db'.format(args.taxonomy)
+
+    dbname = args.database_file
+    mod = modules[args.taxonomy]
 
     pth, fname = path.split(dbname)
     zip_dest = args.download_dir or pth or '.'
