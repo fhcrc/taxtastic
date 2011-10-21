@@ -40,10 +40,10 @@ def build_parser(parser):
         archive. [default is the same directory as the database file]""")
 
     parser.add_argument(
-        '-t', '--taxonomy',
+        '-T', '--taxonomy',
         metavar='TAXSRC',
         default='ncbi', choices=modules.keys(),
-        help="""Taxonomy database to use [%(default)s].""")
+        help="""Taxonomy database to use [%(choices)s] [%(default)s]""")
 
     parser.add_argument(
         '-x', '--clobber', action = 'store_true',

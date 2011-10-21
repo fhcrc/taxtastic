@@ -19,16 +19,17 @@ import argparse
 
 import re
 
-from taxtastic import ncbi
+from taxtastic import ncbi, greengenes
 from taxtastic.taxonomy import Taxonomy
 from taxtastic.utils import getlines
 
 from sqlalchemy import create_engine
-from sqlalchemy.exc import IntegrityError
 import os.path
 import sys
 
 log = logging.getLogger(__name__)
+
+modules = {'ncbi': ncbi, 'greengenes': greengenes}
 
 def build_parser(parser):
 
@@ -73,9 +74,17 @@ def build_parser(parser):
         help="""Output file containing lineages for the specified taxa
         in csv format; writes to stdout if unspecified""")
 
+    parser.add_argument(
+        '-T', '--taxonomy',
+        metavar='TAXSRC',
+        default='ncbi', choices=modules.keys(),
+        help="""Taxonomy source to use [%(choices)s] [%(default)s];
+        database passed via -d must match.""")
+
 def action(args):
+    tax_mod = modules[args.taxonomy]
     engine = create_engine('sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
-    tax = Taxonomy(engine, ncbi.ranks)
+    tax = Taxonomy(engine, tax_mod.ranks)
 
     taxids = set()
 
@@ -110,7 +119,7 @@ def action(args):
     for t in taxids:
         taxids_to_export.update([y for (x,y) in tax._get_lineage(t)])
 
-    tax.write_table(taxids_to_export, csvfile = args.out_file)
+    tax.write_table(taxids_to_export, csvfile=args.out_file)
 
     engine.dispose()
     return 0
