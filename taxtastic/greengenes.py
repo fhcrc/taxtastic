@@ -15,6 +15,7 @@
 """
 Methods and variables specific to the GreenGenes taxonomy.
 """
+import bisect
 import contextlib
 import logging
 import itertools
@@ -38,11 +39,65 @@ tax_map = 'gg_otus_4feb2011/taxonomies/greengenes_tax.txt'
 
 db_connect = taxdb.db_connect
 
+
 def _get_source_id(con):
     """Get the source.id corresponding to greengenes"""
     cursor = con.cursor()
     cursor.execute('SELECT id FROM source where name = ?', ['greengenes'])
     return cursor.fetchone()
+
+def _add_space(species, genus):
+    """
+    Add a space between genus and species
+    """
+    l = len(genus)
+    if species.startswith(genus) and species[l] != ' ':
+        return ' '.join((species[:l], species[l:]))
+    return species
+
+def _clean_species(con):
+    """
+    Try to clean species-level classifications
+
+    For every species that doesn't start with it's genus, try to find the genus
+    and insert a space between genus and species.
+    """
+    cursor = con.cursor()
+    all_genus = dict(cursor.execute("""SELECT names.tax_name, names.tax_id
+    FROM nodes JOIN names USING (tax_id) WHERE nodes.rank = 'genus'"""))
+
+    # Sorted list of all genus in the database, for searching
+    keys = sorted(all_genus)
+
+    def find_genus(tax_name):
+        """Search for a genus in the tax_name"""
+        # We don't know where the genus/species separation is, so search from
+        # the first genus starting with tax_name[0]
+        start = bisect.bisect_left(keys, tax_name[0])
+        poss_genus = itertools.islice(keys, start, None)
+        poss_genus = itertools.takewhile(lambda k: k < tax_name, poss_genus)
+        for genus in poss_genus:
+            if tax_name.startswith(genus):
+                return genus
+
+    # All species names that don't start with the genus and a space
+    cursor.execute("""SELECT DISTINCT snode.tax_id, sname.tax_name
+    FROM nodes snode INNER JOIN nodes gnode ON snode.parent_id = gnode.tax_id
+        INNER JOIN names sname ON sname.tax_id = snode.tax_id
+        INNER JOIN names gname ON gname.tax_id = gnode.tax_id
+    WHERE snode.rank = 'species' AND gnode.rank = 'genus' AND
+       SUBSTR(sname.tax_name, 1, LENGTH(gname.tax_name) + 1) <>
+           gname.tax_name + ' ';""")
+
+    with con:
+        stmt = "UPDATE names SET tax_name = ? WHERE tax_id = ?"
+        args = []
+        for tax_id, tax_name in cursor:
+            genus = find_genus(tax_name)
+            if genus:
+                new_tax_name = _add_space(tax_name, genus)
+                args.append((new_tax_name, tax_id))
+        cursor.executemany(stmt, args)
 
 def _load_rows(rows, con):
     """
@@ -88,9 +143,12 @@ def db_load(con, archive, maxrows=None):
     is not loaded if target tables already contain data.
     """
     try:
-        with tar_member(archive) as handle:
-            rows = _parse_gg(handle)
-            _load_rows(rows, con)
+        cursor = con.cursor()
+        if not taxdb.has_row(cursor, 'nodes'):
+            with tar_member(archive) as handle:
+                rows = _parse_gg(handle)
+                _load_rows(rows, con)
+        _clean_species(con)
     except sqlite3.IntegrityError, err:
         raise IntegrityError(err)
 
@@ -117,19 +175,20 @@ def _parse_classes(classes, otu_id):
        ['k__Bacteria', 'p__Proteobacteria']
     otu_id - OTU ID
 
+    If species starts with the genus, a space is inserted after genus
+
     Returns list of (rank, name) tuples
     """
     split = [i.split('__') for i in classes]
-    result = [(_rank_map[cls_key], cls or None)
+    result = [[_rank_map[cls_key], cls or None]
              for i, (cls_key, cls) in enumerate(split) if cls]
 
     # special handling for species -> genus
     if result[-1][0] == 'species' and result[-2][0] == 'genus':
         species = result[-1][1]
         genus = result[-2][1]
-        if species.startswith(genus):
-            l = len(genus)
-            species = ' '.join((species[:l], species[l:]))
+        if species.startswith(genus) and species[len(genus)] != ' ':
+            result[-1][1] = _add_space(species, genus)
 
     result.append(('otu', str(otu_id)))
     return result
