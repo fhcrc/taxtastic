@@ -117,12 +117,20 @@ def _parse_classes(classes, otu_id):
        ['k__Bacteria', 'p__Proteobacteria']
     otu_id - OTU ID
 
-    Returns list of (calc_tax_id, rank, name) tuples, where calc_tax_id is
-    otu_id*10 + the relative rank in classes
+    Returns list of (rank, name) tuples
     """
     split = [i.split('__') for i in classes]
     result = [(_rank_map[cls_key], cls or None)
              for i, (cls_key, cls) in enumerate(split) if cls]
+
+    # special handling for species -> genus
+    if result[-1][0] == 'species' and result[-2][0] == 'genus':
+        species = result[-1][1]
+        genus = result[-2][1]
+        if species.startswith(genus):
+            l = len(genus)
+            species = ' '.join((species[:l], species[l:]))
+
     result.append(('otu', str(otu_id)))
     return result
 
