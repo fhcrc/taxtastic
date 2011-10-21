@@ -103,7 +103,7 @@ def _load_rows(rows, con):
     """
     Load GreenGenes taxonomy into database.
 
-    Sequences are labeled with tax_ids starting from GG00000001
+    Sequences are labeled with generated tax_ids starting from GG00000001
 
     No action is taken if tables are already populated.
     """
@@ -124,6 +124,10 @@ def _load_rows(rows, con):
 
         # No tax_id found - create
         tax_id = 'GG{0:08d}'.format(count.next())
+
+        # If no parent id, node should be it's own parent (root)
+        if parent_id is None:
+            parent_id = tax_id
 
         cursor.execute("""INSERT INTO nodes (tax_id, parent_id, rank, source_id)
                 VALUES (?, ?, ?, 1)""", (tax_id, parent_id, rank))
@@ -181,7 +185,7 @@ def _parse_classes(classes, otu_id):
     """
     split = [i.split('__') for i in classes]
     result = [[_rank_map[cls_key], cls or None]
-             for i, (cls_key, cls) in enumerate(split) if cls]
+             for cls_key, cls in split if cls]
 
     # special handling for species -> genus
     if result[-1][0] == 'species' and result[-2][0] == 'genus':
@@ -197,7 +201,7 @@ def _parse_gg(handle):
     """
     Parse GreenGenes data
 
-    Yields parsed classes
+    Yields a list of parsed lineages for each OTU
     """
     for line in handle:
         otu_id, classes = line.rstrip().split('\t')
