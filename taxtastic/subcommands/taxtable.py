@@ -36,17 +36,17 @@ def build_parser(parser):
     parser.add_argument(
         '-d', '--database-file',
         dest = 'database_file',
-        metavar = 'FILE',
-        required = True,
-        help = 'Name of the sqlite database file')
+        metavar='FILE',
+        required=True,
+        help='Name of the sqlite database file')
 
     input_group = parser.add_argument_group(
         "Input options").add_mutually_exclusive_group()
 
     input_group.add_argument(
         '-n', '--tax-names',
-        dest = 'taxnames',
-        metavar = 'FILE',
+        dest='taxnames',
+        metavar='FILE',
         help="""A file identifing taxa in the form of taxonomic
         names. Names are matched against both primary names and
         synonyms. Lines beginning with "#" are ignored. Taxa
@@ -55,9 +55,9 @@ def build_parser(parser):
 
     input_group.add_argument(
         '-t', '--tax-ids',
-        dest = 'taxids',
-        metavar = 'FILE-OR-LIST',
-        help = """File containing a whitespace-delimited list of
+        dest='taxids',
+        metavar='FILE-OR-LIST',
+        help="""File containing a whitespace-delimited list of
         tax_ids (ie, separated by tabs, spaces, or newlines; lines
         beginning with "#" are ignored). This option can also be
         passed a comma-delited list of taxids on the command line.""")
@@ -68,8 +68,8 @@ def build_parser(parser):
     output_group.add_argument(
         '-o', '--out-file',
         dest='out_file',
-        type = argparse.FileType('w'),
-        default = sys.stdout,
+        type=argparse.FileType('w'),
+        default=sys.stdout,
         metavar='FILE',
         help="""Output file containing lineages for the specified taxa
         in csv format; writes to stdout if unspecified""")
