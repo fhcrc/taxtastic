@@ -53,7 +53,7 @@ def build_parser(parser):
     parser.add_argument("-p", "--profile",
                         action="store", dest="profile",
                         help='Alignment profile', metavar='FILE')
-    parser.add_argument('-P', '--package-name',
+    parser.add_argument('-P', '--package-name', required=True,
                         action='store', dest='package_name',
                         metavar='PATH', help='Name of refpkg to create')
     parser.add_argument("-R", "--readme",
