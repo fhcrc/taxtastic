@@ -238,7 +238,7 @@ class Refpkg(object):
         if not(isinstance(self.contents['log'], list)):
             return "Key 'log' in manifest did not refer to a list"
         # MD5 keys and filenames are in one to one correspondence
-        if self.contents['files'].keys() != self.contents['md5'].keys():
+        if self.contents['files'].viewkeys() != self.contents['md5'].viewkeys():
             return ("Files and MD5 sums in manifest do not "
                     "match (files: %s, MD5 sums: %s)") % \
                     (self.contents['files'].keys(),
@@ -254,7 +254,7 @@ class Refpkg(object):
             if found_md5 != expected_md5:
                 return ("File %s referred to by key %s did "
                         "not match its MD5 sum (found: %s, expected %s)") % \
-                        (found_md5, expected_md5)
+                        (filename, key, found_md5, expected_md5)
         return False
 
     def _sync_to_disk(self):
