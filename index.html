@@ -3,13 +3,16 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to taxtastic’s documentation! &mdash; taxtastic v0.1.0 documentation</title>
+    <title>taxtastic &mdash; taxtastic 0.1.0 documentation</title>
+    
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
@@ -22,7 +25,8 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="taxtastic v0.1.0 documentation" href="#" /> 
+    <link rel="top" title="taxtastic 0.1.0 documentation" href="#" />
+    <link rel="next" title="Manipulating the NCBI taxonomy" href="taxonomy.html" /> 
   </head>
   <body>
     <div class="related">
@@ -31,7 +35,10 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li><a href="#">taxtastic v0.1.0 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">taxtastic 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -40,11 +47,41 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="welcome-to-taxtastic-s-documentation">
-<h1>Welcome to taxtastic&#8217;s documentation!<a class="headerlink" href="#welcome-to-taxtastic-s-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="taxtastic">
+<h1>taxtastic<a class="headerlink" href="#taxtastic" title="Permalink to this headline">¶</a></h1>
+<p>Taxtastic combines two pieces of functionality: extracting subsets of the NCBI taxonomy, and creating and updating reference packages of sequences for use with pplacer.  All this functionality is exposed to the command line by subcommands of the script <tt class="docutils literal"><span class="pre">taxit</span></tt>.  Taxtastic also supplies a clean API for dealing with reference packages.  The taxonomy functionality is only available via the command line at the moment pending a complete rewrite of the taxonomy subsystem.</p>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
-<ul class="simple">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="taxonomy.html">Manipulating the NCBI taxonomy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="refpkg.html">Creating and manipulating refpkgs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="refpkg.html#quickstart">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="refpkg.html#the-refpkg-format">The Refpkg format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="refpkg.html#the-refpkg-api">The refpkg API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="refpkg_api.html">The Python Refpkg API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="refpkg_api.html#accessing-refpkg-contents">Accessing refpkg contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="refpkg_api.html#checking-refpkg-integrity">Checking refpkg integrity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="refpkg_api.html#updating-and-modifying-refpkgs">Updating and modifying refpkgs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="refpkg_api.html#refpkg-history-undo-and-redo">Refpkg history, undo, and redo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="refpkg_api.html#pplacer-specific-commands"><tt class="docutils literal"><span class="pre">pplacer</span></tt> specific commands</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="commands.html">Detailed <tt class="docutils literal"><span class="pre">taxit</span></tt> documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#add-nodes">add_nodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#check">check</a></li>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#create">create</a></li>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#new-database">new_database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#reroot">reroot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#rollback">rollback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#rollforward">rollforward</a></li>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#strip">strip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#taxids">taxids</a></li>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#taxtable">taxtable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="commands.html#update">update</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -65,12 +102,15 @@
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Welcome to taxtastic&#8217;s documentation!</a><ul>
+<li><a class="reference internal" href="#">taxtastic</a><ul>
 </ul>
 </li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 
+  <h4>Next topic</h4>
+  <p class="topless"><a href="taxonomy.html"
+                        title="next chapter">Manipulating the NCBI taxonomy</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/index.txt"
@@ -79,7 +119,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -99,12 +139,15 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li><a href="#">taxtastic v0.1.0 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
+             >next</a> |</li>
+        <li><a href="#">taxtastic 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2011, Noah Hoffman, Erick Matsen, Brian Hodges.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
     </div>
   </body>
 </html>
