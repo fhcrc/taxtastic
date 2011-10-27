@@ -97,7 +97,7 @@ The refpkg format was designed to store the multiple alignments and trees create
 ``seq_info``
   A CSV file giving basic information on all the sequences included in the refpkg.  It should begin with one line giving the field names::
 
-      ``"seqname","accession","tax_id","species_name","is_type"
+      "seqname","accession","tax_id","species_name","is_type"
   
   ``seqname`` should match the ID of the sequence in the FASTA file.  ``accession`` is a database reference for the sequence, which can be the same as ``seqname``.  In our work, ``seqname`` is an RDP accession number and ``accession`` is the NCBI accession number corresponding to that RDP entry.  ``tax_id`` is the entry in the taxonomy this sequence is mapped to, and ``species_name`` is the name associated with that entry.  ``is_type`` indicates whether this sequence is from a typestrain or not (again, this is particular to our work).
 
@@ -113,5 +113,3 @@ The top level object of ``CONTENTS.json`` plays the role of the current entry, a
 As a result of this, there may be files besides those referenced in the ``files`` key of the JSON object in the refpkg.  They may be referenced by other entries in the zipper.  There is no attempt to intelligently garbage collect orphaned files.  They are only deleted when the refpkg's ``strip`` method is called, which removes all undo/redo information as well.
 
 
-The refpkg API
---------------

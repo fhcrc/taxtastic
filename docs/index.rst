@@ -8,6 +8,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   quickstart
    taxonomy
    refpkg
    refpkg_api
