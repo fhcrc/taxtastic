@@ -132,7 +132,8 @@ taxit rollforward /path/to/refpkg</pre>
 <dd>A FASTA file containing all the sequences included in this refpkg (without gaps; this is the input to <tt class="docutils literal"><span class="pre">cmalign</span></tt>, not its output).</dd>
 <dt><tt class="docutils literal"><span class="pre">seq_info</span></tt></dt>
 <dd><p class="first">A CSV file giving basic information on all the sequences included in the refpkg.  It should begin with one line giving the field names:</p>
-<div class="highlight-python"><pre>``"seqname","accession","tax_id","species_name","is_type"</pre>
+<div class="highlight-python"><div class="highlight"><pre><span class="s">&quot;seqname&quot;</span><span class="p">,</span><span class="s">&quot;accession&quot;</span><span class="p">,</span><span class="s">&quot;tax_id&quot;</span><span class="p">,</span><span class="s">&quot;species_name&quot;</span><span class="p">,</span><span class="s">&quot;is_type&quot;</span>
+</pre></div>
 </div>
 <p class="last"><tt class="docutils literal"><span class="pre">seqname</span></tt> should match the ID of the sequence in the FASTA file.  <tt class="docutils literal"><span class="pre">accession</span></tt> is a database reference for the sequence, which can be the same as <tt class="docutils literal"><span class="pre">seqname</span></tt>.  In our work, <tt class="docutils literal"><span class="pre">seqname</span></tt> is an RDP accession number and <tt class="docutils literal"><span class="pre">accession</span></tt> is the NCBI accession number corresponding to that RDP entry.  <tt class="docutils literal"><span class="pre">tax_id</span></tt> is the entry in the taxonomy this sequence is mapped to, and <tt class="docutils literal"><span class="pre">species_name</span></tt> is the name associated with that entry.  <tt class="docutils literal"><span class="pre">is_type</span></tt> indicates whether this sequence is from a typestrain or not (again, this is particular to our work).</p>
 </dd>
@@ -143,9 +144,6 @@ taxit rollforward /path/to/refpkg</pre>
 <p>The undo/redo system is implemented as a purely functional data structure known as a zipper, used as a replacement for arrays with a pointer into them as a cursor in languages where data is immutable.  A zipper consists of a current entry, a ordered list of previous entries, and an ordered list of subsequent entries.  Moving the cursor one place to the right is equivalent to pushing the current entry onto the head of the list of previous entries, and popping the head of the list of subsequent entries and making that the new current entry.  Moving the cursor one place to the left is exactly the opposite.</p>
 <p>The top level object of <tt class="docutils literal"><span class="pre">CONTENTS.json</span></tt> plays the role of the current entry, and its fields <tt class="docutils literal"><span class="pre">rollback</span></tt> and <tt class="docutils literal"><span class="pre">rollforward</span></tt> are the heads of the lists of previous and subsequent entries.  The <tt class="docutils literal"><span class="pre">rollback</span></tt> field of the object in the <tt class="docutils literal"><span class="pre">rollback</span></tt> field is the second element of the list of previous entries, etc.  Thus undoing an operation consists of putting the current toplevel JSON object in the <tt class="docutils literal"><span class="pre">rollforward</span></tt> fields of the object in the <tt class="docutils literal"><span class="pre">rollback</span></tt> field, and making that object the new toplevel JSON object (with some book keeping details to keep everything consistent).</p>
 <p>As a result of this, there may be files besides those referenced in the <tt class="docutils literal"><span class="pre">files</span></tt> key of the JSON object in the refpkg.  They may be referenced by other entries in the zipper.  There is no attempt to intelligently garbage collect orphaned files.  They are only deleted when the refpkg&#8217;s <tt class="docutils literal"><span class="pre">strip</span></tt> method is called, which removes all undo/redo information as well.</p>
-</div>
-<div class="section" id="the-refpkg-api">
-<h2>The refpkg API<a class="headerlink" href="#the-refpkg-api" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -160,7 +158,6 @@ taxit rollforward /path/to/refpkg</pre>
 <li><a class="reference internal" href="#">Creating and manipulating refpkgs</a><ul>
 <li><a class="reference internal" href="#quickstart">Quickstart</a></li>
 <li><a class="reference internal" href="#the-refpkg-format">The Refpkg format</a></li>
-<li><a class="reference internal" href="#the-refpkg-api">The refpkg API</a></li>
 </ul>
 </li>
 </ul>

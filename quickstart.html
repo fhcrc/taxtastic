@@ -1,0 +1,150 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>I have my files, just tell me how to put them in a refpkg! &mdash; taxtastic 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="taxtastic 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="Manipulating the NCBI taxonomy" href="taxonomy.html" />
+    <link rel="prev" title="taxtastic" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="taxtastic"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">taxtastic 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="i-have-my-files-just-tell-me-how-to-put-them-in-a-refpkg">
+<h1>I have my files, just tell me how to put them in a refpkg!<a class="headerlink" href="#i-have-my-files-just-tell-me-how-to-put-them-in-a-refpkg" title="Permalink to this headline">¶</a></h1>
+<p>You&#8217;re impatient, you&#8217;re a phylogeneticist, and you just need to get a refpkg put together so you can start running <tt class="docutils literal"><span class="pre">pplacer</span></tt>.  You already have your sequences aligned and a tree built from them.  Okay, I get it.  First, here&#8217;s a checklist of the files you need (and the arbitrary filenames I&#8217;ll be calling them by for the reset of this page).  You&#8217;ll have to take care of any format conversions yourself:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">tax_ids.txt</span></tt>: A list of all the tax_ids that the sequences in your refpkg use, one per line in a text file.  Blank lines and Python style comments in this file will be ignored, and repeated entries are only considered once.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">cmalign_profile</span></tt>: If you used <tt class="docutils literal"><span class="pre">cmalign</span></tt> to produce your multiple, the profile you used.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">tree.nwk</span></tt>: The tree you built from your sequences, in Newick format.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">tree_stats.txt</span></tt>: The log file from RAxML or FastTree when it ran.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">seqs.fasta</span></tt> and <tt class="docutils literal"><span class="pre">seqs.sto</span></tt>: The multiply aligned sequences in both FASTA and Stockholm formats.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">seq_info.csv</span></tt>: A CSV file describing each of the aligned sequences.  It begins with one line giving the field names:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="s">&quot;seqname&quot;</span><span class="p">,</span><span class="s">&quot;accession&quot;</span><span class="p">,</span><span class="s">&quot;tax_id&quot;</span><span class="p">,</span><span class="s">&quot;species_name&quot;</span><span class="p">,</span><span class="s">&quot;is_type&quot;</span>
+</pre></div>
+</div>
+<p>This is followed by one line for each sequence in your multiple alignment.  <tt class="docutils literal"><span class="pre">seqname</span></tt> should match the ID of the sequence in the FASTA file.  <tt class="docutils literal"><span class="pre">accession</span></tt> is a database reference for the sequence, which can be the same as <tt class="docutils literal"><span class="pre">seqname</span></tt>.  In our work, <tt class="docutils literal"><span class="pre">seqname</span></tt> is an RDP accession number and <tt class="docutils literal"><span class="pre">accession</span></tt> is the NCBI accession number corresponding to that RDP entry.  <tt class="docutils literal"><span class="pre">tax_id</span></tt> is the entry in the taxonomy this sequence is mapped to, and <tt class="docutils literal"><span class="pre">species_name</span></tt> is the name associated with that entry.  <tt class="docutils literal"><span class="pre">is_type</span></tt> indicates whether this sequence is from a typestrain or not (should be <tt class="docutils literal"><span class="pre">TRUE</span></tt> or <tt class="docutils literal"><span class="pre">FALSE</span></tt>).  If you aren&#8217;t dealing with typestrains, just set it to <tt class="docutils literal"><span class="pre">FALSE</span></tt> for all your sequences.</p>
+</li>
+</ul>
+<p>There, have all that assembled?  Now it&#8217;s a few steps to construct a refpkg.</p>
+<p>First we have to turn the list of tax_ids into a usable taxonomy.  You will need a copy of the NCBI taxonomy in a format taxtastic understands in order to extract the minimal taxonomy containing the tax_ids in <tt class="docutils literal"><span class="pre">tax_ids.txt</span></tt>.  Run:</p>
+<div class="highlight-python"><pre>taxit new_database -d taxonomy.db</pre>
+</div>
+<p>This will download the NCBI taxonomy into the current directory and load it into <tt class="docutils literal"><span class="pre">taxonomy.db</span></tt>.  This takes a while!  Plan to go get a cup of coffee.  Then run:</p>
+<div class="highlight-python"><pre>taxit taxtable -d taxonomy.db -t tax_ids.txt -o taxa.csv</pre>
+</div>
+<p><tt class="docutils literal"><span class="pre">taxa.csv</span></tt> is a CSV file containing the minimum subtaxonomy of <tt class="docutils literal"><span class="pre">taxonomy.db</span></tt> which contains all the entries in <tt class="docutils literal"><span class="pre">tax_ids.txt</span></tt>.</p>
+<p>Now we are ready to build the refpkg. Assuming you&#8217;re building a refpkg of the locus <tt class="docutils literal"><span class="pre">locus_name</span></tt> (usually something like <tt class="docutils literal"><span class="pre">16s_rRNA</span></tt>) and you want to put the resulting refpkg in <tt class="docutils literal"><span class="pre">my_locus.refpkg</span></tt>, run the command:</p>
+<div class="highlight-python"><pre>taxit create -l locus_name -P my_locus.refpkg \
+    --taxonomy taxa.csv \
+    --aln-fasta seqs.fasta \
+    --aln-sto seqs.sto \
+    --seq-info seq_info.csv \
+    --profile cmalign_profile \
+    --tree-stats tree_stats.txt \
+    --tree-file tree.nwk</pre>
+</div>
+<p>You may also want to add some metadata fields using the options <tt class="docutils literal"><span class="pre">--author</span></tt>, <tt class="docutils literal"><span class="pre">--description</span></tt>, and <tt class="docutils literal"><span class="pre">--package-version</span></tt>, but these are optional.  The above command is the bare minimum you need for a refpkg to be valid for use with <tt class="docutils literal"><span class="pre">pplacer</span></tt>.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">taxtastic</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="taxonomy.html"
+                        title="next chapter">Manipulating the NCBI taxonomy</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/quickstart.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="taxtastic"
+             >previous</a> |</li>
+        <li><a href="index.html">taxtastic 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Noah Hoffman, Erick Matsen, Brian Hodges.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
+    </div>
+  </body>
+</html>
