@@ -61,6 +61,8 @@ def _clean_species(con):
 
     For every species that doesn't start with it's genus, try to find the genus
     and insert a space between genus and species.
+
+    :param con: Database connection
     """
     cursor = con.cursor()
     all_genus = dict(cursor.execute("""SELECT names.tax_name, names.tax_id
@@ -99,13 +101,16 @@ def _clean_species(con):
                 args.append((new_tax_name, tax_id))
         cursor.executemany(stmt, args)
 
-def _load_rows(rows, con):
+def _load_taxonomy(rows, con):
     """
     Load GreenGenes taxonomy into database.
 
     Sequences are labeled with generated tax_ids starting from GG00000001
 
     No action is taken if tables are already populated.
+
+    :param rows: Iterable containing lists of (rank_name, rank) tuples by descending rank
+    :param con: database connection
     """
     source_id = _get_source_id(con)
     cursor = con.cursor()
@@ -145,13 +150,17 @@ def db_load(con, archive, maxrows=None):
     """
     Load data from zip archive into database identified by con. Data
     is not loaded if target tables already contain data.
+
+    :param con: Database connection
+    :param archive: Tar archive path
+    :param maxrows: Maximum rows to load (ignored)
     """
     try:
         cursor = con.cursor()
         if not taxdb.has_row(cursor, 'nodes'):
             with tar_member(archive) as handle:
-                rows = _parse_gg(handle)
-                _load_rows(rows, con)
+                rows = _parse_greengenes_lineages(handle)
+                _load_taxonomy(rows, con)
         _clean_species(con)
     except sqlite3.IntegrityError, err:
         raise IntegrityError(err)
@@ -161,9 +170,9 @@ def fetch_data(dest_dir='.', clobber=False, url=greengenes_data_url):
     Download data from greengenes required to generate local taxonomy
     database.
 
-    * dest_dir - directory in which to save output files (created if necessary).
-    * clobber - don't download if False and target of url exists in dest_dir
-    * url - url to archive;
+    :param dest_dir: directory in which to save output files (created if necessary).
+    :param boolean clobber: don't download if False and target of url exists in dest_dir
+    :param url: url to archive;
 
     Returns (fname, downloaded), where fname is the name of the
     downloaded zip archive, and downloaded is True if a new files was
@@ -183,6 +192,9 @@ def _parse_classes(classes, otu_id):
     If species starts with the genus, a space is inserted after genus
 
     Returns list of (rank, name) tuples
+
+    :param classes: semicolon delimited lineage from GreenGenes
+    :param otu_id: OTU number
     """
     split = [i.split('__') for i in classes.split(';')]
     # Start with a single root node
@@ -202,11 +214,13 @@ def _parse_classes(classes, otu_id):
     result.append(('otu', str(otu_id)))
     return result
 
-def _parse_gg(handle):
+def _parse_greengenes_lineages(handle):
     """
-    Parse GreenGenes data
+    Parse GreenGenes lineages from a file handle.
 
     Yields a list of parsed lineages for each OTU
+
+    :param handle: File-like object
     """
     for line in handle:
         otu_id, classes = line.rstrip().split('\t')
