@@ -130,7 +130,7 @@ def _load_rows(rows, con):
             parent_id = tax_id
 
         cursor.execute("""INSERT INTO nodes (tax_id, parent_id, rank, source_id)
-                VALUES (?, ?, ?, 1)""", (tax_id, parent_id, rank))
+                VALUES (?, ?, ?, ?)""", (tax_id, parent_id, rank, source_id))
         cursor.execute("""INSERT INTO names (tax_id, tax_name, is_primary)
                 VALUES (?, ?, 1)""", (tax_id, name))
         return tax_id
