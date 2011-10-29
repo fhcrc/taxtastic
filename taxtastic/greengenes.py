@@ -175,15 +175,16 @@ def _parse_classes(classes, otu_id):
     """
     Parse classes from GreenGenes taxonomy
 
-    classes - split list of GreenGenes taxonomy assignments, e.g.
-       ['k__Bacteria', 'p__Proteobacteria']
+    classes - GreenGenes taxonomy assignments, as semicolon delimited list of
+    [rank_key]__[ank] items, e.g.
+    'k__Bacteria';p__Proteobacteria'
     otu_id - OTU ID
 
     If species starts with the genus, a space is inserted after genus
 
     Returns list of (rank, name) tuples
     """
-    split = [i.split('__') for i in classes]
+    split = [i.split('__') for i in classes.split(';')]
     # Start with a single root node
     result = [[taxdb.root_name, taxdb.root_name]]
 
@@ -210,7 +211,7 @@ def _parse_gg(handle):
     for line in handle:
         otu_id, classes = line.rstrip().split('\t')
         otu_id = int(otu_id)
-        classes = _parse_classes(classes.split(';'), otu_id)
+        classes = _parse_classes(classes, otu_id)
         yield classes
 
 @contextlib.contextmanager
