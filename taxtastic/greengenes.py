@@ -184,8 +184,12 @@ def _parse_classes(classes, otu_id):
     Returns list of (rank, name) tuples
     """
     split = [i.split('__') for i in classes]
-    result = [[_rank_map[cls_key], cls or None]
-             for cls_key, cls in split if cls]
+    # Start with a single root node
+    result = [[taxdb.root_name, taxdb.root_name]]
+
+    # Add classifications
+    result.extend([_rank_map[cls_key], cls or None]
+                  for cls_key, cls in split if cls)
 
     # special handling for species -> genus
     if result[-1][0] == 'species' and result[-2][0] == 'genus':
