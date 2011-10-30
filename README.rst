@@ -5,7 +5,7 @@ TAXTASTIC
 We love it, but what is it?
 ---------------------------
 
-Taxtastic is software written in python used to build and maintain `reference package`_ s-- i.e. collections of reference trees, reference alignments, profiles, and associated taxonomic information.
+Taxtastic is software written in python used to build and maintain reference packages-- i.e. collections of reference trees, reference alignments, profiles, and associated taxonomic information.
 
 * quickstart_
 * `full documentation`_
