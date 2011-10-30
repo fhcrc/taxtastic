@@ -7,6 +7,9 @@ We love it, but what is it?
 
 Taxtastic is software written in python used to build and maintain `reference package`_ s-- i.e. collections of reference trees, reference alignments, profiles, and associated taxonomic information.
 
+* quickstart_
+* `full documentation`_
+
 A script named ``taxit`` provides a command line interface::
 
 
@@ -68,8 +71,6 @@ A script named ``taxit`` provides a command line interface::
     -q, --quiet           Suppress output
 
   usage: taxit.pyc [-h] [-V] [-v] [-q]
-
-For more details, see the quickstart_ and the `full documentation`_.
 
 
 .. Targets ..
