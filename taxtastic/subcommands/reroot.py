@@ -1,4 +1,4 @@
-"""Reroots a reference package"""
+"""Taxonomically reroots a reference package"""
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
