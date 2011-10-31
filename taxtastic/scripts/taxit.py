@@ -24,7 +24,6 @@ import os
 import logging
 from taxtastic import subcommands, __version__ as version
 
-PROG = os.path.basename(__file__)
 DESCRIPTION = __doc__.strip()
 
 def main(argv):
@@ -51,7 +50,7 @@ def parse_arguments(argv):
     """
     """
     # Create the argument parser
-    parser = argparse.ArgumentParser(description=DESCRIPTION, prog=PROG)
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
 
     parser.add_argument('-V', '--version', action='version',
         version='taxit v' + version,
