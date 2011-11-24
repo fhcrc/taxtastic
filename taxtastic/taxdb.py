@@ -86,7 +86,6 @@ merged_keys = 'old_tax_id new_tax_id'.split()
 undefined_rank = 'no_rank'
 root_name = 'root'
 
-# see http://biowarehouse.ai.sri.com/repos/enumerations-loader/data/enumeration_inserts.txt
 _ranks = """
 root
 superkingdom
@@ -102,8 +101,8 @@ infraclass
 superorder
 order
 suborder
-parvorder
 infraorder
+parvorder
 superfamily
 family
 subfamily
