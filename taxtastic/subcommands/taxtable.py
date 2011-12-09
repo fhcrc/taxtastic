@@ -19,34 +19,33 @@ import argparse
 
 import re
 
-from taxtastic import ncbi, greengenes
+from taxtastic import ncbi
 from taxtastic.taxonomy import Taxonomy
 from taxtastic.utils import getlines
 
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 import os.path
 import sys
 
 log = logging.getLogger(__name__)
-
-modules = {'ncbi': ncbi, 'greengenes': greengenes}
 
 def build_parser(parser):
 
     parser.add_argument(
         '-d', '--database-file',
         dest = 'database_file',
-        metavar='FILE',
-        required=True,
-        help='Name of the sqlite database file')
+        metavar = 'FILE',
+        required = True,
+        help = 'Name of the sqlite database file')
 
     input_group = parser.add_argument_group(
         "Input options").add_mutually_exclusive_group()
 
     input_group.add_argument(
         '-n', '--tax-names',
-        dest='taxnames',
-        metavar='FILE',
+        dest = 'taxnames',
+        metavar = 'FILE',
         help="""A file identifing taxa in the form of taxonomic
         names. Names are matched against both primary names and
         synonyms. Lines beginning with "#" are ignored. Taxa
@@ -55,9 +54,9 @@ def build_parser(parser):
 
     input_group.add_argument(
         '-t', '--tax-ids',
-        dest='taxids',
-        metavar='FILE-OR-LIST',
-        help="""File containing a whitespace-delimited list of
+        dest = 'taxids',
+        metavar = 'FILE-OR-LIST',
+        help = """File containing a whitespace-delimited list of
         tax_ids (ie, separated by tabs, spaces, or newlines; lines
         beginning with "#" are ignored). This option can also be
         passed a comma-delited list of taxids on the command line.""")
@@ -68,23 +67,15 @@ def build_parser(parser):
     output_group.add_argument(
         '-o', '--out-file',
         dest='out_file',
-        type=argparse.FileType('w'),
-        default=sys.stdout,
+        type = argparse.FileType('w'),
+        default = sys.stdout,
         metavar='FILE',
         help="""Output file containing lineages for the specified taxa
         in csv format; writes to stdout if unspecified""")
 
-    parser.add_argument(
-        '-T', '--taxonomy',
-        metavar='TAXSRC',
-        default='ncbi', choices=modules.keys(),
-        help="""Taxonomy source to use [%(choices)s] [%(default)s];
-        database passed via -d must match.""")
-
 def action(args):
-    tax_mod = modules[args.taxonomy]
     engine = create_engine('sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
-    tax = Taxonomy(engine, tax_mod.ranks)
+    tax = Taxonomy(engine, ncbi.ranks)
 
     taxids = set()
 
@@ -119,7 +110,7 @@ def action(args):
     for t in taxids:
         taxids_to_export.update([y for (x,y) in tax._get_lineage(t)])
 
-    tax.write_table(taxids_to_export, csvfile=args.out_file)
+    tax.write_table(taxids_to_export, csvfile = args.out_file)
 
     engine.dispose()
     return 0
