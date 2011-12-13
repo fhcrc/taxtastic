@@ -13,11 +13,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-import subprocess
-import tempfile
 import logging
-import shutil
-import os
 
 from taxtastic import refpkg
 

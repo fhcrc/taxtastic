@@ -151,7 +151,6 @@ class Taxonomy(object):
         );
         """
 
-        merged = self.merged
         s = select([self.merged.c.new_tax_id], self.merged.c.old_tax_id == old_tax_id)
         res = s.execute()
         output = res.fetchall() or None
@@ -175,7 +174,7 @@ class Taxonomy(object):
         if merge_obsolete:
             tax_id = self._get_merged(tax_id)
 
-        indent = '.'*_level
+        #indent = '.'*_level
 
         undefined = self.undefined_rank
         prefix = self.undef_prefix+'_'

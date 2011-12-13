@@ -17,12 +17,10 @@ Show information about reference packages.
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import os.path
-import shutil
 import csv
 from collections import defaultdict
 
-from Bio import Phylo, SeqIO
+from Bio import Phylo
 
 from taxtastic import refpkg
 
@@ -40,7 +38,7 @@ def build_parser(parser):
 
 def describe_taxonomy(pkg, rank):
     tally = defaultdict(int)
-    with open(pkg.file_abspath('taxonomy')) as taxtab, open(pkg.file_abspath('seq_info')) as seq_info:  
+    with open(pkg.file_abspath('taxonomy')) as taxtab, open(pkg.file_abspath('seq_info')) as seq_info:
         taxdict = {row['tax_id']: row for row in csv.DictReader(taxtab)}
         taxdict[''] = {'tax_name':'undefined'}
         for refseq in csv.DictReader(seq_info):
@@ -49,7 +47,7 @@ def describe_taxonomy(pkg, rank):
     items = [(taxdict[tax_id]['tax_name'], count) for tax_id, count in tally.items()]
     for name, count in sorted(items):
         print name, count
-        
+
 def action(args):
     """
     Show information about reference packages.
@@ -60,11 +58,11 @@ def action(args):
 
     with open(pkg.file_abspath('seq_info')) as seq_info:
         snames = [row['seqname'] for row in csv.DictReader(seq_info)]
-    
-    if args.seq_names:    
+
+    if args.seq_names:
         print '\n'.join(snames)
     elif args.taxonomy:
         describe_taxonomy(pkg, args.rank)
     else:
         print 'number of sequences:', len(snames)
-        print 'package components\n', '\n'.join(sorted(pkg.file_keys())) 
+        print 'package components\n', '\n'.join(sorted(pkg.file_keys()))

@@ -14,7 +14,6 @@
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 import datetime
 import logging
-import shutil
 import os
 import re
 import csv
@@ -133,7 +132,7 @@ def mkdir(dirpath, clobber = False):
     """
 
     if clobber:
-        rmdir(dirpath)
+        os.rmdir(dirpath)
 
     try:
         os.mkdir(dirpath)

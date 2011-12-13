@@ -98,7 +98,7 @@ def action(args):
     for t in taxids:
         try:
             tax._node(t)
-        except KeyError, k:
+        except KeyError:
             print >>sys.stderr, "Taxid %s not found in taxonomy." % t
             valid_taxids = False
     if not(valid_taxids):

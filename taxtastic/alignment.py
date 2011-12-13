@@ -13,7 +13,12 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-import json, sys, os, string, argparse, subprocess, re
+import json
+import os
+import re
+import string
+import subprocess
+import sys
 from string import Template
 from Bio import SeqIO, AlignIO
 

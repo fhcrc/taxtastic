@@ -20,7 +20,6 @@ with `pplacer` and related software.
 
 import argparse
 import sys
-import os
 import logging
 from taxtastic import subcommands, __version__ as version
 

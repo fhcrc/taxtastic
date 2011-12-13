@@ -19,8 +19,6 @@ $ taxit strip my-refpkg
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import os.path
-import shutil
 
 from taxtastic import refpkg
 

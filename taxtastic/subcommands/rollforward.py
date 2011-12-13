@@ -24,8 +24,6 @@ $ taxit rollforward -n 3 my-refpkg
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import os.path
-import shutil
 import sys
 
 from taxtastic import refpkg
@@ -36,7 +34,7 @@ def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',
                         help='the reference package to operate on')
     parser.add_argument('-n', action='store', metavar='int',
-                        default=1, type=int, 
+                        default=1, type=int,
                         help='Number of operations to roll back')
 
 def action(args):

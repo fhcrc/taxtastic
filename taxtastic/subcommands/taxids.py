@@ -16,15 +16,12 @@
 
 import logging
 import argparse
-import pprint
 import sys
 
 from sqlalchemy import create_engine
-from sqlalchemy.exc import IntegrityError
 
 from taxtastic.taxonomy import Taxonomy
 from taxtastic.ncbi import ranks as ncbi_ranks
-from taxtastic.utils import getlines
 
 log = logging.getLogger(__name__)
 
