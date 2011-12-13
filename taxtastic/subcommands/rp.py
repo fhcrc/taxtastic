@@ -1,10 +1,8 @@
 """
-Get the path to a file in the reference package. Usage is simple:
+Resolve path; get the path to a file in the reference package.
 
-$ taxit rp my.refpkg tree
-
-This will cause the absolute path to the `tree` file in the refpkg to be
-written to stdout.
+Usage is simple: `taxit rp my.refpkg tree` will cause the absolute path to the
+`tree` file in the refpkg to be written to stdout.
 """
 # This file is part of taxtastic.
 #
