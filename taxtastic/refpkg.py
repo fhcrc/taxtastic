@@ -23,17 +23,14 @@ Note that Refpkg objects are *NOT* thread safe!
 import contextlib
 from decorator import decorator
 import subprocess
-import itertools
 import tempfile
 import hashlib
 import shutil
 import os
-import sqlite3
 import copy
 import json
 import time
 import csv
-import sys
 
 import Bio.SeqIO
 import Bio.Phylo
@@ -49,15 +46,17 @@ def md5file(path):
 
 
 @contextlib.contextmanager
-def scratch_file(unlink=True):
+def scratch_file(unlink=True, **kwargs):
     """Create a temporary file and return its name.
+
+    Additional arguments are passed to ``tempfile.mkstemp``
 
     At the start of the with block a secure, temporary file is created
     and its name returned.  At the end of the with block it is
     deleted.
     """
     try:
-        (tmp_fd, tmp_name) = tempfile.mkstemp(text=True)
+        tmp_fd, tmp_name = tempfile.mkstemp(text=True, **kwargs)
         os.close(tmp_fd)
         yield tmp_name
     except ValueError, v:
@@ -385,7 +384,7 @@ class Refpkg(object):
         If *pretend* is ``True``, the convexification is run, but the
         refpkg is not actually updated.
         """
-        with scratch_file() as name:
+        with scratch_file(prefix='tree') as name:
             # Use a specific path to rppr, otherwise rely on $PATH
             subprocess.check_call([rppr or 'rppr', 'reroot',
                                    '-c', self.path, '-o', name])
@@ -429,7 +428,7 @@ class Refpkg(object):
         else:
             raise ValueError('invalid log type: %r' % (stats_type,))
 
-        with scratch_file() as name:
+        with scratch_file(prefix='phylo_model') as name:
             with open(name, 'w') as phylo_model, open(stats_file) as h:
                 json.dump(parser(h), phylo_model, indent=4)
             self.update_file('phylo_model', name)
