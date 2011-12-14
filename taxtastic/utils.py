@@ -188,6 +188,7 @@ def parse_raxml(handle):
 
 
 JTT_MODEL = 'ML Model: Jones-Taylor-Thorton, CAT approximation with 20 rate categories'
+WAG_MODEL = 'ML Model: Whelan-And-Goldman, CAT approximation with 20 rate categories'
 
 def parse_fasttree(fobj):
     data = {
@@ -214,6 +215,8 @@ def parse_fasttree(fobj):
                     map(float, splut[1:])))
         elif line.strip() == JTT_MODEL:
             data['subs_model'] = 'JTT'
+        elif line.strip() == WAG_MODEL:
+            data['subs_model'] = 'WAG'
 
     return data
 
