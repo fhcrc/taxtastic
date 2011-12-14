@@ -1,4 +1,4 @@
-"""Creates a CSV file describing lineages for a set of taxa"""
+"""Create a database containing an entire taxonomy"""
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify

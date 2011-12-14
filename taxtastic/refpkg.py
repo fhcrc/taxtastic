@@ -414,7 +414,8 @@ class Refpkg(object):
                     if line.startswith('FastTree'):
                         stats_type = 'FastTree'
                         break
-                    elif line.startswith('This is RAxML'):
+                    elif (line.startswith('This is RAxML') or
+                          line.startswith('You are using RAxML')):
                         stats_type = 'RAxML'
                         break
                 else:
