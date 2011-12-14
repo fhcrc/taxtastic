@@ -215,8 +215,10 @@ def parse_fasttree(fobj):
                     map(float, splut[1:])))
         elif line.strip() == JTT_MODEL:
             data['subs_model'] = 'JTT'
+            data['datatype'] = 'AA'
         elif line.strip() == WAG_MODEL:
             data['subs_model'] = 'WAG'
+            data['datatype'] = 'AA'
 
     return data
 
