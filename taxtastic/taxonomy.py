@@ -174,7 +174,8 @@ class Taxonomy(object):
         if merge_obsolete:
             tax_id = self._get_merged(tax_id)
 
-        #indent = '.'*_level
+        # Note: indent is referenced through locals() below
+        indent = '.'*_level
 
         undefined = self.undefined_rank
         prefix = self.undef_prefix+'_'
