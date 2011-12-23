@@ -384,7 +384,7 @@ class Refpkg(object):
         If *pretend* is ``True``, the convexification is run, but the
         refpkg is not actually updated.
         """
-        with scratch_file(prefix='tree') as name:
+        with scratch_file(prefix='tree', suffix='.tre') as name:
             # Use a specific path to rppr, otherwise rely on $PATH
             subprocess.check_call([rppr or 'rppr', 'reroot',
                                    '-c', self.path, '-o', name])
@@ -428,7 +428,7 @@ class Refpkg(object):
         else:
             raise ValueError('invalid log type: %r' % (stats_type,))
 
-        with scratch_file(prefix='phylo_model') as name:
+        with scratch_file(prefix='phylo_model', suffix='.json') as name:
             with open(name, 'w') as phylo_model, open(stats_file) as h:
                 json.dump(parser(h), phylo_model, indent=4)
             self.update_file('phylo_model', name)
