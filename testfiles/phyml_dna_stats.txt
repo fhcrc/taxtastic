@@ -1,66 +1,68 @@
 
  oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
-                                    ---  PhyML v3.0_360-500M  ---                                             
-                            http://www.atgc-montpellier.fr/phyml                                          
-                         Copyright CNRS - Universite Montpellier II                                 
+                                    ---  PhyML v3.0_360-500M  ---
+                            http://www.atgc-montpellier.fr/phyml
+                         Copyright CNRS - Universite Montpellier II
  oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
 
 
-. Sequence filename: 			psbA_phy_aln
+. Sequence filename: 			Example_Alignement
 
 . Data set: 				#1
 
-. Tree topology search : 		NNIs
+. Tree topology search : 		Best of NNIs and SPRs
 
 . Initial tree: 			BioNJ
 
 . Model of nucleotides substitution: 	GTR
 
-. Number of taxa: 			128
+. Number of taxa: 			104
 
-. Log-likelihood: 			-26675.55067
+. Log-likelihood: 			-48380.82650
 
-. Unconstrained likelihood: 		-4139.15076
+. Unconstrained likelihood: 		-14205.64537
 
-. Parsimony: 				6226
+. Parsimony: 				12660
 
-. Tree size: 				11.36888
+. Tree size: 				37.97749
 
 . Discrete gamma model: 		Yes
   - Number of categories: 		4
-  - Gamma shape parameter: 		0.448
+  - Gamma shape parameter: 		0.687
+
+. Proportion of invariant: 		0.133
 
 . Nucleotides frequencies:
 
-  - f(A)= 0.20191
-  - f(C)= 0.25916
-  - f(G)= 0.20919
-  - f(T)= 0.32974
+  - f(A)= 0.25062
+  - f(C)= 0.20983
+  - f(G)= 0.23165
+  - f(T)= 0.30789
 
-. GTR relative rate parameters : 
+. GTR relative rate parameters :
 
-  A <-> C    1.13747
-  A <-> G    5.40642
-  A <-> T    7.09944
-  C <-> G    2.57697
-  C <-> T    6.90929
+  A <-> C    1.19324
+  A <-> G    2.18622
+  A <-> T    1.67963
+  C <-> G    0.84982
+  C <-> T    2.63215
   G <-> T    1.00000
 
 
-. Instantaneous rate matrix : 
+. Instantaneous rate matrix :
 
   [A---------C---------G---------T------]
-  -1.20755   0.09450   0.36257   0.75048  
-   0.07363  -0.97682   0.17282   0.73038  
-   0.34995   0.21410  -0.66976   0.10571  
-   0.45953   0.57405   0.06706  -1.10064  
+  -1.05817   0.20797   0.42066   0.42954
+   0.24840  -1.08505   0.16352   0.67314
+   0.45510   0.14811  -0.85895   0.25574
+   0.34964   0.45875   0.19241  -1.00081
 
 
 
-. Time used 0h10m42s
+. Time used 0h37m0s
 
 
-. 642 seconds
+. 2220 seconds
 
  oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
  Suggested citation:

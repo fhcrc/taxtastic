@@ -1,17 +1,16 @@
-#!/usr/bin/env python
 
-
-import os
-import unittest
 import logging
-import pprint
+import os
+import json
+import unittest
 
-import config
-import taxtastic
+#import taxtastic
 import taxtastic.utils
+from . import config
 
 
 log = logging
+
 
 outputdir = os.path.abspath(config.outputdir)
 datadir = os.path.abspath(config.datadir)
@@ -51,7 +50,7 @@ class TestGetNewNodes(unittest.TestCase):
         pass
 
     def check_parent_id(self, rows):
-        check = lambda val: isinstance(val, str) and '.' not in val        
+        check = lambda val: isinstance(val, str) and '.' not in val
         self.assertTrue(all([check(d['parent_id']) for d in rows]))
 
     def check_children(self, rows):
@@ -59,7 +58,7 @@ class TestGetNewNodes(unittest.TestCase):
             if 'children' in d:
                 val = d['children']
                 self.assertTrue(val and isinstance(val, list))
-                    
+
     def test01(self):
         if self.xlrd_is_installed:
             rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
@@ -70,9 +69,8 @@ class TestGetNewNodes(unittest.TestCase):
 
     def test02(self):
         if not self.xlrd_is_installed:
-            self.assertRaises(
-                AttributeError, taxtastic.utils.get_new_nodes,
-                os.path.join(datadir,'new_taxa.xls'))
+            rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
+            self.assertRaises(AttributeError, next, rows)
         else:
             self.assertTrue(True)
 
@@ -84,6 +82,35 @@ class TestGetNewNodes(unittest.TestCase):
     def test04(self):
         rows = list(taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa_mac.csv')))
         self.check_parent_id(rows)
-        
+
+class StatsFileParsingMixIn(object):
+
+    def setUp(self):
+        self.test_path = config.data_path(self.test_file_name)
+        expected_path = config.data_path(self.test_file_name + '.json')
+        with open(expected_path) as fp:
+            self.expected = json.load(fp)
+
+    def test_parse(self):
+        with open(self.test_path) as fp:
+            result = self.parse_func(fp)
+            # Hack: Pass through json so unicode matches
+            actual = json.loads(json.dumps(result))
+            self.assertEqual(self.expected, actual)
 
 
+class PhyMLAminoAcidTestCase(StatsFileParsingMixIn, unittest.TestCase):
+    test_file_name = 'phyml_aa_stats.txt'
+    parse_func = taxtastic.utils.parse_phyml
+
+    @property
+    def parse_func(self):
+        return taxtastic.utils.parse_phyml
+
+
+class PhyMLDNATestCase(StatsFileParsingMixIn, unittest.TestCase):
+    test_file_name = 'phyml_dna_stats.txt'
+
+    @property
+    def parse_func(self):
+        return taxtastic.utils.parse_phyml
