@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 
-import sys
-import os
 from os import path
-import unittest
 import logging
 
 from sqlalchemy import create_engine
 
-import config
-from config import TestBase
+from . import config
+from .config import TestBase
 
 import taxtastic
 from taxtastic.taxonomy import Taxonomy
@@ -60,14 +57,15 @@ class TestGetLineagePrivate(TaxTableSetup):
         tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
 
         self.assertFalse(tax_id in self.tax.cached)
-        self.assertRaises(KeyError, self.tax._get_lineage, tax_id)
+        self.assertRaises(KeyError, self.tax._get_lineage, tax_id,
+                merge_obsolete=False)
 
 class TestGetMerged(TaxTableSetup):
 
     def test01(self):
         tax_id = '1378'
         merged = self.tax._get_merged(tax_id)
-        self.assertTrue(merged is None)
+        self.assertEqual(tax_id, merged)
 
     def test02(self):
         tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
