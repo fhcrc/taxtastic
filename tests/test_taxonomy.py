@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 
-import sys
 import os
 from os import path
-import unittest
 import logging
 import shutil
-import pprint
+import unittest
 
 from sqlalchemy import create_engine
 
-import config
-from config import mkdir, rmdir, TestBase
+from . import config
+from .config import TestBase
 
 import taxtastic
 from taxtastic.taxonomy import Taxonomy
@@ -26,6 +24,11 @@ echo = False
 
 zfile = config.ncbi_data
 dbname = config.ncbi_master_db
+
+try:
+    import xlrd
+except ImportError:
+    xlrd = None
 
 class TestTaxonomyBase(TestBase):
 
@@ -88,8 +91,9 @@ class TestAddNode(TestTaxonomyBase):
             lineage = self.tax.lineage(taxid)
             self.assertTrue(lineage['parent_id'] == new_taxid)
 
-
+    @unittest.skipIf(xlrd is None, "xlrd is not installed")
     def test03(self):
+
         rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
         for d in rows:
             d['source_id'] = 2
