@@ -124,26 +124,6 @@ def getlines(fname):
             if line.strip() and not line.startswith('#'):
                 yield line.split('#', 1)[0].strip()
 
-def mkdir(dirpath, clobber = False):
-    """
-    Create a (potentially existing) directory without errors. Raise
-    OSError if directory can't be created. If clobber is True, remove
-    dirpath if it exists.
-    """
-
-    if clobber:
-        os.rmdir(dirpath)
-
-    try:
-        os.mkdir(dirpath)
-    except OSError, msg:
-        log.debug(msg)
-
-    if not path.exists(dirpath):
-        raise OSError('Failed to create %s' % dirpath)
-
-    return dirpath
-
 
 def try_set_fields(d, regex, text, hook=lambda x: x):
     v = re.search(regex, text, re.MULTILINE)

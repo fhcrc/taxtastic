@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 
-import sys
 import os
 from os import path
-import unittest
 import logging
 import shutil
-import pprint
+import unittest
 
 from sqlalchemy import create_engine
 
-import config
-from config import mkdir, rmdir, TestBase
+from . import config
+from .config import TestBase
 
 import taxtastic
 from taxtastic.taxonomy import Taxonomy
@@ -27,12 +25,17 @@ echo = False
 zfile = config.ncbi_data
 dbname = config.ncbi_master_db
 
+try:
+    import xlrd
+except ImportError:
+    xlrd = None
+
 class TestTaxonomyBase(TestBase):
 
     def setUp(self):
         self.engine = create_engine('sqlite:///%s' % self.dbname, echo=echo)
         self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
-        
+
     def tearDown(self):
         self.engine.dispose()
 
@@ -57,7 +60,7 @@ class TestAddNode(TestTaxonomyBase):
             parent_id = '1578',
             rank = 'species_group',
             tax_name = 'Lactobacillus helveticis/crispatus',
-            source_id = 2            
+            source_id = 2
             )
 
         lineage = self.tax.lineage('1578_1')
@@ -77,7 +80,7 @@ class TestAddNode(TestTaxonomyBase):
             rank = 'species_group',
             tax_name = new_taxname,
             children = children,
-            source_id = 2            
+            source_id = 2
             )
 
         lineage = self.tax.lineage(new_taxid)
@@ -86,10 +89,11 @@ class TestAddNode(TestTaxonomyBase):
 
         for taxid in children:
             lineage = self.tax.lineage(taxid)
-            self.assertTrue(lineage['parent_id'] == new_taxid)        
+            self.assertTrue(lineage['parent_id'] == new_taxid)
 
-        
+    @unittest.skipIf(xlrd is None, "xlrd is not installed")
     def test03(self):
+
         rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
         for d in rows:
             d['source_id'] = 2
@@ -106,4 +110,4 @@ class TestAddNode(TestTaxonomyBase):
 
         for taxid in children:
             lineage = self.tax.lineage(taxid)
-            self.assertTrue(lineage['parent_id'] == new_taxid)        
+            self.assertTrue(lineage['parent_id'] == new_taxid)

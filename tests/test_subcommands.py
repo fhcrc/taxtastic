@@ -3,20 +3,19 @@ import unittest
 import tempfile
 import shutil
 import copy
-import sys
 import os
 
-sys.path.insert(1, '../')
 from taxtastic import refpkg
 from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check
 
+from . import config
+
 class TestUpdate(unittest.TestCase):
     def test_action(self):
-        scratch = tempfile.mkdtemp()
-        try:
+        with config.tempdir() as scratch:
             pkg_path = os.path.join(scratch, 'test.refpkg')
             r = refpkg.Refpkg(pkg_path)
-            test_file = '../testfiles/bv_refdata.csv'
+            test_file = config.data_path('bv_refdata.csv')
             class _Args(object):
                 refpkg=pkg_path
                 changes = ['meep='+test_file, 'hilda='+test_file]
@@ -25,12 +24,9 @@ class TestUpdate(unittest.TestCase):
             r._sync_from_disk()
             self.assertEqual(r.contents['files']['meep'], 'bv_refdata.csv')
             self.assertEqual(r.contents['files']['hilda'], 'bv_refdata.csv1')
-        finally:
-            shutil.rmtree(scratch)
 
     def test_metadata_action(self):
-        scratch = tempfile.mkdtemp()
-        try:
+        with config.tempdir() as scratch:
             pkg_path = os.path.join(scratch, 'test.refpkg')
             r = refpkg.Refpkg(pkg_path)
             class _Args(object):
@@ -41,30 +37,27 @@ class TestUpdate(unittest.TestCase):
             r._sync_from_disk()
             self.assertEqual(r.metadata('meep'), 'boris')
             self.assertEqual(r.metadata('hilda'), 'vrrp')
-        finally:
-            shutil.rmtree(scratch)
 
 class TestCreate(unittest.TestCase):
     def test_create(self):
-        scratch = tempfile.mkdtemp()
-        class _Args(object):
-            clobber = True
-            locus = 'Nowhere'
-            description = 'A description'
-            author = 'Boris the Mad Baboon'
-            package_version = '0.3'
-            package_name = os.path.join(scratch, 'test.refpkg')
-            tree_stats = None
-            aln_fasta = None
-            aln_sto = None
-            phylo_model = None
-            seq_info = None
-            mask = None
-            profile = None
-            readme = None
-            tree = None
-            taxonomy = None
-        try:
+        with config.tempdir() as scratch:
+            class _Args(object):
+                clobber = True
+                locus = 'Nowhere'
+                description = 'A description'
+                author = 'Boris the Mad Baboon'
+                package_version = '0.3'
+                package_name = os.path.join(scratch, 'test.refpkg')
+                tree_stats = None
+                aln_fasta = None
+                aln_sto = None
+                phylo_model = None
+                seq_info = None
+                mask = None
+                profile = None
+                readme = None
+                tree = None
+                taxonomy = None
             create.action(_Args())
             r = refpkg.Refpkg(_Args().package_name)
             self.assertEqual(r.metadata('locus'), 'Nowhere')
@@ -75,44 +68,42 @@ class TestCreate(unittest.TestCase):
             self.assertEqual(r.contents['rollback'], None)
 
             args2 = _Args()
-            args2.package_name = '/dev/null'
+            args2.package_name = os.path.join(scratch, 'test.refpkg')
             args2.clobber = True
-            self.assertEqual(1, create.action(args2))
-        finally:
-            shutil.rmtree(scratch)
+            self.assertEqual(0, create.action(args2))
 
 
 class TestStrip(unittest.TestCase):
     def test_strip(self):
-        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/tostrip.refpkg')
-        try:
-            r = refpkg.Refpkg('../testfiles/tostrip.refpkg')
+        with config.tempdir() as scratch:
+            rpkg = os.path.join(scratch, 'tostrip.refpkg')
+            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            r = refpkg.Refpkg(rpkg)
             r.update_metadata('boris', 'hilda')
             r.update_metadata('meep', 'natasha')
 
             class _Args(object):
-                refpkg = '../testfiles/tostrip.refpkg'
+                refpkg = rpkg
             strip.action(_Args())
 
             r._sync_from_disk()
             self.assertEqual(r.contents['rollback'], None)
             self.assertEqual(r.contents['rollforward'], None)
-        finally:
-            shutil.rmtree('../testfiles/tostrip.refpkg')
 
 class TestRollback(unittest.TestCase):
     maxDiff = None
     def test_rollback(self):
-        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/tostrip.refpkg')
-        try:
-            r = refpkg.Refpkg('../testfiles/tostrip.refpkg')
+        with config.tempdir() as scratch:
+            rpkg = os.path.join(scratch, 'tostrip.refpkg')
+            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            r = refpkg.Refpkg(rpkg)
             original_contents = copy.deepcopy(r.contents)
             r.update_metadata('boris', 'hilda')
             r.update_metadata('meep', 'natasha')
             updated_contents = copy.deepcopy(r.contents)
 
             class _Args(object):
-                refpkg = '../testfiles/tostrip.refpkg'
+                refpkg = rpkg
                 def __init__(self, n):
                     self.n = n
 
@@ -125,16 +116,14 @@ class TestRollback(unittest.TestCase):
             self.assertEqual(r.contents['metadata'], original_contents['metadata'])
             self.assertEqual(r.contents['rollback'], None)
             self.assertNotEqual(r.contents['rollforward'], None)
-        finally:
-            shutil.rmtree('../testfiles/tostrip.refpkg')
-
 
 class TestRollforward(unittest.TestCase):
     maxDiff = None
     def test_rollforward(self):
-        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/tostrip.refpkg')
-        try:
-            r = refpkg.Refpkg('../testfiles/tostrip.refpkg')
+        with config.tempdir() as scratch:
+            rpkg = os.path.join(scratch, 'tostrip.refpkg')
+            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            r = refpkg.Refpkg(rpkg)
             original_contents = copy.deepcopy(r.contents)
             r.update_metadata('boris', 'hilda')
             r.update_metadata('meep', 'natasha')
@@ -143,7 +132,7 @@ class TestRollforward(unittest.TestCase):
             r.rollback()
 
             class _Args(object):
-                refpkg = '../testfiles/tostrip.refpkg'
+                refpkg = rpkg
                 def __init__(self, n):
                     self.n = n
 
@@ -156,8 +145,6 @@ class TestRollforward(unittest.TestCase):
             self.assertEqual(r.contents['metadata'], updated_contents['metadata'])
             self.assertEqual(r.contents['rollforward'], None)
             self.assertNotEqual(r.contents['rollback'], None)
-        finally:
-            shutil.rmtree('../testfiles/tostrip.refpkg')
 
 
 @contextlib.contextmanager
@@ -185,8 +172,8 @@ class TestTaxtable(unittest.TestCase):
         with scratch_file() as out:
             with open(out, 'w') as h:
                 class _Args(object):
-                    database_file = '../testfiles/taxonomy.db'
-                    taxids = '../testfiles/taxids1.txt'
+                    database_file = config.output_path('ncbi_master.db')
+                    taxids = config.data_path('taxids1.txt')
                     taxnames = None
                     verbosity = 0
                     out_file = h
@@ -197,17 +184,17 @@ class TestTaxtable(unittest.TestCase):
         with scratch_file() as out:
             with open(out, 'w') as h:
                 class _Args(object):
-                    database_file = '../testfiles/taxonomy.db'
+                    database_file = config.output_path('ncbi_master.db')
                     taxids = 'horace,hilda'
                     taxnames = None
                     verbosity = 0
                     out_file = h
                 self.assertEqual(taxtable.action(_Args()), 1)
-        
+
 class TestCheck(unittest.TestCase):
     def test_runs(self):
         class _Args(object):
-            refpkg = '../testfiles/lactobacillus2-0.2.refpkg'
+            refpkg = config.data_path('lactobacillus2-0.2.refpkg')
         self.assertEqual(check.action(_Args()), 0)
 
 if __name__ == '__main__':

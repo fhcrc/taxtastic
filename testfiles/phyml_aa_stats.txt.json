@@ -1,7 +1,10 @@
 {
   "datatype": "AA", 
-  "subs_model": "WAG", 
-  "program": "PhyML v3.0", 
-  "ras_model": null,
-  "empirical_frequencies": true
+  "subs_model": "LG", 
+  "program": "PhyML v3.0_export", 
+  "ras_model": "gamma", 
+  "gamma": {
+    "alpha": 0.626, 
+    "n_cats": 4
+  }
 }

@@ -37,6 +37,8 @@ import Bio.Phylo
 
 import utils
 
+FORMAT_VERSION = '1.1'
+
 def md5file(path):
     md5 = hashlib.md5()
     with open(path) as h:
@@ -68,7 +70,7 @@ def scratch_file(unlink=True, **kwargs):
 
 def manifest_template():
     return {'metadata': {'create_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                         'format_version': '1.1'},
+                         'format_version': FORMAT_VERSION},
             'files': {},
             'md5': {},
             'log': [],
@@ -334,26 +336,6 @@ class Refpkg(object):
         self.contents['md5'][key] = md5_value
         self._log('Updated file: %s=%s' % (key,new_path))
         return old_path
-
-        # Many keys require a quick sanity check, for instance to make
-        # sure they really are FASTA or Stockholm.  That code goes here.
-        if key == 'aln_fasta':
-            with open(new_path) as h:
-                if not(h.read(1) in ';>'): # ; is a valid start character FASTA
-                    raise ValueError('File %s is not a valid FASTA file' % new_path)
-        elif key == 'aln_sto':
-            with open(new_path) as h:
-                if not(h.readline().startswith('# STOCKHOLM')):
-                    raise ValueError('File %s is not a valid Stockholm file' % new_path)
-        elif key == 'phylo_model':
-            with open(new_path) as h:
-                json.load(h)
-        elif key == 'seq_info':
-            with open(new_path) as h:
-                if len(csv.reader(h).next()) <= 1:
-                    raise ValueError('File %s is not a valid CSV file' % new_path)
-
-        return (key, md5_value)
 
     def file_abspath(self, key):
         """Return the absolute path to the file referenced by *key*."""
