@@ -69,8 +69,8 @@ def build_parser(parser):
                               'RAxML_info.whatever")'), metavar='FILE')
     parser.add_argument("-Y", "--stats-type",
                         action="store", metavar='TYPE',
-                        help=('The type of the tree stats file. Can be either "FastTree", '
-                              '"RAxML", or unspecified to guess'))
+                        choices=('RAxML', 'PhyML', 'FastTree'),
+                        help='The source of the tree stats file. Options: %(choices)s [default: guess]')
     parser.add_argument("-S", "--aln-sto",
                         action="store", dest="aln_sto",
                         help='Multiple alignment in Stockholm format', metavar='FILE')

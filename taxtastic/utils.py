@@ -221,3 +221,40 @@ def parse_fasttree(fobj):
 
     return data
 
+def parse_phyml(fobj):
+    s = ''.join(fobj)
+    result = {'gamma': {}}
+    try_set_fields(result, r'---\s*(?P<program>PhyML.*?)\s*---', s)
+    try_set_fields(result['gamma'], r'Number of categories:\s+(?P<n_cats>\d+)',
+                   s, hook=int)
+    try_set_fields(result['gamma'],
+            r'Gamma shape parameter:\s+(?P<alpha>\d+\.\d+)', s, hook=float)
+    result['ras_model'] = 'gamma'
+    if 'nucleotides' in s:
+        result['datatype'] = 'DNA'
+        try_set_fields(result,
+                       r'Model of nucleotides substitution:\s+(?P<subs_model>\w+)',
+                       s)
+        rates = {}
+        try_set_fields(rates, r'A <-> C\s+(?P<ac>\d+\.\d+)', s, hook=float)
+        try_set_fields(rates, r'A <-> G\s+(?P<ag>\d+\.\d+)', s, hook=float)
+        try_set_fields(rates, r'A <-> T\s+(?P<at>\d+\.\d+)', s, hook=float)
+        try_set_fields(rates, r'C <-> G\s+(?P<cg>\d+\.\d+)', s, hook=float)
+        try_set_fields(rates, r'C <-> T\s+(?P<ct>\d+\.\d+)', s, hook=float)
+        try_set_fields(rates, r'G <-> T\s+(?P<gt>\d+\.\d+)', s, hook=float)
+        if rates:
+            result['subs_rates'] = rates
+
+        # PhyML doesn't record whether empirical base frequencies were used, or
+        # ML estimates were made.
+        # Setting to empirical for now.
+        result['empirical_frequencies'] = True
+    elif 'amino acids' in s:
+        result['datatype'] = 'AA'
+        try_set_fields(result,
+                       r'Model of amino acids substitution:\s+(?P<subs_model>\w+)',
+                       s)
+    else:
+        raise ValueError('Could not determine if alignment is AA or DNA')
+
+    return result
