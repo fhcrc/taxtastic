@@ -6,8 +6,6 @@ import copy
 import sys
 import os
 
-
-sys.path.insert(1, '../')
 from taxtastic import refpkg
 
 class TestRefpkg(unittest.TestCase):
@@ -54,7 +52,7 @@ class TestRefpkg(unittest.TestCase):
             with open(boris, 'w') as h:
                 print >>h, "Hello, world!"
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
-                json.dump({'metadata': {}, 
+                json.dump({'metadata': {},
                            'log': [],
                            'rollback': None,
                            'rollforward': None,
@@ -74,7 +72,7 @@ class TestRefpkg(unittest.TestCase):
             with open(boris, 'w') as h:
                 print >>h, "Hello, world!"
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
-                json.dump({'metadata': {}, 
+                json.dump({'metadata': {},
                            'log': [], 'rollback': None, 'rollforward': None,
                            'files': {'meep': 'boris', 'hilda': 'boris'},
                            'md5': {'meep': 0}},
@@ -117,7 +115,7 @@ class TestRefpkg(unittest.TestCase):
             self.assertRaises(ValueError, lambda: r.update_file('aln_sto', test_file))
             self.assertRaises(ValueError, lambda: r.update_file('phylo_model', test_file))
             self.assertRaises(ValueError, lambda: r.update_file('seq_info', test_file2))
-            
+
         finally:
             shutil.rmtree(scratch)
 
@@ -147,7 +145,7 @@ class TestRefpkg(unittest.TestCase):
             shutil.rmtree('../testfiles/toreroot.refpkg')
 
     def test_pretend_reroot(self):
-        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/toreroot.refpkg')     
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/toreroot.refpkg')
         try:
             r = refpkg.Refpkg('../testfiles/toreroot.refpkg')
             r.reroot(pretend=True)
@@ -157,13 +155,13 @@ class TestRefpkg(unittest.TestCase):
             shutil.rmtree('../testfiles/toreroot.refpkg')
 
     def test_transaction(self):
-        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/test.refpkg')     
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/test.refpkg')
         try:
             r = refpkg.Refpkg('../testfiles/test.refpkg')
-            self.assertEqual(r.update_metadata('author', 'Boris and Hilda'), 
+            self.assertEqual(r.update_metadata('author', 'Boris and Hilda'),
                              "Noah Hoffman <ngh2@uw.edu>, Sujatha Srinivasan <ssriniva@fhcrc.org>, Erick Matsen <matsen@fhcrc.org>")
             self.assertEqual(r.current_transaction, None)
-            self.assertEqual(r.log(), 
+            self.assertEqual(r.log(),
                              ['Updated metadata: author=Boris and Hilda'])
             self.assertTrue(isinstance(r.contents['rollback'], dict))
             self.assertFalse('log' in r.contents['rollback'])
@@ -182,19 +180,19 @@ class TestRefpkg(unittest.TestCase):
             shutil.rmtree('../testfiles/test.refpkg')
 
     def test_failed_transaction(self):
-        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/test.refpkg')     
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', '../testfiles/test.refpkg')
         try:
             r = refpkg.Refpkg('../testfiles/test.refpkg')
             v = copy.deepcopy(r.contents)
-            self.assertRaises(Exception, 
-                              lambda: r.update_file('tiddlywinks', 
+            self.assertRaises(Exception,
+                              lambda: r.update_file('tiddlywinks',
                                                     '/path/to/nonexistant/thing'))
             self.assertEqual(v, r.contents)
         finally:
             shutil.rmtree('../testfiles/test.refpkg')
 
     def test_rollback(self):
-        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', 
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg',
                         '../testfiles/test.refpkg')
         try:
             r = refpkg.Refpkg('../testfiles/test.refpkg')
@@ -234,9 +232,9 @@ class TestRefpkg(unittest.TestCase):
                               lambda: r.rollforward())
         finally:
             shutil.rmtree('../testfiles/test.refpkg')
-        
+
     def test_strip(self):
-        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', 
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg',
                         '../testfiles/test.refpkg')
         try:
             r = refpkg.Refpkg('../testfiles/test.refpkg')
@@ -258,7 +256,7 @@ class TestRefpkg(unittest.TestCase):
             shutil.rmtree('../testfiles/test.refpkg')
 
     def test_is_ill_formed(self):
-        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg', 
+        shutil.copytree('../testfiles/lactobacillus2-0.2.refpkg',
                         '../testfiles/test.refpkg')
         try:
             r = refpkg.Refpkg('../testfiles/test.refpkg')

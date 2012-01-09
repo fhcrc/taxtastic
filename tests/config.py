@@ -5,7 +5,6 @@ import logging
 import re
 import unittest
 import commands
-import shutil
 
 log = logging
 
@@ -31,10 +30,10 @@ logging.basicConfig(
     )
 
 # module data
-datadir = 'testfiles'
-outputdir = 'test_output'
+datadir = path.join(path.dirname(__file__), '..', 'testfiles')
+outputdir = path.join(path.dirname(__file__), '..', 'test_output')
 
-if not(os.path.exists('../test_output')):
+if not os.path.isdir(outputdir):
     mkdir(outputdir)
 
 class TestBase(unittest.TestCase):

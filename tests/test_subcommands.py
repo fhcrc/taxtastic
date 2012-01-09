@@ -6,7 +6,6 @@ import copy
 import sys
 import os
 
-sys.path.insert(1, '../')
 from taxtastic import refpkg
 from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check
 
@@ -203,7 +202,7 @@ class TestTaxtable(unittest.TestCase):
                     verbosity = 0
                     out_file = h
                 self.assertEqual(taxtable.action(_Args()), 1)
-        
+
 class TestCheck(unittest.TestCase):
     def test_runs(self):
         class _Args(object):
