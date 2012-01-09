@@ -1,6 +1,6 @@
 import contextlib
 import os
-from os import path, mkdir
+from os import path, rmdir
 import sys
 import logging
 import re
@@ -36,6 +36,26 @@ logging.basicConfig(
 datadir = path.abspath(path.join(path.dirname(__file__), '..', 'testfiles'))
 outputdir = path.abspath(path.join(path.dirname(__file__), '..', 'test_output'))
 
+def mkdir(dirpath, clobber=False):
+    """
+    Create a (potentially existing) directory without errors. Raise
+    OSError if directory can't be created. If clobber is True, remove
+    dirpath if it exists.
+    """
+
+    if clobber and os.path.isdir(dirpath):
+        shutil.rmtree(dirpath)
+
+    try:
+        os.mkdir(dirpath)
+    except OSError, msg:
+        log.debug(msg)
+
+    if not path.exists(dirpath):
+        raise OSError('Failed to create %s' % dirpath)
+
+    return dirpath
+
 if not os.path.isdir(outputdir):
     mkdir(outputdir)
 
@@ -67,7 +87,7 @@ class TestBase(unittest.TestCase):
         funcname = '.'.join(self.id().split('.')[-3:])
         return path.join(self.outputdir, funcname)
 
-    def mkoutdir(self, clobber = True):
+    def mkoutdir(self, clobber=True):
         """
         Create output directory (destructively if clobber is True)
         """
