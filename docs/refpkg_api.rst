@@ -51,7 +51,7 @@ There are several methods for retrieving files, depending on whether you want ju
 Checking refpkg integrity
 -------------------------
 
-There are two methods for checking a refpkg.  The ``isinvalid`` method enforces only that the refpkg is sane: there is a ``CONTENTS.json`` file, the MD5 sums listed match the actual files, and other such basics.  The ``is_ill_formed`` method is much stronger.  It enforces the necessary structure of a refpkg to be fed to ``pplacer``.
+There are two methods for checking a refpkg.  The ``is_invalid`` method enforces only that the refpkg is sane: there is a ``CONTENTS.json`` file, the MD5 sums listed match the actual files, and other such basics.  The ``is_ill_formed`` method is much stronger.  It enforces the necessary structure of a refpkg to be fed to pplacer_.
 
 .. automethod:: taxtastic.refpkg.Refpkg.is_invalid
 
@@ -106,10 +106,10 @@ would result in a single operation that could be rolled back as one, and leaves 
 ``pplacer`` specific commands
 -----------------------------
 
-Finally, the API has three commands which are specific to creating inputs for ``pplacer``.  One of these is ``check``, which was described above.  The other two are:
+Finally, the API has three commands which are specific to creating inputs for pplacer_.  One of these is ``check``, which was described above.  The other two are:
 
 .. automethod:: taxtastic.refpkg.Refpkg.reroot
 
 .. automethod:: taxtastic.refpkg.Refpkg.update_phylo_model
 
-
+.. _pplacer: http://matsen.fhcrc.org/pplacer

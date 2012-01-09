@@ -58,4 +58,4 @@ You may also want to add some metadata fields using the options ``--author``, ``
         --aln-sto seqs.sto \
         --profile align_profile
 
-where ``align_profile`` is a profile that can be used to align query sequences using HMMER3 or Infernal, and ``seqs.sto`` is the reference alignment in Stockholm format. This is handy if you plan to use ``cmalign`` (in the Infernal suite of tools) to perform your alignments.
+where ``align_profile`` is a profile that can be used to align query sequences using HMMER3 or Infernal, and ``seqs.sto`` is the reference alignment in Stockholm format. This is handy if you plan to use ``cmalign`` (in the Infernal suite of tools) or ``hmmalign`` (in the HMMER3 suite of tools) to perform your alignments.
