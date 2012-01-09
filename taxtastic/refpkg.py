@@ -37,6 +37,8 @@ import Bio.Phylo
 
 import utils
 
+FORMAT_VERSION = '1.1'
+
 def md5file(path):
     md5 = hashlib.md5()
     with open(path) as h:
@@ -68,7 +70,7 @@ def scratch_file(unlink=True, **kwargs):
 
 def manifest_template():
     return {'metadata': {'create_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                         'format_version': '1.1'},
+                         'format_version': FORMAT_VERSION},
             'files': {},
             'md5': {},
             'log': [],
