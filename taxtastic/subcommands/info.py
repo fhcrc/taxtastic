@@ -19,6 +19,8 @@ Show information about reference packages.
 import logging
 import csv
 from collections import defaultdict
+import pprint
+import sys
 
 from Bio import Phylo
 
@@ -31,22 +33,23 @@ def build_parser(parser):
                         help='the reference package to operate on')
     parser.add_argument('-n', '--seq-names', action = 'store_true', default = False,
                         help = 'print a list of sequence names')
-    parser.add_argument('-t', '--taxonomy', action = 'store_true', default = False,
+    parser.add_argument('-t', '--tally', action = 'store_true', default = False,
                         help = 'print a tally of sequences representing each taxon at rank RANK')
-    parser.add_argument('-r', '--rank', metavar = 'RANK', default = 'species',
-                        help = 'rank at which to describe the taxonomy [%(default)s]')
 
-def describe_taxonomy(pkg, rank):
+def tally_taxa(pkg):
     tally = defaultdict(int)
     with open(pkg.file_abspath('taxonomy')) as taxtab, open(pkg.file_abspath('seq_info')) as seq_info:
         taxdict = {row['tax_id']: row for row in csv.DictReader(taxtab)}
-        taxdict[''] = {'tax_name':'undefined'}
-        for refseq in csv.DictReader(seq_info):
-            tally[taxdict[refseq['tax_id']][rank]] += 1
 
-    items = [(taxdict[tax_id]['tax_name'], count) for tax_id, count in tally.items()]
-    for name, count in sorted(items):
-        print name, count
+        tax_ids = [d['tax_id'] for d in csv.DictReader(seq_info)]
+
+    for tax_id in tax_ids:
+        tally[tax_id] += 1
+        
+    rows = [(taxdict[tax_id]['tax_name'], tax_id, count) for tax_id, count in tally.items()]
+
+    writer = csv.writer(sys.stdout, quoting = csv.QUOTE_NONNUMERIC)
+    writer.writerows(sorted(rows))
 
 def action(args):
     """
@@ -61,8 +64,8 @@ def action(args):
 
     if args.seq_names:
         print '\n'.join(snames)
-    elif args.taxonomy:
-        describe_taxonomy(pkg, args.rank)
+    elif args.tally:
+        tally_taxa(pkg)
     else:
         print 'number of sequences:', len(snames)
         print 'package components\n', '\n'.join(sorted(pkg.file_keys()))
