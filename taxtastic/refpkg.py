@@ -335,26 +335,6 @@ class Refpkg(object):
         self._log('Updated file: %s=%s' % (key,new_path))
         return old_path
 
-        # Many keys require a quick sanity check, for instance to make
-        # sure they really are FASTA or Stockholm.  That code goes here.
-        if key == 'aln_fasta':
-            with open(new_path) as h:
-                if not(h.read(1) in ';>'): # ; is a valid start character FASTA
-                    raise ValueError('File %s is not a valid FASTA file' % new_path)
-        elif key == 'aln_sto':
-            with open(new_path) as h:
-                if not(h.readline().startswith('# STOCKHOLM')):
-                    raise ValueError('File %s is not a valid Stockholm file' % new_path)
-        elif key == 'phylo_model':
-            with open(new_path) as h:
-                json.load(h)
-        elif key == 'seq_info':
-            with open(new_path) as h:
-                if len(csv.reader(h).next()) <= 1:
-                    raise ValueError('File %s is not a valid CSV file' % new_path)
-
-        return (key, md5_value)
-
     def file_abspath(self, key):
         """Return the absolute path to the file referenced by *key*."""
         return os.path.join(self.path, self.file_name(key))

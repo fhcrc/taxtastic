@@ -1,3 +1,4 @@
+import contextlib
 import os
 from os import path, mkdir
 import sys
@@ -5,6 +6,8 @@ import logging
 import re
 import unittest
 import commands
+import shutil
+import tempfile
 
 log = logging
 
@@ -30,11 +33,25 @@ logging.basicConfig(
     )
 
 # module data
-datadir = path.join(path.dirname(__file__), '..', 'testfiles')
-outputdir = path.join(path.dirname(__file__), '..', 'test_output')
+datadir = path.abspath(path.join(path.dirname(__file__), '..', 'testfiles'))
+outputdir = path.abspath(path.join(path.dirname(__file__), '..', 'test_output'))
 
 if not os.path.isdir(outputdir):
     mkdir(outputdir)
+
+def data_path(*args):
+    return os.path.join(datadir, *args)
+
+def output_path(*args):
+    return os.path.join(outputdir, *args)
+
+@contextlib.contextmanager
+def tempdir(*args, **kwargs):
+    try:
+        d = tempfile.mkdtemp(*args, **kwargs)
+        yield d
+    finally:
+        shutil.rmtree(d)
 
 class TestBase(unittest.TestCase):
     """
