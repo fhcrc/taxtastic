@@ -84,6 +84,15 @@ class TestGetNewNodes(unittest.TestCase):
         self.check_parent_id(rows)
 
 class StatsFileParsingMixIn(object):
+    """
+    Base class for stats file parsers.
+
+    Classes using this mixing should define a property returning the
+
+    Requires two files in datadir: example.txt and example.txt.json with expected results.
+    """
+    # Example. Will look for example.txt.json for expected
+    test_file_name = 'example.txt'
 
     def setUp(self):
         self.test_path = config.data_path(self.test_file_name)
@@ -98,19 +107,29 @@ class StatsFileParsingMixIn(object):
             actual = json.loads(json.dumps(result))
             self.assertEqual(self.expected, actual)
 
+    @property
+    def parse_func(self):
+        # Example
+        raise ValueError("Override")
 
-class PhyMLAminoAcidTestCase(StatsFileParsingMixIn, unittest.TestCase):
-    test_file_name = 'phyml_aa_stats.txt'
-    parse_func = taxtastic.utils.parse_phyml
-
+class PhyMLStatsMixIn(StatsFileParsingMixIn):
     @property
     def parse_func(self):
         return taxtastic.utils.parse_phyml
 
+class PhyMLAminoAcidTestCase(PhyMLStatsMixIn, unittest.TestCase):
+    test_file_name = 'phyml_aa_stats.txt'
 
-class PhyMLDNATestCase(StatsFileParsingMixIn, unittest.TestCase):
+class PhyMLDNATestCase(PhyMLStatsMixIn, unittest.TestCase):
     test_file_name = 'phyml_dna_stats.txt'
 
+class RAxMLStatsMixIn(StatsFileParsingMixIn):
     @property
     def parse_func(self):
-        return taxtastic.utils.parse_phyml
+        return taxtastic.utils.parse_raxml
+
+class RAxMLAminoAcidTestCase(RAxMLStatsMixIn, unittest.TestCase):
+    test_file_name = 'RAxML_info.aa'
+
+class RAxMLDNATestCase(RAxMLStatsMixIn, unittest.TestCase):
+    test_file_name = 'RAxML_info.testNuc'
