@@ -20,7 +20,8 @@ class TestRefpkg(unittest.TestCase):
 
     def test_fails_on_dir_without_manifest(self):
         # Trying to attach to a non-Refpkg directory should fail.
-        self.assertRaises(ValueError, lambda: refpkg.Refpkg('../taxtastic'))
+        with config.tempdir() as td:
+            self.assertRaises(ValueError, lambda: refpkg.Refpkg(td))
 
     def test_create(self):
         # Attaching to an empty directory should create a new, empty Refpkg.
