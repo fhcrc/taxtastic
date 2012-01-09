@@ -99,6 +99,9 @@ def action(args):
         except:
             print >>sys.stderr, "Failed: Could not delete %s" % args.package_name
             return 1
+    elif not args.clobber and os.path.exists(args.package_name):
+        print >> sys.stderr, 'Failed: {0} exists.'.format(args.package_name)
+        return 1
 
     r = refpkg.Refpkg(args.package_name)
     r.start_transaction()
