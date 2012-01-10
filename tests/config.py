@@ -1,4 +1,5 @@
 import contextlib
+from cStringIO import StringIO
 import os
 from os import path, rmdir
 import sys
@@ -71,6 +72,18 @@ def tempdir(*args, **kwargs):
     finally:
         shutil.rmtree(d)
 
+class OutputRedirectMixin(object):
+    def setUp(self):
+        self.old_stdout = sys.stdout
+        self.old_stderr = sys.stderr
+        sys.stdout = StringIO()
+        sys.stderr = StringIO()
+
+    def tearDown(self):
+        sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
+
+
 class TestBase(unittest.TestCase):
     """
     Base class for unit tests
@@ -95,7 +108,7 @@ class TestBase(unittest.TestCase):
         return outdir
 
 
-class TestScriptBase(TestBase):
+class TestScriptBase(OutputRedirectMixin, TestBase):
 
     """
     Base class for unit tests of scripts distributed with this
@@ -125,7 +138,7 @@ class TestScriptBase(TestBase):
         if cmd is None:
             cmd = self.executable
         input = (cmd + ' ' + args) % self
-        log.warning('--> '+ input)
+        log.info('--> '+ input)
         status, output = commands.getstatusoutput(input)
         log.info(output)
         return status, output

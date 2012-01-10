@@ -1,16 +1,19 @@
 import contextlib
+from cStringIO import StringIO
 import unittest
 import tempfile
 import shutil
 import copy
 import os
+import sys
 
 from taxtastic import refpkg
 from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check
 
 from . import config
+from .config import OutputRedirectMixin
 
-class TestUpdate(unittest.TestCase):
+class TestUpdate(OutputRedirectMixin, unittest.TestCase):
     def test_action(self):
         with config.tempdir() as scratch:
             pkg_path = os.path.join(scratch, 'test.refpkg')
@@ -38,7 +41,7 @@ class TestUpdate(unittest.TestCase):
             self.assertEqual(r.metadata('meep'), 'boris')
             self.assertEqual(r.metadata('hilda'), 'vrrp')
 
-class TestCreate(unittest.TestCase):
+class TestCreate(OutputRedirectMixin, unittest.TestCase):
     def test_create(self):
         with config.tempdir() as scratch:
             class _Args(object):
@@ -73,7 +76,7 @@ class TestCreate(unittest.TestCase):
             self.assertEqual(0, create.action(args2))
 
 
-class TestStrip(unittest.TestCase):
+class TestStrip(OutputRedirectMixin, unittest.TestCase):
     def test_strip(self):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
@@ -90,7 +93,7 @@ class TestStrip(unittest.TestCase):
             self.assertEqual(r.contents['rollback'], None)
             self.assertEqual(r.contents['rollforward'], None)
 
-class TestRollback(unittest.TestCase):
+class TestRollback(OutputRedirectMixin, unittest.TestCase):
     maxDiff = None
     def test_rollback(self):
         with config.tempdir() as scratch:
@@ -117,7 +120,7 @@ class TestRollback(unittest.TestCase):
             self.assertEqual(r.contents['rollback'], None)
             self.assertNotEqual(r.contents['rollforward'], None)
 
-class TestRollforward(unittest.TestCase):
+class TestRollforward(OutputRedirectMixin, unittest.TestCase):
     maxDiff = None
     def test_rollforward(self):
         with config.tempdir() as scratch:
@@ -166,7 +169,7 @@ def scratch_file(unlink=True):
             os.unlink(tmp_name)
 
 
-class TestTaxtable(unittest.TestCase):
+class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
     maxDiff = None
     @unittest.skip('Output varies.')
     def test_taxids(self):
@@ -192,7 +195,7 @@ class TestTaxtable(unittest.TestCase):
                     out_file = h
                 self.assertEqual(taxtable.action(_Args()), 1)
 
-class TestCheck(unittest.TestCase):
+class TestCheck(OutputRedirectMixin, unittest.TestCase):
     def test_runs(self):
         class _Args(object):
             refpkg = config.data_path('lactobacillus2-0.2.refpkg')

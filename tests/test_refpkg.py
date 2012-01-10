@@ -3,7 +3,6 @@ import tempfile
 import shutil
 import json
 import copy
-import sys
 import os
 import os.path
 

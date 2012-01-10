@@ -48,6 +48,7 @@ class TestHelp(TestScriptBase):
 class TestCreate(TestScriptBase):
 
     def setUp(self):
+        super(TestCreate, self).setUp()
         self.packagename = path.join(self.mkoutdir(), 'refpkg')
         if path.exists(self.packagename):
             shutil.rmtree(self.packagename)
@@ -84,6 +85,7 @@ class TestTaxTable(TestScriptBase):
     """
 
     def setUp(self):
+        super(TestTaxTable, self).setUp()
         self.outfile = path.join(self.mkoutdir(), 'taxtable.csv')
 
     def test01(self):
