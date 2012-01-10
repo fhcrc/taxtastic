@@ -22,7 +22,6 @@ datadir = config.datadir
 
 echo = False
 
-zfile = config.ncbi_data
 dbname = config.ncbi_master_db
 
 try:

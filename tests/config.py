@@ -14,8 +14,6 @@ log = logging
 def funcname(idstr):
     return '.'.join(idstr.split('.')[1:])
 
-from taxtastic import ncbi
-
 # set verbosity of logging output
 try:
     logflag = re.findall(r'-[vq]+\b', ' '.join(sys.argv[1:]))[0]
@@ -140,12 +138,8 @@ class TestScriptBase(TestBase):
         status, output = self.wrap_cmd(cmd, args)
         self.assertFalse(status == 0)
 
-# download ncbi taxonomy data and create a database if necessary; use
+# Small NCBI taxonomy database
 # this database for all non-destructive, non-modifying tests. For
 # modifying tests, make a copy of the database.
-ncbi_data, downloaded = ncbi.fetch_data(dest_dir=outputdir, clobber=False)
-ncbi_master_db = path.join(outputdir, 'ncbi_master.db')
-with ncbi.db_connect(ncbi_master_db, clobber = False) as con:
-    log.info('using %s for all tests' % ncbi_master_db)
-    ncbi.db_load(con, ncbi_data)
-
+ncbi_master_db = data_path('small_taxonomy.db')
+ncbi_data = data_path('taxdmp.zip')
