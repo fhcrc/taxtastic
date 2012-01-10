@@ -4,7 +4,7 @@ Generate a subset of the NCBI taxonomy database to facilitate testing
 
 Generate a new copy with:
     rm -f testfiles/small_taxonomy.db
-    python devtools/pare_database.py -k testfiles/keep_taxids.txt | sqlite3 test_output/small_taxonomy.db
+    python devtools/pare_database.py -k testfiles/keep_taxids.txt | sqlite3 testfiles/small_taxonomy.db
 """
 
 import argparse
