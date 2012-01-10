@@ -55,7 +55,7 @@
 <h1>Creating and manipulating refpkgs<a class="headerlink" href="#creating-and-manipulating-refpkgs" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="quickstart">
 <h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
-<p>The refpkgs is a container format for keeping all the miscellaneous files required to run <tt class="docutils literal"><span class="pre">pplacer</span></tt> in one place.  Roughly, it is a directory containing files and JSON file describing the other contents.  Refpkgs can be created and manipulated either from the commandline with subcommands of <tt class="docutils literal"><span class="pre">taxit</span></tt>, or from Python using an API exposed by the module <tt class="docutils literal"><span class="pre">taxtastic.refpkg</span></tt>.</p>
+<p>The refpkgs is a container format for keeping all the miscellaneous files required to run <a class="reference external" href="http://matsen.fhcrc.org/pplacer">pplacer</a> in one place.  Roughly, it is a directory containing files and JSON file describing the other contents.  Refpkgs can be created and manipulated either from the commandline with subcommands of <tt class="docutils literal"><span class="pre">taxit</span></tt>, or from Python using an API exposed by the module <tt class="docutils literal"><span class="pre">taxtastic.refpkg</span></tt>.</p>
 <p>To create an empty refpkg from Python, you would write:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="kn">import</span> <span class="n">Refpkg</span>
 
@@ -116,20 +116,20 @@ taxit rollforward /path/to/refpkg</pre>
 <dd>When an operation is rolled back, the state before the rollback is preserved in <tt class="docutils literal"><span class="pre">rollforward</span></tt> so the undo can be redone.  <tt class="docutils literal"><span class="pre">rollforward</span></tt> is either <tt class="docutils literal"><span class="pre">null</span></tt> or a list of two entries, the first a string giving the log entry associated with the rolled back operation, the second the JSON object describing the contents before the rollback.</dd>
 </dl>
 <p>Any program only wanting to read refpkgs only needs to worry about the keys <tt class="docutils literal"><span class="pre">files</span></tt>, <tt class="docutils literal"><span class="pre">md5</span></tt>, and <tt class="docutils literal"><span class="pre">metadata</span></tt>.  Any file read from the refpkg should have its MD5 sum checked against the refpkg&#8217;s stored value.</p>
-<p>The refpkg format was designed to store the multiple alignments and trees created by <tt class="docutils literal"><span class="pre">cmalign</span></tt> and RAxML, and used by <tt class="docutils literal"><span class="pre">pplacer</span></tt>, so certain fields are expected.</p>
+<p>The refpkg format was designed to store multiple alignments and trees with optional taxonomic information for use by <tt class="docutils literal"><span class="pre">pplacer</span></tt>, so certain fields are expected.</p>
 <dl class="docutils">
 <dt><tt class="docutils literal"><span class="pre">taxonomy</span></tt></dt>
 <dd>A CSV file giving a taxonomy that contains all the sequences included in the refpkg.  This is typically created with taxtastic&#8217;s <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></tt> command.</dd>
 <dt><tt class="docutils literal"><span class="pre">profile</span></tt></dt>
-<dd>The profile used by <tt class="docutils literal"><span class="pre">cmalign</span></tt> when aligning the sequences for <tt class="docutils literal"><span class="pre">pplacer</span></tt>.</dd>
+<dd>The profile used by <tt class="docutils literal"><span class="pre">cmalign</span></tt> or <tt class="docutils literal"><span class="pre">hmmalign</span></tt> when aligning the sequences for <tt class="docutils literal"><span class="pre">pplacer</span></tt>.</dd>
 <dt><tt class="docutils literal"><span class="pre">tree</span></tt></dt>
 <dd>A phylogenetic tree with the sequences in this refpkg as its nodes, stored in Newick format.</dd>
 <dt><tt class="docutils literal"><span class="pre">tree_stats</span></tt></dt>
-<dd>The output of RAxML describing its run when it assembled the phylogenetic tree for this refpkg.</dd>
+<dd>The output of the phylogenetic inference program describing its run when it assembled the phylogenetic tree for this refpkg.</dd>
 <dt><tt class="docutils literal"><span class="pre">phylo_model</span></tt></dt>
 <dd>A JSON file describing the phylogenetic model used for tree construction, usually parsed from the information in <tt class="docutils literal"><span class="pre">tree_stats</span></tt>.</dd>
 <dt><tt class="docutils literal"><span class="pre">aln_fasta</span></tt></dt>
-<dd>A FASTA file containing all the sequences included in this refpkg (without gaps; this is the input to <tt class="docutils literal"><span class="pre">cmalign</span></tt>, not its output).</dd>
+<dd>A FASTA file containing all the sequences included in this refpkg.</dd>
 <dt><tt class="docutils literal"><span class="pre">seq_info</span></tt></dt>
 <dd><p class="first">A CSV file giving basic information on all the sequences included in the refpkg.  It should begin with one line giving the field names:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="s">&quot;seqname&quot;</span><span class="p">,</span><span class="s">&quot;accession&quot;</span><span class="p">,</span><span class="s">&quot;tax_id&quot;</span><span class="p">,</span><span class="s">&quot;species_name&quot;</span><span class="p">,</span><span class="s">&quot;is_type&quot;</span>
@@ -138,7 +138,7 @@ taxit rollforward /path/to/refpkg</pre>
 <p class="last"><tt class="docutils literal"><span class="pre">seqname</span></tt> should match the ID of the sequence in the FASTA file.  <tt class="docutils literal"><span class="pre">accession</span></tt> is a database reference for the sequence, which can be the same as <tt class="docutils literal"><span class="pre">seqname</span></tt>.  In our work, <tt class="docutils literal"><span class="pre">seqname</span></tt> is an RDP accession number and <tt class="docutils literal"><span class="pre">accession</span></tt> is the NCBI accession number corresponding to that RDP entry.  <tt class="docutils literal"><span class="pre">tax_id</span></tt> is the entry in the taxonomy this sequence is mapped to, and <tt class="docutils literal"><span class="pre">species_name</span></tt> is the name associated with that entry.  <tt class="docutils literal"><span class="pre">is_type</span></tt> indicates whether this sequence is from a typestrain or not (again, this is particular to our work).</p>
 </dd>
 <dt><tt class="docutils literal"><span class="pre">aln_sto</span></tt></dt>
-<dd>The same sequences as in <tt class="docutils literal"><span class="pre">aln_fasta</span></tt>, but now multiply aligned and written in Stockholm format.</dd>
+<dd>The same sequences as in <tt class="docutils literal"><span class="pre">aln_fasta</span></tt>, but written in Stockholm format.</dd>
 </dl>
 <p>The files referred to by <tt class="docutils literal"><span class="pre">aln_fasta</span></tt>, <tt class="docutils literal"><span class="pre">seq_info</span></tt>, <tt class="docutils literal"><span class="pre">aln_sto</span></tt>, and <tt class="docutils literal"><span class="pre">tree</span></tt> should all have the same list of sequences.  This isn&#8217;t strictly enforced, but you can check that it is so with the <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">check</span></tt> command or the <tt class="docutils literal"><span class="pre">is_ill_formed</span></tt> method of the refpkg API.</p>
 <p>The undo/redo system is implemented as a purely functional data structure known as a zipper, used as a replacement for arrays with a pointer into them as a cursor in languages where data is immutable.  A zipper consists of a current entry, a ordered list of previous entries, and an ordered list of subsequent entries.  Moving the cursor one place to the right is equivalent to pushing the current entry onto the head of the list of previous entries, and popping the head of the list of subsequent entries and making that the new current entry.  Moving the cursor one place to the left is exactly the opposite.</p>
@@ -207,7 +207,7 @@ taxit rollforward /path/to/refpkg</pre>
     </div>
     <div class="footer">
         &copy; Copyright 2011, Noah Hoffman, Erick Matsen, Brian Hodges.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
     </div>
   </body>
 </html>

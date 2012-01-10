@@ -71,22 +71,21 @@
 <span class="kn">import</span> <span class="nn">contextlib</span>
 <span class="kn">from</span> <span class="nn">decorator</span> <span class="kn">import</span> <span class="n">decorator</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
-<span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">hashlib</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">sqlite3</span>
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">csv</span>
-<span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="kn">import</span> <span class="nn">Bio.SeqIO</span>
 <span class="kn">import</span> <span class="nn">Bio.Phylo</span>
 
 <span class="kn">import</span> <span class="nn">utils</span>
+
+<span class="n">FORMAT_VERSION</span> <span class="o">=</span> <span class="s">&#39;1.1&#39;</span>
 
 <span class="k">def</span> <span class="nf">md5file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
     <span class="n">md5</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
@@ -97,15 +96,17 @@
 
 
 <span class="nd">@contextlib.contextmanager</span>
-<span class="k">def</span> <span class="nf">scratch_file</span><span class="p">(</span><span class="n">unlink</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">scratch_file</span><span class="p">(</span><span class="n">unlink</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a temporary file and return its name.</span>
+
+<span class="sd">    Additional arguments are passed to ``tempfile.mkstemp``</span>
 
 <span class="sd">    At the start of the with block a secure, temporary file is created</span>
 <span class="sd">    and its name returned.  At the end of the with block it is</span>
 <span class="sd">    deleted.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="p">(</span><span class="n">tmp_fd</span><span class="p">,</span> <span class="n">tmp_name</span><span class="p">)</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">tmp_fd</span><span class="p">,</span> <span class="n">tmp_name</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">tmp_fd</span><span class="p">)</span>
         <span class="k">yield</span> <span class="n">tmp_name</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span>
@@ -117,7 +118,7 @@
 
 <span class="k">def</span> <span class="nf">manifest_template</span><span class="p">():</span>
     <span class="k">return</span> <span class="p">{</span><span class="s">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;create_date&#39;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s"> %H:%M:%S&#39;</span><span class="p">),</span>
-                         <span class="s">&#39;format_version&#39;</span><span class="p">:</span> <span class="s">&#39;1.1&#39;</span><span class="p">},</span>
+                         <span class="s">&#39;format_version&#39;</span><span class="p">:</span> <span class="n">FORMAT_VERSION</span><span class="p">},</span>
             <span class="s">&#39;files&#39;</span><span class="p">:</span> <span class="p">{},</span>
             <span class="s">&#39;md5&#39;</span><span class="p">:</span> <span class="p">{},</span>
             <span class="s">&#39;log&#39;</span><span class="p">:</span> <span class="p">[],</span>
@@ -383,26 +384,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;md5&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">md5_value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s">&#39;Updated file: </span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">new_path</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">old_path</span>
-
-        <span class="c"># Many keys require a quick sanity check, for instance to make</span>
-        <span class="c"># sure they really are FASTA or Stockholm.  That code goes here.</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;aln_fasta&#39;</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">new_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="ow">in</span> <span class="s">&#39;;&gt;&#39;</span><span class="p">):</span> <span class="c"># ; is a valid start character FASTA</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;File </span><span class="si">%s</span><span class="s"> is not a valid FASTA file&#39;</span> <span class="o">%</span> <span class="n">new_path</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;aln_sto&#39;</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">new_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;# STOCKHOLM&#39;</span><span class="p">)):</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;File </span><span class="si">%s</span><span class="s"> is not a valid Stockholm file&#39;</span> <span class="o">%</span> <span class="n">new_path</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;phylo_model&#39;</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">new_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
-                <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;seq_info&#39;</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">new_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">next</span><span class="p">())</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;File </span><span class="si">%s</span><span class="s"> is not a valid CSV file&#39;</span> <span class="o">%</span> <span class="n">new_path</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">md5_value</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Refpkg.file_abspath"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.file_abspath">[docs]</a>    <span class="k">def</span> <span class="nf">file_abspath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return the absolute path to the file referenced by *key*.&quot;&quot;&quot;</span>
@@ -433,7 +414,7 @@
 <span class="sd">        If *pretend* is ``True``, the convexification is run, but the</span>
 <span class="sd">        refpkg is not actually updated.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="n">scratch_file</span><span class="p">()</span> <span class="k">as</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">scratch_file</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s">&#39;tree&#39;</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s">&#39;.tre&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">name</span><span class="p">:</span>
             <span class="c"># Use a specific path to rppr, otherwise rely on $PATH</span>
             <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="n">rppr</span> <span class="ow">or</span> <span class="s">&#39;rppr&#39;</span><span class="p">,</span> <span class="s">&#39;reroot&#39;</span><span class="p">,</span>
                                    <span class="s">&#39;-c&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">])</span>
@@ -451,7 +432,7 @@
 
 <span class="sd">        This function takes a log generated by RAxML or FastTree, parses it,</span>
 <span class="sd">        and inserts an appropriate JSON file into the refpkg. The first</span>
-<span class="sd">        parameter must be either &#39;RAxML&#39; or &#39;FastTree&#39;, depending on which</span>
+<span class="sd">        parameter must be &#39;RAxML&#39;, &#39;PhyML&#39; or &#39;FastTree&#39;, depending on which</span>
 <span class="sd">        program generated the log. It may also be None to attempt to guess</span>
 <span class="sd">        which program generated the log.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -462,8 +443,12 @@
                     <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;FastTree&#39;</span><span class="p">):</span>
                         <span class="n">stats_type</span> <span class="o">=</span> <span class="s">&#39;FastTree&#39;</span>
                         <span class="k">break</span>
-                    <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;This is RAxML&#39;</span><span class="p">):</span>
+                    <span class="k">elif</span> <span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;This is RAxML&#39;</span><span class="p">)</span> <span class="ow">or</span>
+                          <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;You are using RAxML&#39;</span><span class="p">)):</span>
                         <span class="n">stats_type</span> <span class="o">=</span> <span class="s">&#39;RAxML&#39;</span>
+                        <span class="k">break</span>
+                    <span class="k">elif</span> <span class="s">&#39;PhyML v3.0&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                        <span class="n">stats_type</span> <span class="o">=</span> <span class="s">&#39;PhyML&#39;</span>
                         <span class="k">break</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -473,10 +458,12 @@
             <span class="n">parser</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_raxml</span>
         <span class="k">elif</span> <span class="n">stats_type</span> <span class="o">==</span> <span class="s">&#39;FastTree&#39;</span><span class="p">:</span>
             <span class="n">parser</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_fasttree</span>
+        <span class="k">elif</span> <span class="n">stats_type</span> <span class="o">==</span> <span class="s">&#39;PhyML&#39;</span><span class="p">:</span>
+            <span class="n">parser</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_phyml</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;invalid log type: </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stats_type</span><span class="p">,))</span>
 
-        <span class="k">with</span> <span class="n">scratch_file</span><span class="p">()</span> <span class="k">as</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">scratch_file</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s">&#39;phylo_model&#39;</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s">&#39;.json&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">name</span><span class="p">:</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">phylo_model</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">stats_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
                 <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">parser</span><span class="p">(</span><span class="n">h</span><span class="p">),</span> <span class="n">phylo_model</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_file</span><span class="p">(</span><span class="s">&#39;phylo_model&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -696,7 +683,7 @@
     </div>
     <div class="footer">
         &copy; Copyright 2011, Noah Hoffman, Erick Matsen, Brian Hodges.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
     </div>
   </body>
 </html>
