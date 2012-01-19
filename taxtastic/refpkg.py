@@ -340,6 +340,8 @@ class Refpkg(object):
         self.contents['files'][key] = filename
         self.contents['md5'][key] = md5_value
         self._log('Updated file: %s=%s' % (key,new_path))
+        if key == 'tree_stats':
+            self.update_phylo_model(None, new_path)
         return old_path
 
     def file_abspath(self, key):
