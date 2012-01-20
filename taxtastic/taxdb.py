@@ -116,11 +116,14 @@ class Taxdb(object):
                 row['tax_id'], parent, row['rank'], row['tax_name'])
             taxon_map[taxon.tax_id] = taxon
 
+        root = next(taxon_map.itervalues())
+        while root.parent is not None:
+            root = root.parent
         counter = itertools.count(1).next
         def on_pop(parent):
             if parent is not None:
                 parent.rgt = counter()
-        for node in taxon_map['1'].iterate_children(on_pop=on_pop):
+        for node in root.iterate_children(on_pop=on_pop):
             node.lft = counter()
 
         fieldnames = fieldnames_cb()
