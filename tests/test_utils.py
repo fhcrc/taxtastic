@@ -128,6 +128,9 @@ class FastTreeMissingGTRTestCase(FastTreeStatsMixin, unittest.TestCase):
             self.assertRaises(taxtastic.utils.InvalidLogError,
                     self.parse_func, fp)
 
+class FastTreeDNATestCase(FastTreeStatsMixin, unittest.TestCase):
+    test_file_name = 'fastree_dna_stats.txt'
+
 class PhyMLStatsMixIn(StatsFileParsingMixIn):
     @property
     def parse_func(self):
