@@ -96,9 +96,12 @@ class StatsFileParsingMixIn(object):
 
     def setUp(self):
         self.test_path = config.data_path(self.test_file_name)
-        expected_path = config.data_path(self.test_file_name + '.json')
-        with open(expected_path) as fp:
-            self.expected = json.load(fp)
+        self.expected_path = config.data_path(self.test_file_name + '.json')
+
+    @property
+    def expected(self):
+        with open(self.expected_path) as fp:
+            return json.load(fp)
 
     def test_parse(self):
         with open(self.test_path) as fp:
@@ -111,6 +114,19 @@ class StatsFileParsingMixIn(object):
     def parse_func(self):
         # Example
         raise ValueError("Override")
+
+class FastTreeStatsMixin(StatsFileParsingMixIn):
+    @property
+    def parse_func(self):
+        return taxtastic.utils.parse_fasttree
+
+
+class FastTreeMissingGTRTestCase(FastTreeStatsMixin, unittest.TestCase):
+    test_file_name = 'fasttree-missing-rates.txt'
+    def test_parse(self):
+        with open(self.test_path) as fp:
+            self.assertRaises(taxtastic.utils.InvalidLogError,
+                    self.parse_func, fp)
 
 class PhyMLStatsMixIn(StatsFileParsingMixIn):
     @property

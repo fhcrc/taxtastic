@@ -132,6 +132,8 @@ def try_set_fields(d, regex, text, hook=lambda x: x):
                        in v.groupdict().iteritems()]))
     return d
 
+class InvalidLogError(ValueError):
+    pass
 
 def parse_raxml(handle):
     """Parse RAxML's summary output.
@@ -198,6 +200,10 @@ def parse_fasttree(fobj):
         elif line.strip() == WAG_MODEL:
             data['subs_model'] = 'WAG'
             data['datatype'] = 'AA'
+
+    # Sanity check
+    if data['subs_model'] == 'GTR' and 'subs_rates' not in data:
+        raise InvalidLogError("GTR model, but no substitution rates found!")
 
     return data
 
