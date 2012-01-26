@@ -26,6 +26,7 @@ commands = [
     'rollback',
     'rollforward',
     'rp',
+    'refpkg_intersection',
     ]
 
 def itermodules(root=__name__):
