@@ -22,6 +22,19 @@ def build_parser(parser):
     parser.add_argument('-o','--outfile', type=argparse.FileType('w'), default=sys.stdout,
                         help='output file in csv format (default is stdout)')
 
+def test_output(infile, outfile, ranks):
+    """
+    Ensure that all input taxids (provided in a taxtable) are represented in the
+    output.
+    """
+
+    with open(infile) as i, open(outfile) as o:
+        taxids_in = set(d['tax_id'] for d in csv.DictReader(i) if d['rank'] in ranks)
+        taxids_out = set(d['tax_id'] for d in csv.DictReader(o))        
+
+        assert len(taxids_in - taxids_out) == 0, taxids_in - taxids_out
+
+    
 def action(args):
     rp = Refpkg(args.refpkg)
     rp.load_db()
@@ -52,3 +65,6 @@ def action(args):
             GROUP  BY child
         """ % ', '.join('?' * len(ranks)), ranks)
         writer.writerows(cursor)
+
+    args.outfile.flush()
+    test_output(args.infile.name, args.outfile.name, ranks)
