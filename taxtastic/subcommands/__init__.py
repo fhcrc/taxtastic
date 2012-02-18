@@ -21,6 +21,7 @@ commands = [
     'reroot',
     'update',
     'taxids',
+    'update_taxids',
     'taxtable',
     'strip',
     'rollback',
