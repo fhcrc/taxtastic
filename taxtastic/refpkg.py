@@ -538,6 +538,12 @@ class Refpkg(object):
         if nonempty_file(self.file_abspath('seq_info')):
             with open(self.file_abspath('seq_info')) as f:
                 lines = list(csv.reader(f))
+                headers = set(lines[0])
+
+                # Check required headers
+                for req_header in 'seqname', 'tax_id':
+                    if not req_header in headers:
+                        return "seq_info is missing {0}".format(req_header)
                 lens = [len(l) for l in lines]
                 if not(all([l == lens[0] and l > 1 for l in lens])):
                     return "seq_info is not valid CSV."
