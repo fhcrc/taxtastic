@@ -514,18 +514,11 @@ class Refpkg(object):
         if m:
             return m
 
-        if not('aln_fasta' in self.contents['files']):
-            return "RefPkg has no key aln_fasta"
-        if not('aln_sto' in self.contents['files']):
-            return "RefPkg has no key aln_sto"
-        if not('seq_info' in self.contents['files']):
-            return "RefPkg has no key seq_info"
-        if not('tree' in self.contents['files']):
-            return "RefPkg has no key tree"
-        if not('taxonomy' in self.contents['files']):
-            return "RefPkg has no key tree"
-        if not('phylo_model' in self.contents['files']):
-            return "RefPkg has no key phylo_model"
+        required_keys = ('aln_fasta', 'aln_sto', 'seq_info', 'tree',
+                'taxonomy', 'phylo_model')
+        for k in required_keys:
+            if k not in self.contents['files']:
+                return "RefPkg has no key " + k
 
         # aln_fasta, seq_info, tree, and aln_sto must be valid FASTA,
         # CSV, Newick, and Stockholm files, respectively, and describe
