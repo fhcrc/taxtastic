@@ -514,18 +514,11 @@ class Refpkg(object):
         if m:
             return m
 
-        if not('aln_fasta' in self.contents['files']):
-            return "RefPkg has no key aln_fasta"
-        if not('aln_sto' in self.contents['files']):
-            return "RefPkg has no key aln_sto"
-        if not('seq_info' in self.contents['files']):
-            return "RefPkg has no key seq_info"
-        if not('tree' in self.contents['files']):
-            return "RefPkg has no key tree"
-        if not('taxonomy' in self.contents['files']):
-            return "RefPkg has no key tree"
-        if not('phylo_model' in self.contents['files']):
-            return "RefPkg has no key phylo_model"
+        required_keys = ('aln_fasta', 'aln_sto', 'seq_info', 'tree',
+                'taxonomy', 'phylo_model')
+        for k in required_keys:
+            if k not in self.contents['files']:
+                return "RefPkg has no key " + k
 
         # aln_fasta, seq_info, tree, and aln_sto must be valid FASTA,
         # CSV, Newick, and Stockholm files, respectively, and describe
@@ -545,6 +538,12 @@ class Refpkg(object):
         if nonempty_file(self.file_abspath('seq_info')):
             with open(self.file_abspath('seq_info')) as f:
                 lines = list(csv.reader(f))
+                headers = set(lines[0])
+
+                # Check required headers
+                for req_header in 'seqname', 'tax_id':
+                    if not req_header in headers:
+                        return "seq_info is missing {0}".format(req_header)
                 lens = [len(l) for l in lines]
                 if not(all([l == lens[0] and l > 1 for l in lens])):
                     return "seq_info is not valid CSV."
