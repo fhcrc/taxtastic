@@ -14,8 +14,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import argparse
+import csv
+import logging
 
 import re
 
@@ -61,6 +62,11 @@ def build_parser(parser):
         beginning with "#" are ignored). This option can also be
         passed a comma-delited list of taxids on the command line.""")
 
+    input_group.add_argument(
+        '-i', '--seq-info', type=argparse.FileType('r'),
+        help="""Read tax_ids from sequence info file, minimally containing
+        fields "seqname" and "tax_id" """)
+
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
 
@@ -91,6 +97,11 @@ def action(args):
             for name in re.split(r'\s*[,;]\s*', taxname):
                 tax_id, primary_name, is_primary = tax.primary_from_name(name.strip())
                 taxids.add(tax_id)
+
+    if args.seq_info:
+        with args.seq_info:
+            reader = csv.DictReader(args.seq_info)
+            taxids.update(frozenset(i['tax_id'] for i in reader if i['tax_id']))
 
     # Before digging into lineages, make sure all the taxids exist in
     # the taxonomy database.
