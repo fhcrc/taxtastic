@@ -1,12 +1,10 @@
 import sys; sys.path.insert(0, '../')
 import contextlib
-from cStringIO import StringIO
 import unittest
 import tempfile
 import shutil
 import copy
 import os
-import sys
 
 from taxtastic import refpkg
 from taxtastic.lonely import Tree
@@ -198,6 +196,20 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                     verbosity = 0
                     out_file = h
                 self.assertEqual(taxtable.action(_Args()), 1)
+
+    def test_seqinfo(self):
+        with tempfile.TemporaryFile() as tf, \
+             open(config.data_path('simple_seqinfo.csv')) as ifp:
+            class _Args(object):
+                database_file = config.ncbi_master_db
+                taxids = None
+                taxnames = None
+                seq_info = ifp
+                out_file = tf
+                verbosity = 0
+            self.assertEqual(taxtable.action(_Args()), 0)
+            # No output check at present
+            self.assertTrue(tf.tell() > 0)
 
 class TestCheck(OutputRedirectMixin, unittest.TestCase):
     def test_runs(self):
