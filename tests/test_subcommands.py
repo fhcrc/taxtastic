@@ -179,6 +179,7 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                     database_file = config.ncbi_master_db
                     taxids = config.data_path('taxids1.txt')
                     taxnames = None
+                    seq_info = None
                     verbosity = 0
                     out_file = h
                 self.assertEqual(taxtable.action(_Args()), 0)
@@ -191,6 +192,7 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                     database_file = config.ncbi_master_db
                     taxids = 'horace,hilda'
                     taxnames = None
+                    seq_info = None
                     verbosity = 0
                     out_file = h
                 self.assertEqual(taxtable.action(_Args()), 1)
