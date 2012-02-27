@@ -1,4 +1,4 @@
-"""Reroots a reference package"""
+"""Taxonomically reroots a reference package"""
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -13,11 +13,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-import subprocess
-import tempfile
 import logging
-import shutil
-import os
 
 from taxtastic import refpkg
 

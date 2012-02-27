@@ -5,70 +5,74 @@ TAXTASTIC
 We love it, but what is it?
 ---------------------------
 
-Taxtastic software written in python used to build and maintain `reference package`_ s-- i.e. collections of reference trees, reference alignments, profiles, and associated taxonomic information.
+Taxtastic is software written in python used to build and maintain reference packages-- i.e. collections of reference trees, reference alignments, profiles, and associated taxonomic information.
+
+* quickstart_
+* `full documentation`_
 
 A script named ``taxit`` provides a command line interface::
 
+
   % ./taxit -h
   usage: taxit.pyc [-h] [-V] [-v] [-q]
-		   {taxtable,convexify,create,check,badgraph,reroot,help} ...
+
+                   {info,rollback,help,create,update,new_database,reroot,taxids,strip,add_nodes,rollforward,check,taxtable}
+                   ...
 
   Creation, validation, and modification of reference packages for use with
   `pplacer` and related software.
 
   positional arguments:
-    {taxtable,convexify,create,check,badgraph,reroot,help}
+    {info,rollback,help,create,update,new_database,reroot,taxids,strip,add_nodes,rollforward,check,taxtable}
       help                Detailed help for actions using `help <action>`
-      check               Not yet implemented
+      add_nodes           Add new nodes to a database containing a taxonomy.
+      check               taxtastic/subcommands/check.py Run a series of deeper
+                          checks on a RefPkg. This subcommand is a wrapper
+                          around the Refpkg method is_ill_formed.
+      info                Show information about reference packages.
       create              Creates a reference package
+      new_database        Creates a CSV file describing lineages for a set of
+                          taxa
+      reroot              Taxonomically reroots a reference package
+      update              Adds or updates files or metdata in a refpkg. The
+                          update subcommand takes a refpkg to operate on, then a
+                          series of changes to make, expressed as key=file. So
+                          to add a file ../otherdir/boris under the key 'meep'
+                          and abcd under the key 'hilda' in a refpkg 'my-
+                          refpkg', you would run $ taxit update my-refpkg
+                          meep=../otherdir/boris hilda=abcd If a file already
+                          exists under a given key, it is overwritten. Passing
+                          taxit update the --metadata option makes it update the
+                          metadata instead of files. For example, to set the
+                          author field to "Genghis Khan" and the version to
+                          0.4.3, run $ taxit update --metadata "author=Genghis
+                          Khan" version=0.4.3
+      taxids              Look up a set of tax_ids from taxonomic names
       taxtable            Creates a CSV file describing lineages for a set of
-			  taxa
-      convexify           Finds discordance in a reference package
-      reroot              Reroots a reference package
-      badgraph            Generates a csv file representing the ratio of leaves
-			  to edges in a tree.
+                          taxa
+      strip               Removes all rollback and rollforward information and
+                          files not attached to the current state from a refpkg.
+                          $ taxit strip my-refpkg
+      rollback            Rollback a refpkg to undo the previous command. $
+                          taxit rollback my-refpkg You can also specify -n # to
+                          specify the number of operations to roll back
+                          (defaults to 1), as in $ taxit rollback -n 3 my-refpkg
+      rollforward         Rollforward a rolled back command on a refpkg. $ taxit
+                          rollforward my-refpkg You can also specify -n # to
+                          specify the number of operations to roll forward
+                          (defaults to 1), as in $ taxit rollforward -n 3 my-
+                          refpkg
 
   optional arguments:
     -h, --help            show this help message and exit
     -V, --version         Print the version number and exit
     -v, --verbose         Increase verbosity of screen output (eg, -v is
-			  verbose, -vv more so)
+                          verbose, -vv more so)
     -q, --quiet           Suppress output
 
- 
-Here's a quick synopsis of how it's used. 
-Say we would like to assemble a reference package for the gene *rpoB*.
-We have a reference alignment (here rpoB.fasta) and an ML tree built from the reference alignment (here RAxML_result.rpoB.PROTGAMMAWAGF).
-We also have a whitespace-delimited list of taxon ids (here rpoB.ids_only) for the sequences in our reference alignment.
-We also have a CSV file mapping sequence names to taxon ids (here rpoB.seq_info.csv).
-Specifically, it contains two columns, labeled "seqname" and "tax_id" giving that mapping.
-
-We can make a taxonomically-informed reference set in just two steps. 
-First we generate the taxonomy::
-
-  taxit taxtable -t rpoB.ids_only -o rpoB.taxonomy
-
-When performed for the first time, this downloads the NCBI taxonomy and builds a SQLite3 database from it. 
-That takes a while, but it only needs to be performed once (after that you can point to the database with -d).
-Then::
-
-  taxit create \
-        --package-name rpoB.refpkg \
-        --locus rpoB \
-	--author "your name <you@some.address.edu>" \
-	--package-version 1.0 \
-	--tree-stats RAxML_info.rpoB.PROTGAMMAWAGF \
-        --tree-file RAxML_result.rpsB.PROTGAMMAWAGF \
-        --aln-fasta rpoB.aln \
-        --taxonomy rpoB.taxonomy \
-        --seq-info rpoB.seq_info.csv 
-
-
-Now you can run pplacer to get taxonomically annotated placements, and visualizations combining both taxonomic and phylogenetic placements with two more steps::
-
-  pplacer -c rpoB.refpkg sample.fasta
-  guppy fat -c rpoB.refpkg sample.place
+  usage: taxit.pyc [-h] [-V] [-v] [-q]
 
 
 .. Targets ..
-.. _reference package: http://github.com/fhcrc/taxtastic/wiki/refpkg
+.. _quickstart: http://fhcrc.github.com/taxtastic/quickstart.html
+.. _full documentation: http://fhcrc.github.com/taxtastic/index.html

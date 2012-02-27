@@ -1,20 +1,14 @@
 #!/usr/bin/env python
 
-import sys
 import os
 from os import path
-import unittest
 import logging
-import shutil
-import sqlite3
 
 import taxtastic
 import taxtastic.ncbi
-from taxtastic.errors import OperationalError, IntegrityError
-from taxtastic.utils import mkdir, rmdir
 
-import config
-from config import TestBase
+from . import config
+from .config import TestBase
 
 log = logging
 

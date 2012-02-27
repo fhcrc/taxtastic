@@ -4,7 +4,7 @@ Creating and manipulating refpkgs
 Quickstart
 ----------
 
-The refpkgs is a container format for keeping all the miscellaneous files required to run ``pplacer`` in one place.  Roughly, it is a directory containing files and JSON file describing the other contents.  Refpkgs can be created and manipulated either from the commandline with subcommands of ``taxit``, or from Python using an API exposed by the module ``taxtastic.refpkg``.
+The refpkgs is a container format for keeping all the miscellaneous files required to run pplacer_ in one place.  Roughly, it is a directory containing files and JSON file describing the other contents.  Refpkgs can be created and manipulated either from the commandline with subcommands of ``taxit``, or from Python using an API exposed by the module ``taxtastic.refpkg``.
 
 To create an empty refpkg from Python, you would write::
 
@@ -74,44 +74,44 @@ A refpkg is a crude key-value store for files with some basic integrity checking
 
 Any program only wanting to read refpkgs only needs to worry about the keys ``files``, ``md5``, and ``metadata``.  Any file read from the refpkg should have its MD5 sum checked against the refpkg's stored value.
 
-The refpkg format was designed to store the multiple alignments and trees created by ``cmalign`` and RAxML, and used by ``pplacer``, so certain fields are expected.  
+The refpkg format was designed to store multiple alignments and trees with optional taxonomic information for use by ``pplacer``, so certain fields are expected.
 
 ``taxonomy``
   A CSV file giving a taxonomy that contains all the sequences included in the refpkg.  This is typically created with taxtastic's ``taxit taxtable`` command.
 
 ``profile``
-  The profile used by ``cmalign`` when aligning the sequences for ``pplacer``.
+  The profile used by ``cmalign`` or ``hmmalign`` when aligning the sequences for ``pplacer``.
 
 ``tree``
   A phylogenetic tree with the sequences in this refpkg as its nodes, stored in Newick format.
 
 ``tree_stats``
-  The output of RAxML describing its run when it assembled the phylogenetic tree for this refpkg.
+  The output of the phylogenetic inference program describing its run when it assembled the phylogenetic tree for this refpkg.
 
 ``phylo_model``
   A JSON file describing the phylogenetic model used for tree construction, usually parsed from the information in ``tree_stats``.
 
 ``aln_fasta``
-  A FASTA file containing all the sequences included in this refpkg (without gaps; this is the input to ``cmalign``, not its output).
+  A FASTA file containing all the sequences included in this refpkg.
 
 ``seq_info``
   A CSV file giving basic information on all the sequences included in the refpkg.  It should begin with one line giving the field names::
 
-      ``"seqname","accession","tax_id","species_name","is_type"
-  
+      "seqname","accession","tax_id","species_name","is_type"
+
   ``seqname`` should match the ID of the sequence in the FASTA file.  ``accession`` is a database reference for the sequence, which can be the same as ``seqname``.  In our work, ``seqname`` is an RDP accession number and ``accession`` is the NCBI accession number corresponding to that RDP entry.  ``tax_id`` is the entry in the taxonomy this sequence is mapped to, and ``species_name`` is the name associated with that entry.  ``is_type`` indicates whether this sequence is from a typestrain or not (again, this is particular to our work).
 
 ``aln_sto``
-  The same sequences as in ``aln_fasta``, but now multiply aligned and written in Stockholm format.
+  The same sequences as in ``aln_fasta``, but written in Stockholm format.
 
 The files referred to by ``aln_fasta``, ``seq_info``, ``aln_sto``, and ``tree`` should all have the same list of sequences.  This isn't strictly enforced, but you can check that it is so with the ``taxit check`` command or the ``is_ill_formed`` method of the refpkg API.
 
-The undo/redo system is implemented as a purely functional data structure known as a zipper, used as a replacement for arrays with a pointer into them as a cursor in languages where data is immutable.  A zipper consists of a current entry, a ordered list of previous entries, and an ordered list of subsequent entries.  Moving the cursor one place to the right is equivalent to pushing the current entry onto the head of the list of previous entries, and popping the head of the list of subsequent entries and making that the new current entry.  Moving the cursor one place to the left is exactly the opposite.  
+The undo/redo system is implemented as a purely functional data structure known as a zipper, used as a replacement for arrays with a pointer into them as a cursor in languages where data is immutable.  A zipper consists of a current entry, a ordered list of previous entries, and an ordered list of subsequent entries.  Moving the cursor one place to the right is equivalent to pushing the current entry onto the head of the list of previous entries, and popping the head of the list of subsequent entries and making that the new current entry.  Moving the cursor one place to the left is exactly the opposite.
 
 The top level object of ``CONTENTS.json`` plays the role of the current entry, and its fields ``rollback`` and ``rollforward`` are the heads of the lists of previous and subsequent entries.  The ``rollback`` field of the object in the ``rollback`` field is the second element of the list of previous entries, etc.  Thus undoing an operation consists of putting the current toplevel JSON object in the ``rollforward`` fields of the object in the ``rollback`` field, and making that object the new toplevel JSON object (with some book keeping details to keep everything consistent).
 
 As a result of this, there may be files besides those referenced in the ``files`` key of the JSON object in the refpkg.  They may be referenced by other entries in the zipper.  There is no attempt to intelligently garbage collect orphaned files.  They are only deleted when the refpkg's ``strip`` method is called, which removes all undo/redo information as well.
 
 
-The refpkg API
---------------
+
+.. _pplacer: http://matsen.fhcrc.org/pplacer

@@ -98,8 +98,14 @@ def action(args):
     for t in taxids:
         try:
             tax._node(t)
-        except KeyError, k:
-            print >>sys.stderr, "Taxid %s not found in taxonomy." % t
+        except KeyError:
+            # Check for merged
+            m = tax._get_merged(t)
+            if m and m != t:
+                print >> sys.stderr, ("Taxid {0} has been replaced by {1}. "
+                        "Please update your records").format(t, m)
+            else:
+                print >>sys.stderr, "Taxid %s not found in taxonomy." % t
             valid_taxids = False
     if not(valid_taxids):
         print >>sys.stderr, "Some taxids were invalid.  Exiting."

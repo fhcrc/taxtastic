@@ -17,10 +17,12 @@ Show information about reference packages.
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import os.path
-import shutil
+import csv
+from collections import defaultdict
+import pprint
+import sys
 
-from Bio import Phylo, SeqIO
+from Bio import Phylo
 
 from taxtastic import refpkg
 
@@ -29,29 +31,41 @@ log = logging.getLogger(__name__)
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',
                         help='the reference package to operate on')
-    parser.add_argument('-n', '--seq-names', action = 'store_true',
+    parser.add_argument('-n', '--seq-names', action = 'store_true', default = False,
                         help = 'print a list of sequence names')
+    parser.add_argument('-t', '--tally', action = 'store_true', default = False,
+                        help = 'print a tally of sequences representing each taxon at rank RANK')
 
-def tree_names(pkg):
-    tree = Phylo.read(pkg.file_abspath('tree'), 'newick')    
-    return [x.name for x in tree.get_terminals()]
-    
+def tally_taxa(pkg):
+    tally = defaultdict(int)
+    with open(pkg.file_abspath('taxonomy')) as taxtab, open(pkg.file_abspath('seq_info')) as seq_info:
+        taxdict = {row['tax_id']: row for row in csv.DictReader(taxtab)}
+
+        tax_ids = [d['tax_id'] for d in csv.DictReader(seq_info)]
+
+    for tax_id in tax_ids:
+        tally[tax_id] += 1
+        
+    rows = [(taxdict[tax_id]['tax_name'], tax_id, count) for tax_id, count in tally.items()]
+
+    writer = csv.writer(sys.stdout, quoting = csv.QUOTE_NONNUMERIC)
+    writer.writerows(sorted(rows))
+
 def action(args):
     """
     Show information about reference packages.
     """
     log.info('loading reference package')
 
-    pkg = refpkg.Refpkg(args.refpkg)    
-    tnames = tree_names(pkg)
+    pkg = refpkg.Refpkg(args.refpkg)
 
-    with open(pkg.file_abspath('aln_sto')) as f:
-        seqs = SeqIO.parse(f, 'stockholm')
-        snames = [s.id for s in seqs]
+    with open(pkg.file_abspath('seq_info')) as seq_info:
+        snames = [row['seqname'] for row in csv.DictReader(seq_info)]
 
-    if not set(tnames) == set(snames):
-        sys.exit('Error: sequence names in the Stockholm alignment and tree file differ.')
-        
-    if args.seq_names:    
-        for name in tnames:
-            print name
+    if args.seq_names:
+        print '\n'.join(snames)
+    elif args.tally:
+        tally_taxa(pkg)
+    else:
+        print 'number of sequences:', len(snames)
+        print 'package components\n', '\n'.join(sorted(pkg.file_keys()))

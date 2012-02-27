@@ -25,6 +25,7 @@ class TestWhereWeAre(unittest.TestCase):
         We're assuming that unit tests are being run using local
         version of the taxtastic package. Fail otherwise.
         """
-
-        self.assertTrue(taxtastic.__file__.startswith('taxtastic/__init__.py'))
+        taxtastic_path = os.path.abspath(os.path.dirname(taxtastic.__file__))
+        exp_path = os.path.abspath(os.path.join(outputdir, '..', 'taxtastic'))
+        self.assertEqual(exp_path, taxtastic_path)
 

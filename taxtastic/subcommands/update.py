@@ -28,7 +28,6 @@ $ taxit update --metadata "author=Genghis Khan" version=0.4.3
 
 import logging
 import os.path
-import shutil
 
 from taxtastic import refpkg
 

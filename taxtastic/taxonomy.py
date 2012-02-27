@@ -15,12 +15,11 @@
 import logging
 import csv
 import itertools
-import pprint
 
 log = logging
 
 import sqlalchemy
-from sqlalchemy import MetaData, create_engine, and_
+from sqlalchemy import MetaData, and_
 from sqlalchemy.sql import select
 
 class Taxonomy(object):
@@ -39,12 +38,13 @@ class Taxonomy(object):
           rank to create new labels for undefined ranks.
 
         Example:
-        > from sqlalchemy import create_engine
-        > from taxonomy import Taxonomy, ncbi
-        > engine = create_engine('sqlite:///%s' % dbname, echo=False)
-        > tax = Taxonomy(engine, taxonomy.ncbi.ranks)
+        >>> from sqlalchemy import create_engine
+        >>> from taxtastic.taxonomy import Taxonomy
+        >>> from taxtastic import ncbi
+        >>> engine = create_engine('sqlite:///%s' % dbname, echo=False)
+        >>> tax = Taxonomy(engine, ncbi.ranks)
 
-          """
+        """
 
         # TODO: should ranks be defined in a table in the database?
         # TODO: assertions to check for database components
@@ -151,7 +151,6 @@ class Taxonomy(object):
         );
         """
 
-        merged = self.merged
         s = select([self.merged.c.new_tax_id], self.merged.c.old_tax_id == old_tax_id)
         res = s.execute()
         output = res.fetchall() or None
@@ -173,8 +172,9 @@ class Taxonomy(object):
         """
         # Be sure we aren't working with an obsolete tax_id
         if merge_obsolete:
-            tax_id = self._get_merged(tax_id) 
+            tax_id = self._get_merged(tax_id)
 
+        # Note: indent is referenced through locals() below
         indent = '.'*_level
 
         undefined = self.undefined_rank
@@ -319,7 +319,7 @@ class Taxonomy(object):
         """
         Add a node to the taxonomy.
         """
-        
+
         if not (source_id or source_name):
             raise ValueError('Taxonomy.add_node requires source_id or source_name')
 
@@ -339,7 +339,7 @@ class Taxonomy(object):
             for child in children:
                 ret = self.nodes.update(self.nodes.c.tax_id == child, {'parent_id':tax_id})
                 ret.execute()
-                
+
         lineage = self.lineage(tax_id)
 
         log.debug(lineage)

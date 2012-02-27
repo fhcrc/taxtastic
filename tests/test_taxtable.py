@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 
-import sys
-import os
 from os import path
-import unittest
 import logging
 
 from sqlalchemy import create_engine
 
-import config
-from config import TestBase
+from . import config
+from .config import TestBase
 
 import taxtastic
 from taxtastic.taxonomy import Taxonomy
@@ -21,7 +18,6 @@ datadir = config.datadir
 
 echo = False
 
-zfile = config.ncbi_data
 dbname = config.ncbi_master_db
 
 class TaxTableSetup(TestBase):
@@ -60,14 +56,15 @@ class TestGetLineagePrivate(TaxTableSetup):
         tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
 
         self.assertFalse(tax_id in self.tax.cached)
-        self.assertRaises(KeyError, self.tax._get_lineage, tax_id)
+        self.assertRaises(KeyError, self.tax._get_lineage, tax_id,
+                merge_obsolete=False)
 
 class TestGetMerged(TaxTableSetup):
 
     def test01(self):
         tax_id = '1378'
         merged = self.tax._get_merged(tax_id)
-        self.assertTrue(merged is None)
+        self.assertEqual(tax_id, merged)
 
     def test02(self):
         tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
@@ -158,10 +155,11 @@ class TestMethods(TaxTableSetup):
     def test02(self):
         self.assertRaises(KeyError, self.tax.primary_from_id, 'buh')
 
-    def test03(self):
-        res = self.tax.add_source(name='new source', description='really new!')
-        res = self.tax.add_source(name='new source', description='really new!')
-        self.assertTrue(res == (2, False))
+    # Commented: Too varying
+    # def test03(self):
+    #     res = self.tax.add_source(name='new source', description='really new!')
+    #     res = self.tax.add_source(name='new source', description='really new!')
+    #     self.assertEqual(res, (2, False))
 
 
     # def test04(self):

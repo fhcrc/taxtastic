@@ -8,6 +8,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   quickstart
    taxonomy
    refpkg
    refpkg_api
@@ -22,6 +23,3 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-
-.. automodule:: taxonomy
-   :members:

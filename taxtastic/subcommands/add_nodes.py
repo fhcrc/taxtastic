@@ -21,7 +21,6 @@ from taxtastic.utils import get_new_nodes
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
-import os.path
 
 import logging
 log = logging.getLogger(__name__)

@@ -1,7 +1,8 @@
 """
-Removes all rollback and rollforward information and files not attached to the current state from a refpkg.
+Resolve path; get the path to a file in the reference package.
 
-$ taxit strip my-refpkg
+Usage is simple: `taxit rp my.refpkg tree` will cause the absolute path to the
+`tree` file in the refpkg to be written to stdout.
 """
 # This file is part of taxtastic.
 #
@@ -19,6 +20,7 @@ $ taxit strip my-refpkg
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import sys
 
 from taxtastic import refpkg
 
@@ -27,14 +29,11 @@ log = logging.getLogger(__name__)
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',
                         help='the reference package to operate on')
+    parser.add_argument('item', action='store', metavar='item',
+                        help='the item to get out of the reference package')
 
 
 def action(args):
-    """Strips non-current files and rollback information from a refpkg.
-
-    *args* should be an argparse object with fields refpkg (giving the
-    path to the refpkg to operate on).
-    """
-    log.info('loading reference package')
-
-    refpkg.Refpkg(args.refpkg).strip()
+    rp = refpkg.Refpkg(args.refpkg)
+    sys.stdout.write('%s\n' % rp.file_abspath(args.item))
+    return 0

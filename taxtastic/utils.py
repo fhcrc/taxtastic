@@ -14,7 +14,6 @@
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 import datetime
 import logging
-import shutil
 import os
 import re
 import csv
@@ -125,26 +124,6 @@ def getlines(fname):
             if line.strip() and not line.startswith('#'):
                 yield line.split('#', 1)[0].strip()
 
-def mkdir(dirpath, clobber = False):
-    """
-    Create a (potentially existing) directory without errors. Raise
-    OSError if directory can't be created. If clobber is True, remove
-    dirpath if it exists.
-    """
-
-    if clobber:
-        rmdir(dirpath)
-
-    try:
-        os.mkdir(dirpath)
-    except OSError, msg:
-        log.debug(msg)
-
-    if not path.exists(dirpath):
-        raise OSError('Failed to create %s' % dirpath)
-
-    return dirpath
-
 
 def try_set_fields(d, regex, text, hook=lambda x: x):
     v = re.search(regex, text, re.MULTILINE)
@@ -153,6 +132,8 @@ def try_set_fields(d, regex, text, hook=lambda x: x):
                        in v.groupdict().iteritems()]))
     return d
 
+class InvalidLogError(ValueError):
+    pass
 
 def parse_raxml(handle):
     """Parse RAxML's summary output.
@@ -188,6 +169,7 @@ def parse_raxml(handle):
 
 
 JTT_MODEL = 'ML Model: Jones-Taylor-Thorton, CAT approximation with 20 rate categories'
+WAG_MODEL = 'ML Model: Whelan-And-Goldman, CAT approximation with 20 rate categories'
 
 def parse_fasttree(fobj):
     data = {
@@ -214,6 +196,51 @@ def parse_fasttree(fobj):
                     map(float, splut[1:])))
         elif line.strip() == JTT_MODEL:
             data['subs_model'] = 'JTT'
+            data['datatype'] = 'AA'
+        elif line.strip() == WAG_MODEL:
+            data['subs_model'] = 'WAG'
+            data['datatype'] = 'AA'
+
+    # Sanity check
+    if data['subs_model'] == 'GTR' and 'subs_rates' not in data:
+        raise InvalidLogError("GTR model, but no substitution rates found!")
 
     return data
 
+def parse_phyml(fobj):
+    s = ''.join(fobj)
+    result = {'gamma': {}}
+    try_set_fields(result, r'---\s*(?P<program>PhyML.*?)\s*---', s)
+    try_set_fields(result['gamma'], r'Number of categories:\s+(?P<n_cats>\d+)',
+                   s, hook=int)
+    try_set_fields(result['gamma'],
+            r'Gamma shape parameter:\s+(?P<alpha>\d+\.\d+)', s, hook=float)
+    result['ras_model'] = 'gamma'
+    if 'nucleotides' in s:
+        result['datatype'] = 'DNA'
+        try_set_fields(result,
+                       r'Model of nucleotides substitution:\s+(?P<subs_model>\w+)',
+                       s)
+        rates = {}
+        try_set_fields(rates, r'A <-> C\s+(?P<ac>\d+\.\d+)', s, hook=float)
+        try_set_fields(rates, r'A <-> G\s+(?P<ag>\d+\.\d+)', s, hook=float)
+        try_set_fields(rates, r'A <-> T\s+(?P<at>\d+\.\d+)', s, hook=float)
+        try_set_fields(rates, r'C <-> G\s+(?P<cg>\d+\.\d+)', s, hook=float)
+        try_set_fields(rates, r'C <-> T\s+(?P<ct>\d+\.\d+)', s, hook=float)
+        try_set_fields(rates, r'G <-> T\s+(?P<gt>\d+\.\d+)', s, hook=float)
+        if rates:
+            result['subs_rates'] = rates
+
+        # PhyML doesn't record whether empirical base frequencies were used, or
+        # ML estimates were made.
+        # Setting to empirical for now.
+        result['empirical_frequencies'] = True
+    elif 'amino acids' in s:
+        result['datatype'] = 'AA'
+        try_set_fields(result,
+                       r'Model of amino acids substitution:\s+(?P<subs_model>\w+)',
+                       s)
+    else:
+        raise ValueError('Could not determine if alignment is AA or DNA')
+
+    return result

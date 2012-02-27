@@ -23,10 +23,8 @@ import hashlib
 import re
 import json
 import sys
-from collections import defaultdict
 
 from taxtastic import refpkg
-from taxtastic import utils
 
 log = logging.getLogger(__name__)
 
@@ -60,7 +58,7 @@ def build_parser(parser):
     parser.add_argument("-p", "--profile",
                         action="store", dest="profile",
                         help='Alignment profile', metavar='FILE')
-    parser.add_argument('-P', '--package-name',
+    parser.add_argument('-P', '--package-name', required=True,
                         action='store', dest='package_name',
                         metavar='PATH', help='Name of refpkg to create')
     parser.add_argument("-R", "--readme",
@@ -74,10 +72,7 @@ def build_parser(parser):
                         action="store", dest="tree_stats",
                         help=('File containing tree statistics (for example '
                               'RAxML_info.whatever")'), metavar='FILE')
-    parser.add_argument("-Y", "--stats-type",
-                        action="store", metavar='TYPE', default=None,
-                        help=('The type of the tree stats file. Can be either "FastTree", '
-                              '"RAxML", or unspecified to guess'))
+                        action="store", metavar='TYPE',
     parser.add_argument("-S", "--aln-sto",
                         action="store", dest="aln_sto",
                         help='Multiple alignment in Stockholm format', metavar='FILE')
@@ -106,6 +101,9 @@ def action(args):
         except:
             print >>sys.stderr, "Failed: Could not delete %s" % args.package_name
             return 1
+    elif not args.clobber and os.path.exists(args.package_name):
+        print >> sys.stderr, 'Failed: {0} exists.'.format(args.package_name)
+        return 1
 
     r = refpkg.Refpkg(args.package_name)
     r.start_transaction()
@@ -116,11 +114,7 @@ def action(args):
         r.update_metadata('author', args.author)
     if args.package_version:
         r.update_metadata('package_version', args.package_version)
-    if args.tree_stats:
-        # phylo_model is stored internally in JSON, but is built from a
-        # RAxML stats file.  Refpkg provides a special method for handling
-        # this.
-        r.update_phylo_model(args.tree_stats, args.stats_type)
+        r.update_phylo_model(args.stats_type, args.tree_stats)
 
     for file_name in ['aln_fasta', 'aln_sto', 'mask',
                       'profile', 'seq_info', 'taxonomy', 'tree', 'tree_stats',
@@ -132,5 +126,3 @@ def action(args):
     r.commit_transaction()
     r.strip()
     return 0
-
-

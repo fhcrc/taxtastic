@@ -1,184 +1,41 @@
  oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
-                                    ---  PhyML v3.0  ---                                             
-                            http://www.atgc-montpellier.fr/phyml                                          
-                         Copyright CNRS - Universite Montpellier II                                 
+                                    ---  PhyML v3.0_export  ---
+                            http://www.atgc-montpellier.fr/phyml
+                         Copyright CNRS - Universite Montpellier II
  oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
 
 
-. Sequence filename: 			SEL0F.place.phy
+. Sequence filename: 			test.phy
 
 . Data set: 				#1
 
-. Starting tree number: 			#1
+. Tree topology search : 		NNIs
 
-. Tree topology: 			fixed
+. Initial tree: 			BioNJ
 
-. Initial tree: 			user tree (SEL0F.place.tre)
+. Model of amino acids substitution: 	LG
 
-. Model of amino acids substitution: 	WAG
+. Number of taxa: 			10
 
-. Number of taxa: 			5
+. Log-likelihood: 			-3420.41688
 
-. Log-likelihood: 			-1323.79909
+. Unconstrained likelihood: 		-1680.64122
 
-. Parsimony: 				184
+. Parsimony: 				553
 
-. Tree size: 				1.70560
+. Tree size: 				2.86615
 
-. Discrete gamma model: 		No
+. Discrete gamma model: 		Yes
+  - Number of categories: 		4
+  - Gamma shape parameter: 		0.626
 
-. Time used 0h0m0s
-
-
-. 0 seconds
-
- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
- Suggested citation:
-
- S. Guindon & O. Gascuel
- "A simple, fast, and accurate algorithm to estimate large phylogenies by maximum likelihood"
- Systematic Biology. 2003. 52(5):696-704.
- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+. Time used 0h0m5s
 
 
-. Sequence filename: 			SEL0F.place.phy
-
-. Data set: 				#1
-
-. Starting tree number: 			#2
-
-. Tree topology: 			fixed
-
-. Initial tree: 			user tree (SEL0F.place.tre)
-
-. Model of amino acids substitution: 	WAG
-
-. Number of taxa: 			5
-
-. Log-likelihood: 			-1343.28545
-
-. Parsimony: 				195
-
-. Tree size: 				1.95567
-
-. Discrete gamma model: 		No
-
-. Time used 0h0m0s
-
-
-. 0 seconds
+. 5 seconds
 
  oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
  Suggested citation:
-
- S. Guindon & O. Gascuel
- "A simple, fast, and accurate algorithm to estimate large phylogenies by maximum likelihood"
- Systematic Biology. 2003. 52(5):696-704.
- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
-
-
-. Sequence filename: 			SEL0F.place.phy
-
-. Data set: 				#1
-
-. Starting tree number: 			#3
-
-. Tree topology: 			fixed
-
-. Initial tree: 			user tree (SEL0F.place.tre)
-
-. Model of amino acids substitution: 	WAG
-
-. Number of taxa: 			5
-
-. Log-likelihood: 			-1344.18134
-
-. Parsimony: 				196
-
-. Tree size: 				1.96687
-
-. Discrete gamma model: 		No
-
-. Time used 0h0m0s
-
-
-. 0 seconds
-
- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
- Suggested citation:
-
- S. Guindon & O. Gascuel
- "A simple, fast, and accurate algorithm to estimate large phylogenies by maximum likelihood"
- Systematic Biology. 2003. 52(5):696-704.
- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
-
-
-. Sequence filename: 			SEL0F.place.phy
-
-. Data set: 				#1
-
-. Starting tree number: 			#4
-
-. Tree topology: 			fixed
-
-. Initial tree: 			user tree (SEL0F.place.tre)
-
-. Model of amino acids substitution: 	WAG
-
-. Number of taxa: 			5
-
-. Log-likelihood: 			-1346.40405
-
-. Parsimony: 				200
-
-. Tree size: 				2.00009
-
-. Discrete gamma model: 		No
-
-. Time used 0h0m1s
-
-
-. 1 seconds
-
- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
- Suggested citation:
-
- S. Guindon & O. Gascuel
- "A simple, fast, and accurate algorithm to estimate large phylogenies by maximum likelihood"
- Systematic Biology. 2003. 52(5):696-704.
- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
-
-
-. Sequence filename: 			SEL0F.place.phy
-
-. Data set: 				#1
-
-. Starting tree number: 			#5
-
-. Tree topology: 			fixed
-
-. Initial tree: 			user tree (SEL0F.place.tre)
-
-. Model of amino acids substitution: 	WAG
-
-. Number of taxa: 			5
-
-. Log-likelihood: 			-1346.40402
-
-. Parsimony: 				199
-
-. Tree size: 				2.00006
-
-. Discrete gamma model: 		No
-
-. Time used 0h0m0s
-
-
-. 0 seconds
-
- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
- Suggested citation:
-
  S. Guindon & O. Gascuel
  "A simple, fast, and accurate algorithm to estimate large phylogenies by maximum likelihood"
  Systematic Biology. 2003. 52(5):696-704.

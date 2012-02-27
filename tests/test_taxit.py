@@ -1,26 +1,19 @@
-#!/usr/bin/env python
-
-import sys
-import os
-from os import path
-import unittest
-import logging
-import shutil
-import commands
-import re
 import json
+import logging
+from os import path
+import shutil
 
-import config
-from config import TestScriptBase, rmdir
+from taxtastic import refpkg
+
+from . import config
+from .config import TestScriptBase
 
 log = logging
 
-TestScriptBase.executable = './taxit'
+TestScriptBase.executable = path.join(path.dirname(__file__), '..', 'taxit')
 TestScriptBase.outputdir = config.outputdir
 TestScriptBase.taxdb = config.ncbi_master_db
 TestScriptBase.datadir = config.datadir
-
-import taxtastic.package
 
 class TestHelp(TestScriptBase):
 
@@ -55,8 +48,10 @@ class TestHelp(TestScriptBase):
 class TestCreate(TestScriptBase):
 
     def setUp(self):
+        super(TestCreate, self).setUp()
         self.packagename = path.join(self.mkoutdir(), 'refpkg')
-        rmdir(self.packagename)
+        if path.exists(self.packagename):
+            shutil.rmtree(self.packagename)
 
     def test01(self):
         self.cmd_fails('create -P %(packagename)s')
@@ -69,14 +64,14 @@ class TestCreate(TestScriptBase):
         self.cmd_ok('create -P %(packagename)s -l 16s')
         self.assertTrue(path.exists(self.packagename))
 
-        contents_json = path.join(self.packagename,'CONTENTS.json') 
+        contents_json = path.join(self.packagename,'CONTENTS.json')
         self.assertTrue(path.exists(contents_json))
 
         with open(contents_json) as f:
             contents = json.load(f)
 
-        self.assertTrue(contents['metadata']['format_version'] == taxtastic.package.FORMAT_VERSION)
-        
+        self.assertEqual(contents['metadata']['format_version'], refpkg.FORMAT_VERSION)
+
         # test the --clobber option
         self.cmd_ok('create -P %(packagename)s -l 16s --clobber')
 
@@ -90,6 +85,7 @@ class TestTaxTable(TestScriptBase):
     """
 
     def setUp(self):
+        super(TestTaxTable, self).setUp()
         self.outfile = path.join(self.mkoutdir(), 'taxtable.csv')
 
     def test01(self):

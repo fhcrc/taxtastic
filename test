@@ -6,5 +6,4 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     exit 1
 fi
 
-python -m unittest discover $1 tests
-
+python -m unittest discover -t . -s tests $1

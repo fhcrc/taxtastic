@@ -15,7 +15,7 @@
 commands = [
     'add_nodes',
     'check',
-    'info',    
+    'info',
     'create',
     'new_database',
     'reroot',
@@ -25,6 +25,8 @@ commands = [
     'strip',
     'rollback',
     'rollforward',
+    'rp',
+    'refpkg_intersection',
     ]
 
 def itermodules(root=__name__):

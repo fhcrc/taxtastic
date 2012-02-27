@@ -1,18 +1,19 @@
+import contextlib
+from cStringIO import StringIO
 import os
-from os import path, mkdir
+from os import path, rmdir
 import sys
 import logging
 import re
 import unittest
 import commands
 import shutil
+import tempfile
 
 log = logging
 
 def funcname(idstr):
     return '.'.join(idstr.split('.')[1:])
-
-from taxtastic import ncbi
 
 # set verbosity of logging output
 try:
@@ -31,11 +32,57 @@ logging.basicConfig(
     )
 
 # module data
-datadir = 'testfiles'
-outputdir = 'test_output'
+datadir = path.abspath(path.join(path.dirname(__file__), '..', 'testfiles'))
+outputdir = path.abspath(path.join(path.dirname(__file__), '..', 'test_output'))
 
-if not(os.path.exists('../test_output')):
+def mkdir(dirpath, clobber=False):
+    """
+    Create a (potentially existing) directory without errors. Raise
+    OSError if directory can't be created. If clobber is True, remove
+    dirpath if it exists.
+    """
+
+    if clobber and os.path.isdir(dirpath):
+        shutil.rmtree(dirpath)
+
+    try:
+        os.mkdir(dirpath)
+    except OSError, msg:
+        log.debug(msg)
+
+    if not path.exists(dirpath):
+        raise OSError('Failed to create %s' % dirpath)
+
+    return dirpath
+
+if not os.path.isdir(outputdir):
     mkdir(outputdir)
+
+def data_path(*args):
+    return os.path.join(datadir, *args)
+
+def output_path(*args):
+    return os.path.join(outputdir, *args)
+
+@contextlib.contextmanager
+def tempdir(*args, **kwargs):
+    try:
+        d = tempfile.mkdtemp(*args, **kwargs)
+        yield d
+    finally:
+        shutil.rmtree(d)
+
+class OutputRedirectMixin(object):
+    def setUp(self):
+        self.old_stdout = sys.stdout
+        self.old_stderr = sys.stderr
+        sys.stdout = StringIO()
+        sys.stderr = StringIO()
+
+    def tearDown(self):
+        sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
+
 
 class TestBase(unittest.TestCase):
     """
@@ -51,7 +98,7 @@ class TestBase(unittest.TestCase):
         funcname = '.'.join(self.id().split('.')[-3:])
         return path.join(self.outputdir, funcname)
 
-    def mkoutdir(self, clobber = True):
+    def mkoutdir(self, clobber=True):
         """
         Create output directory (destructively if clobber is True)
         """
@@ -61,7 +108,7 @@ class TestBase(unittest.TestCase):
         return outdir
 
 
-class TestScriptBase(TestBase):
+class TestScriptBase(OutputRedirectMixin, TestBase):
 
     """
     Base class for unit tests of scripts distributed with this
@@ -91,7 +138,7 @@ class TestScriptBase(TestBase):
         if cmd is None:
             cmd = self.executable
         input = (cmd + ' ' + args) % self
-        log.warning('--> '+ input)
+        log.info('--> '+ input)
         status, output = commands.getstatusoutput(input)
         log.info(output)
         return status, output
@@ -104,12 +151,8 @@ class TestScriptBase(TestBase):
         status, output = self.wrap_cmd(cmd, args)
         self.assertFalse(status == 0)
 
-# download ncbi taxonomy data and create a database if necessary; use
+# Small NCBI taxonomy database
 # this database for all non-destructive, non-modifying tests. For
 # modifying tests, make a copy of the database.
-ncbi_data, downloaded = ncbi.fetch_data(dest_dir=outputdir, clobber=False)
-ncbi_master_db = path.join(outputdir, 'ncbi_master.db')
-with ncbi.db_connect(ncbi_master_db, clobber = False) as con:
-    log.info('using %s for all tests' % ncbi_master_db)
-    ncbi.db_load(con, ncbi_data)
-
+ncbi_master_db = data_path('small_taxonomy.db')
+ncbi_data = data_path('taxdmp.zip')
