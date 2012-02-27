@@ -72,7 +72,6 @@ def build_parser(parser):
                         action="store", dest="tree_stats",
                         help=('File containing tree statistics (for example '
                               'RAxML_info.whatever")'), metavar='FILE')
-                        action="store", metavar='TYPE',
     parser.add_argument("-S", "--aln-sto",
                         action="store", dest="aln_sto",
                         help='Multiple alignment in Stockholm format', metavar='FILE')
@@ -114,7 +113,8 @@ def action(args):
         r.update_metadata('author', args.author)
     if args.package_version:
         r.update_metadata('package_version', args.package_version)
-        r.update_phylo_model(args.stats_type, args.tree_stats)
+    if args.tree_stats:
+        r.update_phylo_model(args.tree_stats)
 
     for file_name in ['aln_fasta', 'aln_sto', 'mask',
                       'profile', 'seq_info', 'taxonomy', 'tree', 'tree_stats',
