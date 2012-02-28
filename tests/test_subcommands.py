@@ -238,6 +238,7 @@ def test_findcompany(capsys):
         tax_ids = ['1239', '186801']
         input = None
         output = None
+        cut = True
     status = findcompany.action(_Args())
     out, err = capsys.readouterr()
     assert status == 0

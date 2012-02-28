@@ -34,6 +34,9 @@ def build_parser(parser):
                         help="Taxonomy database to work from")
     parser.add_argument("tax_ids", type=str, nargs='*',
                         help='Tax IDs to look up')
+    parser.add_argument("-c", "--cut",
+                        action="store_true", default=False,
+                        help="Return one output per input (probably also lonely)")
     parser.add_argument("-i", "--input",
                         action="store", default=None,
                         help="Text file to read Tax IDs from, one per line")
@@ -54,7 +57,10 @@ def action(args):
     engine = create_engine('sqlite:///%s' % args.taxdb, echo=False)
     tax = Taxonomy(engine, ncbi.ranks)
     # Finally, real work...
-    company = lonely.lonely_company(tax, taxids)
+    if args.cut:
+        company = lonely.lonely_company(tax, taxids)
+    else:
+        company = lonely.solid_company(tax, taxids)
     txt = ""
     for t in company:
         txt += "%s\n" % t

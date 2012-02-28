@@ -370,6 +370,32 @@ class Taxonomy(object):
         else:
             return output[0]
 
+    def children_of(self, tax_id, n):
+        parent_id, rank = self._node(tax_id)
+        s = select([self.nodes.c.tax_id],
+                   and_(self.nodes.c.parent_id == tax_id,
+                        self.nodes.c.rank == rank_below(rank))).limit(n)
+        res = s.execute()
+        output = res.fetchall()
+        if not output:
+            return []
+        else:
+            return [x[0] for x in output]
+
+    def nary_subtree(self, tax_id, n=2):
+        """Return a list of species tax_ids under *tax_id* such that
+        node under *tax_id* and above the species has two children.
+        """
+        parent_id, rank = self._node(tax_id)
+        if rank == 'species':
+            return [tax_id]
+        else:
+            children = self.children_of(tax_id, 2)
+            species_taxids = []
+            for t in children:
+                species_taxids.extend(self.nary_subtree(t, n))
+            return species_taxids
+
     def species_below(self, tax_id):
         parent_id, rank = self._node(tax_id)
         if rank == 'species':

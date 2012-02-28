@@ -120,6 +120,7 @@ def test_child_of():
     engine = create_engine('sqlite:///../testfiles/small_taxonomy.db', echo=False)
     tax = Taxonomy(engine, taxtastic.ncbi.ranks)
     assert tax.child_of('1239') == '91061'
+    assert tax.children_of('1239', 2) == ['91061', '186801']
     
 def test_species_below():
     engine = create_engine('sqlite:///../testfiles/small_taxonomy.db', echo=False)
@@ -129,4 +130,10 @@ def test_species_below():
     assert rank == 'species'
     assert tax.species_below('1239') == '1280'
     assert tax.species_below('186801') == '420335'
+
+def test_nary_subtree():
+    engine = create_engine('sqlite:///../testfiles/small_taxonomy.db', echo=False)
+    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    t = tax.nary_subtree('1239')
+    assert t == ['1280', '372074', '1579', '1580', '37734', '420335', '166485', '166486']
     
