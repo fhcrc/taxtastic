@@ -1,3 +1,4 @@
+import sys; sys.path.insert(0, '../')
 import contextlib
 from cStringIO import StringIO
 import unittest
@@ -8,10 +9,11 @@ import os
 import sys
 
 from taxtastic import refpkg
-from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check
+from taxtastic.lonely import Tree
+from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check, lonelynodes
 
-from . import config
-from .config import OutputRedirectMixin
+import config
+from config import OutputRedirectMixin
 
 class TestUpdate(OutputRedirectMixin, unittest.TestCase):
     def test_action(self):
@@ -201,5 +203,36 @@ class TestCheck(OutputRedirectMixin, unittest.TestCase):
             refpkg = config.data_path('lactobacillus2-0.2.refpkg')
         self.assertEqual(check.action(_Args()), 0)
 
-if __name__ == '__main__':
-    unittest.main()
+def test_lonelynodes(capsys,tmpdir):
+    t = Tree(1, rank='phylum', tax_name='a')(
+             Tree(3, rank='order', tax_name='b')(
+                 Tree(4, rank='class', tax_name='c')(
+                     Tree(5, rank='family', tax_name='d')(
+                         Tree(7, rank='genus', tax_name='e')),
+                     Tree(6, rank='family', tax_name='f'))))
+    infile = tmpdir.join('junk.taxtable')
+    expected = ''.join(["3 # order b\n",
+                          "4 # class c\n",
+                          "7 # genus e\n"])
+    taxtable = '''"tax_id","parent_id","rank","tax_name"
+"1","1","phylum","a"
+"3","1","order","b"
+"4","3","class","c"
+"5","4","family","d"
+"7","5","genus","e"
+"6","4","family","f"'''
+    with open(str(infile), 'w') as h:
+            print >>h, taxtable
+    class _Args(object):
+        target = str(infile)
+        output = None
+        verbose = True
+    status = lonelynodes.action(_Args())
+    assert status == 0
+    out, err = capsys.readouterr()
+    assert out == expected
+
+
+
+
+

@@ -12,9 +12,17 @@ def test_trees():
     assert t.children[0].taxname == "boris meep"
     assert t.children[0].parent == t
     assert t.descendents[5] == t.children[0]
+    t2 = Tree(1)(
+             Tree(3)(
+                 Tree(4)(
+                     Tree(5)(
+                         Tree(7)),
+                     Tree(6))))
+    assert t2.descendents.keys() == [1,3,4,5,6,7]
+    assert t2.children[0].descendents.keys() == [3,4,5,6,7]
 
-taxtable = """
-"tax_id","parent_id","rank","tax_name","root","below_root","superkingdom","superphylum","phylum","class","subclass","order","below_order","suborder","family","genus","species"
+
+taxtable = """"tax_id","parent_id","rank","tax_name","root","below_root","superkingdom","superphylum","phylum","class","subclass","order","below_order","suborder","family","genus","species"
 "1","1","root","root","1","","","","","","","","","","","",""
 "131567","1","below_root","cellular organisms","1","131567","","","","","","","","","","",""
 "2","131567","superkingdom","Bacteria","1","131567","2","","","","","","","","","",""
@@ -39,6 +47,24 @@ def test_taxtable_to_tree():
     h = cStringIO.StringIO(taxtable)
     t = taxtable_to_tree(h)
     assert t.key == "1"
+    assert [x.key for x in t.children] == ["131567"]
+    assert [x.key for x in t.descendents['2'].children] == ['68336','201174','200930','1239','32066','1224']
+
+def test_lonely_nodes():
+    t = Tree(1)(
+            Tree(2)(
+                Tree(3),
+                Tree(4)))
+    assert [x.key for x in t.lonelynodes()] == [2]
+    t2 = Tree(1)(
+             Tree(3)(
+                 Tree(4)(
+                     Tree(5)(
+                         Tree(7)),
+                     Tree(6))))
+    assert [x.key for x in t2.lonelynodes()] == [3,4,7]
+    t2.descendents[5](Tree(9))
+    assert 9 in t2.descendents
 
 if __name__=='__main__':
     test_taxtable_to_tree()
