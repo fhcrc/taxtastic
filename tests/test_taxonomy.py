@@ -8,8 +8,8 @@ import unittest
 
 from sqlalchemy import create_engine
 
-from . import config
-from .config import TestBase
+import config
+from config import TestBase
 
 import taxtastic
 from taxtastic.taxonomy import Taxonomy
@@ -110,3 +110,23 @@ class TestAddNode(TestTaxonomyBase):
         for taxid in children:
             lineage = self.tax.lineage(taxid)
             self.assertTrue(lineage['parent_id'] == new_taxid)
+
+def test_sibling_of():
+    engine = create_engine('sqlite:///../testfiles/small_taxonomy.db', echo=False)
+    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    assert tax.sibling_of('91061') == '186801'
+
+def test_child_of():
+    engine = create_engine('sqlite:///../testfiles/small_taxonomy.db', echo=False)
+    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    assert tax.child_of('1239') == '91061'
+    
+def test_species_below():
+    engine = create_engine('sqlite:///../testfiles/small_taxonomy.db', echo=False)
+    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    t = tax.species_below('1239')
+    parent_id, rank = tax._node(t)
+    assert rank == 'species'
+    assert tax.species_below('1239') == '1280'
+    assert tax.species_below('186801') == '420335'
+    

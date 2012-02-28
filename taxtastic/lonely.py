@@ -1,6 +1,7 @@
 import csv
 
 class Tree(object):
+    """Tree for describing taxonomies."""
     def __init__(self, key, **nodedata):
         self.key = key
         self.data = nodedata
@@ -14,7 +15,14 @@ class Tree(object):
         for c in children:
             c.parent = self
             self.children.append(c)
+            # When creating a tree a priori, the children are fully created
+            # before the parents are, so we have to add all
+            # descendents of the children to the parents when we
+            # finally get to them.
             self.descendents.update(c.descendents)
+            # On the other hand, when adding children to an existing
+            # tree, we have to propogate them up all the descendents
+            # dictionaries of the parents.
             q = self
             while True:
                 q.descendents[c.key] = c
@@ -38,6 +46,7 @@ class Tree(object):
 
 
 def taxtable_to_tree(handle):
+    """Read a CSV taxonomy from *handle* into a Tree."""
     c = csv.reader(handle, quoting=csv.QUOTE_NONNUMERIC)
     header = c.next()
     rootdict = dict(zip(header, c.next()))
@@ -47,5 +56,14 @@ def taxtable_to_tree(handle):
         target = t.descendents[d['parent_id']]
         target(Tree(d['tax_id'], rank=d['rank'], tax_name=d['tax_name']))
     return t
+
+def lonely_company(taxonomy, tax_ids):
+    """Return a set of species tax_ids which will makes those in *tax_ids* not lonely.
+
+    The returned species will probably themselves be lonely.
+    """
+    return [taxonomy.species_below(t) for t in tax_ids]
+
+
 
     

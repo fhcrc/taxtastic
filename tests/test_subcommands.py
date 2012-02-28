@@ -10,7 +10,7 @@ import sys
 
 from taxtastic import refpkg
 from taxtastic.lonely import Tree
-from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check, lonelynodes
+from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check, lonelynodes, findcompany
 
 import config
 from config import OutputRedirectMixin
@@ -232,6 +232,17 @@ def test_lonelynodes(capsys,tmpdir):
     out, err = capsys.readouterr()
     assert out == expected
 
+def test_findcompany(capsys):
+    class _Args(object):
+        taxdb = '../testfiles/small_taxonomy.db'
+        tax_ids = ['1239', '186801']
+        input = None
+        output = None
+    status = findcompany.action(_Args())
+    out, err = capsys.readouterr()
+    assert status == 0
+    assert err == ""
+    assert out.strip() == "1280\n420335"
 
 
 

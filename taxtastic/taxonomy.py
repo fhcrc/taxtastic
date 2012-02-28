@@ -345,3 +345,45 @@ class Taxonomy(object):
         log.debug(lineage)
         return lineage
 
+    def sibling_of(self, tax_id):
+        parent_id, rank = self._node(tax_id)
+        s = select([self.nodes.c.tax_id],
+                   and_(self.nodes.c.parent_id == parent_id,
+                        self.nodes.c.tax_id != tax_id,
+                        self.nodes.c.rank == rank))
+        res = s.execute()
+        output = res.fetchone()
+        if not output:
+            raise KeyError("Tax id %s not found in database" % tax_id)
+        else:
+            return output[0]
+
+    def child_of(self, tax_id):
+        parent_id, rank = self._node(tax_id)
+        s = select([self.nodes.c.tax_id],
+                   and_(self.nodes.c.parent_id == tax_id,
+                        self.nodes.c.rank == rank_below(rank)))
+        res = s.execute()
+        output = res.fetchone()
+        if not output:
+            raise KeyError("No children of tax_id %s found in database" % tax_id)
+        else:
+            return output[0]
+
+    def species_below(self, tax_id):
+        parent_id, rank = self._node(tax_id)
+        if rank == 'species':
+            return tax_id
+        else:
+            c = self.child_of(tax_id)
+            return self.species_below(c)
+
+
+def rank_below(rank):
+    return {'kingdom': 'phylum',
+            'phylum': 'class',
+            'class': 'order',
+            'order': 'family',
+            'family': 'genus',
+            'genus': 'species'}[rank]
+        
