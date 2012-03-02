@@ -12,23 +12,18 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-commands = [
-    'add_nodes',
-    'check',
-    'info',
-    'create',
-    'new_database',
-    'reroot',
-    'update',
-    'taxids',
-    'taxtable',
-    'strip',
-    'rollback',
-    'rollforward',
-    'rp',
-    'refpkg_intersection',
-    ]
 
-def itermodules(root=__name__):
+import glob
+from os.path import splitext, split, join
+
+def itermodules(subcommands_path, root=__name__):
+
+    modules = sorted(glob.glob(join(subcommands_path, '*.py')))
+    # excluded = set(['lonelynodes'])
+    excluded = set()
+    
+    commands = [x for x in [splitext(split(p)[1])[0] for p in modules] if not x.startswith('_') and x not in excluded]
+
     for command in commands:
         yield command, __import__('%s.%s' % (root, command), fromlist=[command])
+

@@ -32,8 +32,9 @@ class ConfigError(Exception):
     pass
 
 def build_parser(parser):
-    parser.add_argument("taxtable_or_refpkg", 
-                        action="store", dest="target",
+    parser.add_argument("target",
+                        metavar = "taxtable_or_refpkg", 
+                        action="store",
                         help='A taxtable or a refpkg containing a taxtable')
     parser.add_argument('-o', '--output',
                         action='store', default=None,
