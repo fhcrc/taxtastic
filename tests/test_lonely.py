@@ -1,6 +1,11 @@
 import sys; sys.path.append('../')
 from taxtastic.lonely import *
 import cStringIO
+import os
+from sqlalchemy import create_engine
+from taxtastic.taxonomy import Taxonomy
+from taxtastic import ncbi
+
 
 def test_trees():
     t = Tree(3, taxname="boris")(
@@ -65,6 +70,17 @@ def test_lonely_nodes():
     assert [x.key for x in t2.lonelynodes()] == [3,4,7]
     t2.descendents[5](Tree(9))
     assert 9 in t2.descendents
+
+def test_bacteroides():
+    if not(os.path.exists('../testfiles/taxonomy.db')):
+        return
+    engine = create_engine('sqlite:///../testfiles/taxonomy.db', echo=False)
+    tax = Taxonomy(engine, ncbi.ranks)
+
+    [t] = lonely_company(tax, [816])
+    parent_id, rank = tax._node(t)
+    assert parent_id != '816'
+    assert lonely_company(tax, [816]) == ['49896']
 
 if __name__=='__main__':
     test_taxtable_to_tree()

@@ -62,13 +62,13 @@ def lonely_company(taxonomy, tax_ids):
 
     The returned species will probably themselves be lonely.
     """
-    return [taxonomy.species_below(t) for t in tax_ids]
+    return [taxonomy.species_below(taxonomy.sibling_of(t)) for t in tax_ids]
 
 def solid_company(taxonomy, tax_ids):
     """Return a set of non-lonely species tax_ids that will make those in *tax_ids* not lonely."""
     res = []
     for t in tax_ids:
-        res.extend(tax.nary_subtree(t, 2))
+        res.extend(tax.nary_subtree(tax.sibling_of(t), 2))
     return res
 
 
