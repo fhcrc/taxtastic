@@ -17,6 +17,11 @@
 import logging
 import shutil
 import os
+import time
+import shutil
+import hashlib
+import re
+import json
 import sys
 
 from taxtastic import refpkg
@@ -108,6 +113,8 @@ def action(args):
         r.update_metadata('author', args.author)
     if args.package_version:
         r.update_metadata('package_version', args.package_version)
+    if args.tree_stats:
+        r.update_phylo_model(args.tree_stats)
 
     for file_name in ['aln_fasta', 'aln_sto', 'mask',
                       'profile', 'seq_info', 'taxonomy', 'tree', 'tree_stats',

@@ -1,8 +1,5 @@
 """
-taxtastic/subcommands/check.py
-
-Run a series of deeper checks on a RefPkg.  This subcommand is a
-wrapper around the Refpkg method is_ill_formed.
+Run a series of deeper checks on a RefPkg.
 """
 # This file is part of taxtastic.
 #

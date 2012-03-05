@@ -19,7 +19,7 @@ import itertools
 log = logging
 
 import sqlalchemy
-from sqlalchemy import MetaData, and_
+from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
 
 class Taxonomy(object):
@@ -91,12 +91,13 @@ class Taxonomy(object):
         """
         Returns parent, rank
         """
+        if tax_id == None:
+            return None
 
         s = select([self.nodes.c.parent_id, self.nodes.c.rank],
                    self.nodes.c.tax_id == tax_id)
         res = s.execute()
         output = res.fetchone()
-
         if not output:
             raise KeyError('value "%s" not found in nodes.tax_id' % tax_id)
 
@@ -345,3 +346,148 @@ class Taxonomy(object):
         log.debug(lineage)
         return lineage
 
+    def sibling_of(self, tax_id):
+        """Return None or a tax_id of a sibling of *tax_id*.
+
+        If *tax_id* is None, then always returns None. Otherwise,
+        returns None if there is no sibling.
+        """
+        if tax_id == None:
+            return None
+        parent_id, rank = self._node(tax_id)
+        s = select([self.nodes.c.tax_id],
+                   and_(self.nodes.c.parent_id == parent_id,
+                        self.nodes.c.tax_id != tax_id,
+                        self.nodes.c.rank == rank))
+        res = s.execute()
+        output = res.fetchone()
+        if not output:
+            log.warning('No sibling of tax_id %s with rank %s found in taxonomy' % (tax_id, rank))
+            return None
+        else:
+            return output[0]
+
+    def is_ancestor_of(self, node, ancestor):
+        if node is None or ancestor is None:
+            return False
+        l = self.lineage(node)
+        return ancestor in l.values()
+
+    def rank(self, tax_id):
+        if tax_id is None:
+            return None
+        else:
+            q = self._node(tax_id)
+            if q:
+                return self._node(tax_id)[1]
+            else:
+                return None
+
+    def child_of(self, tax_id):
+        """Return None or a tax id of a child of *tax_id*.
+
+        If *tax_id* is None, then always returns None. Otherwise
+        returns a child if one exists, else None. The child must have
+        a proper rank below that of tax_id (i.e., genus, species, but
+        not no_rank or below_below_kingdom).
+        """
+        if tax_id == None:
+            return None
+        parent_id, rank = self._node(tax_id)
+        s = select([self.nodes.c.tax_id],
+                   and_(self.nodes.c.parent_id == tax_id,
+                        or_(*[self.nodes.c.rank == r for r in ranks_below(rank)])))
+        res = s.execute()
+        output = res.fetchone()
+        if not output:
+            log.warning("No children of tax_id %s with rank below %s found in database" % (tax_id, rank))
+            return None
+        else:
+            r = output[0]
+            assert self.is_ancestor_of(r, tax_id)
+            return r
+
+    def children_of(self, tax_id, n):
+        if tax_id == None:
+            return None
+        parent_id, rank = self._node(tax_id)
+        s = select([self.nodes.c.tax_id],
+                   and_(self.nodes.c.parent_id == tax_id,
+                        or_(*[self.nodes.c.rank == r for r in ranks_below(rank)]))).limit(n)
+        res = s.execute()
+        output = res.fetchall()
+        if not output:
+            return []
+        else:
+            r = [x[0] for x in output]
+            for x in r:
+                assert self.is_ancestor_of(x, tax_id)
+            return r
+
+    def parent_id(self, tax_id):
+        if tax_id is None:
+            return None
+        else:
+            q = self._node(tax_id)
+            if q:
+                return q[0]
+            else:
+                return None
+
+
+    def nary_subtree(self, tax_id, n=2):
+        """Return a list of species tax_ids under *tax_id* such that
+        node under *tax_id* and above the species has two children.
+        """
+        if tax_id == None:
+            return None
+        parent_id, rank = self._node(tax_id)
+        if rank == 'species':
+            return [tax_id]
+        else:
+            children = self.children_of(tax_id, 2)
+            species_taxids = []
+            for t in children:
+                species_taxids.extend(self.nary_subtree(t, n))
+            return species_taxids
+
+    def species_below(self, tax_id):
+        if tax_id == None:
+            return None
+        try:
+            parent_id, rank = self._node(tax_id)
+        except KeyError:
+            return None
+        if rank == 'species':
+            return tax_id
+        else:
+            c = self.child_of(tax_id)
+            newc = self.species_below(c)
+            assert self.is_ancestor_of(newc, tax_id)
+            return newc
+
+ranks = ['species', 'genus', 'family', 'order', 'class', 'phylum', 'kingdom']
+
+def is_below(lower, upper):
+    try:
+        lindex = ranks.index(lower)
+        uindex = ranks.index(upper)
+        return lindex < uindex
+    except:
+        return False
+
+def ranks_below(rank):
+    try:
+        idx = ranks.index(rank)
+        return ranks[:idx]
+    except:
+        return []
+
+def rank_below(rank):
+    return {'kingdom': 'phylum',
+            'phylum': 'class',
+            'class': 'order',
+            'order': 'family',
+            'family': 'genus',
+            'genus': 'species'}[rank]
+        

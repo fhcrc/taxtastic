@@ -381,7 +381,7 @@ class Refpkg(object):
                 self.update_file('tree', name)
         self._log('Rerooting refpkg')
 
-    def update_phylo_model(self, stats_type, stats_file):
+    def update_phylo_model(self, stats_file, stats_type=None):
         """Parse a stats log and use it to update ``phylo_model``.
 
         ``pplacer`` expects its input to include the deatils of the

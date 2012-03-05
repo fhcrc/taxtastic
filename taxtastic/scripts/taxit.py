@@ -19,10 +19,13 @@ with `pplacer` and related software.
 """
 
 import argparse
+from argparse import RawDescriptionHelpFormatter
 import sys
+import os
 import logging
 from taxtastic import subcommands, __version__ as version
 
+PROG = os.path.basename(__file__)
 DESCRIPTION = __doc__.strip()
 
 def main(argv):
@@ -49,7 +52,7 @@ def parse_arguments(argv):
     """
     """
     # Create the argument parser
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser = argparse.ArgumentParser(description=DESCRIPTION, prog=PROG)
 
     parser.add_argument('-V', '--version', action='version',
         version='taxit v' + version,
@@ -77,8 +80,19 @@ def parse_arguments(argv):
     # End help sub-command
 
     actions = {}
-    for name, mod in subcommands.itermodules():
-        subparser = subparsers.add_parser(name, help=mod.__doc__)
+    
+    for name, mod in subcommands.itermodules(os.path.split(subcommands.__file__)[0]):
+        # set up subcommand help text. The first line of the dosctring
+        # in the module is displayed as the help text in the
+        # script-level help message (`script -h`). The entire
+        # docstring is displayed in the help message for the
+        # individual subcommand ((`script action -h`)).
+        subparser = subparsers.add_parser(
+            name,
+            help = mod.__doc__.lstrip().split('\n', 1)[0],
+            description = mod.__doc__,
+            formatter_class = RawDescriptionHelpFormatter)
+
         mod.build_parser(subparser)
         actions[name] = mod.action
 
