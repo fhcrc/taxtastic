@@ -66,7 +66,7 @@ def action(args):
     with open(path) as h:
         tree = lonely.taxtable_to_tree(h)
     print >>sys.stderr, "done."
-    txt = '\n'.join(["%s # %s %s" % (n.key, n.rank, n.tax_name) for n in tree.lonelynodes()])
+    txt = '\n'.join(["%s # %s %s" % (n.key if n.key else "", n.rank, n.tax_name) for n in tree.lonelynodes()])
     if args.output:
         with open(args.output, 'w') as out:
             print >>out, txt

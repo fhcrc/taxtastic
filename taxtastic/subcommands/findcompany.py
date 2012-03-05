@@ -63,7 +63,7 @@ def action(args):
         company = lonely.solid_company(tax, taxids)
     txt = ""
     for t in company:
-        txt += "%s\n" % t
+        txt += "%s\n" % (t if t else "")
     if args.output:
         with open(args.output, 'w') as h:
             print >>h, txt

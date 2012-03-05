@@ -243,7 +243,7 @@ def test_findcompany(capsys):
     out, err = capsys.readouterr()
     assert status == 0
     assert err == ""
-    assert out.strip() == "1280\n420335"
+    assert out.strip() == "562\n1280"
 
 
 

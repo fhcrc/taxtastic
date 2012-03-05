@@ -71,16 +71,17 @@ def test_lonely_nodes():
     t2.descendents[5](Tree(9))
     assert 9 in t2.descendents
 
-def test_bacteroides():
+def test_lonely_company():
     if not(os.path.exists('../testfiles/taxonomy.db')):
         return
     engine = create_engine('sqlite:///../testfiles/taxonomy.db', echo=False)
     tax = Taxonomy(engine, ncbi.ranks)
+    print tax.lineage(49896)
+    lonely_tax_ids = [None, 816, 1239]
+    for a,t in zip(lonely_tax_ids, lonely_company(tax, lonely_tax_ids)):
+        assert a is None or t is None or tax.is_ancestor_of(t, tax.parent_id(a))
+        assert t is None or tax.rank(t) == 'species'
 
-    [t] = lonely_company(tax, [816])
-    parent_id, rank = tax._node(t)
-    assert parent_id != '816'
-    assert lonely_company(tax, [816]) == ['49896']
 
-if __name__=='__main__':
-    test_taxtable_to_tree()
+
+
