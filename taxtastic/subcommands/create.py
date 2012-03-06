@@ -114,7 +114,7 @@ def action(args):
     if args.package_version:
         r.update_metadata('package_version', args.package_version)
     if args.tree_stats:
-        r.update_phylo_model(args.tree_stats)
+        r.update_phylo_model(None, args.tree_stats)
 
     for file_name in ['aln_fasta', 'aln_sto', 'mask',
                       'profile', 'seq_info', 'taxonomy', 'tree', 'tree_stats',
