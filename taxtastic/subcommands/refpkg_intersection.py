@@ -51,18 +51,19 @@ def action(args):
         writer = csv.writer(args.outfile)
         writer.writerow(('tax_id', 'intersection_rank'))
         cursor.execute("""
-            SELECT child,
-                   rank
-            FROM   (SELECT child,
-                           rank
-                    FROM   tt.parents
-                           JOIN taxa
-                             ON tax_id = parent
-                           JOIN ranks USING (rank)
-                    WHERE  rank IN (%s)
-                    ORDER  BY child,
-                              rank_order ASC)
-            GROUP  BY child
+            SELECT tax_id,
+                   COALESCE(itaxa.rank, "")
+              FROM tt.taxa
+                   LEFT JOIN (SELECT child AS tax_id,
+                                     rank
+                                FROM tt.parents
+                                     JOIN taxa
+                                       ON tax_id = parent
+                                     JOIN ranks USING (rank)
+                               WHERE rank IN (%s)
+                               ORDER BY child,
+                                        rank_order ASC) itaxa USING (tax_id)
+             GROUP BY tax_id
         """ % ', '.join('?' * len(ranks)), ranks)
         writer.writerows(cursor)
 
