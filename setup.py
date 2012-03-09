@@ -15,14 +15,7 @@ except ImportError:
     distribute_setup.use_setuptools()
     from setuptools import setup, find_packages
 
-# The code contained by the with statement below configures and
-# updates the insertion of the abbrevated git sha hash in the package
-# version number. This assumes that the repository root contains a
-# '.gitattributes' file with the contents
-# 
-# taxtastic/data/sha    filter=sha
-#
-# and that the (empty) file 'taxtastic/data/sha' exists.
+# Provide the abbreviated git sha with the version number. 
 subprocess.call('git log --pretty=format:%h -n 1 > taxtastic/data/sha', shell=True)
 from taxtastic import __version__
 

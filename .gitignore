@@ -3,3 +3,4 @@ build/
 _build
 test_output/
 doctrees/
+taxtastic/data/sha
