@@ -15,7 +15,7 @@ except ImportError:
     distribute_setup.use_setuptools()
     from setuptools import setup, find_packages
 
-# Provide the abbreviated git sha with the version number. 
+# Provide the abbreviated git sha with the version number.
 subprocess.call('git log --pretty=format:%h -n 1 > taxtastic/data/sha', shell=True)
 from taxtastic import __version__
 
@@ -31,7 +31,7 @@ params = {'author': 'Noah Hoffman',
           'url': 'https://github.com/fhcrc/taxtastic',
           'version': __version__,
           'package_data': {'taxtastic': [join('data',f) for f in ['sha']]},
-          'install_requires': ['sqlalchemy', 'decorator']}
+          'install_requires': ['sqlalchemy', 'decorator', 'biopython']}
 
 setup(**params)
 
