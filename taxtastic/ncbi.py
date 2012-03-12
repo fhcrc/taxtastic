@@ -377,7 +377,7 @@ def read_names(rows, unclassified_regex = None):
             """
             tn = row[tax_name]
             term = ' '.join(tn.split()[:2]) if ' ' in tn else tn
-            return 0 if unclassified_regex.search(tn) else 1
+            return 0 if unclassified_regex.search(term) else 1
     else:
         _is_classified = lambda row: None
     
