@@ -64,8 +64,8 @@ def build_parser(parser):
 
     input_group.add_argument(
         '-i', '--seq-info', type=argparse.FileType('r'),
-        help="""Read tax_ids from sequence info file, minimally containing
-        fields "seqname" and "tax_id" """)
+        help="""Read tax_ids from sequence info file, minimally containing the
+        field "tax_id" """)
 
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
