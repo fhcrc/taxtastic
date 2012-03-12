@@ -22,6 +22,7 @@ import logging
 import os
 import urllib
 import zipfile
+import re
 
 from errors import IntegrityError
 
@@ -45,7 +46,9 @@ tax_id        TEXT REFERENCES nodes(tax_id),
 tax_name      TEXT,
 unique_name   TEXT,
 name_class    TEXT,
-is_primary    INTEGER -- not defined in names.dmp
+-- not defined in names.dmp:
+is_primary    INTEGER,
+is_classified INTEGER -- tax_name does not match UNCLASSIFIED_REGEX
 );
 
 CREATE TABLE merged(
@@ -119,6 +122,53 @@ varietas
 forma
 """
 
+# provides criteria for defining matching tax_ids as "unclassified"
+UNCLASSIFIED_REGEX = re.compile(
+    r'' + r'|'.join(frozenset(['-like',
+                               'Taxon'
+                               '\d\d',
+                               'acidophile',
+                               'actinobacterium',
+                               'aerobic',
+                               r'\b[Al]g(um|a)\b',
+                               r'\b[Bb]acteri(um|a)',
+                               'Barophile',
+                               'cyanobacterium',
+                               'Chloroplast',
+                               'Cloning',
+                               'cluster',
+                               '-containing',
+                               'epibiont',
+                               # 'et al',
+                               'eubacterium',
+                               r'\b[Gg]roup\b',
+                               'halophilic',
+                               r'hydrothermal\b',
+                               'isolate',
+                               'marine',
+                               'methanotroph',
+                               'microorganism',
+                               'mollicute',
+                               'pathogen',
+                               '[Pp]hytoplasma',
+                               'proteobacterium',
+                               'putative',
+                               r'\bsp\.',
+                               'species',
+                               'spirochete',
+                               r'str\.'
+                               'strain',
+                               'symbiont',
+                               'taxon',
+                               'unicellular',
+                               'uncultured',
+                               'unclassified',
+                               'unidentified',
+                               'unknown',
+                               'vector\b',
+                               r'vent\b',
+                               ])))
+
 ranks = [k.strip().replace(' ','_') for k in _ranks.splitlines() if k.strip()]
 
 def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber = False):
@@ -165,7 +215,8 @@ def db_load(con, archive, root_name='root', maxrows=None):
 
         # names
         rows = read_names(
-            rows=read_archive(archive, 'names.dmp')
+            rows=read_archive(archive, 'names.dmp'),
+            unclassified_regex = UNCLASSIFIED_REGEX
             )
         do_insert(con, 'names', rows, maxrows, add=False)
 
@@ -282,12 +333,17 @@ def read_nodes(rows, root_name, ncbi_source_id):
         row[rank] = '_'.join(row[rank].split())
         yield row[:ncol] + [ncbi_source_id]
 
-def read_names(rows):
+def read_names(rows, unclassified_regex = None):
     """
     Return an iterator of rows ready to insert into table
-    "names". Adds column "is_primary".
+    "names". Adds columns "is_primary" and "is_classified". If
+    `unclassified_regex` is not None, defines 'is_classified' as 1 if
+    the regex fails to match "tax_name" or 0 otherwise; if
+    `unclassified_regex` is None, 'is_classified' is given a value of
+    None.
 
     * rows - iterator of lists (eg, output from read_archive or read_dmp)
+    * unclassified_regex - a compiled re matching "unclassified" names
     """
 
     keys = 'tax_id tax_name unique_name name_class'.split()
@@ -312,8 +368,21 @@ def read_names(rows):
 
         return result
 
+    if unclassified_regex:
+        def _is_classified(row):
+            """
+            Return 1 if tax_name element of `row` matches
+            unclassified_regex, 0 otherwise. Search no more than the
+            first two whitespace-delimited words.
+            """
+            tn = row[tax_name]
+            term = ' '.join(tn.split()[:2]) if ' ' in tn else tn
+            return 0 if unclassified_regex.search(tn) else 1
+    else:
+        _is_classified = lambda row: None
+    
     # appends additional field is_primary
     for row in rows:
-        yield row + [_is_primary(row)]
+        yield row + [_is_primary(row), _is_classified(row)]
 
 
