@@ -72,4 +72,4 @@ def solid_company(taxonomy, tax_ids):
     return res
 
 
-    
+

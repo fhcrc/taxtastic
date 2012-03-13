@@ -45,7 +45,7 @@ def tally_taxa(pkg):
 
     for tax_id in tax_ids:
         tally[tax_id] += 1
-        
+
     rows = [(taxdict[tax_id]['tax_name'], tax_id, count) for tax_id, count in tally.items()]
 
     writer = csv.writer(sys.stdout, quoting = csv.QUOTE_NONNUMERIC)

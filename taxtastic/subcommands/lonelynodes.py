@@ -33,7 +33,7 @@ class ConfigError(Exception):
 
 def build_parser(parser):
     parser.add_argument("target",
-                        metavar = "taxtable_or_refpkg", 
+                        metavar = "taxtable_or_refpkg",
                         action="store",
                         help='A taxtable or a refpkg containing a taxtable')
     parser.add_argument('-o', '--output',
@@ -61,7 +61,7 @@ def action(args):
         if args.verbose:
             print >>sys.stderr, "Target is a CSV file."
         path = args.target
-        
+
     print >>sys.stderr, "Loading taxonomy from file...",
     with open(path) as h:
         tree = lonely.taxtable_to_tree(h)

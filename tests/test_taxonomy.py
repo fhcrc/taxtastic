@@ -130,7 +130,7 @@ def test_child_of():
     assert tax.child_of(None) == None
     assert tax.child_of('1239') == '91061'
     assert tax.children_of('1239', 2) == ['91061', '186801']
-    
+
 def test_is_ancestor_of():
     engine = create_engine('sqlite:///../testfiles/taxonomy.db', echo=False)
     tax = Taxonomy(engine, taxtastic.ncbi.ranks)
@@ -170,4 +170,4 @@ def test_nary_subtree():
     assert tax.nary_subtree(None) == None
     t = tax.nary_subtree('1239')
     assert t == ['1280', '372074', '1579', '1580', '37734', '420335', '166485', '166486']
-    
+
