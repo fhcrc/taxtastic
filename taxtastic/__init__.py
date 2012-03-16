@@ -28,7 +28,7 @@ try:
 except Exception, e:
     sha = ''
 
-__version__ = "0.3.2" + ('.' + sha if sha else '')
+__version__ = "0.4.0" + ('.' + sha if sha else '')
 __version_info__ = tuple([_safeint(num) for num in __version__.split('.')])
 
 

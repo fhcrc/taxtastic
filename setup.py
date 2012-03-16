@@ -1,5 +1,6 @@
 """
 Create unix package:    python setup.py sdist
+Upload to pypi:         python setup.py sdist upload
 """
 
 import os
