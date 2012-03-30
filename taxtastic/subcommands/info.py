@@ -19,10 +19,7 @@ Show information about reference packages.
 import logging
 import csv
 from collections import defaultdict
-import pprint
 import sys
-
-from Bio import Phylo
 
 from taxtastic import refpkg
 
@@ -57,7 +54,7 @@ def action(args):
     """
     log.info('loading reference package')
 
-    pkg = refpkg.Refpkg(args.refpkg)
+    pkg = refpkg.Refpkg(args.refpkg, create=False)
 
     with open(pkg.file_abspath('seq_info')) as seq_info:
         snames = [row['seqname'] for row in csv.DictReader(seq_info)]

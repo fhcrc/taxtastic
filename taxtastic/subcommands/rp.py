@@ -34,6 +34,6 @@ def build_parser(parser):
 
 
 def action(args):
-    rp = refpkg.Refpkg(args.refpkg)
+    rp = refpkg.Refpkg(args.refpkg, create=False)
     sys.stdout.write('%s\n' % rp.file_abspath(args.item))
     return 0

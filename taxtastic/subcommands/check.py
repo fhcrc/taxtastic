@@ -15,7 +15,6 @@ Run a series of deeper checks on a RefPkg.
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-import os.path
 
 import taxtastic.refpkg
 
@@ -24,11 +23,7 @@ def build_parser(parser):
         help='Path to Refpkg to check')
 
 def action(args):
-    if not os.path.isdir(args.refpkg):
-        print args.refpkg, 'is not a directory.'
-        return 1
-
-    r = taxtastic.refpkg.Refpkg(args.refpkg)
+    r = taxtastic.refpkg.Refpkg(args.refpkg, create=False)
     msg = r.is_ill_formed()
     if msg:
         print msg

@@ -136,7 +136,7 @@ class NoAncestor(Exception):
 class Refpkg(object):
     _manifest_name = 'CONTENTS.json'
 
-    def __init__(self, path):
+    def __init__(self, path, create=True):
         """Create a reference to a new or existing RefPkg at *path*.
 
         If there is already a RefPkg at *path*, a reference is
@@ -150,11 +150,15 @@ class Refpkg(object):
         # in place.
         self.current_transaction = None
         self.path = os.path.abspath(path)
-        if not(os.path.exists(path)):
-            os.mkdir(path)
-            with open(os.path.join(path, self._manifest_name), 'w') as h:
-                json.dump(manifest_template(), h, indent=4)
-        if not(os.path.isdir(path)):
+        if not os.path.exists(path):
+            if create:
+                os.mkdir(path)
+                with open(os.path.join(path, self._manifest_name), 'w') as h:
+                    json.dump(manifest_template(), h, indent=4)
+            else:
+                raise ValueError(
+                        "Reference package {0} does not exist.".format(path))
+        if not os.path.isdir(path):
             raise ValueError("%s is not a valid RefPkg" % (path,))
         # Try to load the Refpkg and check that it's valid
         manifest_path = os.path.join(path, self._manifest_name)

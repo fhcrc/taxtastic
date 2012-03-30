@@ -250,6 +250,11 @@ class TestRefpkg(unittest.TestCase):
             r.update_file('aln_fasta', config.data_path('little.fasta'))
             self.assertTrue(isinstance(r.is_ill_formed(), basestring))
 
+    def test_init_dne(self):
+        with config.tempdir() as d:
+            rpkg = os.path.join(d, 'test.refpkg')
+            assert not os.path.exists(rpkg)
+            self.assertRaises(ValueError, refpkg.Refpkg, rpkg, create=False)
 
 if __name__ == '__main__':
     unittest.main()
