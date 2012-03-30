@@ -155,6 +155,7 @@ class Refpkg(object):
                 os.mkdir(path)
                 with open(os.path.join(path, self._manifest_name), 'w') as h:
                     json.dump(manifest_template(), h, indent=4)
+                    h.write('\n')
             else:
                 raise ValueError(
                         "Reference package {0} does not exist.".format(path))
@@ -279,6 +280,7 @@ class Refpkg(object):
         """
         with open(os.path.join(self.path, self._manifest_name), 'w') as h:
             json.dump(self.contents, h, indent=4)
+            h.write('\n')
 
     def _sync_from_disk(self):
         """Read any changes made on disk to this Refpkg.
