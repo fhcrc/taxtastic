@@ -15,13 +15,7 @@
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import shutil
 import os
-import time
-import shutil
-import hashlib
-import re
-import json
 import sys
 
 from taxtastic import lonely, refpkg
@@ -54,7 +48,7 @@ def action(args):
                 print >>sys.stderr, "Target is a refpkg. Working on taxonomy within it."
             r = refpkg.Refpkg(args.target)
             path = r.file_abspath('taxonomy')
-        except e:
+        except Exception, e:
             print >>sys.stderr, "Failed: %s" % str(e)
             return 1
     else:
