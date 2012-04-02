@@ -25,6 +25,9 @@ log = logging.getLogger(__name__)
 class ConfigError(Exception):
     pass
 
+def comma_separated_set(s):
+    return frozenset(i.strip() for i in s.split(','))
+
 def build_parser(parser):
     parser.add_argument("target",
                         metavar = "taxtable_or_refpkg",
@@ -33,6 +36,8 @@ def build_parser(parser):
     parser.add_argument('-o', '--output',
                         action='store', default=None,
                         help='Write output to given file')
+    parser.add_argument('-r', '--ranks', help="""Comma separated list of ranks
+            to consider [default: all ranks]""", type=comma_separated_set)
     parser.add_argument('-v', '--verbose',
                         action="store_true", dest="verbose", default = False,
                         help= 'Print details')
@@ -60,7 +65,10 @@ def action(args):
     with open(path) as h:
         tree = lonely.taxtable_to_tree(h)
     print >>sys.stderr, "done."
-    txt = '\n'.join(["%s # %s %s" % (n.key if n.key else "", n.rank, n.tax_name) for n in tree.lonelynodes()])
+    result = tree.lonelynodes()
+    if args.ranks:
+        result = (n for n in result if n.rank in args.ranks)
+    txt = '\n'.join("%s # %s %s" % (n.key if n.key else "", n.rank, n.tax_name) for n in result)
     if args.output:
         with open(args.output, 'w') as out:
             print >>out, txt
