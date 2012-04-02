@@ -14,9 +14,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
+import argparse
 import logging
-import os
-import sys
 
 from taxtastic import lonely
 from sqlalchemy import create_engine
@@ -30,18 +29,17 @@ class ConfigError(Exception):
     pass
 
 def build_parser(parser):
-    parser.add_argument("taxdb", action="store",
+    parser.add_argument("taxdb",
                         help="Taxonomy database to work from")
     parser.add_argument("tax_ids", type=str, nargs='*',
                         help='Tax IDs to look up')
     parser.add_argument("-c", "--cut",
                         action="store_true", default=False,
                         help="Return one output per input (probably also lonely)")
-    parser.add_argument("-i", "--input",
-                        action="store", default=None,
-                        help="Text file to read Tax IDs from, one per line")
+    parser.add_argument("-i", "--input", type=argparse.FileType('r'),
+            default=None, help="Text file to read Tax IDs from, one per line")
     parser.add_argument('-o', '--output',
-                        action='store', default=None,
+                        default=None,
                         help='Write output to given file')
 
 
@@ -49,10 +47,10 @@ def action(args):
     taxids = args.tax_ids
     # Add taxids from input file
     if args.input:
-        with open(args.input) as h:
+        with args.input as h:
             for l in h:
-                val = l.split('#')[0]
-                taxids.append(val.strip())
+                val = l.split('#')[0].strip()
+                taxids.append(val)
     # Connect to the taxonomy
     engine = create_engine('sqlite:///%s' % args.taxdb, echo=False)
     tax = Taxonomy(engine, ncbi.ranks)
