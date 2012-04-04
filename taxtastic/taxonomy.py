@@ -22,9 +22,11 @@ import sqlalchemy
 from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
 
+from . import ncbi
+
 class Taxonomy(object):
 
-    def __init__(self, engine, ranks, undefined_rank='no_rank', undef_prefix='below'):
+    def __init__(self, engine, ranks=ncbi.ranks, undefined_rank='no_rank', undef_prefix='below'):
         """
         The Taxonomy class defines an object providing an interface to
         the taxonomy database.
@@ -40,9 +42,8 @@ class Taxonomy(object):
         Example:
         >>> from sqlalchemy import create_engine
         >>> from taxtastic.taxonomy import Taxonomy
-        >>> from taxtastic import ncbi
         >>> engine = create_engine('sqlite:///%s' % dbname, echo=False)
-        >>> tax = Taxonomy(engine, ncbi.ranks)
+        >>> tax = Taxonomy(engine)
 
         """
 
