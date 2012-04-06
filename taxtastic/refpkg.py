@@ -33,6 +33,7 @@ import time
 import csv
 import errno
 import warnings
+import zipfile
 
 import Bio.SeqIO
 import Bio.Phylo
@@ -161,10 +162,34 @@ class Refpkg(object):
                 raise ValueError(
                         "Reference package {0} does not exist.".format(path))
 
+        if zipfile.is_zipfile(path):
+            self._install_zipfile_handlers()
+
         self._sync_from_disk()
         self._set_defaults()
 
         self.db = None
+
+    def _install_zipfile_handlers(self):
+        self._archive = zipfile.ZipFile(self.path)
+        archive_dirs = [zi for zi in self._archive.infolist()
+                        if zi.filename.endswith('/')]
+        if len(archive_dirs) != 1:
+            raise ValueError(
+                'zipped reference packages must contain exactly one directory')
+        archive_dir = archive_dirs[0].filename
+
+        def zipopen(name, *mode):
+            return self._archive.open(archive_dir + name, *mode)
+        self.open = zipopen
+
+        def file_path(name):
+            with scratch_file(unlink=False) as path:
+                src = self.open(name)
+                with open(path, 'wb') as dst:
+                    shutil.copyfileobj(src, dst)
+            return path
+        self.file_path = file_path
 
     # can be stubbed out to provide an alternative mechanism for
     # providing data (e.g. for testing)
@@ -216,7 +241,7 @@ class Refpkg(object):
 
     def calculate_resource_md5(self, resource):
         """Calculate the MD5 sum for a particular named resource."""
-        return md5file(self.open_resource(resource, 'rb'))
+        return md5file(self.open_resource(resource, 'r'))
 
     def resource_path(self, resource):
         """
@@ -326,9 +351,6 @@ class Refpkg(object):
         If the Refpkg is valid, is_invalid returns False.  Otherwise it
         returns a nonempty string describing the error.
         """
-        # Contains a manifest file
-        if not(os.path.isfile(os.path.join(self.path, self._manifest_name))):
-            return "No manifest file %s found" % self._manifest_name
         # Manifest file contains the proper keys
         for k in ['metadata', 'files', 'md5']:
             if not(k in self.contents):
@@ -369,10 +391,9 @@ class Refpkg(object):
                      self.contents['md5'].keys())
         # All files in the manifest exist and match the MD5 sums
         for key, filename in self.contents['files'].iteritems():
+            # we don't need to explicitly check for existence;
+            # calculate_resource_md5 will open the file for us.
             expected_md5 = self.resource_md5(key)
-            if not os.path.exists(self.resource_path(key)):
-                return "File %s referred to by key %s not found in refpkg" % \
-                    (filename, key)
             found_md5 = self.calculate_resource_md5(key)
             if found_md5 != expected_md5:
                 return ("File %s referred to by key %s did "
