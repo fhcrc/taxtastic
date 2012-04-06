@@ -31,6 +31,7 @@ import copy
 import json
 import time
 import csv
+import warnings
 
 import Bio.SeqIO
 import Bio.Phylo
@@ -39,11 +40,10 @@ from taxtastic import utils, taxdb
 
 FORMAT_VERSION = '1.1'
 
-def md5file(path):
+def md5file(fobj):
     md5 = hashlib.md5()
-    with open(path) as h:
-        for block in iter(lambda: h.read(4096), ''):
-            md5.update(block)
+    for block in iter(lambda: fobj.read(4096), ''):
+        md5.update(block)
     return md5.hexdigest()
 
 
@@ -61,8 +61,8 @@ def scratch_file(unlink=True, **kwargs):
         tmp_fd, tmp_name = tempfile.mkstemp(text=True, **kwargs)
         os.close(tmp_fd)
         yield tmp_name
-    except ValueError, v:
-        raise v
+    except ValueError:
+        raise
     else:
         if unlink:
             os.unlink(tmp_name)
@@ -153,38 +153,114 @@ class Refpkg(object):
         if not os.path.exists(path):
             if create:
                 os.mkdir(path)
-                with open(os.path.join(path, self._manifest_name), 'w') as h:
+                with self.open_manifest('w') as h:
                     json.dump(manifest_template(), h, indent=4)
                     h.write('\n')
             else:
                 raise ValueError(
                         "Reference package {0} does not exist.".format(path))
-        if not os.path.isdir(path):
-            raise ValueError("%s is not a valid RefPkg" % (path,))
-        # Try to load the Refpkg and check that it's valid
-        manifest_path = os.path.join(path, self._manifest_name)
-        if not(os.path.isfile(manifest_path)):
-            raise ValueError(("%s is not a valid RefPkg - "
-                              "could not find manifest file %s") % \
-                                 (path, self._manifest_name))
-        with open(manifest_path) as h:
-            self.contents = json.load(h)
 
-        if not('log' in self.contents):
-            self.contents['log'] = []
-            self._sync_to_disk()
-        if not('rollback' in self.contents):
-            self.contents['rollback'] = None
-            self._sync_to_disk()
-        if not('rollforward' in self.contents):
-            self.contents['rollforward'] = None
-            self._sync_to_disk()
-
-        error = self.is_invalid()
-        if error:
-            raise ValueError("%s is not a valid RefPkg: %s" % (path, error))
+        self._sync_from_disk()
+        self._set_defaults()
 
         self.db = None
+
+    # can be stubbed out to provide an alternative mechanism for
+    # providing data (e.g. for testing)
+    file_factory = open
+
+    def file_path(self, name):
+        return os.path.join(self.path, name)
+
+    def open(self, name, *mode):
+        return self.file_factory(self.file_path(name), *mode)
+
+    def open_manifest(self, *mode):
+        return self.open(self._manifest_name, *mode)
+
+    def open_resource(self, resource, *mode):
+        """
+        Returns named file object opened with mode. File name must be
+        defined in manifest.
+        """
+
+        return self.open(self.resource_name(resource), *mode)
+
+    def resource_name(self, resource):
+        """Return the name of the file referenced by *resource* in the refpkg."""
+        if not(resource in self.contents['files']):
+            raise ValueError("No such resource %r in refpkg" % (resource,))
+        return self.contents['files'][resource]
+
+    def resource_md5(self, resource):
+        """Return the MD5 sum of the file reference by *resource*."""
+        if not(resource in self.contents['md5']):
+            raise ValueError("No such resource %r in refpkg" % (resource,))
+        return self.contents['md5'][resource]
+
+    def calculate_resource_md5(self, resource):
+        return md5file(self.open_resource(resource, 'rb'))
+
+    def resource_path(self, resource):
+        """Return the absolute path to the file referenced by *resource*."""
+        return self.file_path(self.resource_name(resource))
+
+    def _set_defaults(self):
+        self.contents.setdefault('log', [])
+        self.contents.setdefault('rollback', None)
+        self.contents.setdefault('rollforward', None)
+
+    def _sync_to_disk(self):
+        """Write any changes made on Refpkg to disk.
+
+        Other methods of Refpkg that alter the contents of the package
+        will call this method themselves.  Generally you should never
+        have to call it by hand.  The only exception would be if
+        another program has changed the Refpkg on disk while your
+        program is running and you want to force your version over it.
+        Otherwise it should only be called by other methods of refpkg.
+        """
+        with self.open_manifest('w') as h:
+            json.dump(self.contents, h, indent=4)
+            h.write('\n')
+
+    def _sync_from_disk(self):
+        """Read any changes made on disk to this Refpkg.
+
+        This is necessary if other programs are making changes to the
+        Refpkg on disk and your program must be synchronized to them.
+        """
+
+        if not os.path.isdir(self.path):
+            raise ValueError("%s must be a directory" % (self.path,))
+
+        with self.open_manifest('r') as h:
+            self.contents = json.load(h)
+
+        self._set_defaults()
+        self._check_refpkg()
+
+    def _add_file(self, key, path):
+        filename = os.path.basename(path)
+        while os.path.exists(self.file_path(filename)):
+            filename += "1"
+        shutil.copyfile(path, self.file_path(filename))
+        self.contents['files'][key] = filename
+
+    def _delete_file(self, path):
+        os.unlink(self.file_path(path))
+
+    def metadata(self, key):
+        """Return the metadata value associated to *key*."""
+        return self.contents['metadata'].get(key)
+
+    def file_keys(self):
+        """Return a list of all the keys referring to files in this refpkg."""
+        return self.contents['files'].keys()
+
+    def metadata_keys(self):
+        """Return a list of all the keys referring to metadata in this refpkg."""
+        return self.contents['metadata'].keys()
 
     def _log(self, msg):
         """Set the log message for this operation.
@@ -255,56 +331,22 @@ class Refpkg(object):
                     (self.contents['files'].keys(),
                      self.contents['md5'].keys())
         # All files in the manifest exist and match the MD5 sums
-        for key,filename in self.contents['files'].iteritems():
-            expected_md5 = self.contents['md5'][key]
-            filepath = os.path.join(self.path, filename)
-            if not(os.path.exists(filepath)):
+        for key, filename in self.contents['files'].iteritems():
+            expected_md5 = self.resource_md5(key)
+            if not os.path.exists(self.resource_path(key)):
                 return "File %s referred to by key %s not found in refpkg" % \
                     (filename, key)
-            found_md5 = md5file(filepath)
+            found_md5 = self.calculate_resource_md5(key)
             if found_md5 != expected_md5:
                 return ("File %s referred to by key %s did "
                         "not match its MD5 sum (found: %s, expected %s)") % \
                         (filename, key, found_md5, expected_md5)
         return False
 
-    def _sync_to_disk(self):
-        """Write any changes made on Refpkg to disk.
-
-        Other methods of Refpkg that alter the contents of the package
-        will call this method themselves.  Generally you should never
-        have to call it by hand.  The only exception would be if
-        another program has changed the Refpkg on disk while your
-        program is running and you want to force your version over it.
-        Otherwise it should only be called by other methods of refpkg.
-        """
-        with open(os.path.join(self.path, self._manifest_name), 'w') as h:
-            json.dump(self.contents, h, indent=4)
-            h.write('\n')
-
-    def _sync_from_disk(self):
-        """Read any changes made on disk to this Refpkg.
-
-        This is necessary if other programs are making changes to the
-        Refpkg on disk and your program must be synchronized to them.
-        """
-        with open(os.path.join(self.path, self._manifest_name)) as h:
-            self.contents = json.load(h)
+    def _check_refpkg(self):
         error = self.is_invalid()
         if error:
             raise ValueError("Refpkg is invalid: %s" % error)
-
-    def metadata(self, key):
-        """Return the metadata value associated to *key*."""
-        return self.contents['metadata'].get(key)
-
-    def file_keys(self):
-        """Return a list of all the keys referring to files in this refpkg."""
-        return self.contents['files'].keys()
-
-    def metadata_keys(self):
-        """Return a list of all the keys referring to metadata in this refpkg."""
-        return self.contents['metadata'].keys()
 
     @transaction
     def update_metadata(self, key, value):
@@ -333,38 +375,16 @@ class Refpkg(object):
         the refpkg.
         """
         if key in self.contents['files']:
-            old_path = self.file_abspath(key)
+            old_path = self.resource_path(key)
         else:
             old_path = None
-        if not(os.path.isfile(new_path)):
-            raise ValueError("Cannot update Refpkg with file %s" % (new_path,))
-        md5_value = md5file(new_path)
-        filename = os.path.basename(new_path)
-        while os.path.exists(os.path.join(self.path, filename)):
-            filename += "1"
-        shutil.copyfile(new_path, os.path.join(self.path, filename))
-        self.contents['files'][key] = filename
+        self._add_file(key, new_path)
+        md5_value = md5file(open(new_path))
         self.contents['md5'][key] = md5_value
         self._log('Updated file: %s=%s' % (key,new_path))
         if key == 'tree_stats':
             self.update_phylo_model(None, new_path)
         return old_path
-
-    def file_abspath(self, key):
-        """Return the absolute path to the file referenced by *key*."""
-        return os.path.join(self.path, self.file_name(key))
-
-    def file_name(self, key):
-        """Return the name of the file referenced by *key* in the refpkg."""
-        if not(key in self.contents['files']):
-            raise ValueError("No such resource key %s in refpkg" % key)
-        return self.contents['files'][key]
-
-    def file_md5(self, key):
-        """Return the MD5 sum of the file reference by *key*."""
-        if not(key in self.contents['md5']):
-            raise ValueError("No such resource key %s in refpkg" % key)
-        return self.contents['md5'][key]
 
     @transaction
     def reroot(self, rppr=None, pretend=False):
@@ -446,8 +466,8 @@ class Refpkg(object):
         rollforward = copy.deepcopy(self.contents)
         rollforward.pop('rollback')
         self.contents = self.contents['rollback']
-        self.contents[u'log'] = rolledback_log
-        self.contents[u'rollforward'] = [future_msg, rollforward]
+        self.contents['log'] = rolledback_log
+        self.contents['rollforward'] = [future_msg, rollforward]
         self._sync_to_disk()
 
     def rollforward(self):
@@ -457,9 +477,9 @@ class Refpkg(object):
             raise ValueError("No operation to roll forward on refpkg")
         new_log_message = self.contents['rollforward'][0]
         new_contents = self.contents['rollforward'][1]
-        new_contents[u'log'] = [new_log_message] + self.contents.pop('log')
+        new_contents['log'] = [new_log_message] + self.contents.pop('log')
         self.contents['rollforward'] = None
-        new_contents[u'rollback'] = copy.deepcopy(self.contents)
+        new_contents['rollback'] = copy.deepcopy(self.contents)
         new_contents['rollback'].pop('rollforward')
         self.contents = new_contents
         self._sync_to_disk()
@@ -477,7 +497,7 @@ class Refpkg(object):
         to_delete = all_filenames.difference(current_filenames)
         to_delete.discard('CONTENTS.json')
         for f in to_delete:
-            os.unlink(os.path.join(self.path, f))
+            self._delete_file(f)
         self.contents['rollback'] = None
         self.contents['rollforward'] = None
         self.contents['log'].insert(0,
@@ -530,57 +550,46 @@ class Refpkg(object):
         # CSV, Newick, and Stockholm files, respectively, and describe
         # the same sequences.
 
-        def nonempty_file(path):
-            return os.stat(self.file_abspath('aln_fasta')).st_size != 0
+        with self.open_resource('aln_fasta') as f:
+            try:
+                Bio.SeqIO.read(f, 'fasta')
+            except ValueError, v:
+                if v[0] == 'No records found in handle':
+                    return 'aln_fasta file is not valid FASTA.'
 
-        if nonempty_file(self.file_abspath('aln_fasta')):
-            with open(self.file_abspath('aln_fasta')) as f:
-                try:
-                    Bio.SeqIO.read(f, 'fasta')
-                except ValueError, v:
-                    if v[0] == 'No records found in handle':
-                        return 'aln_fasta file is not valid FASTA.'
+        with self.open_resource('seq_info') as f:
+            lines = list(csv.reader(f))
+            headers = set(lines[0])
 
-        if nonempty_file(self.file_abspath('seq_info')):
-            with open(self.file_abspath('seq_info')) as f:
-                lines = list(csv.reader(f))
-                headers = set(lines[0])
+            # Check required headers
+            for req_header in 'seqname', 'tax_id':
+                if not req_header in headers:
+                    return "seq_info is missing {0}".format(req_header)
+            lens = [len(l) for l in lines]
+            if not(all([l == lens[0] and l > 1 for l in lens])):
+                return "seq_info is not valid CSV."
 
-                # Check required headers
-                for req_header in 'seqname', 'tax_id':
-                    if not req_header in headers:
-                        return "seq_info is missing {0}".format(req_header)
-                lens = [len(l) for l in lines]
-                if not(all([l == lens[0] and l > 1 for l in lens])):
-                    return "seq_info is not valid CSV."
+        with self.open_resource('aln_sto') as f:
+            try:
+                Bio.SeqIO.read(f, 'stockholm')
+            except ValueError, v:
+                if v[0] == 'No records found in handle':
+                    return 'aln_sto file is not valid Stockholm.'
 
+        with self.open_resource('tree') as f:
+            try:
+                Bio.Phylo.read(f, 'newick')
+            except:
+                return 'tree file is not valid Newick.'
 
-        if nonempty_file(self.file_abspath('aln_sto')):
-            with open(self.file_abspath('aln_sto')) as f:
-                try:
-                    Bio.SeqIO.read(f, 'stockholm')
-                except ValueError, v:
-                    if v[0] == 'No records found in handle':
-                        return 'aln_sto file is not valid Stockholm.'
-
-        if nonempty_file(self.file_abspath('tree')):
-            with open(self.file_abspath('tree')) as f:
-                try:
-                    Bio.Phylo.read(f, 'newick')
-                except:
-                    return 'tree file is not valid Newick.'
-
-        with open(self.file_abspath('aln_fasta')) as f:
-            os.stat(self.file_abspath('aln_fasta'))
-
-        with open(self.file_abspath('aln_fasta')) as f:
+        with self.open_resource('aln_fasta') as f:
             fasta_names = set([s.id for s in Bio.SeqIO.parse(f, 'fasta')])
-        with open(self.file_abspath('seq_info')) as f:
+        with self.open_resource('seq_info') as f:
             csv_names = set([s[0] for s in csv.reader(f)][1:]) # Remove header with [1:]
-        with open(self.file_abspath('tree')) as f:
+        with self.open_resource('tree') as f:
             tree_names = set([n.name for n in
                               Bio.Phylo.read(f, 'newick').get_terminals()])
-        with open(self.file_abspath('aln_sto')) as f:
+        with self.open_resource('aln_sto') as f:
             sto_names = set([s.id for s in Bio.SeqIO.parse(f, 'stockholm')])
         d = fasta_names.symmetric_difference(sto_names)
         if len(d) != 0:
@@ -596,7 +605,7 @@ class Refpkg(object):
                 ', '.join([str(x) for x in d])
 
         # Next make sure that taxonomy is valid CSV, phylo_model is valid JSON
-        with open(self.file_abspath('taxonomy')) as f:
+        with self.open_resource('taxonomy') as f:
             lines = list(csv.reader(f))
             lens = [len(l) for l in lines]
             if not(all([l == lens[0] and l > 1 for l in lens])):
@@ -604,7 +613,7 @@ class Refpkg(object):
             # I don't try to check if the taxids match up to those
             # mentioned in aln_fasta, since that would make taxtastic
             # depend on RefsetInternalFasta in romperroom.
-        with open(self.file_abspath('phylo_model')) as f:
+        with self.open_resource('phylo_model') as f:
             try:
                 json.load(f)
             except ValueError, v:
@@ -622,11 +631,11 @@ class Refpkg(object):
 
         db = taxdb.Taxdb()
         db.create_tables()
-        reader = csv.DictReader(open(self.file_abspath('taxonomy'), 'rU'))
+        reader = csv.DictReader(self.open_resource('taxonomy', 'rU'))
         db.insert_from_taxtable(lambda: reader._fieldnames, reader)
 
         curs = db.cursor()
-        reader = csv.DictReader(open(self.file_abspath('seq_info'), 'rU'))
+        reader = csv.DictReader(self.open_resource('seq_info', 'rU'))
         curs.executemany("INSERT INTO sequences VALUES (?, ?)",
             ((row['seqname'], row['tax_id']) for row in reader))
 
@@ -706,3 +715,24 @@ class Refpkg(object):
 
         return cursor.fetchall()
 
+
+    def file_abspath(self, resource):
+        """Deprecated alias for *resource_path*."""
+        warnings.warn(
+            "file_abspath is deprecated; use resource_path instead",
+            DeprecationWarning, stacklevel=2)
+        return self.resource_path(resource)
+
+    def file_name(self, resource):
+        """Deprecated alias for *resource_name*."""
+        warnings.warn(
+            "file_name is deprecated; use resource_name instead",
+            DeprecationWarning, stacklevel=2)
+        return self.resource_name(resource)
+
+    def file_md5(self, resource):
+        """Deprecated alias for *resource_md5*."""
+        warnings.warn(
+            "file_md5 is deprecated; use resource_md5 instead",
+            DeprecationWarning, stacklevel=2)
+        return self.resource_md5(resource)
