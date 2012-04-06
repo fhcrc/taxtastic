@@ -31,6 +31,7 @@ import copy
 import json
 import time
 import csv
+import errno
 import warnings
 
 import Bio.SeqIO
@@ -170,42 +171,70 @@ class Refpkg(object):
     file_factory = open
 
     def file_path(self, name):
+        """
+        Return the full path to a file in the reference package.
+
+        Do not use this method if it is at all possible to use the *open*
+        method instead.
+        """
         return os.path.join(self.path, name)
 
     def open(self, name, *mode):
+        """
+        Return an open file object for a file in the reference package.
+        """
         return self.file_factory(self.file_path(name), *mode)
 
     def open_manifest(self, *mode):
+        """
+        Return an open file object for the manifest file in this reference
+        package.
+        """
         return self.open(self._manifest_name, *mode)
 
     def open_resource(self, resource, *mode):
         """
-        Returns named file object opened with mode. File name must be
-        defined in manifest.
+        Return an open file object for a particular named resource in this
+        reference package.
         """
-
         return self.open(self.resource_name(resource), *mode)
 
     def resource_name(self, resource):
-        """Return the name of the file referenced by *resource* in the refpkg."""
+        """
+        Return the name of the file within the reference package for a
+        particular named resource.
+        """
         if not(resource in self.contents['files']):
             raise ValueError("No such resource %r in refpkg" % (resource,))
         return self.contents['files'][resource]
 
     def resource_md5(self, resource):
-        """Return the MD5 sum of the file reference by *resource*."""
+        """Return the stored MD5 sum for a particular named resource."""
         if not(resource in self.contents['md5']):
             raise ValueError("No such resource %r in refpkg" % (resource,))
         return self.contents['md5'][resource]
 
     def calculate_resource_md5(self, resource):
+        """Calculate the MD5 sum for a particular named resource."""
         return md5file(self.open_resource(resource, 'rb'))
 
     def resource_path(self, resource):
-        """Return the absolute path to the file referenced by *resource*."""
+        """
+        Return the path to the file within the reference package for a
+        particular named resource.
+
+        Do not use this method if it is at all possible to use the
+        *open_resource* method instead.
+        """
         return self.file_path(self.resource_name(resource))
 
     def _set_defaults(self):
+        """
+        Set some default values in the manifest.
+
+        This method should be called after loading from disk, but before
+        checking the integrity of the reference package.
+        """
         self.contents.setdefault('log', [])
         self.contents.setdefault('rollback', None)
         self.contents.setdefault('rollforward', None)
@@ -231,16 +260,23 @@ class Refpkg(object):
         Refpkg on disk and your program must be synchronized to them.
         """
 
-        if not os.path.isdir(self.path):
-            raise ValueError("%s must be a directory" % (self.path,))
-
-        with self.open_manifest('r') as h:
-            self.contents = json.load(h)
+        try:
+            fobj = self.open_manifest('r')
+        except IOError, e:
+            if e.errno == errno.ENOENT:
+                raise ValueError("couldn't find manifest file in %s" % (self.path,))
+            elif e.errno == errno.ENOTDIR:
+                raise ValueError("%s is not a directory" % (self.path,))
+            else:
+                raise
+        with fobj:
+            self.contents = json.load(fobj)
 
         self._set_defaults()
         self._check_refpkg()
 
     def _add_file(self, key, path):
+        """Copy a file into the reference package."""
         filename = os.path.basename(path)
         while os.path.exists(self.file_path(filename)):
             filename += "1"
@@ -248,6 +284,7 @@ class Refpkg(object):
         self.contents['files'][key] = filename
 
     def _delete_file(self, path):
+        """Delete a file from the reference package."""
         os.unlink(self.file_path(path))
 
     def metadata(self, key):
