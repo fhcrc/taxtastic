@@ -54,7 +54,7 @@ def action(args):
 
     pairs = [p.split('=',1) for p in args.changes]
     if args.metadata:
-        rp = refpkg.Refpkg(args.refpkg)
+        rp = refpkg.Refpkg(args.refpkg, create=False)
         rp.start_transaction()
         for (key,value) in pairs:
             rp.update_metadata(key, value)
@@ -67,7 +67,7 @@ def action(args):
                 print "No such file: %s" % filename
                 exit(1)
 
-        rp = refpkg.Refpkg(args.refpkg)
+        rp = refpkg.Refpkg(args.refpkg, create=False)
         rp.start_transaction()
         for (key,filename) in pairs:
             rp.update_file(key, os.path.abspath(filename))

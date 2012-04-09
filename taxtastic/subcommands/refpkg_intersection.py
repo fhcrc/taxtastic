@@ -48,7 +48,7 @@ def filter_ranks(results):
 
 
 def action(args):
-    rp = Refpkg(args.refpkg)
+    rp = Refpkg(args.refpkg, create=False)
     rp.load_db()
     cursor = rp.db.cursor()
     ranks = args.ranks.split(',')

@@ -51,7 +51,7 @@ def action(args):
         try:
             if args.verbose:
                 print >>sys.stderr, "Target is a refpkg. Working on taxonomy within it."
-            r = refpkg.Refpkg(args.target)
+            r = refpkg.Refpkg(args.target, create=False)
             path = r.file_abspath('taxonomy')
         except Exception, e:
             print >>sys.stderr, "Failed: %s" % str(e)

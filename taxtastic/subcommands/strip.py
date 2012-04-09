@@ -37,4 +37,4 @@ def action(args):
     """
     log.info('loading reference package')
 
-    refpkg.Refpkg(args.refpkg).strip()
+    refpkg.Refpkg(args.refpkg, create=False).strip()
