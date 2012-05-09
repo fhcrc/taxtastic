@@ -26,6 +26,7 @@ class TaxNode(object):
         """
         Add a child to this node
         """
+        assert child != self
         child.parent = self
         child.ranks = self.ranks
         child.index = self.index
@@ -50,9 +51,9 @@ class TaxNode(object):
         Remove taxa without sequences in the subtree below
         """
         def below(node):
-            any_below = any(below(child) for child in self.children)
-            if not any_below and not self.children:
-                self.parent.remove_child(self)
+            any_below = any(below(child) for child in node.children)
+            if not any_below and not node.children:
+                node.parent.remove_child(node)
                 return False
             return True
 
@@ -187,6 +188,16 @@ class TaxNode(object):
             parent.add_child(cls(rank, tax_id, name=name))
 
         return root
+
+    def add_seqinfo_sequence_ids(self, seqinfo_fp):
+        """
+        Add sequence IDs from an open file handle to seq_info file.
+        """
+        r = csv.DictReader(seqinfo_fp)
+        for i in r:
+            if i['tax_id']:
+                n = self.get_node(i['tax_id'])
+                n.sequence_ids.append(i)
 
     @classmethod
     def from_taxdb(cls, con, root=None):
