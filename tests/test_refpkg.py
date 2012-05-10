@@ -91,23 +91,23 @@ class TestRefpkg(unittest.TestCase):
             r = refpkg.Refpkg(pkg_path)
             test_file = config.data_path('bv_refdata.csv')
             test_name = 'bv_refdata.csv'
-            md5_value = refpkg.md5file(test_file)
+            md5_value = refpkg.md5file(open(test_file))
             self.assertEqual(None, r.update_file('a', test_file))
             # Make sure it's properly written
             with open(os.path.join(r.path, r._manifest_name)) as h:
                 self.assertEqual(json.load(h), r.contents)
 
             self.assertIn('a', r.contents['files'])
-            self.assertEqual(r.file_name('a'), test_name)
-            self.assertEqual(r.file_md5('a'), md5_value)
+            self.assertEqual(r.resource_name('a'), test_name)
+            self.assertEqual(r.resource_md5('a'), md5_value)
 
             self.assertEqual(None, r.update_file('b', test_file))
-            self.assertEqual(r.file_name('b'), test_name + '1')
-            self.assertEqual(r.file_md5('b'), md5_value)
+            self.assertEqual(r.resource_name('b'), test_name + '1')
+            self.assertEqual(r.resource_md5('b'), md5_value)
 
             test_file2 = config.data_path('taxids1.txt')
 
-            old_path = r.file_abspath('a')
+            old_path = r.resource_path('a')
             self.assertEqual(old_path, r.update_file('a', test_file2))
             self.assertTrue(os.path.exists(os.path.join(r.path, test_name)))
         finally:
@@ -196,7 +196,7 @@ class TestRefpkg(unittest.TestCase):
             r.update_metadata('boris', 'meep')
             r.update_file('boris', config.data_path('taxids1.txt'))
             r.commit_transaction()
-            boris_path = r.file_abspath('boris')
+            boris_path = r.resource_path('boris')
             self.assertTrue('boris' in r.contents['files'])
             self.assertFalse('boris' in r.contents['rollback']['files'])
 
@@ -229,7 +229,7 @@ class TestRefpkg(unittest.TestCase):
             r = refpkg.Refpkg(rpkg)
             self.assertFalse('boris' in r.contents['files'])
             r.update_file('boris', config.data_path('taxids1.txt'))
-            boris_path = r.file_abspath('boris')
+            boris_path = r.resource_path('boris')
             r.rollback()
             self.assertFalse('boris' in r.contents['files'])
             original_log= r.log()
