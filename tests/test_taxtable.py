@@ -8,7 +8,7 @@ from .config import data_path
 DN = os.path.dirname(__file__)
 
 
-class NodeTestCase(unittest.TestCase):
+class TaxNodeTestCase(unittest.TestCase):
     def setUp(self):
         with open(data_path('simple_taxtable.csv')) as fp:
             self.root = TaxNode.from_taxtable(fp)
@@ -45,3 +45,9 @@ class NodeTestCase(unittest.TestCase):
         v = s.getvalue()
         self.assertEquals(expected, v)
 
+
+    def test_prune_unrepresented(self):
+        self.root.get_node('1303').sequence_ids.add('sequence1')
+        self.root.prune_unrepresented()
+        self.assertEqual(set(['1', '131567', '2', '1239', '91061', '186826', '1300', '1301', '1303']),
+                set(self.root.index))

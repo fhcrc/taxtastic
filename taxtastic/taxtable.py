@@ -152,12 +152,6 @@ class TaxNode(object):
             d.update(l)
             return d
 
-        def node_iter(node):
-            yield node
-            for child in node.children:
-                for i in node_iter(child):
-                    yield i
-
         header = ['tax_id', 'parent_id', 'rank', 'tax_name'] + ranks
         w = csv.DictWriter(out_fp, header, quoting=csv.QUOTE_NONNUMERIC,
                 lineterminator='\n')
@@ -165,7 +159,7 @@ class TaxNode(object):
         # All nodes leading to this one
         for i in self.lineage()[:-1]:
             w.writerow(node_record(i))
-        w.writerows(node_record(i) for i in node_iter(self))
+        w.writerows(node_record(i) for i in self)
 
     def populate_from_seqinfo(self, seqinfo):
         """Populate sequence_ids below this node from a seqinfo file object."""
