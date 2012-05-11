@@ -7,7 +7,7 @@ import csv
 
 class TaxNode(object):
     """
-    Taxonomic tree, with optional sequence IDs on nodes
+    Taxonomic tree, with optional sequence IDs on nodes.
     """
     def __init__(self, rank, tax_id, parent=None, sequence_ids=None, children=None, name=None):
         self.ranks = None
@@ -15,8 +15,8 @@ class TaxNode(object):
         self.name = name
         self.tax_id = tax_id
         self.parent = parent
-        self.sequence_ids = sequence_ids or []
-        self.children = children or []
+        self.sequence_ids = sequence_ids or set()
+        self.children = children or set()
         assert tax_id != ""
 
         if self.is_root:
@@ -24,7 +24,7 @@ class TaxNode(object):
 
     def add_child(self, child):
         """
-        Add a child to this node
+        Add a child to this node.
         """
         assert child != self
         child.parent = self
@@ -32,32 +32,27 @@ class TaxNode(object):
         child.index = self.index
         assert child.tax_id not in self.index
         self.index[child.tax_id] = child
-        self.children.append(child)
+        self.children.add(child)
 
     def remove_child(self, child):
         """
-        Remove a child from this node
+        Remove a child from this node.
         """
         assert child in self.children
         self.children.remove(child)
         self.index.pop(child.tax_id)
-        if child.parent == self:
+        if child.parent is self:
             child.parent = None
-        if child.index == self.index:
+        if child.index is self.index:
             child.index = None
 
     def prune_unrepresented(self):
         """
-        Remove taxa without sequences in the subtree below
+        Remove nodes without sequences or children below this node.
         """
-        def below(node):
-            any_below = any(below(child) for child in node.children)
-            if not any_below and not node.children:
+        for node in self.depth_first_iter(self_first=False):
+            if not node.children and not node.sequence_ids and node is not self:
                 node.parent.remove_child(node)
-                return False
-            return True
-
-        below(self)
 
     @property
     def is_leaf(self):
@@ -69,7 +64,7 @@ class TaxNode(object):
 
     def at_rank(self, rank):
         """
-        Find the node in this node's lineage at rank ``rank``
+        Find the node above this node at rank ``rank``
         """
         s = self
         while s:
@@ -79,14 +74,18 @@ class TaxNode(object):
         raise KeyError("No node at rank {0} for {1}".format(rank,
             self.tax_id))
 
-    def depth_first_iter(self):
+    def depth_first_iter(self, self_first=True):
         """
-        Iterate over nodes in the tree, returning children before self.
+        Iterate over nodes below this node, optionally yielding children before
+        self.
         """
-        yield self
-        for child in self.children:
-            for i in child.depth_first_iter():
+        if self_first:
+            yield self
+        for child in list(self.children):
+            for i in child.depth_first_iter(self_first):
                 yield i
+        if not self_first:
+            yield self
 
     def subtree_sequence_ids(self):
         """
@@ -97,7 +96,7 @@ class TaxNode(object):
                 yield s
 
     def path(self, tax_ids):
-        """Get the node at the end of the path described by tax_ids"""
+        """Get the node at the end of the path described by tax_ids."""
         assert tax_ids[0] == self.tax_id
         if len(tax_ids) == 1:
             return self
@@ -112,7 +111,7 @@ class TaxNode(object):
 
     def get_node(self, tax_id):
         """
-        Get a node by tax id
+        Find a node above or below this node by tax id.
         """
         return self.index[tax_id]
 
@@ -127,8 +126,8 @@ class TaxNode(object):
             return l
 
     def __repr__(self):
-        return "<TaxNode {0}:{1} [rank={2};children={3}]>".format(self.tax_id,
-                self.name, self.rank, len(self.children))
+        return "<TaxNode {0.tax_id}:{0.name} [rank={0.rank};children={1};sequences={2}]>".format(
+            self, len(self.children), len(self.sequence_ids))
 
     def __iter__(self):
         return self.depth_first_iter()
@@ -168,6 +167,13 @@ class TaxNode(object):
             w.writerow(node_record(i))
         w.writerows(node_record(i) for i in node_iter(self))
 
+    def populate_from_seqinfo(self, seqinfo):
+        """Populate sequence_ids below this node from a seqinfo file object."""
+        for row in csv.DictReader(seqinfo):
+            node = self.index.get(row['tax_id'])
+            if node:
+                node.sequence_ids.add(row['seqname'])
+
     @classmethod
     def from_taxtable(cls, taxtable_fp):
         """
@@ -188,16 +194,6 @@ class TaxNode(object):
             parent.add_child(cls(rank, tax_id, name=name))
 
         return root
-
-    def add_seqinfo_sequence_ids(self, seqinfo_fp):
-        """
-        Add sequence IDs from an open file handle to seq_info file.
-        """
-        r = csv.DictReader(seqinfo_fp)
-        for i in r:
-            if i['tax_id']:
-                n = self.get_node(i['tax_id'])
-                n.sequence_ids.append(i)
 
     @classmethod
     def from_taxdb(cls, con, root=None):
