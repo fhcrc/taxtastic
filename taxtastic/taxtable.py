@@ -46,6 +46,14 @@ class TaxNode(object):
         if child.index is self.index:
             child.index = None
 
+        # Remove child subtree from index
+        for n in child:
+            if n is child:
+                continue
+            self.index.pop(n.tax_id)
+            if n.index is self.index:
+                n.index = None
+
     def prune_unrepresented(self):
         """
         Remove nodes without sequences or children below this node.
