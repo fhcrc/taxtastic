@@ -1,3 +1,3 @@
 [submodule "html"]
 	path = html
-	url = git@github.com:fhcrc/taxtastic.git
+	url = git://github.com/fhcrc/taxtastic.git
