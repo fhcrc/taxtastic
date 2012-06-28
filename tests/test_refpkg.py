@@ -5,9 +5,30 @@ import json
 import copy
 import os
 import os.path
+import subprocess
 
 from taxtastic import refpkg
 from . import config
+
+def _has_rppr(rppr_name='rppr'):
+    """
+    Check for rppr binary in path
+    """
+    with open(os.devnull) as dn:
+        try:
+            subprocess.check_call([rppr_name], stdout=dn, stderr=dn)
+        except OSError as e:
+            if e.errno == os.errno.ENOENT:
+                return False
+            else:
+                raise
+        except subprocess.CalledProcessError as e:
+            # rppr returns non-zero exit status with no arguments
+            pass
+    return True
+
+HAS_RPPR = _has_rppr()
+
 
 class TestRefpkg(unittest.TestCase):
     maxDiff = None
@@ -127,6 +148,7 @@ class TestRefpkg(unittest.TestCase):
         finally:
             shutil.rmtree(scratch)
 
+    @unittest.skipUnless(HAS_RPPR, "`rppr` binary is not installed.")
     def test_reroot(self):
         with config.tempdir() as d:
             rpkg = os.path.join(d, 'reroot.refpkg')
@@ -137,6 +159,7 @@ class TestRefpkg(unittest.TestCase):
                              r.file_md5('tree'))
             self.assertEqual(r.log(), ['Rerooting refpkg'])
 
+    @unittest.skipUnless(HAS_RPPR, "`rppr` binary is not installed.")
     def test_pretend_reroot(self):
         with config.tempdir() as d:
             rpkg = os.path.join(d, 'reroot.refpkg')
