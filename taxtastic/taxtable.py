@@ -198,6 +198,31 @@ class TaxNode(object):
             if node:
                 node.sequence_ids.add(row['seqname'])
 
+    def collapse(self, node):
+        """
+        Given a node, takes all the seqinfo for that node's descendants and
+        places them at the node in question.
+        """
+        for descendant in node:
+            if descendant != node:
+                node.sequence_ids.update(descendant.sequence_ids)
+                descendant.sequence_ids.clear()
+
+    def write_seqinfo(self, out_fp):
+        """
+        Useful for printing out the results of collapsing tax nodes - super
+        bare bones, just tax_id and seqname.
+        """
+        header = ['seqname', 'tax_id']
+        w = csv.DictWriter(out_fp, header, quoting=csv.QUOTE_NONNUMERIC,
+                lineterminator = '\n')
+        w.writeheader()
+        #import pdb
+        for node in self:
+            for seq_id in node.sequence_ids:
+                w.writerow({'seqname': seq_id, 'tax_id': node.tax_id})
+
+
     @classmethod
     def from_taxtable(cls, taxtable_fp):
         """
