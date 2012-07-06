@@ -225,3 +225,10 @@ class TaxNode(object):
 
         add_lineage(root)
         return root
+
+
+def read(fp):
+    """
+    Read a taxtable into a taxonomic tree. Shortcut for :meth:`TaxNode.from_taxtable`.
+    """
+    return TaxNode.from_taxtable(fp)
