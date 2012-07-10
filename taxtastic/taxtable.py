@@ -198,30 +198,46 @@ class TaxNode(object):
             if node:
                 node.sequence_ids.add(row['seqname'])
 
-    def collapse(self, node):
+    def collapse(self, remove=False):
         """
-        Given a node, takes all the seqinfo for that node's descendants and
-        places them at the node in question.
-        """
-        for descendant in node:
-            if descendant != node:
-                node.sequence_ids.update(descendant.sequence_ids)
-                descendant.sequence_ids.clear()
+        Move all ``sequence_ids`` in the subtree below this node to this node.
 
-    def write_seqinfo(self, out_fp):
+        If ``remove`` is True, nodes below this one are deleted from the
+        taxonomy.
         """
+        descendants = iter(self)
+        # Skip this node
+        assert next(descendants) is self
+        for descendant in descendants:
+            self.sequence_ids.update(descendant.sequence_ids)
+            descendant.sequence_ids.clear()
+
+        if remove:
+            for node in self.children:
+                self.remove_child(node)
+
+    def write_seqinfo(self, out_fp, include_name=True):
+        """
+        Write a simple seq_info file, suitable for use in taxtastic.
         Useful for printing out the results of collapsing tax nodes - super
         bare bones, just tax_id and seqname.
+
+        If include_name is True, a column with the taxon name is included.
         """
         header = ['seqname', 'tax_id']
-        w = csv.DictWriter(out_fp, header, quoting=csv.QUOTE_NONNUMERIC,
-                lineterminator = '\n')
-        w.writeheader()
-        #import pdb
-        for node in self:
-            for seq_id in node.sequence_ids:
-                w.writerow({'seqname': seq_id, 'tax_id': node.tax_id})
 
+        if include_name:
+            header.append('tax_name')
+
+        w = csv.DictWriter(out_fp, header, quoting=csv.QUOTE_NONNUMERIC,
+                lineterminator = '\n', extrasaction='ignore')
+        w.writeheader()
+
+        rows = ({'seqname': seq_id, 'tax_id': node.tax_id, 'tax_name': node.name}
+                for node in self
+                for seq_id in node.sequence_ids)
+
+        w.writerows(rows)
 
     @classmethod
     def from_taxtable(cls, taxtable_fp):

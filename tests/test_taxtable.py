@@ -57,7 +57,7 @@ class TaxNodeTestCase(unittest.TestCase):
         self.root.get_node('1303').sequence_ids.add('seq1')
         self.root.get_node('1301').sequence_ids.add('seq2')
         node.sequence_ids.add('seq3')
-        self.root.collapse(node)
+        node.collapse(False)
         self.assertEqual(node.sequence_ids, set(['seq1', 'seq2', 'seq3']))
         self.assertEqual(self.root.get_node('1303').sequence_ids, set())
         self.assertEqual(self.root.get_node('1301').sequence_ids, set())
