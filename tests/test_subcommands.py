@@ -1,4 +1,3 @@
-import sys; sys.path.insert(0, '../')
 import contextlib
 import unittest
 import tempfile
@@ -8,8 +7,7 @@ import os
 import os.path
 
 from taxtastic import refpkg
-from taxtastic.lonely import Tree
-from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check, lonelynodes, findcompany
+from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check
 
 import config
 from config import OutputRedirectMixin
@@ -224,49 +222,3 @@ class TestCheck(OutputRedirectMixin, unittest.TestCase):
         class _Args(object):
             refpkg = config.data_path('lactobacillus2-0.2.refpkg')
         self.assertEqual(check.action(_Args()), 0)
-
-def test_lonelynodes(capsys,tmpdir):
-    t = Tree(1, rank='phylum', tax_name='a')(
-             Tree(3, rank='order', tax_name='b')(
-                 Tree(4, rank='class', tax_name='c')(
-                     Tree(5, rank='family', tax_name='d')(
-                         Tree(7, rank='genus', tax_name='e')),
-                     Tree(6, rank='family', tax_name='f'))))
-    infile = tmpdir.join('junk.taxtable')
-    expected = ''.join(["3 # order b\n",
-                          "4 # class c\n",
-                          "7 # genus e\n"])
-    taxtable = '''"tax_id","parent_id","rank","tax_name"
-"1","1","phylum","a"
-"3","1","order","b"
-"4","3","class","c"
-"5","4","family","d"
-"7","5","genus","e"
-"6","4","family","f"'''
-    with open(str(infile), 'w') as h:
-            print >>h, taxtable
-    class _Args(object):
-        target = str(infile)
-        output = None
-        verbose = True
-    status = lonelynodes.action(_Args())
-    assert status == 0
-    out, err = capsys.readouterr()
-    assert out == expected
-
-def test_findcompany(capsys):
-    class _Args(object):
-        taxdb = '../testfiles/small_taxonomy.db'
-        tax_ids = ['1239', '186801']
-        input = None
-        output = None
-        cut = True
-    status = findcompany.action(_Args())
-    out, err = capsys.readouterr()
-    assert status == 0
-    assert err == ""
-    assert out.strip() == "562\n1280"
-
-
-
-
