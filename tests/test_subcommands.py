@@ -5,6 +5,7 @@ import tempfile
 import shutil
 import copy
 import os
+import os.path
 
 from taxtastic import refpkg
 from taxtastic.lonely import Tree
@@ -26,7 +27,14 @@ class TestUpdate(OutputRedirectMixin, unittest.TestCase):
             update.action(_Args())
             r._sync_from_disk()
             self.assertEqual(r.contents['files']['meep'], 'bv_refdata.csv')
-            self.assertEqual(r.contents['files']['hilda'], 'bv_refdata.csv1')
+
+            # Second file should have been assigned a non-clashing name
+            h = r.contents['files']['hilda']
+            self.assertNotEqual(h, 'bv_refdata.csv')
+            self.assertTrue(h.startswith('bv_refdata'))
+            self.assertTrue(h.endswith('.csv'))
+
+            self.assertTrue(os.path.exists(r.resource_path('hilda')))
 
     def test_metadata_action(self):
         with config.tempdir() as scratch:

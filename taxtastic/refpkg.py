@@ -303,8 +303,10 @@ class Refpkg(object):
     def _add_file(self, key, path):
         """Copy a file into the reference package."""
         filename = os.path.basename(path)
-        while os.path.exists(self.file_path(filename)):
-            filename += "1"
+        base, ext = os.path.splitext(filename)
+        if os.path.exists(self.file_path(filename)):
+            with tempfile.NamedTemporaryFile(dir=self.path, prefix=base, suffix=ext) as tf:
+                filename = os.path.basename(tf.name)
         shutil.copyfile(path, self.file_path(filename))
         self.contents['files'][key] = filename
 

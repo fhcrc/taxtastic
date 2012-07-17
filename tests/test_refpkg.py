@@ -123,7 +123,9 @@ class TestRefpkg(unittest.TestCase):
             self.assertEqual(r.resource_md5('a'), md5_value)
 
             self.assertEqual(None, r.update_file('b', test_file))
-            self.assertEqual(r.resource_name('b'), test_name + '1')
+            self.assertNotEqual(r.resource_name('b'), test_name)
+            self.assertTrue(r.resource_name('b').startswith('bv_refdata'))
+            self.assertTrue(r.resource_name('b').endswith('.csv'))
             self.assertEqual(r.resource_md5('b'), md5_value)
 
             test_file2 = config.data_path('taxids1.txt')
