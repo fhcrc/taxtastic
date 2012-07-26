@@ -21,6 +21,8 @@ import csv
 from collections import defaultdict
 import sys
 
+from Bio import SeqIO
+
 from taxtastic import refpkg
 
 log = logging.getLogger(__name__)
@@ -32,7 +34,10 @@ def build_parser(parser):
                         help = 'print a list of sequence names')
     parser.add_argument('-t', '--tally', action = 'store_true', default = False,
                         help = 'print a tally of sequences representing each taxon at rank RANK')
+    parser.add_argument('-l', '--lengths', action = 'store_true', default = False,
+                        help = 'print sequence lengths')
 
+    
 def tally_taxa(pkg):
     tally = defaultdict(int)
     with open(pkg.file_abspath('taxonomy')) as taxtab, open(pkg.file_abspath('seq_info')) as seq_info:
@@ -48,6 +53,12 @@ def tally_taxa(pkg):
     writer = csv.writer(sys.stdout, quoting = csv.QUOTE_NONNUMERIC)
     writer.writerows(sorted(rows))
 
+def print_lengths(pkg):    
+    seqs = SeqIO.parse(pkg.file_abspath('aln_fasta'), 'fasta')
+    writer = csv.writer(sys.stdout)
+    for seq in seqs:
+        writer.writerow([seq.id, len(str(seq.seq).replace('-',''))])
+    
 def action(args):
     """
     Show information about reference packages.
@@ -57,12 +68,15 @@ def action(args):
     pkg = refpkg.Refpkg(args.refpkg, create=False)
 
     with open(pkg.file_abspath('seq_info')) as seq_info:
-        snames = [row['seqname'] for row in csv.DictReader(seq_info)]
+        seqinfo = list(csv.DictReader(seq_info))
+        snames = [row['seqname'] for row in seqinfo]
 
     if args.seq_names:
         print '\n'.join(snames)
     elif args.tally:
         tally_taxa(pkg)
+    elif args.lengths:
+        print_lengths(pkg)
     else:
         print 'number of sequences:', len(snames)
         print 'package components\n', '\n'.join(sorted(pkg.file_keys()))
