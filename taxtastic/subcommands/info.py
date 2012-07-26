@@ -56,6 +56,7 @@ def tally_taxa(pkg):
 def print_lengths(pkg):    
     seqs = SeqIO.parse(pkg.file_abspath('aln_fasta'), 'fasta')
     writer = csv.writer(sys.stdout)
+    writer.writerow(["seqname","length"])
     for seq in seqs:
         writer.writerow([seq.id, len(str(seq.seq).replace('-',''))])
     
