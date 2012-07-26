@@ -8,6 +8,7 @@
  * 'names' table in the taxonomy database has a new column
    'is_classified' indicating whether 'tax_name' should be considered
    "classified".
+ * Rerooting reference packages on creation [GH-57]
 
 
 0.3.2
