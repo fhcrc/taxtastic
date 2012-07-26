@@ -5,29 +5,11 @@ import json
 import copy
 import os
 import os.path
-import subprocess
 
-from taxtastic import refpkg
+from taxtastic import refpkg, utils
 from . import config
 
-def _has_rppr(rppr_name='rppr'):
-    """
-    Check for rppr binary in path
-    """
-    with open(os.devnull) as dn:
-        try:
-            subprocess.check_call([rppr_name], stdout=dn, stderr=dn)
-        except OSError as e:
-            if e.errno == os.errno.ENOENT:
-                return False
-            else:
-                raise
-        except subprocess.CalledProcessError as e:
-            # rppr returns non-zero exit status with no arguments
-            pass
-    return True
-
-HAS_RPPR = _has_rppr()
+HAS_RPPR = utils.has_rppr()
 
 
 class TestRefpkg(unittest.TestCase):

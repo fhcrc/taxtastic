@@ -67,6 +67,8 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
                 readme = None
                 tree = None
                 taxonomy = None
+                reroot = False
+                rppr = 'rppr'
             create.action(_Args())
             r = refpkg.Refpkg(_Args().package_name)
             self.assertEqual(r.metadata('locus'), 'Nowhere')
