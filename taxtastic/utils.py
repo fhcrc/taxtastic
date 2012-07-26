@@ -12,12 +12,11 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+import csv
 import datetime
 import logging
 import os
 import re
-import csv
-from os import path
 import subprocess
 
 log = logging
@@ -75,7 +74,7 @@ if xlrd:
 
                     try:
                         d[colname] = formatter(d[colname])
-                    except (TypeError, ValueError, AttributeError), msg:
+                    except (TypeError, ValueError, AttributeError):
                         pass
 
             lines.append(d)

@@ -17,11 +17,6 @@
 import logging
 import shutil
 import os
-import time
-import shutil
-import hashlib
-import re
-import json
 import sys
 
 from taxtastic import refpkg, utils
