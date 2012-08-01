@@ -45,6 +45,12 @@ def build_parser(parser):
         and/or re-create the database even if one or both already
         exists. [%(default)s]""")
 
+    parser.add_argument(
+        '--preserve-inconsistent-taxonomies',
+        action='store_true', default=False,
+        help="""If a node has the same rank as its parent, do *not* its rank
+        set to no_rank.""")
+
 def action(args):
 
     dbname = args.database_file
@@ -60,6 +66,19 @@ def action(args):
                         (dbname, zfile))
         con = ncbi.db_connect(dbname, clobber=True)
         ncbi.db_load(con, zfile)
+        if not args.preserve_inconsistent_taxonomies:
+            curs = con.cursor()
+            curs.execute("""
+                UPDATE nodes
+                   SET rank = 'no_rank'
+                 WHERE tax_id IN (SELECT n1.tax_id
+                                    FROM nodes n1
+                                         JOIN nodes n2
+                                           ON n1.parent_id = n2.tax_id
+                                   WHERE n1.rank = n2.rank
+                                     AND n1.rank NOT IN ('root', 'no_rank'))
+            """)
+            con.commit()
         con.close()
     else:
         log.warning('taxonomy database already exists in %s' % dbname)
