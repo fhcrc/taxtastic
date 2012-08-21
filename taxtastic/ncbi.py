@@ -245,22 +245,22 @@ def fix_missing_primary(con):
         # Prefer scientific name
 
         if sum(i[-1] == 'scientific name' for i in records) == 1:
-            record = next(i for i in records if i[-1] == 'scientific name')
-            logging.warn("No primary name for tax_id %s. Using %s.",tax_id, record)
+            tax_id, tax_name, unique_name, name_class = next(i for i in records
+                    if i[-1] == 'scientific name')
             cursor.execute("""UPDATE names
                 SET is_primary = 1
                 WHERE tax_id = ? AND name_class = ?""",
                 [tax_id, 'scientific name'])
         else:
-            record = records[0]
-            logging.warn("No primary name for tax_id %s. Arbitrarily using %s.",
-                    tax_id, record)
-            cursor.execute("""UPDATE names
-                SET is_primary = 1
-                WHERE tax_id = ? AND name = ? and name_class = ?""", record[:3])
+            tax_id, tax_name, unique_name, name_class = records[0]
+        logging.warn("No primary name for tax_id %s. Arbitrarily using %s[%s].",
+                tax_id, tax_name, name_class)
+        cursor.execute("""UPDATE names
+            SET is_primary = 1
+            WHERE tax_id = ? AND name = ? AND unique_name = ? AND name_class = ?""",
+            [tax_id, tax_name, unique_name, name_class])
 
 def do_insert(con, tablename, rows, maxrows=None, add=True):
-
     """
     Insert rows into a table. Do not perform the insert if
     add is False and table already contains data.
@@ -291,7 +291,6 @@ def do_insert(con, tablename, rows, maxrows=None, add=True):
     return True
 
 def fetch_data(dest_dir='.', clobber=False, url=ncbi_data_url):
-
     """
     Download data from NCBI required to generate local taxonomy
     database. Default url is ncbi.ncbi_data_url
@@ -342,7 +341,6 @@ def read_dmp(fname):
         yield line.rstrip('\t|\n').split('\t|\t')
 
 def read_nodes(rows, root_name, ncbi_source_id):
-
     """
     Return an iterator of rows ready to insert into table "nodes".
 
@@ -416,5 +414,3 @@ def read_names(rows, unclassified_regex = None):
     # appends additional field is_primary
     for row in rows:
         yield row + [_is_primary(row), _is_classified(row)]
-
-

@@ -11,4 +11,5 @@ before_install:
 script: ./test -v
 
 notifications:
-  email: false
+  email:
+    - cmccoy@fhcrc.org
