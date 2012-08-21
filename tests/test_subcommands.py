@@ -179,19 +179,6 @@ def scratch_file(unlink=True):
 
 class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
     maxDiff = None
-    @unittest.skip('Output varies.')
-    def test_taxids(self):
-        with scratch_file() as out:
-            with open(out, 'w') as h:
-                class _Args(object):
-                    database_file = config.ncbi_master_db
-                    taxids = config.data_path('taxids1.txt')
-                    taxnames = None
-                    seq_info = None
-                    verbosity = 0
-                    out_file = h
-                self.assertEqual(taxtable.action(_Args()), 0)
-            self.assertEqual(refpkg.md5file(out), '88ed5643d4754c60d5c472ff0b298f0f')
 
     def test_invalid_taxid(self):
         with scratch_file() as out:
