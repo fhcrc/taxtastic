@@ -5,7 +5,7 @@ python:
 # Install numpy, then BioPython
 # BioPython doesn't always play well with pip install.
 before_install: 
-  - "pip install numpy"
+  - "pip install numpy > /dev/null"
   - "pip install biopython decorator sqlalchemy"
 
 script: ./test -v
