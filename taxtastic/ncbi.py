@@ -172,7 +172,6 @@ UNCLASSIFIED_REGEX = re.compile(
 ranks = [k.strip().replace(' ','_') for k in _ranks.splitlines() if k.strip()]
 
 def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber = False):
-
     """
     Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
@@ -224,8 +223,41 @@ def db_load(con, archive, root_name='root', maxrows=None):
         rows = read_archive(archive, 'merged.dmp')
         do_insert(con, 'merged', rows, maxrows, add=False)
 
+        fix_missing_primary(con)
+
     except sqlite3.IntegrityError, err:
         raise IntegrityError(err)
+
+def fix_missing_primary(con):
+    missing_primary = """SELECT tax_id
+        FROM names
+        GROUP BY tax_id
+        HAVING SUM(is_primary) = 0;"""
+    rows_for_taxid = """SELECT tax_id, tax_name, unique_name, name_class
+        FROM names
+        WHERE tax_id = ?"""
+    cursor = con.cursor()
+    tax_ids = [i[0] for i in cursor.execute(missing_primary)]
+    logging.warn("%d records lack primary names", len(tax_ids))
+
+    for tax_id in tax_ids:
+        records = list(cursor.execute(rows_for_taxid, [tax_id]))
+        # Prefer scientific name
+
+        if sum(i[-1] == 'scientific name' for i in records) == 1:
+            record = next(i for i in records if i[-1] == 'scientific name')
+            logging.warn("No primary name for tax_id %s. Using %s.",tax_id, record)
+            cursor.execute("""UPDATE names
+                SET is_primary = 1
+                WHERE tax_id = ? AND name_class = ?""",
+                [tax_id, 'scientific name'])
+        else:
+            record = records[0]
+            logging.warn("No primary name for tax_id %s. Arbitrarily using %s.",
+                    tax_id, record)
+            cursor.execute("""UPDATE names
+                SET is_primary = 1
+                WHERE tax_id = ? AND name = ? and name_class = ?""", record[:3])
 
 def do_insert(con, tablename, rows, maxrows=None, add=True):
 
@@ -380,7 +412,7 @@ def read_names(rows, unclassified_regex = None):
             return 0 if unclassified_regex.search(term) else 1
     else:
         _is_classified = lambda row: None
-    
+
     # appends additional field is_primary
     for row in rows:
         yield row + [_is_primary(row), _is_classified(row)]
