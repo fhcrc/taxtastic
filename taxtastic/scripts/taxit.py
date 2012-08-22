@@ -25,7 +25,6 @@ import os
 import logging
 from taxtastic import subcommands, __version__ as version
 
-PROG = os.path.basename(__file__)
 DESCRIPTION = __doc__.strip()
 
 def main(argv):
@@ -52,17 +51,18 @@ def parse_arguments(argv):
     """
     """
     # Create the argument parser
-    parser = argparse.ArgumentParser(description=DESCRIPTION, prog=PROG)
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    base_parser = argparse.ArgumentParser(add_help=False)
 
     parser.add_argument('-V', '--version', action='version',
         version='taxit v' + version,
         help='Print the version number and exit')
 
-    parser.add_argument('-v', '--verbose',
+    base_parser.add_argument('-v', '--verbose',
         action='count', dest='verbosity', default=1,
         help='Increase verbosity of screen output (eg, -v is verbose, '
              '-vv more so)')
-    parser.add_argument('-q', '--quiet',
+    base_parser.add_argument('-q', '--quiet',
         action='store_const', dest='verbosity', const=0,
         help='Suppress output')
 
@@ -89,9 +89,10 @@ def parse_arguments(argv):
         # individual subcommand ((`script action -h`)).
         subparser = subparsers.add_parser(
             name,
-            help = mod.__doc__.lstrip().split('\n', 1)[0],
-            description = mod.__doc__,
-            formatter_class = RawDescriptionHelpFormatter)
+            help=mod.__doc__.lstrip().split('\n', 1)[0],
+            description=mod.__doc__,
+            formatter_class=RawDescriptionHelpFormatter,
+            parents=[base_parser])
 
         mod.build_parser(subparser)
         actions[name] = mod.action

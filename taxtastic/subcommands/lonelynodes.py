@@ -38,10 +38,6 @@ def build_parser(parser):
                         help='Write output to given file')
     parser.add_argument('-r', '--ranks', help="""Comma separated list of ranks
             to consider [default: all ranks]""", type=comma_separated_set)
-    parser.add_argument('-v', '--verbose',
-                        action="store_true", dest="verbose", default = False,
-                        help= 'Print details')
-
 
 def action(args):
     if not(os.path.exists(args.target)):
