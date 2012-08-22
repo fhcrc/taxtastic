@@ -257,7 +257,8 @@ def fix_missing_primary(con):
                 tax_id, tax_name, name_class)
         cursor.execute("""UPDATE names
             SET is_primary = 1
-            WHERE tax_id = ? AND name = ? AND unique_name = ? AND name_class = ?""",
+            WHERE tax_id = ? AND tax_name = ? AND
+                unique_name = ? AND name_class = ?""",
             [tax_id, tax_name, unique_name, name_class])
 
 def do_insert(con, tablename, rows, maxrows=None, add=True):
