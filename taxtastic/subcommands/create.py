@@ -107,7 +107,7 @@ def action(args):
         print >> sys.stderr, 'Failed: {0} exists.'.format(args.package_name)
         return 1
 
-    r = refpkg.Refpkg(args.package_name)
+    r = refpkg.Refpkg(args.package_name, create=True)
     r.start_transaction()
     r.update_metadata('locus', args.locus) # Locus is required
     if args.description:

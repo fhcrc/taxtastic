@@ -16,7 +16,7 @@ class TestUpdate(OutputRedirectMixin, unittest.TestCase):
     def test_action(self):
         with config.tempdir() as scratch:
             pkg_path = os.path.join(scratch, 'test.refpkg')
-            r = refpkg.Refpkg(pkg_path)
+            r = refpkg.Refpkg(pkg_path, create=True)
             test_file = config.data_path('bv_refdata.csv')
             class _Args(object):
                 refpkg=pkg_path
@@ -37,7 +37,7 @@ class TestUpdate(OutputRedirectMixin, unittest.TestCase):
     def test_metadata_action(self):
         with config.tempdir() as scratch:
             pkg_path = os.path.join(scratch, 'test.refpkg')
-            r = refpkg.Refpkg(pkg_path)
+            r = refpkg.Refpkg(pkg_path, create=True)
             class _Args(object):
                 refpkg=pkg_path
                 changes = ['meep=boris', 'hilda=vrrp']
@@ -70,7 +70,7 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
                 reroot = False
                 rppr = 'rppr'
             create.action(_Args())
-            r = refpkg.Refpkg(_Args().package_name)
+            r = refpkg.Refpkg(_Args().package_name, create=False)
             self.assertEqual(r.metadata('locus'), 'Nowhere')
             self.assertEqual(r.metadata('description'), 'A description')
             self.assertEqual(r.metadata('author'), 'Boris the Mad Baboon')
@@ -89,7 +89,7 @@ class TestStrip(OutputRedirectMixin, unittest.TestCase):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
             shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
-            r = refpkg.Refpkg(rpkg)
+            r = refpkg.Refpkg(rpkg, create=False)
             r.update_metadata('boris', 'hilda')
             r.update_metadata('meep', 'natasha')
 
@@ -107,7 +107,7 @@ class TestRollback(OutputRedirectMixin, unittest.TestCase):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
             shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
-            r = refpkg.Refpkg(rpkg)
+            r = refpkg.Refpkg(rpkg, create=False)
             original_contents = copy.deepcopy(r.contents)
             r.update_metadata('boris', 'hilda')
             r.update_metadata('meep', 'natasha')
@@ -134,7 +134,7 @@ class TestRollforward(OutputRedirectMixin, unittest.TestCase):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
             shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
-            r = refpkg.Refpkg(rpkg)
+            r = refpkg.Refpkg(rpkg, create=False)
             original_contents = copy.deepcopy(r.contents)
             r.update_metadata('boris', 'hilda')
             r.update_metadata('meep', 'natasha')
