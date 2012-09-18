@@ -138,18 +138,25 @@ class NoAncestor(Exception):
 class Refpkg(object):
     _manifest_name = 'CONTENTS.json'
 
-    def __init__(self, path, create=True):
+    def __init__(self, path, create=None):
         """Create a reference to a new or existing RefPkg at *path*.
 
-        If there is already a RefPkg at *path*, a reference is
-        returned to that RefPkg.  If *path* does not exist, then an
-        empty RefPkg is created.
+        If there is already a RefPkg at *path*, a reference is returned to that
+        RefPkg. If *path* does not exist and *create* is true, then an empty
+        RefPkg is created.
         """
         # The logic of __init__ is complicated by having to check for
         # validity of a refpkg.  Much of its can be dispatched to the
         # isvalid method, but I want that to work at any time on the
         # RefPkg object, so it must have the RefPkg's manifest already
         # in place.
+        if create is None:
+            warnings.warn(
+                "the default value of True for the `create` parameter is "
+                "deprecated; it will eventually become False",
+                DeprecationWarning, stacklevel=2)
+            create = True
+
         self.current_transaction = None
         self.path = os.path.abspath(path)
         if not os.path.exists(path):
