@@ -2,11 +2,14 @@ language: python
 python:
   - "2.7"
 
-# Install numpy, then BioPython
+# Install numpy, then BioPython and other dependencies
 # BioPython doesn't always play well with pip install.
 before_install: 
-  - "pip install numpy > /dev/null"
-  - "pip install biopython decorator sqlalchemy"
+  - "pip install -q numpy"
+  - "pip install -q biopython decorator sqlalchemy"
+
+install:
+  - "python setup.py build install"
 
 script: ./test -v
 
