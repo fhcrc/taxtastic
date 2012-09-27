@@ -29,5 +29,5 @@ def build_parser(parser):
                         help="don't save the rerooted tree; just attempt the rerooting.")
 
 def action(args):
-    r = refpkg.Refpkg(args.refpkg)
+    r = refpkg.Refpkg(args.refpkg, create=False)
     r.reroot(rppr=args.rppr, pretend=args.pretend)

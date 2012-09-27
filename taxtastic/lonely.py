@@ -68,8 +68,6 @@ def solid_company(taxonomy, tax_ids):
     """Return a set of non-lonely species tax_ids that will make those in *tax_ids* not lonely."""
     res = []
     for t in tax_ids:
-        res.extend(taxonomy.nary_subtree(taxonomy.sibling_of(t), 2))
+        res.extend(taxonomy.nary_subtree(taxonomy.sibling_of(t), 2) or [])
     return res
 
-
-    

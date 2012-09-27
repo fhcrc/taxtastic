@@ -1,0 +1,15 @@
+language: python
+python:
+  - "2.7"
+
+# Install numpy, then BioPython
+# BioPython doesn't always play well with pip install.
+before_install: 
+  - "pip install numpy > /dev/null"
+  - "pip install biopython decorator sqlalchemy"
+
+script: ./test -v
+
+notifications:
+  email:
+    - cmccoy@fhcrc.org

@@ -13,10 +13,12 @@ Taxtastic is software written in python used to build and maintain reference pac
 A script named ``taxit`` provides a command line interface::
 
    % ./taxit -h
-   usage: taxit [-h] [-V] [-v] [-q]
 
-                   {info,rollback,help,create,strip,taxids,new_database,check,reroot,refpkg_intersection,lonelynodes,update_taxids,rp,add_nodes,rollforward,update,findcompany,taxtable}
-                   ...
+
+   usage: taxit [-h] [-V]
+
+                {info,rollback,help,create,strip,taxids,new_database,check,reroot,refpkg_intersection,lonelynodes,update_taxids,rp,add_nodes,rollforward,update,findcompany,taxtable}
+                ...
 
    Creation, validation, and modification of reference packages for use with
    `pplacer` and related software.
@@ -51,9 +53,7 @@ A script named ``taxit`` provides a command line interface::
    optional arguments:
      -h, --help            show this help message and exit
      -V, --version         Print the version number and exit
-     -v, --verbose         Increase verbosity of screen output (eg, -v is
-                           verbose, -vv more so)
-     -q, --quiet           Suppress output
+
 
 .. Targets ..
 .. _quickstart: http://fhcrc.github.com/taxtastic/quickstart.html

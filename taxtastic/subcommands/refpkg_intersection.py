@@ -6,6 +6,8 @@ import sys
 import csv
 import argparse
 import tempfile
+import itertools
+import operator
 
 from taxtastic.refpkg import Refpkg
 from taxtastic.taxdb import Taxdb
@@ -19,6 +21,8 @@ def build_parser(parser):
                         help='refpkg to insert into')
     parser.add_argument('-r', '--ranks', required=True,
                         help='ranks to list in the output')
+    parser.add_argument('--all-ranks', default=False, action='store_true',
+                        help="don't filter by the lowest rank; list all intersections")
     parser.add_argument('-o','--outfile', type=argparse.FileType('w'), default=sys.stdout,
                         help='output file in csv format (default is stdout)')
 
@@ -35,8 +39,16 @@ def test_output(infile, outfile, ranks):
         assert len(taxids_in - taxids_out) == 0, taxids_in - taxids_out
 
 
+def filter_ranks(results):
+    """
+    Find just the first rank for all the results for a given tax_id.
+    """
+    for _, group in itertools.groupby(results, operator.itemgetter(0)):
+        yield next(group)
+
+
 def action(args):
-    rp = Refpkg(args.refpkg)
+    rp = Refpkg(args.refpkg, create=False)
     rp.load_db()
     cursor = rp.db.cursor()
     ranks = args.ranks.split(',')
@@ -55,16 +67,18 @@ def action(args):
                    COALESCE(itaxa.rank, "")
               FROM tt.taxa
                    LEFT JOIN (SELECT child AS tax_id,
+                                     rank_order,
                                      rank
                                 FROM tt.parents
                                      JOIN taxa
                                        ON tax_id = parent
                                      JOIN ranks USING (rank)
-                               WHERE rank IN (%s)
-                               ORDER BY child,
-                                        rank_order ASC) itaxa USING (tax_id)
-             GROUP BY tax_id
+                               WHERE rank IN (%s)) itaxa USING (tax_id)
+             ORDER BY tax_id,
+                      rank_order DESC
         """ % ', '.join('?' * len(ranks)), ranks)
+        if not args.all_ranks:
+            cursor = filter_ranks(cursor)
         writer.writerows(cursor)
 
     args.outfile.flush()

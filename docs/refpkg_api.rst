@@ -22,7 +22,7 @@ Refpkgs are primarily key-value stores for files and metadata.  To find all the 
 
 .. automethod:: taxtastic.refpkg.Refpkg.metadata_keys
 
-For example,::
+For example::
 
     r = Refpkg('/path/to/new/refpkg')
     r.metadata_keys()
@@ -35,18 +35,20 @@ Call the ``metadata`` method to retrieve the value of a particular metadata fiel
 
 .. automethod:: taxtastic.refpkg.Refpkg.metadata
 
-For instance, on the same refpkg as above,::
+For instance, on the same refpkg as above::
 
     r.metadata('format_version')
      --> '1.1'
 
-There are several methods for retrieving files, depending on whether you want just the name of the file in the repository, a full path to the file, or the file's MD5 sum (for integrity checking purposes).
+There are several methods for working with the resources in a reference package.
 
-.. automethod:: taxtastic.refpkg.Refpkg.file_name
+.. automethod:: taxtastic.refpkg.Refpkg.open_resource
 
-.. automethod:: taxtastic.refpkg.Refpkg.file_abspath
+.. automethod:: taxtastic.refpkg.Refpkg.resource_name
 
-.. automethod:: taxtastic.refpkg.Refpkg.file_md5
+.. automethod:: taxtastic.refpkg.Refpkg.resource_md5
+
+.. automethod:: taxtastic.refpkg.Refpkg.resource_path
 
 Checking refpkg integrity
 -------------------------

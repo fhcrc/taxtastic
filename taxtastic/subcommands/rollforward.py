@@ -46,7 +46,7 @@ def action(args):
     """
     log.info('loading reference package')
 
-    r = refpkg.Refpkg(args.refpkg)
+    r = refpkg.Refpkg(args.refpkg, create=False)
 
     # First check if we can do n rollforwards
     q = r.contents

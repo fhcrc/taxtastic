@@ -22,9 +22,11 @@ import sqlalchemy
 from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
 
+from . import ncbi
+
 class Taxonomy(object):
 
-    def __init__(self, engine, ranks, undefined_rank='no_rank', undef_prefix='below'):
+    def __init__(self, engine, ranks=ncbi.ranks, undefined_rank='no_rank', undef_prefix='below'):
         """
         The Taxonomy class defines an object providing an interface to
         the taxonomy database.
@@ -40,9 +42,8 @@ class Taxonomy(object):
         Example:
         >>> from sqlalchemy import create_engine
         >>> from taxtastic.taxonomy import Taxonomy
-        >>> from taxtastic import ncbi
         >>> engine = create_engine('sqlite:///%s' % dbname, echo=False)
-        >>> tax = Taxonomy(engine, ncbi.ranks)
+        >>> tax = Taxonomy(engine)
 
         """
 
@@ -279,23 +280,26 @@ class Taxonomy(object):
 
         if not taxa:
             taxa = self.cached.keys()
+            lin = self.cached.values()
+        else:
+            lin = [self._get_lineage(tax_id) for tax_id in taxa]
 
         # which ranks are actually represented?
         if full:
             ranks = self.ranks
         else:
             represented = set(itertools.chain.from_iterable(
-                    [[node[0] for node in lineage] for lineage in self.cached.values()])
-            )
+                    [[node[0] for node in lineage] for lineage in lin]))
             ranks = [r for r in self.ranks if r in represented]
 
-        fields = ['tax_id','parent_id','rank','tax_name'] + ranks
+        lineages = [self.lineage(tax_id) for tax_id in taxa]
+
+        fields = ['tax_id', 'parent_id', 'rank', 'tax_name'] + ranks
         writer = csv.DictWriter(csvfile, fieldnames=fields,
                                 extrasaction='ignore', quoting=csv.QUOTE_NONNUMERIC)
 
         # header row
-        writer.writerow(dict(zip(fields, fields)))
-        lineages = [self.lineage(tax_id) for tax_id in taxa]
+        writer.writeheader()
 
         for lin in sorted(lineages, key=lambda x: (ranks.index(x['rank']), x['tax_name'])):
              writer.writerow(lin)
@@ -490,4 +494,4 @@ def rank_below(rank):
             'order': 'family',
             'family': 'genus',
             'genus': 'species'}[rank]
-        
+

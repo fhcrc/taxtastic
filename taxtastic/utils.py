@@ -12,12 +12,12 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+import csv
 import datetime
 import logging
 import os
 import re
-import csv
-from os import path
+import subprocess
 
 log = logging
 
@@ -74,7 +74,7 @@ if xlrd:
 
                     try:
                         d[colname] = formatter(d[colname])
-                    except (TypeError, ValueError, AttributeError), msg:
+                    except (TypeError, ValueError, AttributeError):
                         pass
 
             lines.append(d)
@@ -244,3 +244,20 @@ def parse_phyml(fobj):
         raise ValueError('Could not determine if alignment is AA or DNA')
 
     return result
+
+def has_rppr(rppr_name='rppr'):
+    """
+    Check for rppr binary in path
+    """
+    with open(os.devnull) as dn:
+        try:
+            subprocess.check_call([rppr_name], stdout=dn, stderr=dn)
+        except OSError as e:
+            if e.errno == os.errno.ENOENT:
+                return False
+            else:
+                raise
+        except subprocess.CalledProcessError as e:
+            # rppr returns non-zero exit status with no arguments
+            pass
+    return True

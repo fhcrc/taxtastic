@@ -17,14 +17,9 @@
 import logging
 import shutil
 import os
-import time
-import shutil
-import hashlib
-import re
-import json
 import sys
 
-from taxtastic import refpkg
+from taxtastic import refpkg, utils
 
 log = logging.getLogger(__name__)
 
@@ -86,6 +81,14 @@ def build_parser(parser):
                               'defining tax_id at each rank starting with root'),
                         metavar='FILE')
 
+    root_grp = parser.add_argument_group('Taxonomic Rerooting')
+    root_grp.add_argument('--no-reroot', action='store_false', dest='reroot',
+            default=True, help="""Do not reroot the reference package using
+            `rppr reroot`. [default: reroot if `rppr` is available and a
+            taxonomy file is specified]""")
+    root_grp.add_argument('--rppr', default='rppr', help="""Name of the rppr
+            executable. [default: %(default)s]""")
+
 
 def action(args):
     if args.clobber and os.path.isdir(args.package_name):
@@ -104,7 +107,7 @@ def action(args):
         print >> sys.stderr, 'Failed: {0} exists.'.format(args.package_name)
         return 1
 
-    r = refpkg.Refpkg(args.package_name)
+    r = refpkg.Refpkg(args.package_name, create=True)
     r.start_transaction()
     r.update_metadata('locus', args.locus) # Locus is required
     if args.description:
@@ -125,4 +128,15 @@ def action(args):
     r._log('Loaded initial files into empty refpkg')
     r.commit_transaction()
     r.strip()
+
+    reroot_prereqs = args.reroot and args.taxonomy and args.seq_info and args.tree
+    if utils.has_rppr(args.rppr) and reroot_prereqs:
+        r.start_transaction()
+        logging.info('%s found. Rerooting.', args.rppr)
+        r.reroot(rppr=args.rppr)
+        r._log('Rerooted')
+        r.commit_transaction()
+    elif reroot_prereqs:
+        log.warn('"%s" not found. Skipping rerooting', args.rppr)
+
     return 0

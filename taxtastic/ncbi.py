@@ -22,6 +22,7 @@ import logging
 import os
 import urllib
 import zipfile
+import re
 
 from errors import IntegrityError
 
@@ -45,7 +46,9 @@ tax_id        TEXT REFERENCES nodes(tax_id),
 tax_name      TEXT,
 unique_name   TEXT,
 name_class    TEXT,
-is_primary    INTEGER -- not defined in names.dmp
+-- not defined in names.dmp:
+is_primary    INTEGER,
+is_classified INTEGER -- tax_name does not match UNCLASSIFIED_REGEX
 );
 
 CREATE TABLE merged(
@@ -74,9 +77,9 @@ CREATE INDEX nodes_rank ON nodes(rank);
 CREATE INDEX names_tax_id ON names(tax_id);
 CREATE INDEX names_tax_name ON names(tax_name);
 CREATE INDEX names_is_primary ON names(is_primary);
+CREATE INDEX names_is_classified ON names(is_classified);
 CREATE INDEX names_taxid_is_primary ON names(tax_id, is_primary);
 CREATE INDEX names_name_is_primary ON names(tax_name, is_primary);
-
 -- CREATE UNIQUE INDEX names_id_name ON names(tax_id, tax_name, is_primary);
 
 """
@@ -119,10 +122,56 @@ varietas
 forma
 """
 
+# provides criteria for defining matching tax_ids as "unclassified"
+UNCLASSIFIED_REGEX = re.compile(
+    r'' + r'|'.join(frozenset(['-like',
+                               'Taxon'
+                               '\d\d',
+                               'acidophile',
+                               'actinobacterium',
+                               'aerobic',
+                               r'\b[Al]g(um|a)\b',
+                               r'\b[Bb]acteri(um|a)',
+                               'Barophile',
+                               'cyanobacterium',
+                               'Chloroplast',
+                               'Cloning',
+                               'cluster',
+                               '-containing',
+                               'epibiont',
+                               # 'et al',
+                               'eubacterium',
+                               r'\b[Gg]roup\b',
+                               'halophilic',
+                               r'hydrothermal\b',
+                               'isolate',
+                               'marine',
+                               'methanotroph',
+                               'microorganism',
+                               'mollicute',
+                               'pathogen',
+                               '[Pp]hytoplasma',
+                               'proteobacterium',
+                               'putative',
+                               r'\bsp\.',
+                               'species',
+                               'spirochete',
+                               r'str\.'
+                               'strain',
+                               'symbiont',
+                               'taxon',
+                               'unicellular',
+                               'uncultured',
+                               'unclassified',
+                               'unidentified',
+                               'unknown',
+                               'vector\b',
+                               r'vent\b',
+                               ])))
+
 ranks = [k.strip().replace(' ','_') for k in _ranks.splitlines() if k.strip()]
 
 def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber = False):
-
     """
     Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
@@ -165,7 +214,8 @@ def db_load(con, archive, root_name='root', maxrows=None):
 
         # names
         rows = read_names(
-            rows=read_archive(archive, 'names.dmp')
+            rows=read_archive(archive, 'names.dmp'),
+            unclassified_regex = UNCLASSIFIED_REGEX
             )
         do_insert(con, 'names', rows, maxrows, add=False)
 
@@ -173,11 +223,45 @@ def db_load(con, archive, root_name='root', maxrows=None):
         rows = read_archive(archive, 'merged.dmp')
         do_insert(con, 'merged', rows, maxrows, add=False)
 
+        fix_missing_primary(con)
+
     except sqlite3.IntegrityError, err:
         raise IntegrityError(err)
 
-def do_insert(con, tablename, rows, maxrows=None, add=True):
+def fix_missing_primary(con):
+    missing_primary = """SELECT tax_id
+        FROM names
+        GROUP BY tax_id
+        HAVING SUM(is_primary) = 0;"""
+    rows_for_taxid = """SELECT tax_id, tax_name, unique_name, name_class
+        FROM names
+        WHERE tax_id = ?"""
+    cursor = con.cursor()
+    tax_ids = [i[0] for i in cursor.execute(missing_primary)]
+    logging.warn("%d records lack primary names", len(tax_ids))
 
+    for tax_id in tax_ids:
+        records = list(cursor.execute(rows_for_taxid, [tax_id]))
+        # Prefer scientific name
+
+        if sum(i[-1] == 'scientific name' for i in records) == 1:
+            tax_id, tax_name, unique_name, name_class = next(i for i in records
+                    if i[-1] == 'scientific name')
+            cursor.execute("""UPDATE names
+                SET is_primary = 1
+                WHERE tax_id = ? AND name_class = ?""",
+                [tax_id, 'scientific name'])
+        else:
+            tax_id, tax_name, unique_name, name_class = records[0]
+        logging.warn("No primary name for tax_id %s. Arbitrarily using %s[%s].",
+                tax_id, tax_name, name_class)
+        cursor.execute("""UPDATE names
+            SET is_primary = 1
+            WHERE tax_id = ? AND tax_name = ? AND
+                unique_name = ? AND name_class = ?""",
+            [tax_id, tax_name, unique_name, name_class])
+
+def do_insert(con, tablename, rows, maxrows=None, add=True):
     """
     Insert rows into a table. Do not perform the insert if
     add is False and table already contains data.
@@ -208,7 +292,6 @@ def do_insert(con, tablename, rows, maxrows=None, add=True):
     return True
 
 def fetch_data(dest_dir='.', clobber=False, url=ncbi_data_url):
-
     """
     Download data from NCBI required to generate local taxonomy
     database. Default url is ncbi.ncbi_data_url
@@ -259,7 +342,6 @@ def read_dmp(fname):
         yield line.rstrip('\t|\n').split('\t|\t')
 
 def read_nodes(rows, root_name, ncbi_source_id):
-
     """
     Return an iterator of rows ready to insert into table "nodes".
 
@@ -282,12 +364,17 @@ def read_nodes(rows, root_name, ncbi_source_id):
         row[rank] = '_'.join(row[rank].split())
         yield row[:ncol] + [ncbi_source_id]
 
-def read_names(rows):
+def read_names(rows, unclassified_regex = None):
     """
     Return an iterator of rows ready to insert into table
-    "names". Adds column "is_primary".
+    "names". Adds columns "is_primary" and "is_classified". If
+    `unclassified_regex` is not None, defines 'is_classified' as 1 if
+    the regex fails to match "tax_name" or 0 otherwise; if
+    `unclassified_regex` is None, 'is_classified' is given a value of
+    None.
 
     * rows - iterator of lists (eg, output from read_archive or read_dmp)
+    * unclassified_regex - a compiled re matching "unclassified" names
     """
 
     keys = 'tax_id tax_name unique_name name_class'.split()
@@ -312,8 +399,19 @@ def read_names(rows):
 
         return result
 
+    if unclassified_regex:
+        def _is_classified(row):
+            """
+            Return 1 if tax_name element of `row` matches
+            unclassified_regex, 0 otherwise. Search no more than the
+            first two whitespace-delimited words.
+            """
+            tn = row[tax_name]
+            term = ' '.join(tn.split()[:2]) if ' ' in tn else tn
+            return 0 if unclassified_regex.search(term) else 1
+    else:
+        _is_classified = lambda row: None
+
     # appends additional field is_primary
     for row in rows:
-        yield row + [_is_primary(row)]
-
-
+        yield row + [_is_primary(row), _is_classified(row)]
