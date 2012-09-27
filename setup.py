@@ -4,7 +4,6 @@ Upload to pypi:         python setup.py sdist upload
 """
 
 from os.path import join
-import glob
 
 try:
     from setuptools import setup, find_packages, Command
@@ -42,7 +41,7 @@ params = {'author': 'Noah Hoffman',
           'packages': find_packages(exclude=['tests']),
           'scripts': scripts,
           'url': 'https://github.com/fhcrc/taxtastic',
-          'version': '0.4.0',
+          'version': get_git_version(),
           'package_data': {'taxtastic': [join('data',f) for f in ['sha']]},
           'cmdclass': {'git_version': git_version},
           'install_requires': ['sqlalchemy', 'decorator', 'biopython']}
