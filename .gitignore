@@ -1,6 +1,6 @@
 *.pyc
-build/
+/build
+/dist
 _build
 test_output/
 doctrees/
-taxtastic/data/sha

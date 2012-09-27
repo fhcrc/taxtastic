@@ -13,23 +13,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
-from os import path
 
-def _safeint(s):
-    try:
-        return int(s)
-    except ValueError:
-        return s
+def __version__():
+    import pkg_resources
+    def _safe_int(s):
+        try:
+            return int(s)
+        except:
+            return s
+    version = pkg_resources.require("taxtastic")[0].version
+    version_info = tuple(_safe_int(i) for i in  version.split('.'))
+    return version, version_info
 
-_shafile = path.join(path.dirname(__file__), 'data', 'sha')
-try:
-    with open(_shafile) as f:
-        sha = f.read().strip()
-except Exception, e:
-    sha = ''
-
-__version__ = "0.4.0" + ('.' + sha if sha else '')
-__version_info__ = tuple([_safeint(num) for num in __version__.split('.')])
-
-
-
+__version__, __version_info__ = __version__()
