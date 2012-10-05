@@ -42,6 +42,13 @@ params = {'author': 'Noah Hoffman',
           'scripts': scripts,
           'url': 'https://github.com/fhcrc/taxtastic',
           'version': get_git_version(),
+          'license': 'GPL',
+          'classifiers': [
+              'License :: OSI Approved :: GNU General Public License (GPL)',
+              'Development Status :: 3 - Alpha',
+              'Programming Language :: Python :: 2.7',
+              'Topic :: Scientific/Engineering :: Bio-Informatics'],
+          'download_url': 'https://github.com/fhcrc/taxtastic',
           'package_data': {'taxtastic': [join('data',f) for f in ['sha']]},
           'cmdclass': {'git_version': git_version},
           'install_requires': ['sqlalchemy', 'decorator', 'biopython']}
