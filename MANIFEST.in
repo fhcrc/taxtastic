@@ -2,6 +2,7 @@ include docs/*.rst
 include README.rst
 include LICENSE
 include setup.py
+include distribute_setup.py
 
 global-exclude *.pyd
 global-exclude *.pyc
