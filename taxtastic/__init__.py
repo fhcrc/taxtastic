@@ -14,15 +14,17 @@
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
 
-def __version__():
-    import pkg_resources
-    def _safe_int(s):
-        try:
-            return int(s)
-        except:
-            return s
-    version = pkg_resources.require("taxtastic")[0].version
-    version_info = tuple(_safe_int(i) for i in  version.split('.'))
-    return version, version_info
+__version__ = '0.4.1pre'
+__version_info__ = (0, 4, 1, 'pre')
 
-__version__, __version_info__ = __version__()
+if '+' in __version__ or 'pre' in __version__:
+    # Try to append the commit hash to the version
+    try:
+        import subprocess
+        p = subprocess.Popen(['git', 'log', '--pretty=format:%h', '-n', '1'],
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        if out:
+            __version__ += '-' + out.strip()
+    except Exception:
+        pass

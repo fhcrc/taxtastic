@@ -12,25 +12,7 @@ except ImportError:
     distribute_setup.use_setuptools()
     from setuptools import setup, find_packages, Command
 
-
-def get_git_version():
-    import subprocess
-    git_version = subprocess.check_output(['git', 'describe']).rstrip()
-    return git_version
-
-class git_version(Command):
-    description = "Show package version from git"
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        git_version = get_git_version()
-        print 'Version:', git_version
+import taxtastic
 
 scripts = ['taxit']
 
@@ -41,7 +23,7 @@ params = {'author': 'Noah Hoffman',
           'packages': find_packages(exclude=['tests']),
           'scripts': scripts,
           'url': 'https://github.com/fhcrc/taxtastic',
-          'version': get_git_version(),
+          'version': taxtastic.__version__,
           'license': 'GPL',
           'classifiers': [
               'License :: OSI Approved :: GNU General Public License (GPL)',
@@ -50,7 +32,6 @@ params = {'author': 'Noah Hoffman',
               'Topic :: Scientific/Engineering :: Bio-Informatics'],
           'download_url': 'https://github.com/fhcrc/taxtastic',
           'package_data': {'taxtastic': [join('data',f) for f in ['sha']]},
-          'cmdclass': {'git_version': git_version},
           'install_requires': ['sqlalchemy', 'decorator', 'biopython']}
 
 setup(**params)
