@@ -185,9 +185,9 @@ class Taxonomy(object):
         lineage = self.cached.get(tax_id)
 
         if lineage:
-            log.debug('%(indent)s tax_id "%(tax_id)s" is cached' % locals())
+            log.debug('%s tax_id "%s" is cached', indent, tax_id)
         else:
-            log.debug('%(indent)s reconstructing lineage of tax_id "%(tax_id)s"' % locals())
+            log.debug('%s reconstructing lineage of tax_id "%s"', indent, tax_id)
             parent_id, rank = self._node(tax_id)
             lineage = [(rank, tax_id)]
 
@@ -206,8 +206,8 @@ class Taxonomy(object):
 
                     lineage[i] = (_rank, _tax_id)
                     self.cached[_tax_id] = lineage
-                    log.debug('renamed undefined rank to %(_rank)s in element %(i)s of lineage of %(tax_id)s' \
-                                  % locals())
+                    log.debug('renamed undefined rank to %s in element %s of lineage of %s',
+                            _rank, i, tax_id)
 
                 _parent_rank, _parent_id = _rank, _tax_id
 
@@ -331,14 +331,14 @@ class Taxonomy(object):
         if not source_id:
             source_id, source_is_new = self.add_source(name=source_name)
 
-        result = self.nodes.insert().execute(tax_id = tax_id,
-                                             parent_id = parent_id,
-                                             rank = rank,
-                                             source_id = source_id)
+        self.nodes.insert().execute(tax_id = tax_id,
+                                    parent_id = parent_id,
+                                    rank = rank,
+                                    source_id = source_id)
 
-        result = self.names.insert().execute(tax_id = tax_id,
-                                             tax_name = tax_name,
-                                             is_primary = 1)
+        self.names.insert().execute(tax_id = tax_id,
+                                    tax_name = tax_name,
+                                    is_primary = 1)
 
         if children:
             for child in children:

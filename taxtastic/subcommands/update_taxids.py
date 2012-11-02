@@ -66,7 +66,7 @@ def taxid_updater(taxonomy, action='halt'):
             # Skip blank
             return row
         try:
-            node = taxonomy._node(current_tax_id)
+            taxonomy._node(current_tax_id)
             # _node raises KeyError if the taxon couldn't be found in the
             # current taxonomy. If found, no update needed.
             return row
