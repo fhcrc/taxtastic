@@ -54,6 +54,28 @@ class TaxNode(object):
             if n.index is self.index:
                 n.index = None
 
+    def drop(self):
+        """
+        Remove this node from the taxonomy, maintaining child subtrees by
+        adding them to the node's parent, and moving sequences at this node
+        to the parent.
+
+        Not valid for root node.
+        """
+        if self.is_root:
+            raise ValueError("Cannot drop root node!")
+
+        parent = self.parent
+        for child in self.children:
+            child.parent = parent
+            parent.children.add(child)
+        self.children = set()
+
+        parent.sequence_ids.update(self.sequence_ids)
+        self.sequence_ids = set()
+
+        parent.remove_child(self)
+
     def prune_unrepresented(self):
         """
         Remove nodes without sequences or children below this node.

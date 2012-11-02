@@ -51,3 +51,28 @@ class TaxNodeTestCase(unittest.TestCase):
         self.root.prune_unrepresented()
         self.assertEqual(set(['1', '131567', '2', '1239', '91061', '186826', '1300', '1301', '1303']),
                 set(self.root.index))
+
+    def test_drop(self):
+        tax_id = "1301"
+        sequence_ids = ['dsequence1', 'dsequence2']
+        to_drop = self.root.get_node(tax_id)
+        for i in sequence_ids:
+            to_drop.sequence_ids.add(i)
+        children = to_drop.children
+        parent = to_drop.parent
+        to_drop.drop()
+        self.assertNotIn(tax_id, self.root.index)
+        self.assertNotIn(to_drop, parent.children)
+        for child in children:
+            self.assertIn(child, parent.children)
+            self.assertIn(child.tax_id, self.root.index)
+            self.assertEquals(parent, child.parent)
+            self.assertEquals(parent.index, child.index)
+
+        self.assertIsNone(to_drop.index)
+        self.assertIsNone(to_drop.parent)
+        for i in sequence_ids:
+            self.assertIn(i, parent.sequence_ids)
+
+    def test_drop_root(self):
+        self.assertRaises(ValueError, self.root.drop)
