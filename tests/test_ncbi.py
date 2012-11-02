@@ -3,7 +3,6 @@
 import os
 from os import path
 import logging
-from itertools import groupby
 
 import taxtastic
 import taxtastic.ncbi
@@ -91,12 +90,12 @@ class TestReadNames(TestBase):
 
     def setUp(self):
         self.zipfile = ncbi_data
-        
+
     def test01(self):
         """
         is_classified always 0 or 1 if unclassified_regex is provided
         """
-        
+
         rows = read_names(rows = read_archive(self.zipfile, 'names.dmp'),
                           unclassified_regex = UNCLASSIFIED_REGEX)
         self.assertEquals(set(row[-1] for row in rows), set([0,1]))
@@ -115,12 +114,12 @@ class TestReadNames(TestBase):
 #     def setUp(self):
 #         self.zipfile, downloaded = taxtastic.ncbi.fetch_data(dest_dir = config.outputdir)
 
-    
-#     def test03(self):        
+
+#     def test03(self):
 #         """
 #         Print classified names
 #         """
-        
+
 #         rows = read_names(rows = read_archive(self.zipfile, 'names.dmp'),
 #                           unclassified_regex = UNCLASSIFIED_REGEX)
 
@@ -128,12 +127,12 @@ class TestReadNames(TestBase):
 #             if row[-2] and row[-1]:
 #                 print row[1]
 
-                
-#     def test04(self):        
+
+#     def test04(self):
 #         """
 #         Print unclassified names
 #         """
-        
+
 #         rows = read_names(rows = read_archive(self.zipfile, 'names.dmp'),
 #                           unclassified_regex = UNCLASSIFIED_REGEX)
 

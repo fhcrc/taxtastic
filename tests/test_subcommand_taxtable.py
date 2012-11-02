@@ -91,10 +91,10 @@ class TestTaxNameSearch(TaxTableSetup):
 class TestSynonyms(TaxTableSetup):
 
     def test01(self):
-        synonyms = self.tax.synonyms(tax_id='1378')
+        self.tax.synonyms(tax_id='1378')
 
     def test02(self):
-        synonyms = self.tax.synonyms(tax_name='Gemella')
+        self.tax.synonyms(tax_name='Gemella')
 
 
 
@@ -136,14 +136,14 @@ class TestGetLineagePublic(TaxTableSetup):
     def test06(self):
         tax_id = '1378' # Gemella; lineage has two successive no_rank taxa
         tax_name = 'Gemella'
-        lineage = self.tax.lineage(tax_name=tax_name)
+        self.tax.lineage(tax_name=tax_name)
 
-        # lineage = self.tax.lineage(tax_id)
+        self.tax.lineage(tax_id)
         # self.assertTrue(lineage['rank'] == 'genus')
 
     def test07(self):
         tax_id = '30630' # deprecated; Microtus levis Taxonomy ID: 537919
-        lineage = self.tax.lineage(tax_id=tax_id)
+        self.tax.lineage(tax_id=tax_id)
 
 
 class TestMethods(TaxTableSetup):
@@ -187,13 +187,13 @@ class TestWriteTable(TaxTableSetup):
 
     def test02(self):
         tax_id = '1280' # staph aureus
-        lineage = self.tax.lineage(tax_id)
+        self.tax.lineage(tax_id)
 
     def test03(self):
         tax_id = '1378' # Gemella; lineage has two successive no_rank taxa
-        lineage = self.tax.lineage(tax_id)
+        self.tax.lineage(tax_id)
 
     def test04(self):
         tax_id = '1378' # Gemella; lineage has two successive no_rank taxa
         for tax_id in ['1378','1280','131110']:
-            lineage = self.tax.lineage(tax_id)
+            self.tax.lineage(tax_id)

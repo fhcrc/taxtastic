@@ -1,7 +1,7 @@
 import contextlib
 from cStringIO import StringIO
 import os
-from os import path, rmdir
+from os import path
 import sys
 import logging
 import re
