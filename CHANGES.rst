@@ -2,6 +2,8 @@
  change log for taxtastic
 ==========================
 
+ * Add ``.drop()`` ``.collapse()`` methods to ``taxtastic.taxtable.TaxNode``
+
 0.4
 ===
 
