@@ -28,6 +28,7 @@ commands = [
     'rollforward',
     'rp',
     'refpkg_intersection',
+    'merge'
     ]
 
 import glob
@@ -43,4 +44,3 @@ def itermodules(subcommands_path, root=__name__):
 
     for command in commands:
         yield command, __import__('%s.%s' % (root, command), fromlist=[command])
-

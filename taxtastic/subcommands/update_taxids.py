@@ -39,6 +39,8 @@ def build_parser(parser):
     parser.add_argument('-o', '--out-file', help="""Output file to write
             updates [default: stdout]""", type=argparse.FileType('w'),
             default=sys.stdout)
+    parser.add_argument('--unknowns', help="""csv file with single column 'seqname'
+            identifying records with unknown taxids (only if --unknown-action=remove)""", type=argparse.FileType('w'))
     parser.add_argument('-u', '--unknown-action', help="""Action to take on
             encountering an unknown tax_id [default: %(default)s]""",
             choices=('halt', 'remove'), default='halt')
@@ -109,10 +111,13 @@ def action(args):
             raise ValueError("Missing required field: {0}".format(header))
 
     update = taxid_updater(tax, args.unknown_action)
-    updated = (update(row) for row in rows)
+    updated = [update(row) for row in rows]
+
+    if args.unknowns:
+        # unknown taxids are set to empty string in taxid_updater
+        csv.writer(args.unknowns).writerows([r['seqname']] for r in updated if not r['tax_id'])
 
     with args.out_file as fp:
         writer = csv.DictWriter(fp, headers, dialect)
         writer.writeheader()
         writer.writerows(updated)
-
