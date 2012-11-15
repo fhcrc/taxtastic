@@ -45,10 +45,10 @@ ncbi_data = config.ncbi_data
 class TestDbconnect(TestBase):
 
     def test01(self):
-        with taxtastic.ncbi.db_connect(ncbi_master_db) as con:
-            cur = con.cursor()
-            cur.execute('select name from sqlite_master where type = "table"')
-            tables = set(i for j in cur.fetchall() for i in j) # flattened
+        engine = taxtastic.ncbi.db_connect(ncbi_master_db)
+        with engine.begin() as con:
+            result = con.execute('select name from sqlite_master where type = "table"')
+            tables = set(i[0] for i in result)
             self.assertTrue(set(['nodes','names','merged','source']).issubset(tables))
 
 class TestLoadData(TestBase):
@@ -63,27 +63,26 @@ class TestLoadData(TestBase):
         # we should be starting from scratch
         self.assertFalse(path.isfile(self.dbname))
 
-        with taxtastic.ncbi.db_connect(self.dbname) as con:
-            taxtastic.ncbi.db_load(con, ncbi_data, maxrows = self.maxrows)
-            cur = con.cursor()
-            cur.execute('select * from names')
-            self.assertTrue(len(list(cur.fetchall())) == self.maxrows)
+        engine = taxtastic.ncbi.db_connect(self.dbname)
+        taxtastic.ncbi.db_load(engine, ncbi_data, maxrows=self.maxrows)
+        with engine.begin() as conn:
+            result = conn.execute('select 1 AS i from names')
+            self.assertEqual(self.maxrows, len(list(result)))
 
         # test clobber argument
-        with taxtastic.ncbi.db_connect(self.dbname, clobber = True) as con:
-            taxtastic.ncbi.db_load(con, ncbi_data, maxrows = self.maxrows)
-            cur = con.cursor()
-            cur.execute('select * from names')
-            self.assertTrue(len(list(cur.fetchall())) == self.maxrows)
+        engine = taxtastic.ncbi.db_connect(self.dbname, clobber=True)
+        taxtastic.ncbi.db_load(engine, ncbi_data, maxrows=self.maxrows)
+        with engine.begin() as conn:
+            result = conn.execute('select 1 AS i from names')
+            self.assertEqual(self.maxrows, len(list(result)))
 
             # shouldn't be able to load data a second time, so number
             # of rows should not change
             taxtastic.ncbi.db_load(
-                con = con,
-                archive = ncbi_data,
-                maxrows = self.maxrows)
-            cur.execute('select * from names')
-            self.assertTrue(len(list(cur.fetchall())) == self.maxrows)
+                    engine, archive=ncbi_data,
+                    maxrows=self.maxrows)
+            result = conn.execute('select 1 AS i from names')
+            self.assertEqual(self.maxrows, len(list(result)))
 
 
 class TestReadNames(TestBase):
@@ -96,9 +95,9 @@ class TestReadNames(TestBase):
         is_classified always 0 or 1 if unclassified_regex is provided
         """
 
-        rows = read_names(rows = read_archive(self.zipfile, 'names.dmp'),
-                          unclassified_regex = UNCLASSIFIED_REGEX)
-        self.assertEquals(set(row[-1] for row in rows), set([0,1]))
+        rows = read_names(rows=read_archive(self.zipfile, 'names.dmp'),
+                          unclassified_regex=UNCLASSIFIED_REGEX)
+        self.assertEquals(set(row['is_classified'] for row in rows), set([0,1]))
 
     def test02(self):
         """
@@ -106,7 +105,7 @@ class TestReadNames(TestBase):
         """
 
         rows = read_names(rows = read_archive(self.zipfile, 'names.dmp'))
-        self.assertEquals(set(row[-1] for row in rows), set([None]))
+        self.assertEquals(set(row['is_classified'] for row in rows), set([None]))
 
 
 # class TestReadNamesExhaustively(TestReadNames):
