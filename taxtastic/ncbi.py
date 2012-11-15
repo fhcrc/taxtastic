@@ -16,10 +16,12 @@
 Methods and variables specific to the NCBI taxonomy.
 """
 
-import sqlite3
 import itertools
 import logging
+import operator
 import os
+import re
+import sqlite3
 import urllib
 import zipfile
 import re
@@ -38,7 +40,8 @@ parent_id     TEXT,
 rank          TEXT,
 embl_code     TEXT,
 division_id   INTEGER,
-source_id     INTEGER DEFAULT 1 -- added to support multiple sources
+source_id     INTEGER DEFAULT 1, -- added to support multiple sources
+is_valid      INTEGER DEFAULT 1  -- primary tax_name does not match UNCLASSIFIED_REGEX
 );
 
 CREATE TABLE names(
@@ -72,6 +75,7 @@ VALUES
 CREATE INDEX nodes_tax_id ON nodes(tax_id);
 CREATE INDEX nodes_parent_id ON nodes(parent_id);
 CREATE INDEX nodes_rank ON nodes(rank);
+CREATE INDEX nodes_is_valid ON nodes(is_valid);
 
 -- indices on names
 CREATE INDEX names_tax_id ON names(tax_id);
@@ -206,13 +210,17 @@ def db_load(con, archive, root_name='root', maxrows=None):
 
     try:
         # nodes
+        logging.info("Inserting nodes")
         rows = read_nodes(
             rows=read_archive(archive, 'nodes.dmp'),
             root_name=root_name,
             ncbi_source_id=1)
+        # Add is_valid
+        rows = (list(row) + [1] for row in rows)
         do_insert(con, 'nodes', rows, maxrows, add=False)
 
         # names
+        logging.info("Inserting names")
         rows = read_names(
             rows=read_archive(archive, 'names.dmp'),
             unclassified_regex = UNCLASSIFIED_REGEX
@@ -220,10 +228,15 @@ def db_load(con, archive, root_name='root', maxrows=None):
         do_insert(con, 'names', rows, maxrows, add=False)
 
         # merged
+        logging.info("Inserting merged")
         rows = read_archive(archive, 'merged.dmp')
         do_insert(con, 'merged', rows, maxrows, add=False)
 
         fix_missing_primary(con)
+
+        # Mark names as valid/invalid
+        mark_is_valid(con)
+        update_subtree_validity(con)
 
     except sqlite3.IntegrityError, err:
         raise IntegrityError(err)
@@ -260,6 +273,72 @@ def fix_missing_primary(con):
             WHERE tax_id = ? AND tax_name = ? AND
                 unique_name = ? AND name_class = ?""",
             [tax_id, tax_name, unique_name, name_class])
+
+def mark_is_valid(con, regex=UNCLASSIFIED_REGEX):
+    """
+    Apply ``regex`` to primary names associated with tax_ids, marking those
+    that match as invalid.
+    """
+    logging.info("Marking nodes validity based on primary name")
+    sql = """UPDATE nodes SET is_valid = (SELECT is_classified FROM names WHERE names.tax_id = tax_id)"""
+    cursor = con.cursor()
+    cursor.execute(sql)
+
+def update_subtree_validity(con, mark_below_rank='species'):
+    """
+    Update subtrees below rank "species" to match ``is_valid`` status at
+    rank "species"
+    """
+    def generate_in_param(count):
+        return '(' + ', '.join('?' * count) + ')'
+
+    def partition(iterable, size):
+        iterable = iter(iterable)
+        while True:
+            chunk = list(itertools.islice(iterable, 0, size))
+            if chunk:
+                yield chunk
+            else:
+                break
+
+    def mark_subtrees(tax_ids, is_valid):
+        cursor = con.cursor()
+
+        to_mark = list(tax_ids)
+        logging.info("Marking %d subtrees as is_valid=%s", len(to_mark), is_valid)
+        while to_mark:
+            # First, mark nodes
+            cursor.executemany("""UPDATE nodes SET is_valid = ?
+                WHERE tax_id = ?""",
+                ([is_valid, tax_id] for tax_id in tax_ids))
+
+            # Find children - can exceed the maximum number of parameters in a sqlite query,
+            # so chunk:
+            chunked = partition(to_mark, 250)
+            child_sql = """SELECT tax_id
+                           FROM nodes
+                           WHERE parent_id IN {0}"""
+            to_mark = [i[0] for i in itertools.chain.from_iterable(
+                           cursor.execute(child_sql.format(generate_in_param(len(chunk))),
+                                chunk) for chunk in chunked)]
+
+    cursor = con.cursor()
+
+    below_rank_query = """
+    SELECT nodes.tax_id, pnodes.is_valid
+    FROM nodes
+        JOIN nodes pnodes ON pnodes.tax_id = nodes.parent_id
+    WHERE pnodes.rank = ?
+    ORDER BY pnodes.is_valid"""
+
+    cursor.execute(below_rank_query, [mark_below_rank])
+
+    # Group by validity
+    grouped = itertools.groupby(cursor, operator.itemgetter(1))
+    for is_valid, records in grouped:
+        tax_ids = [i[0] for i in records]
+        mark_subtrees(tax_ids, is_valid)
+
 
 def do_insert(con, tablename, rows, maxrows=None, add=True):
     """
@@ -407,8 +486,7 @@ def read_names(rows, unclassified_regex = None):
             first two whitespace-delimited words.
             """
             tn = row[tax_name]
-            term = ' '.join(tn.split()[:2]) if ' ' in tn else tn
-            return 0 if unclassified_regex.search(term) else 1
+            return 0 if unclassified_regex.search(tn) else 1
     else:
         _is_classified = lambda row: None
 
