@@ -59,8 +59,7 @@ class Name(Base):
     name_class = Column(String)
     is_primary = Column(Boolean)
     is_classified = Column(Boolean)
-
-    __table_args__ = Index('ix_names_tax_id_is_primary', 'tax_id', 'is_primary'),
+Index('ix_names_tax_id_is_primary', Name.tax_id, Name.is_primary)
 
 class Merge(Base):
     __tablename__ = 'merged'
@@ -312,8 +311,6 @@ def update_subtree_validity(engine, mark_below_rank='species'):
         to_mark = list(tax_ids)
         logging.info("Marking %d subtrees as is_valid=%s", len(to_mark), is_valid)
         while to_mark:
-            if '29454' in to_mark:
-                logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
             # First, mark nodes
             conn.execute("""UPDATE nodes SET is_valid = ?
                 WHERE tax_id = ?""",
