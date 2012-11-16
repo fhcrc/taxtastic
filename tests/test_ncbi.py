@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import re
 import os
 from os import path
 import logging
@@ -107,37 +108,55 @@ class TestReadNames(TestBase):
         rows = read_names(rows = read_archive(self.zipfile, 'names.dmp'))
         self.assertEquals(set(row['is_classified'] for row in rows), set([None]))
 
+class TestUnclassifiedRegex(TestBase):
+    """
+    Test the heuristic used to determine if a taxonomic name is meaningful.
+    """
 
-# class TestReadNamesExhaustively(TestReadNames):
+    def setUp(self):
+        self.pieces = taxtastic.ncbi.UNCLASSIFIED_REGEX_COMPONENTS
+        self.regexes = [re.compile(piece) for piece in self.pieces]
+        with open(config.data_path('type_strain_names.txt')) as fp:
+            self.type_strain_names = [i.rstrip() for i in fp]
 
-#     def setUp(self):
-#         self.zipfile, downloaded = taxtastic.ncbi.fetch_data(dest_dir = config.outputdir)
+    def test_no_type_strains_match(self):
+        for strain_name in self.type_strain_names:
+            for regex in self.regexes:
+                m = regex.search(strain_name)
+                if m:
+                    self.fail('"{0}" matches "{1}"'.format(strain_name, regex.pattern))
 
+#def generate_test_unclassified_regex():
+    #"""
+    #Generate a test class verifying that none of the type strains in
+    #type_strain_names.txt match the unclassified regex.
+    #"""
+    #def generate_test(strain_name):
+        #def do_test(self):
+            #for regex in self.regexes:
+                #m = regex.search(strain_name)
+                #if m:
+                    #self.fail('"{0}" matches "{1}"'.format(strain_name, regex.pattern))
+        #return do_test
 
-#     def test03(self):
-#         """
-#         Print classified names
-#         """
+    #class TestUnclassifiedRegex(TestBase):
+        #def setUp(self):
+            #self.pieces = taxtastic.ncbi.UNCLASSIFIED_REGEX_COMPONENTS
+            #self.regexes = [re.compile(piece) for piece in self.pieces]
 
-#         rows = read_names(rows = read_archive(self.zipfile, 'names.dmp'),
-#                           unclassified_regex = UNCLASSIFIED_REGEX)
+    #with open(config.data_path('type_strain_names.txt')) as fp:
+        #type_strain_names = [i.rstrip() for i in fp]
 
-#         for row in rows:
-#             if row[-2] and row[-1]:
-#                 print row[1]
+    #for s in type_strain_names:
+        #test_fn = generate_test(s)
+        #func_name = 'test_{0}_no_match'.format(re.sub(r'[ -.]', '_', s).lower())
+        #test_fn.__name__ = func_name
+        #setattr(TestUnclassifiedRegex, func_name, test_fn)
 
+    #return TestUnclassifiedRegex
 
-#     def test04(self):
-#         """
-#         Print unclassified names
-#         """
-
-#         rows = read_names(rows = read_archive(self.zipfile, 'names.dmp'),
-#                           unclassified_regex = UNCLASSIFIED_REGEX)
-
-#         for row in rows:
-#             if row[-2] and not row[-1]:
-#                 print row[1]
+#TestUnclassifiedRegex = generate_test_unclassified_regex()
+#del generate_test_unclassified_regex
 
 
 

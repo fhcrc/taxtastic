@@ -26,8 +26,7 @@ import urllib
 import zipfile
 
 import sqlalchemy
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
-from sqlalchemy.sql import expression
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -39,7 +38,6 @@ Base = declarative_base()
 
 ncbi_data_url = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
-
 class Node(Base):
     __tablename__ = 'nodes'
     tax_id = Column(String, primary_key=True, nullable=False)
@@ -48,7 +46,7 @@ class Node(Base):
     embl_code = Column(String)
     division_id = Column(String)
     source_id = Column(Integer, server_default='1')
-    is_valid = Column(Boolean, server_default=expression.true())
+    is_valid = Column(Boolean, server_default='1', index=True)
 
 class Name(Base):
     __tablename__ = 'names'
@@ -61,6 +59,8 @@ class Name(Base):
     name_class = Column(String)
     is_primary = Column(Boolean)
     is_classified = Column(Boolean)
+
+    __table_args__ = Index('ix_names_tax_id_is_primary', 'tax_id', 'is_primary'),
 
 class Merge(Base):
     __tablename__ = 'merged'
@@ -115,52 +115,78 @@ varietas
 forma
 """
 
+# Components of a regex to apply to all names. Names matching this regex are
+# marked as invalid.
+UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
+                                r'\bactinomycete\b',
+                                r'\bcrenarchaeote\b',
+                                r'\bculture\b',
+                                r'\bchimeric\b',
+                                r'\bcyanobiont\b',
+                                r'degrading',
+                                r'\beuryarchaeote\b',
+                                r'disease',
+                                r'\b[cC]lone',
+                                r'\bmethanogen(ic)?\b',
+                                r'\bplanktonic\b',
+                                r'\bplanctomycete\b',
+                                r'\bsymbiote\b',
+                                r'\btransconjugant\b',
+                                r'^[a-z]', # starts with lower-case character
+                                r'^\W+\s+[a-zA-Z]*\d', # Digit in second word
+                                r'\d\d',
+                                r'atypical',
+                                r'^cf\.',
+                                r'acidophile',
+                                r'\bactinobacterium\b',
+                                r'aerobic',
+                                r'.+\b[Al]g(um|a)\b',
+                                r'\b[Bb]acteri(um|al)\b',
+                                r'.+\b[Bb]acteria\b',
+                                r'Barophile',
+                                r'cyanobacterium',
+                                r'Chloroplast',
+                                r'Cloning',
+                                r'\bclone\b',
+                                r'cluster',
+                                r'^diazotroph',
+                                r'\bcoccus\b',
+                                r'archaeon',
+                                r'-containing',
+                                r'epibiont',
+                                # 'et al',
+                                r'environmental samples',
+                                r'eubacterium',
+                                r'\b[Gg]roup\b',
+                                r'halophilic',
+                                r'hydrothermal\b',
+                                r'isolate',
+                                r'\bmarine\b',
+                                r'methanotroph',
+                                r'microorganism',
+                                r'mollicute',
+                                r'pathogen',
+                                r'[Pp]hytoplasma',
+                                r'proteobacterium',
+                                r'putative',
+                                r'\bsp\.',
+                                r'species',
+                                r'spirochete',
+                                r'str\.',
+                                r'strain',
+                                r'symbiont',
+                                r'\b[Tt]axon\b',
+                                r'unicellular',
+                                r'uncultured',
+                                r'unclassified',
+                                r'unidentified',
+                                r'unknown',
+                                r'vector\b',
+                                r'vent\b',
+                               ]
+
 # provides criteria for defining matching tax_ids as "unclassified"
-UNCLASSIFIED_REGEX = re.compile(
-    r'' + r'|'.join(frozenset(['-like',
-                               'Taxon'
-                               '\d\d',
-                               'acidophile',
-                               'actinobacterium',
-                               'aerobic',
-                               r'\b[Al]g(um|a)\b',
-                               r'\b[Bb]acteri(um|a)',
-                               'Barophile',
-                               'cyanobacterium',
-                               'Chloroplast',
-                               'Cloning',
-                               'cluster',
-                               '-containing',
-                               'epibiont',
-                               # 'et al',
-                               'eubacterium',
-                               r'\b[Gg]roup\b',
-                               'halophilic',
-                               r'hydrothermal\b',
-                               'isolate',
-                               'marine',
-                               'methanotroph',
-                               'microorganism',
-                               'mollicute',
-                               'pathogen',
-                               '[Pp]hytoplasma',
-                               'proteobacterium',
-                               'putative',
-                               r'\bsp\.',
-                               'species',
-                               'spirochete',
-                               r'str\.'
-                               'strain',
-                               'symbiont',
-                               'taxon',
-                               'unicellular',
-                               'uncultured',
-                               'unclassified',
-                               'unidentified',
-                               'unknown',
-                               'vector\b',
-                               r'vent\b',
-                               ])))
+UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
 ranks = [k.strip().replace(' ','_') for k in _ranks.splitlines() if k.strip()]
 
@@ -168,7 +194,7 @@ def db_connect(dbname='ncbi_taxonomy.db', clobber=False):
     """
     Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
-    True and return otherwise. Returns a connection object.
+    True and return otherwise. Returns a sqlalchemy engine object.
     """
 
     if clobber:
@@ -262,31 +288,36 @@ def mark_is_valid(engine, regex=UNCLASSIFIED_REGEX):
         sql = """UPDATE nodes SET is_valid = (SELECT is_classified FROM names WHERE names.tax_id = nodes.tax_id AND names.is_primary = 1)"""
         connection.execute(sql)
 
+def partition(iterable, size):
+    iterable = iter(iterable)
+    while True:
+        chunk = list(itertools.islice(iterable, 0, size))
+        if chunk:
+            yield chunk
+        else:
+            break
+
 def update_subtree_validity(engine, mark_below_rank='species'):
     """
     Update subtrees below rank "species" to match ``is_valid`` status at
     rank "species"
+
+    Also covers the special case of marking the "unclassified Bacteria" subtree
+    invalid.
     """
     def generate_in_param(count):
         return '(' + ', '.join('?' * count) + ')'
-
-    def partition(iterable, size):
-        iterable = iter(iterable)
-        while True:
-            chunk = list(itertools.islice(iterable, 0, size))
-            if chunk:
-                yield chunk
-            else:
-                break
 
     def mark_subtrees(conn, tax_ids, is_valid):
         to_mark = list(tax_ids)
         logging.info("Marking %d subtrees as is_valid=%s", len(to_mark), is_valid)
         while to_mark:
+            if '29454' in to_mark:
+                logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
             # First, mark nodes
             conn.execute("""UPDATE nodes SET is_valid = ?
                 WHERE tax_id = ?""",
-                [[is_valid, tax_id] for tax_id in tax_ids])
+                [[is_valid, tax_id] for tax_id in to_mark])
 
             # Find children - can exceed the maximum number of parameters in a sqlite query,
             # so chunk:
@@ -314,8 +345,16 @@ def update_subtree_validity(engine, mark_below_rank='species'):
             tax_ids = [i[0] for i in records]
             mark_subtrees(conn, tax_ids, is_valid)
 
+        # Special case: unclassified bacteria
+        result = list(conn.execute("""SELECT tax_id FROM names WHERE tax_name = ? and is_primary = ?""",
+            ['unclassified Bacteria', 1]))
+        assert len(result) < 2
+        logging.info("marking subtrees for unclassified Bacteria invalid")
+        for i, in result:
+            mark_subtrees(conn, [i], 0)
 
-def do_insert(engine, tablename, rows, maxrows=None, add=True):
+
+def do_insert(engine, tablename, rows, maxrows=None, add=True, chunk_size=5000):
     """
     Insert rows into a table. Do not perform the insert if
     add is False and table already contains data.
@@ -331,10 +370,12 @@ def do_insert(engine, tablename, rows, maxrows=None, add=True):
         rows = itertools.islice(rows, maxrows)
 
     insert = table.insert()
-    rows = list(rows)
     with engine.begin() as conn:
-        result = conn.execute(insert, rows)
-        logging.info("Inserted %d rows into %s", result.rowcount, tablename)
+        count = 0
+        for chunk in partition(rows, chunk_size):
+            result = conn.execute(insert, chunk)
+            count += result.rowcount
+        logging.info("Inserted %d rows into %s", count, tablename)
 
     return True
 
