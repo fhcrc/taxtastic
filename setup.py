@@ -32,7 +32,7 @@ params = {'author': 'Noah Hoffman',
               'Topic :: Scientific/Engineering :: Bio-Informatics'],
           'download_url': 'https://github.com/fhcrc/taxtastic',
           'package_data': {'taxtastic': [join('data',f) for f in ['sha']]},
-          'install_requires': ['sqlalchemy', 'decorator', 'biopython']}
+          'install_requires': ['sqlalchemy>=0.7', 'decorator', 'biopython']}
 
 setup(**params)
 
