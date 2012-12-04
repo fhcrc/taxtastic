@@ -2,7 +2,16 @@
  change log for taxtastic
 ==========================
 
+0.5.0-dev
+=========
+
  * Add ``.drop()`` ``.collapse()`` methods to ``taxtastic.taxtable.TaxNode``
+ * Change ``is_classified`` column in taxonomy database: now does not mark
+   below species as unclassified if the species-level classification is valid. [GH-59]
+ * Add ``taxit composition`` - shows the taxonomic composition of a reference package at a given rank
+ * Fix broken ``taxit lonelynodes``
+ * Add ``taxit merge`` - Identifies tax_ids which have been merged, suggests new tax_ids.
+
 
 0.4
 ===
