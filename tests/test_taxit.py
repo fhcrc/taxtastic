@@ -130,21 +130,22 @@ class LonelyNodesTestCase(TestScriptBase):
         self.cmd_ok('lonelynodes %(refpkg)s -o %(outfile)s')
         self.assertTrue(path.isfile(self.outfile))
         with open(self.outfile) as fp:
-            self.assertEqual("""91061 # class Bacilli
-33958 # family Lactobacillaceae
-131567 # below_root cellular organisms
-543 # family Enterobacteriaceae
-2 # superkingdom Bacteria
-91347 # order Enterobacteriales
-1236 # class Gammaproteobacteria
-561 # genus Escherichia
-562 # species Escherichia coli
-186826 # order Lactobacillales
-1578 # genus Lactobacillus""", fp.read().strip())
+            self.assertEqual("""tax_name,tax_id,rank
+Bacilli,91061,class
+Bacteria,2,superkingdom
+Enterobacteriaceae,543,family
+Enterobacteriales,91347,order
+Escherichia,561,genus
+Escherichia coli,562,species
+Gammaproteobacteria,1236,class
+Lactobacillaceae,33958,family
+Lactobacillales,186826,order
+Lactobacillus,1578,genus
+cellular organisms,131567,below_root""", fp.read().strip().replace('\r', ''))
 
     def test_species(self):
         self.cmd_ok('lonelynodes %(refpkg)s -o %(outfile)s -r species')
         self.assertTrue(path.isfile(self.outfile))
         with open(self.outfile) as fp:
-            self.assertEqual("""562 # species Escherichia coli""",
+            self.assertEqual("""tax_name,tax_id,rank\r\nEscherichia coli,562,species""",
                     fp.read().strip())
