@@ -16,73 +16,65 @@
 Methods and variables specific to the NCBI taxonomy.
 """
 
-import sqlite3
 import itertools
 import logging
+import operator
 import os
+import re
+import sqlite3
 import urllib
 import zipfile
-import re
+
+import sqlalchemy
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Index
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 
 from errors import IntegrityError
 
 log = logging
 
+Base = declarative_base()
+
 ncbi_data_url = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
-db_schema = """
--- nodes.dmp specifies additional columns but these are not implemented yet
-CREATE TABLE nodes(
-tax_id        TEXT UNIQUE PRIMARY KEY NOT NULL,
-parent_id     TEXT,
-rank          TEXT,
-embl_code     TEXT,
-division_id   INTEGER,
-source_id     INTEGER DEFAULT 1 -- added to support multiple sources
-);
+class Node(Base):
+    __tablename__ = 'nodes'
+    tax_id = Column(String, primary_key=True, nullable=False)
+    parent_id = Column(String, index=True)
+    rank = Column(String, index=True)
+    embl_code = Column(String)
+    division_id = Column(String)
+    source_id = Column(Integer, server_default='1')
+    is_valid = Column(Boolean, server_default='1', index=True)
 
-CREATE TABLE names(
-tax_id        TEXT REFERENCES nodes(tax_id),
-tax_name      TEXT,
-unique_name   TEXT,
-name_class    TEXT,
--- not defined in names.dmp:
-is_primary    INTEGER,
-is_classified INTEGER -- tax_name does not match UNCLASSIFIED_REGEX
-);
+class Name(Base):
+    __tablename__ = 'names'
+    id = Column(Integer, primary_key=True)
 
-CREATE TABLE merged(
-old_tax_id    TEXT,
-new_tax_id    TEXT REFERENCES nodes(tax_id)
-);
+    tax_id = Column(String, ForeignKey('nodes.tax_id', ondelete='CASCADE'), index=True)
+    node = relationship('Node', backref='names')
+    tax_name = Column(String, index=True)
+    unique_name = Column(String)
+    name_class = Column(String)
+    is_primary = Column(Boolean)
+    is_classified = Column(Boolean)
+Index('ix_names_tax_id_is_primary', Name.tax_id, Name.is_primary)
 
--- table "source" supports addition of custom taxa (not provided by NCBI)
-CREATE TABLE source(
-id            INTEGER PRIMARY KEY AUTOINCREMENT,
-name          TEXT UNIQUE,
-description   TEXT
-);
+class Merge(Base):
+    __tablename__ = 'merged'
 
-INSERT INTO "source"
-  (id, name, description)
-VALUES
-  (1, "NCBI", "NCBI taxonomy");
+    old_tax_id = Column(String, primary_key=True, index=True)
+    new_tax_id = Column(String, ForeignKey('nodes.tax_id', ondelete='CASCADE'), index=True)
+    merged_node = relationship('Node', backref='merged_ids')
 
--- indices on nodes
-CREATE INDEX nodes_tax_id ON nodes(tax_id);
-CREATE INDEX nodes_parent_id ON nodes(parent_id);
-CREATE INDEX nodes_rank ON nodes(rank);
+class Source(Base):
+    __tablename__ = 'source'
 
--- indices on names
-CREATE INDEX names_tax_id ON names(tax_id);
-CREATE INDEX names_tax_name ON names(tax_name);
-CREATE INDEX names_is_primary ON names(is_primary);
-CREATE INDEX names_is_classified ON names(is_classified);
-CREATE INDEX names_taxid_is_primary ON names(tax_id, is_primary);
-CREATE INDEX names_name_is_primary ON names(tax_name, is_primary);
--- CREATE UNIQUE INDEX names_id_name ON names(tax_id, tax_name, is_primary);
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    description = Column(String)
 
-"""
 
 # define headers in names.dmp, etc (may not correspond to table columns above)
 merged_keys = 'old_tax_id new_tax_id'.split()
@@ -122,60 +114,86 @@ varietas
 forma
 """
 
+# Components of a regex to apply to all names. Names matching this regex are
+# marked as invalid.
+UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
+                                r'\bactinomycete\b',
+                                r'\bcrenarchaeote\b',
+                                r'\bculture\b',
+                                r'\bchimeric\b',
+                                r'\bcyanobiont\b',
+                                r'degrading',
+                                r'\beuryarchaeote\b',
+                                r'disease',
+                                r'\b[cC]lone',
+                                r'\bmethanogen(ic)?\b',
+                                r'\bplanktonic\b',
+                                r'\bplanctomycete\b',
+                                r'\bsymbiote\b',
+                                r'\btransconjugant\b',
+                                r'^[a-z]', # starts with lower-case character
+                                r'^\W+\s+[a-zA-Z]*\d', # Digit in second word
+                                r'\d\d',
+                                r'atypical',
+                                r'^cf\.',
+                                r'acidophile',
+                                r'\bactinobacterium\b',
+                                r'aerobic',
+                                r'.+\b[Al]g(um|a)\b',
+                                r'\b[Bb]acteri(um|al)\b',
+                                r'.+\b[Bb]acteria\b',
+                                r'Barophile',
+                                r'cyanobacterium',
+                                r'Chloroplast',
+                                r'Cloning',
+                                r'\bclone\b',
+                                r'cluster',
+                                r'^diazotroph',
+                                r'\bcoccus\b',
+                                r'archaeon',
+                                r'-containing',
+                                r'epibiont',
+                                # 'et al',
+                                r'environmental samples',
+                                r'eubacterium',
+                                r'\b[Gg]roup\b',
+                                r'halophilic',
+                                r'hydrothermal\b',
+                                r'isolate',
+                                r'\bmarine\b',
+                                r'methanotroph',
+                                r'microorganism',
+                                r'mollicute',
+                                r'pathogen',
+                                r'[Pp]hytoplasma',
+                                r'proteobacterium',
+                                r'putative',
+                                r'\bsp\.',
+                                r'species',
+                                r'spirochete',
+                                r'str\.',
+                                r'strain',
+                                r'symbiont',
+                                r'\b[Tt]axon\b',
+                                r'unicellular',
+                                r'uncultured',
+                                r'unclassified',
+                                r'unidentified',
+                                r'unknown',
+                                r'vector\b',
+                                r'vent\b',
+                               ]
+
 # provides criteria for defining matching tax_ids as "unclassified"
-UNCLASSIFIED_REGEX = re.compile(
-    r'' + r'|'.join(frozenset(['-like',
-                               'Taxon'
-                               '\d\d',
-                               'acidophile',
-                               'actinobacterium',
-                               'aerobic',
-                               r'\b[Al]g(um|a)\b',
-                               r'\b[Bb]acteri(um|a)',
-                               'Barophile',
-                               'cyanobacterium',
-                               'Chloroplast',
-                               'Cloning',
-                               'cluster',
-                               '-containing',
-                               'epibiont',
-                               # 'et al',
-                               'eubacterium',
-                               r'\b[Gg]roup\b',
-                               'halophilic',
-                               r'hydrothermal\b',
-                               'isolate',
-                               'marine',
-                               'methanotroph',
-                               'microorganism',
-                               'mollicute',
-                               'pathogen',
-                               '[Pp]hytoplasma',
-                               'proteobacterium',
-                               'putative',
-                               r'\bsp\.',
-                               'species',
-                               'spirochete',
-                               r'str\.'
-                               'strain',
-                               'symbiont',
-                               'taxon',
-                               'unicellular',
-                               'uncultured',
-                               'unclassified',
-                               'unidentified',
-                               'unknown',
-                               'vector\b',
-                               r'vent\b',
-                               ])))
+UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
 ranks = [k.strip().replace(' ','_') for k in _ranks.splitlines() if k.strip()]
 
-def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber = False):
+def db_connect(dbname='ncbi_taxonomy.db', clobber=False):
     """
     Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
-    True and return otherwise. Returns a connection object.
+    True and return otherwise. Returns a sqlalchemy engine object.
     """
 
     if clobber:
@@ -185,20 +203,11 @@ def db_connect(dbname='ncbi_taxonomy.db', schema=db_schema, clobber = False):
         except OSError:
             pass
 
-    con = sqlite3.connect(dbname)
-    cur = con.cursor()
+    engine = sqlalchemy.create_engine('sqlite:///{0}'.format(dbname))
+    Base.metadata.create_all(bind=engine)
+    return engine
 
-    cmds = [cmd.strip() for cmd in schema.split(';') if cmd.strip()]
-    try:
-        for cmd in cmds:
-            cur.execute(cmd)
-            log.debug(cmd)
-    except sqlite3.OperationalError as err:
-        log.info(err)
-
-    return con
-
-def db_load(con, archive, root_name='root', maxrows=None):
+def db_load(engine, archive, root_name='root', maxrows=None):
     """
     Load data from zip archive into database identified by con. Data
     is not loaded if target tables already contain data.
@@ -206,88 +215,164 @@ def db_load(con, archive, root_name='root', maxrows=None):
 
     try:
         # nodes
+        logging.info("Inserting nodes")
         rows = read_nodes(
             rows=read_archive(archive, 'nodes.dmp'),
             root_name=root_name,
             ncbi_source_id=1)
-        do_insert(con, 'nodes', rows, maxrows, add=False)
+        # Add is_valid
+        do_insert(engine, 'nodes', rows, maxrows, add=False)
 
         # names
+        logging.info("Inserting names")
         rows = read_names(
             rows=read_archive(archive, 'names.dmp'),
-            unclassified_regex = UNCLASSIFIED_REGEX
-            )
-        do_insert(con, 'names', rows, maxrows, add=False)
+            unclassified_regex=UNCLASSIFIED_REGEX)
+        do_insert(engine, 'names', rows, maxrows, add=False)
 
         # merged
+        logging.info("Inserting merged")
         rows = read_archive(archive, 'merged.dmp')
-        do_insert(con, 'merged', rows, maxrows, add=False)
+        rows = (dict(zip(['old_tax_id', 'new_tax_id'], row)) for row in rows)
+        do_insert(engine, 'merged', rows, maxrows, add=False)
 
-        fix_missing_primary(con)
+        fix_missing_primary(engine)
+
+        # Mark names as valid/invalid
+        mark_is_valid(engine)
+        update_subtree_validity(engine)
 
     except sqlite3.IntegrityError, err:
         raise IntegrityError(err)
 
-def fix_missing_primary(con):
-    missing_primary = """SELECT tax_id
-        FROM names
-        GROUP BY tax_id
-        HAVING SUM(is_primary) = 0;"""
-    rows_for_taxid = """SELECT tax_id, tax_name, unique_name, name_class
-        FROM names
-        WHERE tax_id = ?"""
-    cursor = con.cursor()
-    tax_ids = [i[0] for i in cursor.execute(missing_primary)]
-    logging.warn("%d records lack primary names", len(tax_ids))
+def fix_missing_primary(engine):
+    with engine.begin() as cursor:
+        missing_primary = """SELECT tax_id
+            FROM names
+            GROUP BY tax_id
+            HAVING SUM(is_primary) = 0;"""
+        rows_for_taxid = """SELECT tax_id, tax_name, unique_name, name_class
+            FROM names
+            WHERE tax_id = ?"""
+        tax_ids = [i[0] for i in cursor.execute(missing_primary)]
+        logging.warn("%d records lack primary names", len(tax_ids))
 
-    for tax_id in tax_ids:
-        records = list(cursor.execute(rows_for_taxid, [tax_id]))
-        # Prefer scientific name
-
-        if sum(i[-1] == 'scientific name' for i in records) == 1:
-            tax_id, tax_name, unique_name, name_class = next(i for i in records
-                    if i[-1] == 'scientific name')
+        for tax_id in tax_ids:
+            records = list(cursor.execute(rows_for_taxid, [tax_id]))
+            # Prefer scientific name
+            if sum(list(i)[-1] == 'scientific name' for i in records) == 1:
+                tax_id, tax_name, unique_name, name_class = next(i for i in records
+                        if list(i)[-1] == 'scientific name')
+                cursor.execute("""UPDATE names
+                    SET is_primary = 1
+                    WHERE tax_id = ? AND name_class = ?""",
+                    [tax_id, 'scientific name'])
+            else:
+                tax_id, tax_name, unique_name, name_class = records[0]
+            logging.warn("No primary name for tax_id %s. Arbitrarily using %s[%s].",
+                    tax_id, tax_name, name_class)
             cursor.execute("""UPDATE names
                 SET is_primary = 1
-                WHERE tax_id = ? AND name_class = ?""",
-                [tax_id, 'scientific name'])
-        else:
-            tax_id, tax_name, unique_name, name_class = records[0]
-        logging.warn("No primary name for tax_id %s. Arbitrarily using %s[%s].",
-                tax_id, tax_name, name_class)
-        cursor.execute("""UPDATE names
-            SET is_primary = 1
-            WHERE tax_id = ? AND tax_name = ? AND
-                unique_name = ? AND name_class = ?""",
-            [tax_id, tax_name, unique_name, name_class])
+                WHERE tax_id = ? AND tax_name = ? AND
+                    unique_name = ? AND name_class = ?""",
+                [tax_id, tax_name, unique_name, name_class])
 
-def do_insert(con, tablename, rows, maxrows=None, add=True):
+def mark_is_valid(engine, regex=UNCLASSIFIED_REGEX):
+    """
+    Apply ``regex`` to primary names associated with tax_ids, marking those
+    that match as invalid.
+    """
+    logging.info("Marking nodes validity based on primary name")
+    with engine.begin() as connection:
+        sql = """UPDATE nodes SET is_valid = (SELECT is_classified FROM names WHERE names.tax_id = nodes.tax_id AND names.is_primary = 1)"""
+        connection.execute(sql)
+
+def partition(iterable, size):
+    iterable = iter(iterable)
+    while True:
+        chunk = list(itertools.islice(iterable, 0, size))
+        if chunk:
+            yield chunk
+        else:
+            break
+
+def update_subtree_validity(engine, mark_below_rank='species'):
+    """
+    Update subtrees below rank "species" to match ``is_valid`` status at
+    rank "species"
+
+    Also covers the special case of marking the "unclassified Bacteria" subtree
+    invalid.
+    """
+    def generate_in_param(count):
+        return '(' + ', '.join('?' * count) + ')'
+
+    def mark_subtrees(conn, tax_ids, is_valid):
+        to_mark = list(tax_ids)
+        logging.info("Marking %d subtrees as is_valid=%s", len(to_mark), is_valid)
+        while to_mark:
+            # First, mark nodes
+            conn.execute("""UPDATE nodes SET is_valid = ?
+                WHERE tax_id = ?""",
+                [[is_valid, tax_id] for tax_id in to_mark])
+
+            # Find children - can exceed the maximum number of parameters in a sqlite query,
+            # so chunk:
+            chunked = partition(to_mark, 250)
+            child_sql = """SELECT tax_id
+                           FROM nodes
+                           WHERE parent_id IN {0}"""
+            to_mark = [i[0] for i in itertools.chain.from_iterable(
+                           conn.execute(child_sql.format(generate_in_param(len(chunk))),
+                                chunk) for chunk in chunked)]
+
+    below_rank_query = """
+    SELECT nodes.tax_id, pnodes.is_valid
+    FROM nodes
+        JOIN nodes pnodes ON pnodes.tax_id = nodes.parent_id
+    WHERE pnodes.rank = ?
+    ORDER BY pnodes.is_valid"""
+
+    with engine.begin() as conn:
+        result = list(conn.execute(below_rank_query, [mark_below_rank]))
+
+        # Group by validity
+        grouped = itertools.groupby(result, operator.itemgetter(1))
+        for is_valid, records in grouped:
+            tax_ids = [i[0] for i in records]
+            mark_subtrees(conn, tax_ids, is_valid)
+
+        # Special case: unclassified bacteria
+        result = list(conn.execute("""SELECT tax_id FROM names WHERE tax_name = ? and is_primary = ?""",
+            ['unclassified Bacteria', 1]))
+        assert len(result) < 2
+        logging.info("marking subtrees for unclassified Bacteria invalid")
+        for i, in result:
+            mark_subtrees(conn, [i], 0)
+
+
+def do_insert(engine, tablename, rows, maxrows=None, add=True, chunk_size=5000):
     """
     Insert rows into a table. Do not perform the insert if
     add is False and table already contains data.
     """
-
-    cur = con.cursor()
-
-    cur.execute('select count(*) from "%s" where rowid < 2' % tablename)
-    has_data = cur.fetchone()[0]
+    meta = Base.metadata
+    table = meta.tables[tablename]
+    has_data = table.select(bind=engine).limit(1).count().execute().first()[0] > 0
 
     if not add and has_data:
         log.info('Table "%s" already contains data; load not performed.' % tablename)
         return False
-
-    # pop first row to determine number of columns
-    row = rows.next()
-    cmd = 'INSERT INTO "%s" VALUES (%s)' % (tablename, ', '.join(['?']*len(row)))
-    log.info(cmd)
-
-    # put the first row back
-    rows = itertools.chain([row], rows)
     if maxrows:
         rows = itertools.islice(rows, maxrows)
 
-    cur.executemany(cmd, rows)
-    con.commit()
+    insert = table.insert()
+    with engine.begin() as conn:
+        count = 0
+        for chunk in partition(rows, chunk_size):
+            result = conn.execute(insert, chunk)
+            count += result.rowcount
+        logging.info("Inserted %d rows into %s", count, tablename)
 
     return True
 
@@ -351,18 +436,21 @@ def read_nodes(rows, root_name, ncbi_source_id):
 
     keys = 'tax_id parent_id rank embl_code division_id'.split()
     idx = dict((k,i) for i,k in enumerate(keys))
-    tax_id, parent_id, rank = [idx[k] for k in ['tax_id','parent_id','rank']]
+    rank = idx['rank']
 
     # assume the first row is the root
     row = rows.next()
     row[rank] = root_name
     rows = itertools.chain([row], rows)
 
-    ncol = len(keys)
-    # replace whitespace in "rank" with underscore
-    for row in rows:
-        row[rank] = '_'.join(row[rank].split())
-        yield row[:ncol] + [ncbi_source_id]
+    colnames = keys + ['source_id']
+    for r in rows:
+        row = dict(zip(colnames, r))
+        assert len(row) == len(colnames)
+
+        # replace whitespace in "rank" with underscore
+        row['rank'] = '_'.join(row['rank'].split())
+        yield row
 
 def read_names(rows, unclassified_regex = None):
     """
@@ -407,11 +495,12 @@ def read_names(rows, unclassified_regex = None):
             first two whitespace-delimited words.
             """
             tn = row[tax_name]
-            term = ' '.join(tn.split()[:2]) if ' ' in tn else tn
-            return 0 if unclassified_regex.search(term) else 1
+            return 0 if unclassified_regex.search(tn) else 1
     else:
         _is_classified = lambda row: None
 
     # appends additional field is_primary
-    for row in rows:
-        yield row + [_is_primary(row), _is_classified(row)]
+    colnames = keys + ['is_primary', 'is_classified']
+    for r in rows:
+        row = dict(zip(colnames, r + [_is_primary(r), _is_classified(r)]))
+        yield row
