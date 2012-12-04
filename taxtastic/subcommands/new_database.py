@@ -64,22 +64,22 @@ def action(args):
     if not os.access(dbname, os.F_OK) or args.clobber:
         log.warning('creating new database in %s using data in %s' % \
                         (dbname, zfile))
-        con = ncbi.db_connect(dbname, clobber=True)
-        with con:
-            ncbi.db_load(con, zfile)
-            if not args.preserve_inconsistent_taxonomies:
-                curs = con.cursor()
-                curs.execute("""
-                    UPDATE nodes
-                       SET rank = 'no_rank'
-                     WHERE tax_id IN (SELECT n1.tax_id
-                                        FROM nodes n1
-                                             JOIN nodes n2
-                                               ON n1.parent_id = n2.tax_id
-                                       WHERE n1.rank = n2.rank
-                                         AND n1.rank NOT IN ('root', 'no_rank'))
-                """)
-        con.close()
+        engine = ncbi.db_connect(dbname, clobber=True)
+        if True:
+            ncbi.db_load(engine, zfile)
+            #if not args.preserve_inconsistent_taxonomies:
+                #curs = con.cursor()
+                #curs.execute("""
+                    #UPDATE nodes
+                       #SET rank = 'no_rank'
+                     #WHERE tax_id IN (SELECT n1.tax_id
+                                        #FROM nodes n1
+                                             #JOIN nodes n2
+                                               #ON n1.parent_id = n2.tax_id
+                                       #WHERE n1.rank = n2.rank
+                                         #AND n1.rank NOT IN ('root', 'no_rank'))
+                #""")
+        #con.close()
     else:
         log.warning('taxonomy database already exists in %s' % dbname)
 
