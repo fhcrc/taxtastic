@@ -22,8 +22,6 @@ from collections import Counter
 import sys
 import argparse
 
-from Bio import SeqIO
-
 from taxtastic import refpkg
 
 log = logging.getLogger(__name__)

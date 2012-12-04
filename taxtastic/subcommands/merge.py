@@ -25,7 +25,6 @@ from taxtastic.taxonomy import Taxonomy
 from taxtastic.utils import getlines
 
 from sqlalchemy import create_engine
-from sqlalchemy.exc import IntegrityError
 import os.path
 import sys
 
