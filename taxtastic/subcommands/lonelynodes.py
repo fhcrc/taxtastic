@@ -18,6 +18,7 @@ import argparse
 import logging
 import os
 import sys
+import csv
 
 from taxtastic import lonely, refpkg
 
@@ -59,7 +60,7 @@ def action(args):
     result = tree.lonelynodes()
     if args.ranks:
         result = (n for n in result if n.rank in args.ranks)
-    txt = '\n'.join("%s # %s %s" % (n.key if n.key else "", n.rank, n.tax_name) for n in result)
-    with args.output as out:
-        print >>out, txt
-    return 0
+
+    writer = csv.writer(args.output)
+    writer.writerow(['tax_name','tax_id','rank'])
+    writer.writerows(sorted((n.tax_name, n.key, n.rank) for n in result))
