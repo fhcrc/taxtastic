@@ -121,3 +121,30 @@ class TestTaxTable(TestScriptBase):
         self.assertTrue(path.isfile(self.outfile))
 
 
+class LonelyNodesTestCase(TestScriptBase):
+    def setUp(self):
+        super(LonelyNodesTestCase, self).setUp()
+        self.outfile = path.join(self.mkoutdir(), 'lonely.txt')
+        self.refpkg = config.data_path('lactobacillus2-0.2.refpkg')
+    def test_all_ranks(self):
+        self.cmd_ok('lonelynodes %(refpkg)s -o %(outfile)s')
+        self.assertTrue(path.isfile(self.outfile))
+        with open(self.outfile) as fp:
+            self.assertEqual("""91061 # class Bacilli
+33958 # family Lactobacillaceae
+131567 # below_root cellular organisms
+543 # family Enterobacteriaceae
+2 # superkingdom Bacteria
+91347 # order Enterobacteriales
+1236 # class Gammaproteobacteria
+561 # genus Escherichia
+562 # species Escherichia coli
+186826 # order Lactobacillales
+1578 # genus Lactobacillus""", fp.read().strip())
+
+    def test_species(self):
+        self.cmd_ok('lonelynodes %(refpkg)s -o %(outfile)s -r species')
+        self.assertTrue(path.isfile(self.outfile))
+        with open(self.outfile) as fp:
+            self.assertEqual("""562 # species Escherichia coli""",
+                    fp.read().strip())
