@@ -1,0 +1,4 @@
+tax_id,parent_id,rank,tax_name,other_field
+1578_1,1578,species,"Novel lactobacillus species 1","test"
+99999,91061,below_class,"Novel class 1","test"
+100000,99999,below_below_class,"Novel thing","comment"
