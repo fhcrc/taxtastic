@@ -7,7 +7,7 @@ import os
 import os.path
 
 from taxtastic import refpkg
-from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check
+from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check, add_to_taxtable
 
 import config
 from config import OutputRedirectMixin
@@ -203,6 +203,22 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                 out_file = tf
                 verbosity = 0
             self.assertEqual(taxtable.action(_Args()), 0)
+            # No output check at present
+            self.assertTrue(tf.tell() > 0)
+
+class TestAddToTaxtable(OutputRedirectMixin, unittest.TestCase):
+    maxDiff = None
+
+    def test_seqinfo(self):
+        with tempfile.TemporaryFile() as tf, \
+             open(config.data_path('minimal_taxonomy.csv')) as taxtable_fp, \
+             open(config.data_path('minimal_add_taxonomy.csv')) as extra_nodes_fp:
+            class _Args(object):
+                extra_nodes_csv = extra_nodes_fp
+                taxtable = taxtable_fp
+                out_file = tf
+                verbosity = 0
+            self.assertFalse(add_to_taxtable.action(_Args()))
             # No output check at present
             self.assertTrue(tf.tell() > 0)
 
