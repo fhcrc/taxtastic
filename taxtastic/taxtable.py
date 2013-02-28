@@ -9,8 +9,9 @@ class TaxNode(object):
     """
     Taxonomic tree, with optional sequence IDs on nodes.
     """
-    def __init__(self, rank, tax_id, parent=None, sequence_ids=None, children=None, name=None):
-        self.ranks = None
+    def __init__(self, rank, tax_id, parent=None, sequence_ids=None,
+                 children=None, name=None, ranks=None):
+        self.ranks = ranks
         self.rank = rank
         self.name = name
         self.tax_id = tax_id
