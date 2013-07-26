@@ -2,6 +2,19 @@
 TAXTASTIC
 ---------
 
+Installing
+----------
+
+``taxtastic`` requires Python 2.7.  The simplest method of installing is susing `pip <http://pip-installer.org>`_::
+
+    pip install taxtastic
+
+If you don't have pip, try::
+
+    easy_install taxtastic
+
+Either of these commands will install taxtastic along with required dependencies.
+
 We love it, but what is it?
 ---------------------------
 
