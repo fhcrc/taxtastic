@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>taxtastic.refpkg &mdash; taxtastic 0.1.0 documentation</title>
+    <title>taxtastic.refpkg &mdash; taxtastic 0.4.1pre-6cac66d documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -16,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.0',
+        VERSION:     '0.4.1pre-6cac66d',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="taxtastic 0.1.0 documentation" href="../../index.html" />
+    <link rel="top" title="taxtastic 0.4.1pre-6cac66d documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body>
@@ -35,7 +33,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li><a href="../../index.html">taxtastic 0.1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">taxtastic 0.4.1pre-6cac66d documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -79,19 +77,21 @@
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">zipfile</span>
 
 <span class="kn">import</span> <span class="nn">Bio.SeqIO</span>
 <span class="kn">import</span> <span class="nn">Bio.Phylo</span>
 
-<span class="kn">import</span> <span class="nn">utils</span>
+<span class="kn">from</span> <span class="nn">taxtastic</span> <span class="kn">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">taxdb</span>
 
 <span class="n">FORMAT_VERSION</span> <span class="o">=</span> <span class="s">&#39;1.1&#39;</span>
 
-<span class="k">def</span> <span class="nf">md5file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">md5file</span><span class="p">(</span><span class="n">fobj</span><span class="p">):</span>
     <span class="n">md5</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4096</span><span class="p">),</span> <span class="s">&#39;&#39;</span><span class="p">):</span>
-            <span class="n">md5</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">fobj</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4096</span><span class="p">),</span> <span class="s">&#39;&#39;</span><span class="p">):</span>
+        <span class="n">md5</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">md5</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
 
@@ -109,8 +109,8 @@
         <span class="n">tmp_fd</span><span class="p">,</span> <span class="n">tmp_name</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">tmp_fd</span><span class="p">)</span>
         <span class="k">yield</span> <span class="n">tmp_name</span>
-    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">v</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">unlink</span><span class="p">:</span>
             <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">tmp_name</span><span class="p">)</span>
@@ -178,52 +178,207 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">current_transaction</span> <span class="o">=</span> <span class="bp">None</span>
 
 
+<span class="k">class</span> <span class="nc">NoAncestor</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
 <span class="k">class</span> <span class="nc">Refpkg</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="n">_manifest_name</span> <span class="o">=</span> <span class="s">&#39;CONTENTS.json&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create a reference to a new or existing RefPkg at *path*.</span>
 
-<span class="sd">        If there is already a RefPkg at *path*, a reference is</span>
-<span class="sd">        returned to that RefPkg.  If *path* does not exist, then an</span>
-<span class="sd">        empty RefPkg is created.</span>
+<span class="sd">        If there is already a RefPkg at *path*, a reference is returned to that</span>
+<span class="sd">        RefPkg. If *path* does not exist and *create* is true, then an empty</span>
+<span class="sd">        RefPkg is created.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c"># The logic of __init__ is complicated by having to check for</span>
         <span class="c"># validity of a refpkg.  Much of its can be dispatched to the</span>
         <span class="c"># isvalid method, but I want that to work at any time on the</span>
         <span class="c"># RefPkg object, so it must have the RefPkg&#39;s manifest already</span>
         <span class="c"># in place.</span>
+        <span class="k">if</span> <span class="n">create</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s">&quot;the default value of True for the `create` parameter is &quot;</span>
+                <span class="s">&quot;deprecated; it will eventually become False&quot;</span><span class="p">,</span>
+                <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">create</span> <span class="o">=</span> <span class="bp">True</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">current_transaction</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">)):</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_name</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
-                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">manifest_template</span><span class="p">(),</span> <span class="n">h</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> is not a valid RefPkg&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">path</span><span class="p">,))</span>
-        <span class="c"># Try to load the Refpkg and check that it&#39;s valid</span>
-        <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">((</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> is not a valid RefPkg - &quot;</span>
-                              <span class="s">&quot;could not find manifest file </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">)</span> <span class="o">%</span> \
-                                 <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_name</span><span class="p">))</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">create</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_manifest</span><span class="p">(</span><span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">manifest_template</span><span class="p">(),</span> <span class="n">h</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+                    <span class="n">h</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s">&quot;Reference package {0} does not exist.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
 
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s">&#39;log&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;log&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sync_to_disk</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s">&#39;rollback&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;rollback&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sync_to_disk</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s">&#39;rollforward&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;rollforward&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sync_to_disk</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">is_zipfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_install_zipfile_handlers</span><span class="p">()</span>
 
-        <span class="n">error</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_invalid</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> is not a valid RefPkg: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">error</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_from_disk</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_defaults</span><span class="p">()</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">_install_zipfile_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_archive</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">archive_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">zi</span> <span class="k">for</span> <span class="n">zi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_archive</span><span class="o">.</span><span class="n">infolist</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">zi</span><span class="o">.</span><span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">archive_dirs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s">&#39;zipped reference packages must contain exactly one directory&#39;</span><span class="p">)</span>
+        <span class="n">archive_dir</span> <span class="o">=</span> <span class="n">archive_dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">filename</span>
+
+        <span class="k">def</span> <span class="nf">zipopen</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">archive_dir</span> <span class="o">+</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open</span> <span class="o">=</span> <span class="n">zipopen</span>
+
+        <span class="k">def</span> <span class="nf">file_path</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">scratch_file</span><span class="p">(</span><span class="n">unlink</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">path</span><span class="p">:</span>
+                <span class="n">src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
+                    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfileobj</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span> <span class="o">=</span> <span class="n">file_path</span>
+
+    <span class="c"># can be stubbed out to provide an alternative mechanism for</span>
+    <span class="c"># providing data (e.g. for testing)</span>
+    <span class="n">file_factory</span> <span class="o">=</span> <span class="nb">open</span>
+
+    <span class="k">def</span> <span class="nf">file_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the full path to a file in the reference package.</span>
+
+<span class="sd">        Do not use this method if it is at all possible to use the *open*</span>
+<span class="sd">        method instead.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an open file object for a file in the reference package.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_factory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="o">*</span><span class="n">mode</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">open_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an open file object for the manifest file in this reference</span>
+<span class="sd">        package.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_manifest_name</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Refpkg.open_resource"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.open_resource">[docs]</a>    <span class="k">def</span> <span class="nf">open_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an open file object for a particular named resource in this</span>
+<span class="sd">        reference package.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resource_name</span><span class="p">(</span><span class="n">resource</span><span class="p">),</span> <span class="o">*</span><span class="n">mode</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Refpkg.resource_name"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.resource_name">[docs]</a>    <span class="k">def</span> <span class="nf">resource_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the name of the file within the reference package for a</span>
+<span class="sd">        particular named resource.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;No such resource </span><span class="si">%r</span><span class="s"> in refpkg&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">resource</span><span class="p">,))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">][</span><span class="n">resource</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Refpkg.resource_md5"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.resource_md5">[docs]</a>    <span class="k">def</span> <span class="nf">resource_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the stored MD5 sum for a particular named resource.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;md5&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;No such resource </span><span class="si">%r</span><span class="s"> in refpkg&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">resource</span><span class="p">,))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;md5&#39;</span><span class="p">][</span><span class="n">resource</span><span class="p">]</span>
+</div>
+    <span class="k">def</span> <span class="nf">calculate_resource_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the MD5 sum for a particular named resource.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">md5file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Refpkg.resource_path"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.resource_path">[docs]</a>    <span class="k">def</span> <span class="nf">resource_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the path to the file within the reference package for a</span>
+<span class="sd">        particular named resource.</span>
+
+<span class="sd">        Do not use this method if it is at all possible to use the</span>
+<span class="sd">        *open_resource* method instead.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resource_name</span><span class="p">(</span><span class="n">resource</span><span class="p">))</span>
+</div>
+    <span class="k">def</span> <span class="nf">_set_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set some default values in the manifest.</span>
+
+<span class="sd">        This method should be called after loading from disk, but before</span>
+<span class="sd">        checking the integrity of the reference package.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s">&#39;log&#39;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s">&#39;rollback&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s">&#39;rollforward&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_sync_to_disk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write any changes made on Refpkg to disk.</span>
+
+<span class="sd">        Other methods of Refpkg that alter the contents of the package</span>
+<span class="sd">        will call this method themselves.  Generally you should never</span>
+<span class="sd">        have to call it by hand.  The only exception would be if</span>
+<span class="sd">        another program has changed the Refpkg on disk while your</span>
+<span class="sd">        program is running and you want to force your version over it.</span>
+<span class="sd">        Otherwise it should only be called by other methods of refpkg.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_manifest</span><span class="p">(</span><span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_sync_from_disk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read any changes made on disk to this Refpkg.</span>
+
+<span class="sd">        This is necessary if other programs are making changes to the</span>
+<span class="sd">        Refpkg on disk and your program must be synchronized to them.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fobj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_manifest</span><span class="p">(</span><span class="s">&#39;r&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IOError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;couldn&#39;t find manifest file in </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,))</span>
+            <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOTDIR</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> is not a directory&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span>
+        <span class="k">with</span> <span class="n">fobj</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fobj</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_defaults</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_refpkg</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_add_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Copy a file into the reference package.&quot;&quot;&quot;</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">base</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">filename</span><span class="p">)):</span>
+            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">ext</span><span class="p">)</span> <span class="k">as</span> <span class="n">tf</span><span class="p">:</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="k">def</span> <span class="nf">_delete_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a file from the reference package.&quot;&quot;&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Refpkg.metadata"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.metadata">[docs]</a>    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the metadata value associated to *key*.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;metadata&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Refpkg.file_keys"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.file_keys">[docs]</a>    <span class="k">def</span> <span class="nf">file_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a list of all the keys referring to files in this refpkg.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Refpkg.metadata_keys"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.metadata_keys">[docs]</a>    <span class="k">def</span> <span class="nf">metadata_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a list of all the keys referring to metadata in this refpkg.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;metadata&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</div>
     <span class="k">def</span> <span class="nf">_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Set the log message for this operation.</span>
 
@@ -251,9 +406,6 @@
 <span class="sd">        If the Refpkg is valid, is_invalid returns False.  Otherwise it</span>
 <span class="sd">        returns a nonempty string describing the error.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c"># Contains a manifest file</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_name</span><span class="p">))):</span>
-            <span class="k">return</span> <span class="s">&quot;No manifest file </span><span class="si">%s</span><span class="s"> found&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_name</span>
         <span class="c"># Manifest file contains the proper keys</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;metadata&#39;</span><span class="p">,</span> <span class="s">&#39;files&#39;</span><span class="p">,</span> <span class="s">&#39;md5&#39;</span><span class="p">]:</span>
             <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">):</span>
@@ -293,56 +445,22 @@
                     <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
                      <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;md5&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="c"># All files in the manifest exist and match the MD5 sums</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">filename</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-            <span class="n">expected_md5</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;md5&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
-            <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">)):</span>
-                <span class="k">return</span> <span class="s">&quot;File </span><span class="si">%s</span><span class="s"> referred to by key </span><span class="si">%s</span><span class="s"> not found in refpkg&quot;</span> <span class="o">%</span> \
-                    <span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
-            <span class="n">found_md5</span> <span class="o">=</span> <span class="n">md5file</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">filename</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="c"># we don&#39;t need to explicitly check for existence;</span>
+            <span class="c"># calculate_resource_md5 will open the file for us.</span>
+            <span class="n">expected_md5</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_md5</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">found_md5</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_resource_md5</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">found_md5</span> <span class="o">!=</span> <span class="n">expected_md5</span><span class="p">:</span>
                 <span class="k">return</span> <span class="p">(</span><span class="s">&quot;File </span><span class="si">%s</span><span class="s"> referred to by key </span><span class="si">%s</span><span class="s"> did &quot;</span>
                         <span class="s">&quot;not match its MD5 sum (found: </span><span class="si">%s</span><span class="s">, expected </span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">)</span> <span class="o">%</span> \
                         <span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">found_md5</span><span class="p">,</span> <span class="n">expected_md5</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">False</span>
 </div>
-    <span class="k">def</span> <span class="nf">_sync_to_disk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Write any changes made on Refpkg to disk.</span>
-
-<span class="sd">        Other methods of Refpkg that alter the contents of the package</span>
-<span class="sd">        will call this method themselves.  Generally you should never</span>
-<span class="sd">        have to call it by hand.  The only exception would be if</span>
-<span class="sd">        another program has changed the Refpkg on disk while your</span>
-<span class="sd">        program is running and you want to force your version over it.</span>
-<span class="sd">        Otherwise it should only be called by other methods of refpkg.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_name</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_sync_from_disk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Read any changes made on disk to this Refpkg.</span>
-
-<span class="sd">        This is necessary if other programs are making changes to the</span>
-<span class="sd">        Refpkg on disk and your program must be synchronized to them.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_name</span><span class="p">))</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_check_refpkg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">error</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_invalid</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Refpkg is invalid: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">error</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Refpkg.metadata"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.metadata">[docs]</a>    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the metadata value associated to *key*.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;metadata&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="Refpkg.file_keys"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.file_keys">[docs]</a>    <span class="k">def</span> <span class="nf">file_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return a list of all the keys referring to files in this refpkg.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-</div>
-<div class="viewcode-block" id="Refpkg.metadata_keys"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.metadata_keys">[docs]</a>    <span class="k">def</span> <span class="nf">metadata_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return a list of all the keys referring to metadata in this refpkg.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;metadata&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-</div>
     <span class="nd">@transaction</span>
 <div class="viewcode-block" id="Refpkg.update_metadata"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.update_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">update_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Set *key* in the metadata to *value*.</span>
@@ -370,36 +488,16 @@
 <span class="sd">        the refpkg.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]:</span>
-            <span class="n">old_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">old_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_path</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">old_path</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">new_path</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Cannot update Refpkg with file </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">new_path</span><span class="p">,))</span>
-        <span class="n">md5_value</span> <span class="o">=</span> <span class="n">md5file</span><span class="p">(</span><span class="n">new_path</span><span class="p">)</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">new_path</span><span class="p">)</span>
-        <span class="k">while</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)):</span>
-            <span class="n">filename</span> <span class="o">+=</span> <span class="s">&quot;1&quot;</span>
-        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">new_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">new_path</span><span class="p">)</span>
+        <span class="n">md5_value</span> <span class="o">=</span> <span class="n">md5file</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">new_path</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;md5&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">md5_value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s">&#39;Updated file: </span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">new_path</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;tree_stats&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_phylo_model</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">new_path</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">old_path</span>
-</div>
-<div class="viewcode-block" id="Refpkg.file_abspath"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.file_abspath">[docs]</a>    <span class="k">def</span> <span class="nf">file_abspath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the absolute path to the file referenced by *key*.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_name</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
-</div>
-<div class="viewcode-block" id="Refpkg.file_name"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.file_name">[docs]</a>    <span class="k">def</span> <span class="nf">file_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the name of the file referenced by *key* in the refpkg.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;No such resource key </span><span class="si">%s</span><span class="s"> in refpkg&quot;</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
-</div>
-<div class="viewcode-block" id="Refpkg.file_md5"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.file_md5">[docs]</a>    <span class="k">def</span> <span class="nf">file_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the MD5 sum of the file reference by *key*.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;md5&#39;</span><span class="p">]):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;No such resource key </span><span class="si">%s</span><span class="s"> in refpkg&quot;</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;md5&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
 </div>
     <span class="nd">@transaction</span>
 <div class="viewcode-block" id="Refpkg.reroot"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.reroot">[docs]</a>    <span class="k">def</span> <span class="nf">reroot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rppr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">pretend</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
@@ -481,8 +579,8 @@
         <span class="n">rollforward</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">)</span>
         <span class="n">rollforward</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;rollback&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;rollback&#39;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">u&#39;log&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rolledback_log</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">u&#39;rollforward&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">future_msg</span><span class="p">,</span> <span class="n">rollforward</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;log&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rolledback_log</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;rollforward&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">future_msg</span><span class="p">,</span> <span class="n">rollforward</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sync_to_disk</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="Refpkg.rollforward"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.rollforward">[docs]</a>    <span class="k">def</span> <span class="nf">rollforward</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -492,9 +590,9 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;No operation to roll forward on refpkg&quot;</span><span class="p">)</span>
         <span class="n">new_log_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;rollforward&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">new_contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;rollforward&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">new_contents</span><span class="p">[</span><span class="s">u&#39;log&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_log_message</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;log&#39;</span><span class="p">)</span>
+        <span class="n">new_contents</span><span class="p">[</span><span class="s">&#39;log&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_log_message</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;log&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;rollforward&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">new_contents</span><span class="p">[</span><span class="s">u&#39;rollback&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">)</span>
+        <span class="n">new_contents</span><span class="p">[</span><span class="s">&#39;rollback&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">)</span>
         <span class="n">new_contents</span><span class="p">[</span><span class="s">&#39;rollback&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;rollforward&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="n">new_contents</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sync_to_disk</span><span class="p">()</span>
@@ -512,7 +610,7 @@
         <span class="n">to_delete</span> <span class="o">=</span> <span class="n">all_filenames</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">current_filenames</span><span class="p">)</span>
         <span class="n">to_delete</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="s">&#39;CONTENTS.json&#39;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">to_delete</span><span class="p">:</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_delete_file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;rollback&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;rollforward&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;log&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>
@@ -555,68 +653,56 @@
         <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">m</span>
 
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s">&#39;aln_fasta&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]):</span>
-            <span class="k">return</span> <span class="s">&quot;RefPkg has no key aln_fasta&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s">&#39;aln_sto&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]):</span>
-            <span class="k">return</span> <span class="s">&quot;RefPkg has no key aln_sto&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s">&#39;seq_info&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]):</span>
-            <span class="k">return</span> <span class="s">&quot;RefPkg has no key seq_info&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s">&#39;tree&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]):</span>
-            <span class="k">return</span> <span class="s">&quot;RefPkg has no key tree&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s">&#39;taxonomy&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]):</span>
-            <span class="k">return</span> <span class="s">&quot;RefPkg has no key tree&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s">&#39;phylo_model&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]):</span>
-            <span class="k">return</span> <span class="s">&quot;RefPkg has no key phylo_model&quot;</span>
+        <span class="n">required_keys</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;aln_fasta&#39;</span><span class="p">,</span> <span class="s">&#39;aln_sto&#39;</span><span class="p">,</span> <span class="s">&#39;seq_info&#39;</span><span class="p">,</span> <span class="s">&#39;tree&#39;</span><span class="p">,</span>
+                <span class="s">&#39;taxonomy&#39;</span><span class="p">,</span> <span class="s">&#39;phylo_model&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">required_keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="s">&quot;RefPkg has no key &quot;</span> <span class="o">+</span> <span class="n">k</span>
 
         <span class="c"># aln_fasta, seq_info, tree, and aln_sto must be valid FASTA,</span>
         <span class="c"># CSV, Newick, and Stockholm files, respectively, and describe</span>
         <span class="c"># the same sequences.</span>
 
-        <span class="k">def</span> <span class="nf">nonempty_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;aln_fasta&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">st_size</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;aln_fasta&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">Bio</span><span class="o">.</span><span class="n">SeqIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;No records found in handle&#39;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="s">&#39;aln_fasta file is not valid FASTA.&#39;</span>
 
-        <span class="k">if</span> <span class="n">nonempty_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;aln_fasta&#39;</span><span class="p">)):</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;aln_fasta&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">Bio</span><span class="o">.</span><span class="n">SeqIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;No records found in handle&#39;</span><span class="p">:</span>
-                        <span class="k">return</span> <span class="s">&#39;aln_fasta file is not valid FASTA.&#39;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;seq_info&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
-        <span class="k">if</span> <span class="n">nonempty_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;seq_info&#39;</span><span class="p">)):</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;seq_info&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                <span class="n">lines</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
-                <span class="n">lens</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
-                <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="nb">all</span><span class="p">([</span><span class="n">l</span> <span class="o">==</span> <span class="n">lens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lens</span><span class="p">])):</span>
-                    <span class="k">return</span> <span class="s">&quot;seq_info is not valid CSV.&quot;</span>
+            <span class="c"># Check required headers</span>
+            <span class="k">for</span> <span class="n">req_header</span> <span class="ow">in</span> <span class="s">&#39;seqname&#39;</span><span class="p">,</span> <span class="s">&#39;tax_id&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">req_header</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="s">&quot;seq_info is missing {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">req_header</span><span class="p">)</span>
+            <span class="n">lens</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="nb">all</span><span class="p">([</span><span class="n">l</span> <span class="o">==</span> <span class="n">lens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lens</span><span class="p">])):</span>
+                <span class="k">return</span> <span class="s">&quot;seq_info is not valid CSV.&quot;</span>
 
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;aln_sto&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">Bio</span><span class="o">.</span><span class="n">SeqIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s">&#39;stockholm&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;No records found in handle&#39;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="s">&#39;aln_sto file is not valid Stockholm.&#39;</span>
 
-        <span class="k">if</span> <span class="n">nonempty_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;aln_sto&#39;</span><span class="p">)):</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;aln_sto&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">Bio</span><span class="o">.</span><span class="n">SeqIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s">&#39;stockholm&#39;</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;No records found in handle&#39;</span><span class="p">:</span>
-                        <span class="k">return</span> <span class="s">&#39;aln_sto file is not valid Stockholm.&#39;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;tree&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">Bio</span><span class="o">.</span><span class="n">Phylo</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s">&#39;newick&#39;</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s">&#39;tree file is not valid Newick.&#39;</span>
 
-        <span class="k">if</span> <span class="n">nonempty_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;tree&#39;</span><span class="p">)):</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;tree&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">Bio</span><span class="o">.</span><span class="n">Phylo</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s">&#39;newick&#39;</span><span class="p">)</span>
-                <span class="k">except</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="s">&#39;tree file is not valid Newick.&#39;</span>
-
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;aln_fasta&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;aln_fasta&#39;</span><span class="p">))</span>
-
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;aln_fasta&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;aln_fasta&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">fasta_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">Bio</span><span class="o">.</span><span class="n">SeqIO</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s">&#39;fasta&#39;</span><span class="p">)])</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;seq_info&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;seq_info&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">csv_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">f</span><span class="p">)][</span><span class="mi">1</span><span class="p">:])</span> <span class="c"># Remove header with [1:]</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;tree&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;tree&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">tree_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">n</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span>
                               <span class="n">Bio</span><span class="o">.</span><span class="n">Phylo</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s">&#39;newick&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_terminals</span><span class="p">()])</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;aln_sto&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;aln_sto&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">sto_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">Bio</span><span class="o">.</span><span class="n">SeqIO</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s">&#39;stockholm&#39;</span><span class="p">)])</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">fasta_names</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">sto_names</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
@@ -632,7 +718,7 @@
                 <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">d</span><span class="p">])</span>
 
         <span class="c"># Next make sure that taxonomy is valid CSV, phylo_model is valid JSON</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;taxonomy&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;taxonomy&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">lines</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
             <span class="n">lens</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
             <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="nb">all</span><span class="p">([</span><span class="n">l</span> <span class="o">==</span> <span class="n">lens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lens</span><span class="p">])):</span>
@@ -640,13 +726,129 @@
             <span class="c"># I don&#39;t try to check if the taxids match up to those</span>
             <span class="c"># mentioned in aln_fasta, since that would make taxtastic</span>
             <span class="c"># depend on RefsetInternalFasta in romperroom.</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_abspath</span><span class="p">(</span><span class="s">&#39;phylo_model&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;phylo_model&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span>
                 <span class="k">return</span> <span class="s">&quot;phylo_model is not valid JSON.&quot;</span>
 
-        <span class="k">return</span> <span class="bp">False</span></div>
+        <span class="k">return</span> <span class="bp">False</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">load_db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load the taxonomy into a sqlite3 database.</span>
+
+<span class="sd">        This will set ``self.db`` to a sqlite3 database which contains all of</span>
+<span class="sd">        the taxonomic information in the reference package.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">db</span> <span class="o">=</span> <span class="n">taxdb</span><span class="o">.</span><span class="n">Taxdb</span><span class="p">()</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">create_tables</span><span class="p">()</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;taxonomy&#39;</span><span class="p">,</span> <span class="s">&#39;rU&#39;</span><span class="p">))</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">insert_from_taxtable</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">reader</span><span class="o">.</span><span class="n">_fieldnames</span><span class="p">,</span> <span class="n">reader</span><span class="p">)</span>
+
+        <span class="n">curs</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s">&#39;seq_info&#39;</span><span class="p">,</span> <span class="s">&#39;rU&#39;</span><span class="p">))</span>
+        <span class="n">curs</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span><span class="s">&quot;INSERT INTO sequences VALUES (?, ?)&quot;</span><span class="p">,</span>
+            <span class="p">((</span><span class="n">row</span><span class="p">[</span><span class="s">&#39;seqname&#39;</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;tax_id&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">))</span>
+
+        <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="n">db</span>
+
+    <span class="k">def</span> <span class="nf">most_recent_common_ancestor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find the MRCA of some tax_ids.</span>
+
+<span class="sd">        Returns the MRCA of the specified tax_ids, or raises ``NoAncestor`` if</span>
+<span class="sd">        no ancestor of the specified tax_ids could be found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_large_mrca</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_small_mrca</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">res</span><span class="p">,),</span> <span class="o">=</span> <span class="n">res</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NoAncestor</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">def</span> <span class="nf">_large_mrca</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find the MRCA using a temporary table.&quot;&quot;&quot;</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">            DROP TABLE IF EXISTS _mrca_temp</span>
+<span class="s">        &quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">            CREATE TEMPORARY TABLE _mrca_temp(</span>
+<span class="s">                child TEXT PRIMARY KEY REFERENCES taxa (tax_id) NOT NULL</span>
+<span class="s">            )</span>
+<span class="s">        &quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">            INSERT INTO _mrca_temp</span>
+<span class="s">            VALUES (?)</span>
+<span class="s">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">((</span><span class="n">tid</span><span class="p">,)</span> <span class="k">for</span> <span class="n">tid</span> <span class="ow">in</span> <span class="n">ts</span><span class="p">))</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">            SELECT parent</span>
+<span class="s">            FROM   _mrca_temp</span>
+<span class="s">                   JOIN parents USING (child)</span>
+<span class="s">                   JOIN taxa</span>
+<span class="s">                     ON parent = taxa.tax_id</span>
+<span class="s">                   JOIN ranks USING (rank)</span>
+<span class="s">            GROUP  BY parent</span>
+<span class="s">            HAVING COUNT(*) = ?</span>
+<span class="s">            ORDER  BY rank_order DESC</span>
+<span class="s">            LIMIT  1</span>
+<span class="s">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ts</span><span class="p">),))</span>
+
+        <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_small_mrca</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find a MRCA using query parameters.</span>
+
+<span class="sd">        This only supports a limited number of tax_ids; ``_large_mrca`` will</span>
+<span class="sd">        support an arbitrary number.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">qmarks</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;?&#39;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">ts</span><span class="p">))</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">            SELECT parent</span>
+<span class="s">            FROM   parents</span>
+<span class="s">                   JOIN taxa</span>
+<span class="s">                     ON parent = taxa.tax_id</span>
+<span class="s">                   JOIN ranks USING (rank)</span>
+<span class="s">            WHERE  child IN (</span><span class="si">%s</span><span class="s">)</span>
+<span class="s">            GROUP  BY parent</span>
+<span class="s">            HAVING COUNT(*) = ?</span>
+<span class="s">            ORDER  BY rank_order DESC</span>
+<span class="s">            LIMIT  1</span>
+<span class="s">        &quot;&quot;&quot;</span> <span class="o">%</span> <span class="n">qmarks</span><span class="p">,</span> <span class="n">ts</span> <span class="o">+</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ts</span><span class="p">),))</span>
+
+        <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">file_abspath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Deprecated alias for *resource_path*.&quot;&quot;&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s">&quot;file_abspath is deprecated; use resource_path instead&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_path</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">file_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Deprecated alias for *resource_name*.&quot;&quot;&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s">&quot;file_name is deprecated; use resource_name instead&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_name</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">file_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Deprecated alias for *resource_md5*.&quot;&quot;&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s">&quot;file_md5 is deprecated; use resource_md5 instead&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_md5</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
 </pre></div>
 
           </div>
@@ -677,13 +879,13 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li><a href="../../index.html">taxtastic 0.1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">taxtastic 0.4.1pre-6cac66d documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2011, Noah Hoffman, Erick Matsen, Brian Hodges.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+        &copy; Copyright 2011-2013, Noah Hoffman, Erick Matsen, Brian Hodges.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>
