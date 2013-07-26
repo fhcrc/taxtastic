@@ -199,6 +199,48 @@ taxit create -P another_refpkg -l "Another locus" \
     --taxonomy taxtable.csv</pre>
 </div>
 </div>
+<div class="section" id="findcompany">
+<h2>findcompany<a class="headerlink" href="#findcompany" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">findcompany</span> <span class="pre">[-c]</span> <span class="pre">taxonomy.db</span> <span class="pre">[-i</span> <span class="pre">taxids.txt]</span> <span class="pre">[taxid</span> <span class="pre">...]</span> <span class="pre">[-o</span> <span class="pre">output.txt]</span></tt></p>
+<p>A command meant to follow <tt class="docutils literal"><span class="pre">lonelynodes</span></tt> (below). Given a list of tax_ids produced by <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">lonelynodes</span></tt>, produces another list of species tax_ids that can be added to the taxtable that would render those tax_ids no longer lonely.</p>
+<p>Examples:</p>
+<div class="highlight-python"><pre>taxit findcompany taxonomy.db -i taxids.txt -o newtaxids.txt
+taxit findcompany taxonomy.db 31661 5213 564</pre>
+</div>
+<p>Arguments:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="sb">``</span><span class="o">-</span><span class="n">c</span><span class="sb">``</span>
+</pre></div>
+</div>
+<blockquote>
+<div>Produce only one output tax_id per input tax_id, whether or not the output species would themselves be lonely.</div></blockquote>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">-o</span></tt></dt>
+<dd>Write new taxids to the specified file. Otherwise they are written to <tt class="docutils literal"><span class="pre">stdout</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">-i</span></tt></dt>
+<dd>Read taxids from the specified file in addition to any given as command line arguments.</dd>
+</dl>
+</div>
+<div class="section" id="lonelynodes">
+<h2>lonelynodes<a class="headerlink" href="#lonelynodes" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">lonelynodes</span> <span class="pre">target</span> <span class="pre">[-o</span> <span class="pre">output.txt]</span></tt></p>
+<p>Find nodes in <tt class="docutils literal"><span class="pre">target</span></tt> (which can be a CSV file extracted by <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></tt> or a RefPkg containing such a file) which are lonely &#8211; that is, whose parents have only one child. Print them, one per line, to <tt class="docutils literal"><span class="pre">stdout</span></tt> or to the file specified by the <tt class="docutils literal"><span class="pre">-o</span></tt> option.</p>
+<p>Examples:</p>
+<div class="highlight-python"><pre># Find lonely nodes in RefPkg mypkg-0.1.refpkg
+taxit lonelynodes mypkg-0.1.refpkg</pre>
+</div>
+<p>Arguments:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="sb">``</span><span class="o">-</span><span class="n">h</span><span class="sb">``</span>
+</pre></div>
+</div>
+<blockquote>
+<div>Print help and exit</div></blockquote>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">-o</span></tt></dt>
+<dd>Write resulting tax_ids to a specified filename instead of <tt class="docutils literal"><span class="pre">stdout</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">-v</span></tt></dt>
+<dd>Run verbosely.</dd>
+</dl>
+</div>
 <div class="section" id="new-database">
 <h2>new_database<a class="headerlink" href="#new-database" title="Permalink to this headline">¶</a></h2>
 <p><tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">new_database</span> <span class="pre">[...]</span> <span class="pre">-d</span> <span class="pre">database_file</span></tt></p>
@@ -385,6 +427,8 @@ taxit update my_refpkg "aln_fasta=/path/to/a/file.fasta"</pre>
 <li><a class="reference internal" href="#add-nodes">add_nodes</a></li>
 <li><a class="reference internal" href="#check">check</a></li>
 <li><a class="reference internal" href="#create">create</a></li>
+<li><a class="reference internal" href="#findcompany">findcompany</a></li>
+<li><a class="reference internal" href="#lonelynodes">lonelynodes</a></li>
 <li><a class="reference internal" href="#new-database">new_database</a></li>
 <li><a class="reference internal" href="#reroot">reroot</a></li>
 <li><a class="reference internal" href="#rollback">rollback</a></li>
@@ -436,7 +480,7 @@ taxit update my_refpkg "aln_fasta=/path/to/a/file.fasta"</pre>
     </div>
     <div class="footer">
         &copy; Copyright 2011, Noah Hoffman, Erick Matsen, Brian Hodges.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>
 </html>

@@ -112,6 +112,53 @@ Examples::
         --taxonomy taxtable.csv
 
 
+findcompany
+-----------
+
+``taxit findcompany [-c] taxonomy.db [-i taxids.txt] [taxid ...] [-o output.txt]``
+
+A command meant to follow ``lonelynodes`` (below). Given a list of tax_ids produced by ``taxit lonelynodes``, produces another list of species tax_ids that can be added to the taxtable that would render those tax_ids no longer lonely.
+
+Examples::
+
+    taxit findcompany taxonomy.db -i taxids.txt -o newtaxids.txt
+    taxit findcompany taxonomy.db 31661 5213 564
+
+Arguments::
+
+``-c``
+    Produce only one output tax_id per input tax_id, whether or not the output species would themselves be lonely.
+
+``-o``
+    Write new taxids to the specified file. Otherwise they are written to ``stdout``
+
+``-i``
+    Read taxids from the specified file in addition to any given as command line arguments.
+
+
+lonelynodes
+-----------
+
+``taxit lonelynodes target [-o output.txt]``
+
+Find nodes in ``target`` (which can be a CSV file extracted by ``taxit taxtable`` or a RefPkg containing such a file) which are lonely -- that is, whose parents have only one child. Print them, one per line, to ``stdout`` or to the file specified by the ``-o`` option.
+
+Examples::
+
+    # Find lonely nodes in RefPkg mypkg-0.1.refpkg
+    taxit lonelynodes mypkg-0.1.refpkg
+
+Arguments::
+
+``-h``
+  Print help and exit
+
+``-o``
+  Write resulting tax_ids to a specified filename instead of ``stdout``.
+
+``-v``
+  Run verbosely.
+
 new_database
 ------------
 
