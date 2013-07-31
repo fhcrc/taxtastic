@@ -65,7 +65,7 @@ class TestGetNewNodes(unittest.TestCase):
         check = lambda val: isinstance(val, str) and '.' not in val
         self.assertTrue(all([check(row['parent_id']) for row in rows]))
 
-    @unittest.skipUnless(xlrd_is_installed, 'xlrd required')
+    @unittest.skipIf(xlrd_is_installed, 'test behavior without xlrd')
     def test02(self):
         rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
         self.assertRaises(AttributeError, next, rows)
