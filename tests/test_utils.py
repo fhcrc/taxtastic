@@ -15,33 +15,33 @@ log = logging
 outputdir = os.path.abspath(config.outputdir)
 datadir = os.path.abspath(config.datadir)
 
-if hasattr(taxtastic.utils, 'read_spreadsheet'):
-    class TestReadSpreadsheet(unittest.TestCase):
+xlrd_is_installed = hasattr(taxtastic.utils, 'read_spreadsheet')
 
-        def setUp(self):
-            self.funcname = '_'.join(self.id().split('.')[-2:])
+@unittest.skipUnless(xlrd_is_installed, 'xlrd required')
+class TestReadSpreadsheet(unittest.TestCase):
 
-        def tearDown(self):
-            pass
+    def setUp(self):
+        self.funcname = '_'.join(self.id().split('.')[-2:])
 
-        def test01(self):
-            headers, rows = taxtastic.utils.read_spreadsheet(
-                os.path.join(datadir,'new_taxa.xls'))
-            check = lambda val: isinstance(val, float)
-            self.assertTrue(all([check(row['parent_id']) for row in rows]))
+    def tearDown(self):
+        pass
 
-        def test02(self):
-            headers, rows = taxtastic.utils.read_spreadsheet(
-                os.path.join(datadir,'new_taxa.xls'),
-                fmts={'tax_id':'%i','parent_id':'%i'}
-                )
-            check = lambda val: isinstance(val, str) and '.' not in val
-            self.assertTrue(all([check(row['parent_id']) for row in rows]))
+    def test01(self):
+        headers, rows = taxtastic.utils.read_spreadsheet(
+            os.path.join(datadir,'new_taxa.xls'))
+        check = lambda val: isinstance(val, float)
+        self.assertTrue(all([check(row['parent_id']) for row in rows]))
+
+    def test02(self):
+        headers, rows = taxtastic.utils.read_spreadsheet(
+            os.path.join(datadir,'new_taxa.xls'),
+            fmts={'tax_id':'%i','parent_id':'%i'}
+            )
+        check = lambda val: isinstance(val, str) and '.' not in val
+        self.assertTrue(all([check(row['parent_id']) for row in rows]))
 
 ## TODO: need to test creation of new nodes with csv (as opposed to xls) output
 class TestGetNewNodes(unittest.TestCase):
-
-    xlrd_is_installed = hasattr(taxtastic.utils, 'read_spreadsheet')
 
     def setUp(self):
         self.funcname = '_'.join(self.id().split('.')[-2:])
@@ -59,20 +59,16 @@ class TestGetNewNodes(unittest.TestCase):
                 val = d['children']
                 self.assertTrue(val and isinstance(val, list))
 
+    @unittest.skipUnless(xlrd_is_installed, 'xlrd required')
     def test01(self):
-        if self.xlrd_is_installed:
-            rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
-            check = lambda val: isinstance(val, str) and '.' not in val
-            self.assertTrue(all([check(row['parent_id']) for row in rows]))
-        else:
-            self.assertTrue(True)
+        rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
+        check = lambda val: isinstance(val, str) and '.' not in val
+        self.assertTrue(all([check(row['parent_id']) for row in rows]))
 
+    @unittest.skipUnless(xlrd_is_installed, 'xlrd required')
     def test02(self):
-        if not self.xlrd_is_installed:
-            rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
-            self.assertRaises(AttributeError, next, rows)
-        else:
-            self.assertTrue(True)
+        rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
+        self.assertRaises(AttributeError, next, rows)
 
     def test03(self):
         rows = list(taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.csv')))
@@ -150,5 +146,14 @@ class RAxMLStatsMixIn(StatsFileParsingMixIn):
 class RAxMLAminoAcidTestCase(RAxMLStatsMixIn, unittest.TestCase):
     test_file_name = 'RAxML_info.aa'
 
+class RAxML772AminoAcidTestCase(RAxMLStatsMixIn, unittest.TestCase):
+    test_file_name = 'RAxML_info_7.7.2.aa'
+
+class RAxML772EmpAminoAcidTestCase(RAxMLStatsMixIn, unittest.TestCase):
+    test_file_name = 'RAxML_info_7.7.2.aa_empfreq'
+
 class RAxMLDNATestCase(RAxMLStatsMixIn, unittest.TestCase):
     test_file_name = 'RAxML_info.testNuc'
+
+class RAxMLDNA772TestCase(RAxMLStatsMixIn, unittest.TestCase):
+    test_file_name = 'RAxML_info_7.7.2.dna'
