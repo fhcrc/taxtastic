@@ -12,6 +12,7 @@
  * Fix broken ``taxit lonelynodes``
  * Add ``taxit merge`` - Identifies tax_ids which have been merged, suggests new tax_ids.
  * Add ``taxit add_to_taxtable`` - adds nodes to a taxonomy
+ * Fix support for newer versions of PhyML [GH-61]
 
 
 0.4
