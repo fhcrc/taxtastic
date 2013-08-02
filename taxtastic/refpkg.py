@@ -499,7 +499,7 @@ class Refpkg(object):
                           line.startswith('You are using RAxML')):
                         stats_type = 'RAxML'
                         break
-                    elif 'PhyML v3.0' in line:
+                    elif 'PhyML' in line:
                         stats_type = 'PhyML'
                         break
                 else:
