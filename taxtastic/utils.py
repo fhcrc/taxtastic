@@ -181,7 +181,7 @@ def parse_fasttree(fobj):
         'Price-CAT': {},
     }
     for line in fobj:
-        if not line: continue
+        if not line.strip(): continue
         splut = line.split()
         if splut[0] == 'FastTree':
             data['program'] = line.strip()
