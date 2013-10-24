@@ -2,8 +2,8 @@
  change log for taxtastic
 ==========================
 
-0.5.0-dev
-=========
+0.5.0
+=====
 
  * Add ``.drop()`` ``.collapse()`` methods to ``taxtastic.taxtable.TaxNode``
  * Change ``is_classified`` column in taxonomy database: now does not mark

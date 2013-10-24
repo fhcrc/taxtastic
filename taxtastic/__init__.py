@@ -14,8 +14,8 @@
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
 
-__version__ = '0.4.1pre'
-__version_info__ = (0, 4, 1, 'pre')
+__version__ = '0.5.0'
+__version_info__ = (0, 5, 0)
 
 if '+' in __version__ or 'pre' in __version__:
     # Try to append the commit hash to the version
