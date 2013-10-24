@@ -11,8 +11,9 @@
  * Add ``taxit composition`` - shows the taxonomic composition of a reference package at a given rank
  * Fix broken ``taxit lonelynodes``
  * Add ``taxit merge`` - Identifies tax_ids which have been merged, suggests new tax_ids.
- * Add ``taxit add_to_taxtable`` - adds nodes to a taxonomy
+ * Add ``taxit add_to_taxtable`` - adds nodes to a taxonomy [GH-60]
  * Fix support for newer versions of PhyML [GH-61]
+ * Updates for compatibility with RAxML 7.7.2
 
 
 0.4
