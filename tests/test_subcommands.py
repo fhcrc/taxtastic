@@ -48,40 +48,66 @@ class TestUpdate(OutputRedirectMixin, unittest.TestCase):
             self.assertEqual(r.metadata('hilda'), 'vrrp')
 
 class TestCreate(OutputRedirectMixin, unittest.TestCase):
+
+    def setUp(self):
+        super(TestCreate, self).setUp()
+        class _Args(object):
+            clobber = True
+            locus = 'Nowhere'
+            description = 'A description'
+            author = 'Boris the Mad Baboon'
+            package_version = '0.3'
+            tree_stats = None
+            stats_type = None
+            aln_fasta = None
+            aln_sto = None
+            phylo_model = None
+            seq_info = None
+            mask = None
+            profile = None
+            readme = None
+            tree = None
+            taxonomy = None
+            reroot = False
+            rppr = 'rppr'
+            def __init__(self, scratch):
+                self.package_name = os.path.join(scratch, 'test.refpkg')
+        self._Args = _Args
+
     def test_create(self):
         with config.tempdir() as scratch:
-            class _Args(object):
-                clobber = True
-                locus = 'Nowhere'
-                description = 'A description'
-                author = 'Boris the Mad Baboon'
-                package_version = '0.3'
-                package_name = os.path.join(scratch, 'test.refpkg')
-                tree_stats = None
-                aln_fasta = None
-                aln_sto = None
-                phylo_model = None
-                seq_info = None
-                mask = None
-                profile = None
-                readme = None
-                tree = None
-                taxonomy = None
-                reroot = False
-                rppr = 'rppr'
-            create.action(_Args())
-            r = refpkg.Refpkg(_Args().package_name, create=False)
+            args = self._Args(scratch)
+            create.action(args)
+            r = refpkg.Refpkg(args.package_name, create=False)
             self.assertEqual(r.metadata('locus'), 'Nowhere')
             self.assertEqual(r.metadata('description'), 'A description')
             self.assertEqual(r.metadata('author'), 'Boris the Mad Baboon')
             self.assertEqual(r.metadata('package_version'), '0.3')
             self.assertEqual(r.metadata('format_version'), '1.1')
             self.assertEqual(r.contents['rollback'], None)
-
-            args2 = _Args()
+            args2 = self._Args(scratch)
             args2.package_name = os.path.join(scratch, 'test.refpkg')
             args2.clobber = True
             self.assertEqual(0, create.action(args2))
+
+    def _test_create_phylo_model(self, stats_path, stats_type=None):
+        with config.tempdir() as scratch:
+            args = self._Args(scratch)
+            args.tree_stats = stats_path
+            args.stats_type = stats_type
+            create.action(args)
+
+            r = refpkg.Refpkg(args.package_name, create=False)
+            self.assertIn('phylo_model', r.contents['files'])
+
+    def test_create_phyml_aa(self):
+        stats_path = os.path.join(config.datadir, 'phyml_aa_stats.txt')
+        self._test_create_phylo_model(stats_path)
+        self._test_create_phylo_model(stats_path, 'PhyML')
+        self.assertRaises(ValueError, self._test_create_phylo_model,
+                          stats_path, 'FastTree')
+        self.assertRaises(ValueError, self._test_create_phylo_model,
+                          stats_path, 'garli')
 
 
 class TestStrip(OutputRedirectMixin, unittest.TestCase):

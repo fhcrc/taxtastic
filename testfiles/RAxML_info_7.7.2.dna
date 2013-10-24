@@ -1,0 +1,63 @@
+
+
+This is RAxML version 7.7.2 released by Alexandros Stamatakis on July 31 2013.
+
+With greatly appreciated code contributions by:
+Andre Aberer (HITS)
+Simon Berger (HITS)
+Nick Pattengale (Sandia)
+Wayne Pfeiffer (SDSC)
+Akifumi S. Tanabe (NRIFS)
+
+
+Alignment has 331 distinct alignment patterns
+
+Proportion of gaps and completely undetermined characters in this alignment: 83.94%
+
+RAxML rapid hill-climbing mode
+
+Using 1 distinct models/data partitions with joint branch length optimization
+
+
+Executing 1 inferences on the original alignment using 1 distinct randomized MP trees
+
+All free model parameters will be estimated by RAxML
+GAMMA model of rate heteorgeneity, ML estimate of alpha-parameter
+
+GAMMA Model parameters will be estimated up to an accuracy of 0.1000000000 Log Likelihood units
+
+Partition: 0
+Alignment Patterns: 331
+Name: No Name Provided
+DataType: DNA
+Substitution Matrix: GTR
+
+
+
+
+RAxML was called as follows:
+
+./raxmlHPC -m GTRGAMMA -n dna -s /home/cmccoy/git/seqmagick/examples/aligned.fasta -D -p 100 
+
+
+Partition: 0 with name: No Name Provided
+Base frequencies: 0.342 0.195 0.224 0.238 
+
+Inference[0]: Time 2.186419 GAMMA-based likelihood -15942.798212, best rearrangement setting 5
+alpha[0]: 0.678906 rates[0] ac ag at cg ct gt: 1.437514 3.282160 0.550950 0.659876 2.641523 1.000000 
+
+
+Conducting final model optimizations on all 1 trees under GAMMA-based models ....
+
+Inference[0] final GAMMA-based Likelihood: -15939.094959 tree written to file /tmp/standard-RAxML/RAxML_result.dna
+
+
+Starting final GAMMA-based thorough Optimization on tree 0 likelihood -15939.094959 .... 
+
+Final GAMMA-based Score of best tree -15939.094943
+
+Program execution info written to /tmp/standard-RAxML/RAxML_info.dna
+Best-scoring ML tree written to: /tmp/standard-RAxML/RAxML_bestTree.dna
+
+Overall execution time: 3.609066 secs or 0.001003 hours or 0.000042 days
+

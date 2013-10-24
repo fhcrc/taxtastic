@@ -2,14 +2,18 @@ language: python
 python:
   - "2.7"
 
+env:
+  - EXTRA_PACKAGES=
+  - EXTRA_PACKAGES=xlrd
+
 # Install numpy, then BioPython and other dependencies
 # BioPython doesn't always play well with pip install.
 before_install: 
-  - "pip install -q numpy"
-  - "pip install -q biopython decorator sqlalchemy"
+  - pip install -q numpy
+  - pip install -q biopython decorator sqlalchemy $EXTRA_PACKAGES
 
 install:
-  - "python setup.py build install"
+  - python setup.py build install
 
 script: ./test -v
 
