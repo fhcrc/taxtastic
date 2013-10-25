@@ -14,17 +14,6 @@
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
 
-__version__ = '0.6.0-dev'
-__version_info__ = (0, 6, 0, 'dev')
-
-if '+' in __version__ or 'dev' in __version__:
-    # Try to append the commit hash to the version
-    try:
-        import subprocess
-        p = subprocess.Popen(['git', 'log', '--pretty=format:%h', '-n', '1'],
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.communicate()
-        if out:
-            __version__ += '-' + out.strip()
-    except Exception:
-        pass
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
