@@ -5,6 +5,11 @@
 0.6.0-dev
 =========
 
+0.5.1
+=====
+
+ * Fix GH-62: "empirical_frequencies" was not set when parsing PhyML AA statistics files.
+
 0.5.0
 =====
 
