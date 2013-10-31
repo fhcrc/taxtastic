@@ -232,10 +232,6 @@ def parse_phyml(fobj):
         if rates:
             result['subs_rates'] = rates
 
-        # PhyML doesn't record whether empirical base frequencies were used, or
-        # ML estimates were made.
-        # Setting to empirical for now.
-        result['empirical_frequencies'] = True
     elif 'amino acids' in s:
         result['datatype'] = 'AA'
         try_set_fields(result,
@@ -243,6 +239,11 @@ def parse_phyml(fobj):
                        s)
     else:
         raise ValueError('Could not determine if alignment is AA or DNA')
+
+    # PhyML doesn't record whether empirical base frequencies were used, or
+    # ML estimates were made.
+    # Setting to empirical for now.
+    result['empirical_frequencies'] = True
 
     return result
 
