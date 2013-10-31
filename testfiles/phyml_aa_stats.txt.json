@@ -6,5 +6,6 @@
   "gamma": {
     "alpha": 0.626, 
     "n_cats": 4
-  }
+  },
+  "empirical_frequencies": true
 }
