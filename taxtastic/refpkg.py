@@ -53,21 +53,20 @@ def md5file(fobj):
 def scratch_file(unlink=True, **kwargs):
     """Create a temporary file and return its name.
 
-    Additional arguments are passed to ``tempfile.mkstemp``
+    Additional arguments are passed to :class:`tempfile.NamedTemporaryFile`
 
     At the start of the with block a secure, temporary file is created
     and its name returned.  At the end of the with block it is
     deleted.
     """
+    kwargs['delete'] = False
+    tf = tempfile.NamedTemporaryFile(**kwargs)
+    tf.close()
     try:
-        tmp_fd, tmp_name = tempfile.mkstemp(text=True, **kwargs)
-        os.close(tmp_fd)
-        yield tmp_name
-    except ValueError:
-        raise
-    else:
+        yield tf.name
+    finally:
         if unlink:
-            os.unlink(tmp_name)
+            os.unlink(tf.name)
 
 
 def manifest_template():
