@@ -60,12 +60,12 @@ def action(args):
             sys.exit('Error: --taxonomy and --seq-info are '
                      'required if refpkg is not provided.')
 
-    with open(taxonomy) as f:
+    with open(taxonomy, 'rU') as f:
         taxdict = {r['tax_id']: r for r in csv.DictReader(f)}
 
     unclassified = '<unclassified at this rank>'
     counts = Counter()
-    with open(seq_info) as f:
+    with open(seq_info, 'rU') as f:
         for row in csv.DictReader(f):
             # tax_id at the specified rank
             tax_id = taxdict[row['tax_id']][args.rank] if row['tax_id'] else ''

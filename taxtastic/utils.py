@@ -119,7 +119,7 @@ def getlines(fname):
     the first '#' character.
     """
 
-    with open(fname) as f:
+    with open(fname, 'rU') as f:
         for line in f:
             if line.strip() and not line.startswith('#'):
                 yield line.split('#', 1)[0].strip()

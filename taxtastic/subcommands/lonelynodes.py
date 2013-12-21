@@ -55,7 +55,7 @@ def action(args):
         path = args.target
 
     logging.info("Loading taxonomy from file.")
-    with open(path) as h:
+    with open(path, 'rU') as h:
         tree = lonely.taxtable_to_tree(h)
     result = tree.lonelynodes()
     if args.ranks:
