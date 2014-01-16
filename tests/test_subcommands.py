@@ -70,6 +70,7 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
             taxonomy = None
             reroot = False
             rppr = 'rppr'
+            frequency_type = None
             def __init__(self, scratch):
                 self.package_name = os.path.join(scratch, 'test.refpkg')
         self._Args = _Args
@@ -90,11 +91,13 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
             args2.clobber = True
             self.assertEqual(0, create.action(args2))
 
-    def _test_create_phylo_model(self, stats_path, stats_type=None):
+    def _test_create_phylo_model(self, stats_path, stats_type=None,
+                                 frequency_type=None):
         with config.tempdir() as scratch:
             args = self._Args(scratch)
             args.tree_stats = stats_path
             args.stats_type = stats_type
+            args.frequency_type = frequency_type
             create.action(args)
 
             r = refpkg.Refpkg(args.package_name, create=False)
@@ -102,12 +105,13 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
 
     def test_create_phyml_aa(self):
         stats_path = os.path.join(config.datadir, 'phyml_aa_stats.txt')
-        self._test_create_phylo_model(stats_path)
-        self._test_create_phylo_model(stats_path, 'PhyML')
+        self._test_create_phylo_model(stats_path, frequency_type='model')
+        self._test_create_phylo_model(stats_path, 'PhyML', frequency_type='model')
+        self._test_create_phylo_model(stats_path, 'PhyML', frequency_type='empirical')
         self.assertRaises(ValueError, self._test_create_phylo_model,
-                          stats_path, 'FastTree')
+                          stats_path, 'FastTree', frequency_type='empirical')
         self.assertRaises(ValueError, self._test_create_phylo_model,
-                          stats_path, 'garli')
+                          stats_path, 'garli', frequency_type='empirical')
 
 
 class TestStrip(OutputRedirectMixin, unittest.TestCase):

@@ -20,25 +20,29 @@ Note that Refpkg objects are *NOT* thread safe!
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+import errno
+import os
+import time
+import warnings
+
+import Bio.Phylo
+import Bio.SeqIO
 import contextlib
-from decorator import decorator
+import copy
+import csv
+import functools
+import hashlib
+import json
+import shutil
 import subprocess
 import tempfile
-import hashlib
-import shutil
-import os
-import copy
-import json
-import time
-import csv
-import errno
 import warnings
 import zipfile
 
-import Bio.SeqIO
-import Bio.Phylo
+from decorator import decorator
 
 from taxtastic import utils, taxdb
+
 
 FORMAT_VERSION = '1.1'
 
@@ -448,8 +452,8 @@ class Refpkg(object):
         md5_value = md5file(open(new_path))
         self.contents['md5'][key] = md5_value
         self._log('Updated file: %s=%s' % (key,new_path))
-        if key == 'tree_stats':
-            self.update_phylo_model(None, new_path)
+        if key == 'tree_stats' and old_path:
+            warnings.warn('Updating tree_stats, but not phylo_model.')
         return old_path
 
     @transaction
@@ -473,7 +477,7 @@ class Refpkg(object):
                 self.update_file('tree', name)
         self._log('Rerooting refpkg')
 
-    def update_phylo_model(self, stats_type, stats_file):
+    def update_phylo_model(self, stats_type, stats_file, frequency_type=None):
         """Parse a stats log and use it to update ``phylo_model``.
 
         ``pplacer`` expects its input to include the deatils of the
@@ -486,7 +490,19 @@ class Refpkg(object):
         parameter must be 'RAxML', 'PhyML' or 'FastTree', depending on which
         program generated the log. It may also be None to attempt to guess
         which program generated the log.
+
+        :param stats_type: Statistics file type. One of 'RAxML', 'FastTree', 'PhyML'
+        :param stats_file: path to statistics/log file
+        :param frequency_type: For ``stats_type == 'PhyML'``, amino acid
+        alignments only: was the alignment inferred with ``model`` or
+        ``empirical`` frequencies?
         """
+
+        if frequency_type not in (None, 'model', 'empirical'):
+            raise ValueError('Unknown frequency type: "{0}"'.format(frequency_type))
+        if frequency_type and stats_type not in (None, 'PhyML'):
+            raise ValueError('Frequency type should only be specified for '
+                             'PhyML alignments.')
 
         if stats_type is None:
             with open(stats_file) as fobj:
@@ -510,7 +526,8 @@ class Refpkg(object):
         elif stats_type == 'FastTree':
             parser = utils.parse_fasttree
         elif stats_type == 'PhyML':
-            parser = utils.parse_phyml
+            parser = functools.partial(utils.parse_phyml,
+                                       frequency_type=frequency_type)
         else:
             raise ValueError('invalid log type: %r' % (stats_type,))
 
