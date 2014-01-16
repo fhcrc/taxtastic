@@ -198,9 +198,11 @@ def parse_fasttree(fobj):
         elif line.strip() == JTT_MODEL:
             data['subs_model'] = 'JTT'
             data['datatype'] = 'AA'
+            data['empirical_frequencies'] = False
         elif line.strip() == WAG_MODEL:
             data['subs_model'] = 'WAG'
             data['datatype'] = 'AA'
+            data['empirical_frequencies'] = False
 
     # Sanity check
     if data['subs_model'] == 'GTR' and 'subs_rates' not in data:

@@ -127,6 +127,9 @@ class FastTreeMissingGTRTestCase(FastTreeStatsMixin, unittest.TestCase):
 class FastTreeDNATestCase(FastTreeStatsMixin, unittest.TestCase):
     test_file_name = 'fastree_dna_stats.txt'
 
+class FastTreeAATestCase(FastTreeStatsMixin, unittest.TestCase):
+    test_file_name = 'V278.updated.pruned.log'
+
 class PhyMLStatsMixIn(StatsFileParsingMixIn):
     @property
     def parse_func(self):

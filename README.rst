@@ -5,7 +5,7 @@ TAXTASTIC
 Installing
 ----------
 
-``taxtastic`` requires Python 2.7.  The simplest method of installing is susing `pip <http://pip-installer.org>`_::
+``taxtastic`` requires Python 2.7.  The simplest method of installing is using `pip <http://pip-installer.org>`_::
 
     pip install taxtastic
 

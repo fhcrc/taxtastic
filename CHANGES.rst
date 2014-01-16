@@ -5,6 +5,8 @@
 0.6.0-dev
 =========
 
+ * Fix GH-63: "empirical_frequencies" now set to false when parsing FastTree AA statistics files
+
 0.5.1
 =====
 
