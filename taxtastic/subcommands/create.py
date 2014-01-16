@@ -72,7 +72,7 @@ def build_parser(parser):
                         file contents]""")
     parser.add_argument("--frequency-type", choices=('empirical', 'model'),
                         help="""Residue frequency type from the model. Required
-                        for PhyML / Amino Acid alignments.""")
+                        for PhyML Amino Acid alignments.""")
     parser.add_argument("-S", "--aln-sto",
                         action="store", dest="aln_sto",
                         help='Multiple alignment in Stockholm format', metavar='FILE')

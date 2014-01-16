@@ -41,6 +41,15 @@ def build_parser(parser):
     parser.add_argument('--metadata', action='store_const', const=True,
                         default=False, help='Update metadata instead of files')
 
+    stats_group = parser.add_argument_group('Tree inference log file parsing '
+                                            '(for updating `tree_stats`)')
+    stats_group.add_argument("--stats-type", choices=('PhyML', 'FastTree', 'RAxML'),
+                        help="""stats file type [default: attempt to guess from
+                        file contents]""")
+    stats_group.add_argument("--frequency-type", choices=('empirical', 'model'),
+                        help="""Residue frequency type from the model. Required
+                        for PhyML Amino Acid alignments.""")
+
 
 def action(args):
     """Updates a Refpkg with new files.
@@ -71,7 +80,13 @@ def action(args):
         rp.start_transaction()
         for key, filename in pairs:
             rp.update_file(key, os.path.abspath(filename))
-        rp.commit_transaction('Updates files: ' + \
+            if key == 'tree_stats':
+                # Trigger model update
+                log.info('Updating phylo_model to match tree_stats')
+                rp.update_phylo_model(args.stats_type, filename,
+                                      args.frequency_type)
+
+        rp.commit_transaction('Updates files: ' +
                                   ', '.join(['%s=%s' % (a,b)
                                              for a, b in pairs]))
     return 0
