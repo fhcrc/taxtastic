@@ -52,26 +52,26 @@ def action(args):
     """
     log.info('loading reference package')
 
-    pairs = [p.split('=',1) for p in args.changes]
+    pairs = [p.split('=', 1) for p in args.changes]
     if args.metadata:
         rp = refpkg.Refpkg(args.refpkg, create=False)
         rp.start_transaction()
-        for (key,value) in pairs:
+        for key, value in pairs:
             rp.update_metadata(key, value)
         rp.commit_transaction('Updated metadata: ' + \
                                   ', '.join(['%s=%s' % (a,b)
                                              for a,b in pairs]))
     else:
-        for (key,filename) in pairs:
+        for key, filename in pairs:
             if not(os.path.exists(filename)):
                 print "No such file: %s" % filename
                 exit(1)
 
         rp = refpkg.Refpkg(args.refpkg, create=False)
         rp.start_transaction()
-        for (key,filename) in pairs:
+        for key, filename in pairs:
             rp.update_file(key, os.path.abspath(filename))
         rp.commit_transaction('Updates files: ' + \
                                   ', '.join(['%s=%s' % (a,b)
-                                             for a,b in pairs]))
+                                             for a, b in pairs]))
     return 0
