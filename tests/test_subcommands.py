@@ -13,16 +13,26 @@ import config
 from config import OutputRedirectMixin
 
 class TestUpdate(OutputRedirectMixin, unittest.TestCase):
+    def setUp(self):
+        super(TestUpdate, self).setUp()
+        class _Args(object):
+            refpkg = None
+            changes = []
+            metadata = False
+            stats_type = None
+            frequency_type = None
+        self.args = _Args()
+
     def test_action(self):
         with config.tempdir() as scratch:
             pkg_path = os.path.join(scratch, 'test.refpkg')
             r = refpkg.Refpkg(pkg_path, create=True)
             test_file = config.data_path('bv_refdata.csv')
-            class _Args(object):
-                refpkg=pkg_path
-                changes = ['meep='+test_file, 'hilda='+test_file]
-                metadata = False
-            update.action(_Args())
+
+            self.args.refpkg = pkg_path
+            self.args.changes = ['meep='+test_file, 'hilda='+test_file]
+
+            update.action(self.args)
             r._sync_from_disk()
             self.assertEqual(r.contents['files']['meep'], 'bv_refdata.csv')
 
@@ -38,14 +48,33 @@ class TestUpdate(OutputRedirectMixin, unittest.TestCase):
         with config.tempdir() as scratch:
             pkg_path = os.path.join(scratch, 'test.refpkg')
             r = refpkg.Refpkg(pkg_path, create=True)
-            class _Args(object):
-                refpkg=pkg_path
-                changes = ['meep=boris', 'hilda=vrrp']
-                metadata = True
-            update.action(_Args())
+            self.args.changes = ['meep=boris', 'hilda=vrrp']
+            self.args.metadata = True
+            self.args.refpkg = pkg_path
+            update.action(self.args)
             r._sync_from_disk()
             self.assertEqual(r.metadata('meep'), 'boris')
             self.assertEqual(r.metadata('hilda'), 'vrrp')
+
+    def test_update_stats_action(self):
+        with config.tempdir() as scratch:
+            pkg_path = os.path.join(scratch, 'test.refpkg')
+            r = refpkg.Refpkg(pkg_path, create=True)
+
+            args = self.args
+            stats_path = os.path.join(config.datadir, 'phyml_aa_stats.txt')
+
+            args.refpkg = pkg_path
+            args.changes = ['tree_stats=' + stats_path]
+            args.frequency_type = 'empirical'
+
+            update.action(args)
+
+            r._sync_from_disk()
+
+            self.assertIn('tree_stats', r.contents['files'])
+            self.assertIn('phylo_model', r.contents['files'])
+            self.assertTrue(r.contents['files']['phylo_model'].endswith('.json'))
 
 class TestCreate(OutputRedirectMixin, unittest.TestCase):
 
@@ -70,6 +99,7 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
             taxonomy = None
             reroot = False
             rppr = 'rppr'
+            frequency_type = None
             def __init__(self, scratch):
                 self.package_name = os.path.join(scratch, 'test.refpkg')
         self._Args = _Args
@@ -90,11 +120,13 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
             args2.clobber = True
             self.assertEqual(0, create.action(args2))
 
-    def _test_create_phylo_model(self, stats_path, stats_type=None):
+    def _test_create_phylo_model(self, stats_path, stats_type=None,
+                                 frequency_type=None):
         with config.tempdir() as scratch:
             args = self._Args(scratch)
             args.tree_stats = stats_path
             args.stats_type = stats_type
+            args.frequency_type = frequency_type
             create.action(args)
 
             r = refpkg.Refpkg(args.package_name, create=False)
@@ -102,12 +134,13 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
 
     def test_create_phyml_aa(self):
         stats_path = os.path.join(config.datadir, 'phyml_aa_stats.txt')
-        self._test_create_phylo_model(stats_path)
-        self._test_create_phylo_model(stats_path, 'PhyML')
+        self._test_create_phylo_model(stats_path, frequency_type='model')
+        self._test_create_phylo_model(stats_path, 'PhyML', frequency_type='model')
+        self._test_create_phylo_model(stats_path, 'PhyML', frequency_type='empirical')
         self.assertRaises(ValueError, self._test_create_phylo_model,
-                          stats_path, 'FastTree')
+                          stats_path, 'FastTree', frequency_type='empirical')
         self.assertRaises(ValueError, self._test_create_phylo_model,
-                          stats_path, 'garli')
+                          stats_path, 'garli', frequency_type='empirical')
 
 
 class TestStrip(OutputRedirectMixin, unittest.TestCase):
