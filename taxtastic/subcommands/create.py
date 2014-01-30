@@ -70,6 +70,9 @@ def build_parser(parser):
     parser.add_argument("--stats-type", choices=('PhyML', 'FastTree', 'RAxML'),
                         help="""stats file type [default: attempt to guess from
                         file contents]""")
+    parser.add_argument("--frequency-type", choices=('empirical', 'model'),
+                        help="""Residue frequency type from the model. Required
+                        for PhyML Amino Acid alignments.""")
     parser.add_argument("-S", "--aln-sto",
                         action="store", dest="aln_sto",
                         help='Multiple alignment in Stockholm format', metavar='FILE')
@@ -120,7 +123,8 @@ def action(args):
     if args.package_version:
         r.update_metadata('package_version', args.package_version)
     if args.tree_stats:
-        r.update_phylo_model(args.stats_type, args.tree_stats)
+        r.update_phylo_model(args.stats_type, args.tree_stats,
+                             frequency_type=args.frequency_type)
 
     for file_name in ['aln_fasta', 'aln_sto', 'mask',
                       'profile', 'seq_info', 'taxonomy', 'tree', 'tree_stats',
