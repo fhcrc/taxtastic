@@ -12,7 +12,12 @@ except ImportError:
     distribute_setup.use_setuptools()
     from setuptools import setup, find_packages, Command
 
-import taxtastic
+import versioneer
+
+versioneer.versionfile_source = 'taxtastic/_version.py'
+versioneer.versionfile_build = 'taxtastic/_version.py'
+versioneer.tag_prefix = 'v' # tags are like v1.2.0
+versioneer.parentdir_prefix = 'taxtastic-'
 
 class run_audit(Command):
     """Audits source code using PyFlakes for following issues:
@@ -58,8 +63,8 @@ params = {'author': 'Noah Hoffman',
           'packages': find_packages(exclude=['tests']),
           'scripts': scripts,
           'url': 'https://github.com/fhcrc/taxtastic',
-          'version': taxtastic.__version__,
-          'cmdclass': {'audit': run_audit},
+          'version': versioneer.get_version(),
+          'cmdclass': versioneer.get_cmdclass(),
           'license': 'GPL',
           'classifiers': [
               'License :: OSI Approved :: GNU General Public License (GPL)',
