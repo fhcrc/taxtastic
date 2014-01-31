@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>taxtastic.refpkg &mdash; taxtastic 0.5.0 documentation</title>
+    <title>taxtastic.refpkg &mdash; taxtastic 0.5.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -16,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5.0',
+        VERSION:     '0.5.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="taxtastic 0.5.0 documentation" href="../../index.html" />
+    <link rel="top" title="taxtastic 0.5.2 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body>
@@ -35,7 +33,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li><a href="../../index.html">taxtastic 0.5.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">taxtastic 0.5.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -68,25 +66,29 @@
 <span class="c">#</span>
 <span class="c">#    You should have received a copy of the GNU General Public License</span>
 <span class="c">#    along with taxtastic.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">Bio.Phylo</span>
+<span class="kn">import</span> <span class="nn">Bio.SeqIO</span>
 <span class="kn">import</span> <span class="nn">contextlib</span>
-<span class="kn">from</span> <span class="nn">decorator</span> <span class="kn">import</span> <span class="n">decorator</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
-<span class="kn">import</span> <span class="nn">hashlib</span>
-<span class="kn">import</span> <span class="nn">shutil</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">csv</span>
-<span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">zipfile</span>
 
-<span class="kn">import</span> <span class="nn">Bio.SeqIO</span>
-<span class="kn">import</span> <span class="nn">Bio.Phylo</span>
+<span class="kn">from</span> <span class="nn">decorator</span> <span class="kn">import</span> <span class="n">decorator</span>
 
 <span class="kn">from</span> <span class="nn">taxtastic</span> <span class="kn">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">taxdb</span>
+
 
 <span class="n">FORMAT_VERSION</span> <span class="o">=</span> <span class="s">&#39;1.1&#39;</span>
 
@@ -101,21 +103,20 @@
 <span class="k">def</span> <span class="nf">scratch_file</span><span class="p">(</span><span class="n">unlink</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a temporary file and return its name.</span>
 
-<span class="sd">    Additional arguments are passed to ``tempfile.mkstemp``</span>
+<span class="sd">    Additional arguments are passed to :class:`tempfile.NamedTemporaryFile`</span>
 
 <span class="sd">    At the start of the with block a secure, temporary file is created</span>
 <span class="sd">    and its name returned.  At the end of the with block it is</span>
 <span class="sd">    deleted.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;delete&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">tf</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">tmp_fd</span><span class="p">,</span> <span class="n">tmp_name</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">tmp_fd</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="n">tmp_name</span>
-    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-        <span class="k">raise</span>
-    <span class="k">else</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">tf</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">finally</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">unlink</span><span class="p">:</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">tmp_name</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">manifest_template</span><span class="p">():</span>
@@ -497,8 +498,8 @@
         <span class="n">md5_value</span> <span class="o">=</span> <span class="n">md5file</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">new_path</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;md5&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">md5_value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s">&#39;Updated file: </span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">new_path</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;tree_stats&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">update_phylo_model</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">new_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;tree_stats&#39;</span> <span class="ow">and</span> <span class="n">old_path</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&#39;Updating tree_stats, but not phylo_model.&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">old_path</span>
 </div>
     <span class="nd">@transaction</span>
@@ -522,7 +523,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">update_file</span><span class="p">(</span><span class="s">&#39;tree&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s">&#39;Rerooting refpkg&#39;</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="Refpkg.update_phylo_model"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.update_phylo_model">[docs]</a>    <span class="k">def</span> <span class="nf">update_phylo_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stats_type</span><span class="p">,</span> <span class="n">stats_file</span><span class="p">):</span>
+<div class="viewcode-block" id="Refpkg.update_phylo_model"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.update_phylo_model">[docs]</a>    <span class="k">def</span> <span class="nf">update_phylo_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stats_type</span><span class="p">,</span> <span class="n">stats_file</span><span class="p">,</span> <span class="n">frequency_type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Parse a stats log and use it to update ``phylo_model``.</span>
 
 <span class="sd">        ``pplacer`` expects its input to include the deatils of the</span>
@@ -535,7 +536,19 @@
 <span class="sd">        parameter must be &#39;RAxML&#39;, &#39;PhyML&#39; or &#39;FastTree&#39;, depending on which</span>
 <span class="sd">        program generated the log. It may also be None to attempt to guess</span>
 <span class="sd">        which program generated the log.</span>
+
+<span class="sd">        :param stats_type: Statistics file type. One of &#39;RAxML&#39;, &#39;FastTree&#39;, &#39;PhyML&#39;</span>
+<span class="sd">        :param stats_file: path to statistics/log file</span>
+<span class="sd">        :param frequency_type: For ``stats_type == &#39;PhyML&#39;``, amino acid</span>
+<span class="sd">        alignments only: was the alignment inferred with ``model`` or</span>
+<span class="sd">        ``empirical`` frequencies?</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">frequency_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;model&#39;</span><span class="p">,</span> <span class="s">&#39;empirical&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Unknown frequency type: &quot;{0}&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">frequency_type</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">frequency_type</span> <span class="ow">and</span> <span class="n">stats_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;PhyML&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Frequency type should only be specified for &#39;</span>
+                             <span class="s">&#39;PhyML alignments.&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">stats_type</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">stats_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">fobj</span><span class="p">:</span>
@@ -559,7 +572,8 @@
         <span class="k">elif</span> <span class="n">stats_type</span> <span class="o">==</span> <span class="s">&#39;FastTree&#39;</span><span class="p">:</span>
             <span class="n">parser</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_fasttree</span>
         <span class="k">elif</span> <span class="n">stats_type</span> <span class="o">==</span> <span class="s">&#39;PhyML&#39;</span><span class="p">:</span>
-            <span class="n">parser</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_phyml</span>
+            <span class="n">parser</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">parse_phyml</span><span class="p">,</span>
+                                       <span class="n">frequency_type</span><span class="o">=</span><span class="n">frequency_type</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;invalid log type: </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stats_type</span><span class="p">,))</span>
 
@@ -881,13 +895,13 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li><a href="../../index.html">taxtastic 0.5.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">taxtastic 0.5.2 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2011-2013, Noah Hoffman, Erick Matsen, Brian Hodges.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
     </div>
   </body>
 </html>

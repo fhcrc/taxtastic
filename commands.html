@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Detailed taxit documentation &mdash; taxtastic 0.5.0 documentation</title>
+    <title>Detailed taxit documentation &mdash; taxtastic 0.5.2 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
-        VERSION:     '0.5.0',
+        URL_ROOT:    './',
+        VERSION:     '0.5.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="taxtastic 0.5.0 documentation" href="index.html" />
+    <link rel="top" title="taxtastic 0.5.2 documentation" href="index.html" />
     <link rel="prev" title="The Python Refpkg API" href="refpkg_api.html" /> 
   </head>
   <body>
@@ -38,7 +36,7 @@
         <li class="right" >
           <a href="refpkg_api.html" title="The Python Refpkg API"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">taxtastic 0.5.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">taxtastic 0.5.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -74,11 +72,12 @@
 <dd>A semicolon separated list of tax_ids which should be detached from their current parents and attached to this node as its children.</dd>
 </dl>
 <p>Examples:</p>
-<div class="highlight-python"><pre># Add the taxa specified in new_taxa.csv to taxonomy.db
+<div class="highlight-python"><div class="highlight"><pre># Add the taxa specified in new_taxa.csv to taxonomy.db
 taxit add_nodes -d taxonomy.db -N new_taxa.csv
 
 # Add the same taxa, but force the source name to be hetty_lab
-taxit add_nodes -d taxonomy.db -N new_taxa.csv -S hetty_lab</pre>
+taxit add_nodes -d taxonomy.db -N new_taxa.csv -S hetty_lab
+</pre></div>
 </div>
 <p>Arguments:</p>
 <dl class="docutils">
@@ -187,16 +186,17 @@ taxit add_nodes -d taxonomy.db -N new_taxa.csv -S hetty_lab</pre>
 </tbody>
 </table>
 <p>Examples:</p>
-<div class="highlight-python"><pre># Create a minimal refpkg
-taxit create -P my_refpkg -l "Some locus name"
+<div class="highlight-python"><div class="highlight"><pre># Create a minimal refpkg
+taxit create -P my_refpkg -l &quot;Some locus name&quot;
 
 # Create a refpkg with lots of files in it
-taxit create -P another_refpkg -l "Another locus" \
-    --author "Boris the mad baboon" --package-version 0.3.1 \
+taxit create -P another_refpkg -l &quot;Another locus&quot; \
+    --author &quot;Boris the mad baboon&quot; --package-version 0.3.1 \
     --aln-fasta seqs.fasta --aln-sto seqs.sto \
     --tree-file seqs.newick --seq-info seqs.csv \
     --profile cmalign.profile --tree-stats RAxML.info \
-    --taxonomy taxtable.csv</pre>
+    --taxonomy taxtable.csv
+</pre></div>
 </div>
 </div>
 <div class="section" id="findcompany">
@@ -204,13 +204,17 @@ taxit create -P another_refpkg -l "Another locus" \
 <p><tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">findcompany</span> <span class="pre">[-c]</span> <span class="pre">taxonomy.db</span> <span class="pre">[-i</span> <span class="pre">taxids.txt]</span> <span class="pre">[taxid</span> <span class="pre">...]</span> <span class="pre">[-o</span> <span class="pre">output.txt]</span></tt></p>
 <p>A command meant to follow <tt class="docutils literal"><span class="pre">lonelynodes</span></tt> (below). Given a list of tax_ids produced by <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">lonelynodes</span></tt>, produces another list of species tax_ids that can be added to the taxtable that would render those tax_ids no longer lonely.</p>
 <p>Examples:</p>
-<div class="highlight-python"><pre>taxit findcompany taxonomy.db -i taxids.txt -o newtaxids.txt
-taxit findcompany taxonomy.db 31661 5213 564</pre>
+<div class="highlight-python"><div class="highlight"><pre>taxit findcompany taxonomy.db -i taxids.txt -o newtaxids.txt
+taxit findcompany taxonomy.db 31661 5213 564
+</pre></div>
 </div>
 <p>Arguments:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="sb">``</span><span class="o">-</span><span class="n">c</span><span class="sb">``</span>
+</pre></div>
+</div>
+<blockquote>
+<div>Produce only one output tax_id per input tax_id, whether or not the output species would themselves be lonely.</div></blockquote>
 <dl class="docutils">
-<dt><tt class="docutils literal"><span class="pre">-c</span></tt></dt>
-<dd>Produce only one output tax_id per input tax_id, whether or not the output species would themselves be lonely.</dd>
 <dt><tt class="docutils literal"><span class="pre">-o</span></tt></dt>
 <dd>Write new taxids to the specified file. Otherwise they are written to <tt class="docutils literal"><span class="pre">stdout</span></tt></dd>
 <dt><tt class="docutils literal"><span class="pre">-i</span></tt></dt>
@@ -222,13 +226,17 @@ taxit findcompany taxonomy.db 31661 5213 564</pre>
 <p><tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">lonelynodes</span> <span class="pre">target</span> <span class="pre">[-o</span> <span class="pre">output.txt]</span></tt></p>
 <p>Find nodes in <tt class="docutils literal"><span class="pre">target</span></tt> (which can be a CSV file extracted by <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></tt> or a RefPkg containing such a file) which are lonely &#8211; that is, whose parents have only one child. Print them, one per line, to <tt class="docutils literal"><span class="pre">stdout</span></tt> or to the file specified by the <tt class="docutils literal"><span class="pre">-o</span></tt> option.</p>
 <p>Examples:</p>
-<div class="highlight-python"><pre># Find lonely nodes in RefPkg mypkg-0.1.refpkg
-taxit lonelynodes mypkg-0.1.refpkg</pre>
+<div class="highlight-python"><div class="highlight"><pre># Find lonely nodes in RefPkg mypkg-0.1.refpkg
+taxit lonelynodes mypkg-0.1.refpkg
+</pre></div>
 </div>
 <p>Arguments:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="sb">``</span><span class="o">-</span><span class="n">h</span><span class="sb">``</span>
+</pre></div>
+</div>
+<blockquote>
+<div>Print help and exit</div></blockquote>
 <dl class="docutils">
-<dt><tt class="docutils literal"><span class="pre">-h</span></tt></dt>
-<dd>Print help and exit</dd>
 <dt><tt class="docutils literal"><span class="pre">-o</span></tt></dt>
 <dd>Write resulting tax_ids to a specified filename instead of <tt class="docutils literal"><span class="pre">stdout</span></tt>.</dd>
 <dt><tt class="docutils literal"><span class="pre">-v</span></tt></dt>
@@ -240,12 +248,13 @@ taxit lonelynodes mypkg-0.1.refpkg</pre>
 <p><tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">new_database</span> <span class="pre">[...]</span> <span class="pre">-d</span> <span class="pre">database_file</span></tt></p>
 <p>Download the current version of the NCBI taxonomy and load it into <tt class="docutils literal"><span class="pre">database_file</span></tt> as an SQLite3 database.  If <tt class="docutils literal"><span class="pre">database_file</span></tt> already exists, it will fail and leave it untouched unless you specify <tt class="docutils literal"><span class="pre">-x</span></tt> or <tt class="docutils literal"><span class="pre">--clobber</span></tt>.  The NCBI taxonomy will be downloaded into the same directory as <tt class="docutils literal"><span class="pre">database_file</span></tt> will be created in unless you specify <tt class="docutils literal"><span class="pre">-p</span></tt> or <tt class="docutils literal"><span class="pre">--download-dir</span></tt>.</p>
 <p>Examples:</p>
-<div class="highlight-python"><pre># Download the NCBI taxonomy and create taxonomy.db if it does not exist
+<div class="highlight-python"><div class="highlight"><pre># Download the NCBI taxonomy and create taxonomy.db if it does not exist
 taxit new_database -d taxonomy.db
 
 # Force the creation of taxonomy.db in the parent directory, putting
 # the downloaded NCBI data in /tmp/ncbi.
-taxit new_database -d ../taxonomy.db -x -p /tmp/ncbi</pre>
+taxit new_database -d ../taxonomy.db -x -p /tmp/ncbi
+</pre></div>
 </div>
 <p>Arguments:</p>
 <dl class="docutils">
@@ -264,12 +273,13 @@ taxit new_database -d ../taxonomy.db -x -p /tmp/ncbi</pre>
 <p><tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">reroot</span> <span class="pre">refpkg</span></tt></p>
 <p>Calls <tt class="docutils literal"><span class="pre">rppr</span> <span class="pre">reroot</span></tt> to generate a rerooted tree from the tree in <tt class="docutils literal"><span class="pre">refpkg</span></tt> and writes it back to the refpkg.  The refpkg <tt class="docutils literal"><span class="pre">refpkg</span></tt> must contain the necessary inputs for <tt class="docutils literal"><span class="pre">pplacer</span></tt> for this to work.</p>
 <p>Examples:</p>
-<div class="highlight-python"><pre># Reroot the tree in my_refpkg
+<div class="highlight-python"><div class="highlight"><pre># Reroot the tree in my_refpkg
 taxit reroot my_refpkg
 
 # Try running reroot without modifying the refpkg, using a particular
 # version of rppr
-taxit reroot --rppr ~/local/bin/rppr -p my_refpkg</pre>
+taxit reroot --rppr ~/local/bin/rppr -p my_refpkg
+</pre></div>
 </div>
 <p>Arguments:</p>
 <dl class="docutils">
@@ -284,13 +294,14 @@ taxit reroot --rppr ~/local/bin/rppr -p my_refpkg</pre>
 <p><tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">rollback</span> <span class="pre">[-n</span> <span class="pre">N]</span> <span class="pre">refpkg</span></tt></p>
 <p>Rollback <tt class="docutils literal"><span class="pre">N</span></tt> operations on <tt class="docutils literal"><span class="pre">refpkg</span></tt> (default to 1 operation if <tt class="docutils literal"><span class="pre">-n</span></tt> is omitted).  This is equivalent to calling the <tt class="docutils literal"><span class="pre">rollback()</span></tt> method of <tt class="docutils literal"><span class="pre">taxtastic.refpkg.Refpkg</span></tt>.  If there are not at least <tt class="docutils literal"><span class="pre">N</span></tt> operations that can be rolled back, an error is returned and no changes are made to the refpkg.</p>
 <p>Examples:</p>
-<div class="highlight-python"><pre># Update the author on my_refpkg, then roll back the change so
+<div class="highlight-python"><div class="highlight"><pre># Update the author on my_refpkg, then roll back the change so
 # that it is in the same state it was.
-taxit update --metadata 'author=Boris the mad baboon'
+taxit update --metadata &#39;author=Boris the mad baboon&#39;
 taxit rollback my_refpkg
 
 # Roll back the last 3 operations on my_refpkg
-taxit rollback -n 3 my_refpkg</pre>
+taxit rollback -n 3 my_refpkg
+</pre></div>
 </div>
 <p>Arguments:</p>
 <dl class="docutils">
@@ -304,12 +315,13 @@ taxit rollback -n 3 my_refpkg</pre>
 <p>Restore the last <tt class="docutils literal"><span class="pre">N</span></tt> rolled back operations on <tt class="docutils literal"><span class="pre">refpkg</span></tt>, or the last operation if <tt class="docutils literal"><span class="pre">-n</span></tt> is omitted.  If there are not at least <tt class="docutils literal"><span class="pre">N</span></tt> operations that can be rolled forward on this refpkg, then an error is returned and no changes are made to the refpkg.</p>
 <p>Note that operations can only be rolled forward immediately after being rolled back.  If any operation besides a rollback occurs, all roll forward information is removed.</p>
 <p>Examples:</p>
-<div class="highlight-python"><pre># Roll back the last operation on my_refpkg, then restore it.
+<div class="highlight-python"><div class="highlight"><pre># Roll back the last operation on my_refpkg, then restore it.
 taxit rollback my_refpkg
 taxit rollforward my_refpkg
 
 # Roll forward the last 3 rollbacks on my_refpkg
-taxit rollforward -n 3 my_refpkg</pre>
+taxit rollforward -n 3 my_refpkg
+</pre></div>
 </div>
 <p>Arguments:</p>
 <dl class="docutils">
@@ -322,14 +334,15 @@ taxit rollforward -n 3 my_refpkg</pre>
 <p><tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">strip</span> <span class="pre">refpkg</span></tt></p>
 <p>Delete everything in the refpkg not relevant to the current state: all files not referred to in the current state and all rollback and rollforward information.  The log is preserved, with a new entry entered indicating that <tt class="docutils literal"><span class="pre">refpkg</span></tt> was stripped.</p>
 <p>Examples:</p>
-<div class="highlight-python"><pre>taxit update my_refpkg hilda=file1
+<div class="highlight-python"><div class="highlight"><pre>taxit update my_refpkg hilda=file1
 
 # After this, file1 is still in the refpkg, but not referred to
 # except by the rollback information.
 taxit update my_refpkg hilda=file2
 
 # strip deletes file1, and the rollback and rollforward information
-taxit strip my_refpkg</pre>
+taxit strip my_refpkg
+</pre></div>
 </div>
 </div>
 <div class="section" id="taxids">
@@ -337,11 +350,12 @@ taxit strip my_refpkg</pre>
 <p><tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxids</span> <span class="pre">-d</span> <span class="pre">ncbi_taxonomy.db</span> <span class="pre">[-f</span> <span class="pre">file_of_names.txt|-n</span> <span class="pre">name1,name2,...]</span> <span class="pre">[-o</span> <span class="pre">taxids.txt]</span></tt></p>
 <p>Convert a list of taxonomic names into a list of tax_ids.  <tt class="docutils literal"><span class="pre">ncbi_taxonomy.db</span></tt> must be a database created by <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">new_database</span></tt>, containing a taxonomy.  The names to convert can be specified in a text file with one name per line (the <tt class="docutils literal"><span class="pre">-f</span></tt> or <tt class="docutils literal"><span class="pre">--name-file</span></tt> options) or on the command line as a comma delimited list (the <tt class="docutils literal"><span class="pre">-n</span></tt> of <tt class="docutils literal"><span class="pre">--name</span></tt> options).</p>
 <p>Examples:</p>
-<div class="highlight-python"><pre># Look up two species and print their tax_ids to stdout, one per line
-taxit taxids -d ncbi_database.db -n "Lactobacillus crispatus,Lactobacillus helveticus"
+<div class="highlight-python"><div class="highlight"><pre># Look up two species and print their tax_ids to stdout, one per line
+taxit taxids -d ncbi_database.db -n &quot;Lactobacillus crispatus,Lactobacillus helveticus&quot;
 
 # Read the species from some_names.txt and write their tax_ids to some_taxids.txt
-taxit taxids -d ncbi_database.db -f some_names.txt -o some_taxids.txt</pre>
+taxit taxids -d ncbi_database.db -f some_names.txt -o some_taxids.txt
+</pre></div>
 </div>
 <p>Arguments:</p>
 <dl class="docutils">
@@ -363,14 +377,15 @@ taxit taxids -d ncbi_database.db -f some_names.txt -o some_taxids.txt</pre>
 <p><tt class="docutils literal"><span class="pre">tax_ids</span></tt> is either a comma or semicolon delimited list of tax_ids (e.g., <tt class="docutils literal"><span class="pre">4522,2213;44;221</span></tt>) or the name of a text file containing tax_ids.  The text file also allows Python style comments, and any non-comment text separated by and combination of spaces, commas, and semicolons is considered a tax_id.</p>
 <p>tax_ids and taxa names can overlap, nor does anything have to be unique within either file.  The nodes will only be written once in the CSV output no matter how many times a particular taxon is mentioned.</p>
 <p>Examples:</p>
-<div class="highlight-python"><pre># Extract tax_ids 47770 and 33945 and all nodes connecting them to the root.
+<div class="highlight-python"><div class="highlight"><pre># Extract tax_ids 47770 and 33945 and all nodes connecting them to the root.
 taxit taxtable -d taxonomy.db -t 47770,33945
 
 # The same as above, but write the output to subtax.csv instead of stdout
 taxit taxtable -d taxonomy.db -t 47770,33945 -o subtax.csv
 
 # Extract the same tax_ids, plus the taxa specifies in taxnames.txt
-taxit taxtable -d taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv</pre>
+taxit taxtable -d taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv
+</pre></div>
 </div>
 <p>Arguments:</p>
 <dl class="docutils">
@@ -392,14 +407,15 @@ taxit taxtable -d taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_bo
 <p>Update <tt class="docutils literal"><span class="pre">refpkg</span></tt> to set <tt class="docutils literal"><span class="pre">key</span></tt> to <tt class="docutils literal"><span class="pre">some</span> <span class="pre">value</span></tt>.  If <tt class="docutils literal"><span class="pre">--metadata</span></tt> is specified, the update is done to the metadata.  Otherwise <tt class="docutils literal"><span class="pre">some</span> <span class="pre">value</span></tt> is treated as the path to a file, and that file is updated in <tt class="docutils literal"><span class="pre">refpkg</span></tt>.  An arbitrary of &#8220;key=value&#8221; pairs can be specified on the command line.  If the same key is specified twice, the later occurrence dominates.</p>
 <p>All updates specified to an instance of this command are run as a single operation, and will all be undone by a single rollback.</p>
 <p>Examples:</p>
-<div class="highlight-python"><pre># Set the author in my_refpkg
-taxit update my_refpkg --metadata "author=Boris the mad baboon"
+<div class="highlight-python"><div class="highlight"><pre># Set the author in my_refpkg
+taxit update my_refpkg --metadata &quot;author=Boris the mad baboon&quot;
 
 # Set the author and version at once
-taxit update my_refpkg --metadata "author=Bill" "package_version=1.7.2"
+taxit update my_refpkg --metadata &quot;author=Bill&quot; &quot;package_version=1.7.2&quot;
 
 # Insert a file into the refpkg
-taxit update my_refpkg "aln_fasta=/path/to/a/file.fasta"</pre>
+taxit update my_refpkg &quot;aln_fasta=/path/to/a/file.fasta&quot;
+</pre></div>
 </div>
 <p>Arguments:</p>
 <dl class="docutils">
@@ -469,12 +485,12 @@ taxit update my_refpkg "aln_fasta=/path/to/a/file.fasta"</pre>
         <li class="right" >
           <a href="refpkg_api.html" title="The Python Refpkg API"
              >previous</a> |</li>
-        <li><a href="index.html">taxtastic 0.5.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">taxtastic 0.5.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2011-2013, Noah Hoffman, Erick Matsen, Brian Hodges.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
     </div>
   </body>
 </html>

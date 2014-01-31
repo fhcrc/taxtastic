@@ -124,7 +124,7 @@ Examples::
     taxit findcompany taxonomy.db -i taxids.txt -o newtaxids.txt
     taxit findcompany taxonomy.db 31661 5213 564
 
-Arguments:
+Arguments::
 
 ``-c``
     Produce only one output tax_id per input tax_id, whether or not the output species would themselves be lonely.
@@ -148,7 +148,7 @@ Examples::
     # Find lonely nodes in RefPkg mypkg-0.1.refpkg
     taxit lonelynodes mypkg-0.1.refpkg
 
-Arguments:
+Arguments::
 
 ``-h``
   Print help and exit
