@@ -28,6 +28,7 @@ $ taxit update --metadata "author=Genghis Khan" version=0.4.3
 
 import logging
 import os.path
+import warnings
 
 from taxtastic import refpkg
 
@@ -79,12 +80,16 @@ def action(args):
         rp = refpkg.Refpkg(args.refpkg, create=False)
         rp.start_transaction()
         for key, filename in pairs:
-            rp.update_file(key, os.path.abspath(filename))
             if key == 'tree_stats':
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", refpkg.DerivedFileNotUpdatedWarning)
+                    rp.update_file(key, os.path.abspath(filename))
                 # Trigger model update
                 log.info('Updating phylo_model to match tree_stats')
                 rp.update_phylo_model(args.stats_type, filename,
                                       args.frequency_type)
+            else:
+                rp.update_file(key, os.path.abspath(filename))
 
         rp.commit_transaction('Updates files: ' +
                                   ', '.join(['%s=%s' % (a,b)
