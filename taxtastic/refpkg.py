@@ -36,7 +36,6 @@ import json
 import shutil
 import subprocess
 import tempfile
-import warnings
 import zipfile
 
 from decorator import decorator
@@ -45,6 +44,11 @@ from taxtastic import utils, taxdb
 
 
 FORMAT_VERSION = '1.1'
+
+
+class DerivedFileNotUpdatedWarning(UserWarning):
+    pass
+
 
 def md5file(fobj):
     md5 = hashlib.md5()
@@ -451,9 +455,10 @@ class Refpkg(object):
         self._add_file(key, new_path)
         md5_value = md5file(open(new_path))
         self.contents['md5'][key] = md5_value
-        self._log('Updated file: %s=%s' % (key,new_path))
+        self._log('Updated file: %s=%s' % (key, new_path))
         if key == 'tree_stats' and old_path:
-            warnings.warn('Updating tree_stats, but not phylo_model.')
+            warnings.warn('Updating tree_stats, but not phylo_model.',
+                          DerivedFileNotUpdatedWarning, stacklevel=2)
         return old_path
 
     @transaction
