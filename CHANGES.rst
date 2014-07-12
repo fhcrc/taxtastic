@@ -2,8 +2,8 @@
  change log for taxtastic
 ==========================
 
-In development
-==============
+0.5.3
+=====
 
  * Suppress warning when updating refpkg ``tree_stats`` file via ``taxit update``.
 

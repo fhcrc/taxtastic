@@ -34,7 +34,7 @@ Preparing a release
 ===================
 
 1. check out dev and make sure it is up to date with GitHub
-1. update CHANGELOG.rst (the topmost section header should indicate
+1. update CHANGES.rst (the topmost section header should indicate
    the new version number)
 1. make a final commit to dev
 1. `git push origin dev`
