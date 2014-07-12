@@ -499,8 +499,9 @@ class Refpkg(object):
         :param stats_type: Statistics file type. One of 'RAxML', 'FastTree', 'PhyML'
         :param stats_file: path to statistics/log file
         :param frequency_type: For ``stats_type == 'PhyML'``, amino acid
-        alignments only: was the alignment inferred with ``model`` or
-        ``empirical`` frequencies?
+         alignments only: was the alignment inferred with ``model`` or
+         ``empirical`` frequencies?
+
         """
 
         if frequency_type not in (None, 'model', 'empirical'):
