@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>taxtastic.refpkg &mdash; taxtastic 0.5.2 documentation</title>
+    <title>taxtastic.refpkg &mdash; taxtastic 0.5.3 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5.2',
+        VERSION:     '0.5.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="taxtastic 0.5.2 documentation" href="../../index.html" />
+    <link rel="top" title="taxtastic 0.5.3 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body>
@@ -33,7 +33,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li><a href="../../index.html">taxtastic 0.5.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">taxtastic 0.5.3 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -82,7 +82,6 @@
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">zipfile</span>
 
 <span class="kn">from</span> <span class="nn">decorator</span> <span class="kn">import</span> <span class="n">decorator</span>
@@ -91,6 +90,11 @@
 
 
 <span class="n">FORMAT_VERSION</span> <span class="o">=</span> <span class="s">&#39;1.1&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">DerivedFileNotUpdatedWarning</span><span class="p">(</span><span class="ne">UserWarning</span><span class="p">):</span>
+    <span class="k">pass</span>
+
 
 <span class="k">def</span> <span class="nf">md5file</span><span class="p">(</span><span class="n">fobj</span><span class="p">):</span>
     <span class="n">md5</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
@@ -497,9 +501,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_add_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">new_path</span><span class="p">)</span>
         <span class="n">md5_value</span> <span class="o">=</span> <span class="n">md5file</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">new_path</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s">&#39;md5&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">md5_value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s">&#39;Updated file: </span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">new_path</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s">&#39;Updated file: </span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">new_path</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;tree_stats&#39;</span> <span class="ow">and</span> <span class="n">old_path</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&#39;Updating tree_stats, but not phylo_model.&#39;</span><span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&#39;Updating tree_stats, but not phylo_model.&#39;</span><span class="p">,</span>
+                          <span class="n">DerivedFileNotUpdatedWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">old_path</span>
 </div>
     <span class="nd">@transaction</span>
@@ -540,8 +545,9 @@
 <span class="sd">        :param stats_type: Statistics file type. One of &#39;RAxML&#39;, &#39;FastTree&#39;, &#39;PhyML&#39;</span>
 <span class="sd">        :param stats_file: path to statistics/log file</span>
 <span class="sd">        :param frequency_type: For ``stats_type == &#39;PhyML&#39;``, amino acid</span>
-<span class="sd">        alignments only: was the alignment inferred with ``model`` or</span>
-<span class="sd">        ``empirical`` frequencies?</span>
+<span class="sd">         alignments only: was the alignment inferred with ``model`` or</span>
+<span class="sd">         ``empirical`` frequencies?</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="n">frequency_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;model&#39;</span><span class="p">,</span> <span class="s">&#39;empirical&#39;</span><span class="p">):</span>
@@ -895,13 +901,13 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li><a href="../../index.html">taxtastic 0.5.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">taxtastic 0.5.3 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2011-2013, Noah Hoffman, Erick Matsen, Brian Hodges.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+        &copy; Copyright 2011-2014, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>
