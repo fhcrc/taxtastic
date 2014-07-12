@@ -5,3 +5,6 @@ _build
 test_output/
 doctrees/
 /MANIFEST
+*-env
+*.egg-info
+html

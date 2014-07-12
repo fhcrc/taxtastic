@@ -1,0 +1,7 @@
+sqlalchemy
+decorator
+biopython
+sphinx
+ghp-import
+twine
+wheel
