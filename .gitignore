@@ -4,4 +4,7 @@
 _build
 test_output/
 doctrees/
-taxtastic.egg-info/
+/MANIFEST
+*-env
+*.egg-info
+html

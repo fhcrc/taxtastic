@@ -1,4 +1,5 @@
 
+import functools
 import logging
 import os
 import json
@@ -127,13 +128,23 @@ class FastTreeMissingGTRTestCase(FastTreeStatsMixin, unittest.TestCase):
 class FastTreeDNATestCase(FastTreeStatsMixin, unittest.TestCase):
     test_file_name = 'fastree_dna_stats.txt'
 
+class FastTreeAATestCase(FastTreeStatsMixin, unittest.TestCase):
+    test_file_name = 'V278.updated.pruned.log'
+
 class PhyMLStatsMixIn(StatsFileParsingMixIn):
+    frequency_type = None
     @property
     def parse_func(self):
-        return taxtastic.utils.parse_phyml
+        return functools.partial(taxtastic.utils.parse_phyml,
+                                 frequency_type=self.frequency_type)
 
 class PhyMLAminoAcidTestCase(PhyMLStatsMixIn, unittest.TestCase):
     test_file_name = 'phyml_aa_stats.txt'
+    frequency_type = 'model'
+
+class PhyMLEmpiricalAminoAcidTestCase(PhyMLStatsMixIn, unittest.TestCase):
+    test_file_name = 'phyml_aa_stats_empirical.txt'
+    frequency_type = 'empirical'
 
 class PhyMLDNATestCase(PhyMLStatsMixIn, unittest.TestCase):
     test_file_name = 'phyml_dna_stats.txt'

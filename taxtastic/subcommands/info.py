@@ -37,10 +37,10 @@ def build_parser(parser):
     parser.add_argument('-l', '--lengths', action = 'store_true', default = False,
                         help = 'print sequence lengths')
 
-    
+
 def tally_taxa(pkg):
     tally = defaultdict(int)
-    with open(pkg.file_abspath('taxonomy')) as taxtab, open(pkg.file_abspath('seq_info')) as seq_info:
+    with open(pkg.file_abspath('taxonomy'), 'rU') as taxtab, open(pkg.file_abspath('seq_info'), 'rU') as seq_info:
         taxdict = {row['tax_id']: row for row in csv.DictReader(taxtab)}
 
         tax_ids = [d['tax_id'] for d in csv.DictReader(seq_info)]
@@ -53,13 +53,13 @@ def tally_taxa(pkg):
     writer = csv.writer(sys.stdout, quoting = csv.QUOTE_NONNUMERIC)
     writer.writerows(sorted(rows))
 
-def print_lengths(pkg):    
+def print_lengths(pkg):
     seqs = SeqIO.parse(pkg.file_abspath('aln_fasta'), 'fasta')
     writer = csv.writer(sys.stdout)
     writer.writerow(["seqname","length"])
     for seq in seqs:
         writer.writerow([seq.id, len(str(seq.seq).replace('-',''))])
-    
+
 def action(args):
     """
     Show information about reference packages.
@@ -68,7 +68,7 @@ def action(args):
 
     pkg = refpkg.Refpkg(args.refpkg, create=False)
 
-    with open(pkg.file_abspath('seq_info')) as seq_info:
+    with open(pkg.file_abspath('seq_info'), 'rU') as seq_info:
         seqinfo = list(csv.DictReader(seq_info))
         snames = [row['seqname'] for row in seqinfo]
 

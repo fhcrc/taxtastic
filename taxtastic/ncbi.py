@@ -423,7 +423,7 @@ def read_archive(archive, fname):
         yield line.rstrip('\t|\n').split('\t|\t')
 
 def read_dmp(fname):
-    for line in open(fname,'rU'):
+    for line in open(fname, 'rU'):
         yield line.rstrip('\t|\n').split('\t|\t')
 
 def read_nodes(rows, root_name, ncbi_source_id):

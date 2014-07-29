@@ -119,7 +119,7 @@ def getlines(fname):
     the first '#' character.
     """
 
-    with open(fname) as f:
+    with open(fname, 'rU') as f:
         for line in f:
             if line.strip() and not line.startswith('#'):
                 yield line.split('#', 1)[0].strip()
@@ -198,9 +198,11 @@ def parse_fasttree(fobj):
         elif line.strip() == JTT_MODEL:
             data['subs_model'] = 'JTT'
             data['datatype'] = 'AA'
+            data['empirical_frequencies'] = False
         elif line.strip() == WAG_MODEL:
             data['subs_model'] = 'WAG'
             data['datatype'] = 'AA'
+            data['empirical_frequencies'] = False
 
     # Sanity check
     if data['subs_model'] == 'GTR' and 'subs_rates' not in data:
@@ -208,7 +210,9 @@ def parse_fasttree(fobj):
 
     return data
 
-def parse_phyml(fobj):
+def parse_phyml(fobj, frequency_type=None):
+    if frequency_type not in (None, 'empirical', 'model'):
+        raise ValueError("Unknown frequency_type: {0}".format(frequency_type))
     s = ''.join(fobj)
     result = {'gamma': {}}
     try_set_fields(result, r'---\s*(?P<program>PhyML.*?)\s*---', s)
@@ -232,18 +236,20 @@ def parse_phyml(fobj):
         if rates:
             result['subs_rates'] = rates
 
+        # PhyML doesn't record whether empirical base frequencies were used, or
+        # ML estimates were made.
+        # Setting to empirical for now.
+        result['empirical_frequencies'] = True
     elif 'amino acids' in s:
         result['datatype'] = 'AA'
+        if not frequency_type:
+            raise ValueError("frequency type required for PhyML AA models.")
+        result['empirical_frequencies'] = frequency_type == 'empirical'
         try_set_fields(result,
                        r'Model of amino acids substitution:\s+(?P<subs_model>\w+)',
                        s)
     else:
         raise ValueError('Could not determine if alignment is AA or DNA')
-
-    # PhyML doesn't record whether empirical base frequencies were used, or
-    # ML estimates were made.
-    # Setting to empirical for now.
-    result['empirical_frequencies'] = True
 
     return result
 

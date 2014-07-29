@@ -2,8 +2,17 @@
  change log for taxtastic
 ==========================
 
-0.6.0-dev
-=========
+0.5.3
+=====
+
+ * Suppress warning when updating refpkg ``tree_stats`` file via ``taxit update``.
+
+0.5.2
+=====
+
+ * Fix GH-63: "empirical_frequencies" now set to false when parsing FastTree AA statistics files
+ * Close GH-64: "empirical_frequencies" is now available as a flag for PhyML statistics files
+ * Fixed bug that prevented temporary files from being deleted
 
 0.5.1
 =====

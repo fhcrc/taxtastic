@@ -28,6 +28,7 @@ $ taxit update --metadata "author=Genghis Khan" version=0.4.3
 
 import logging
 import os.path
+import warnings
 
 from taxtastic import refpkg
 
@@ -41,6 +42,15 @@ def build_parser(parser):
     parser.add_argument('--metadata', action='store_const', const=True,
                         default=False, help='Update metadata instead of files')
 
+    stats_group = parser.add_argument_group('Tree inference log file parsing '
+                                            '(for updating `tree_stats`)')
+    stats_group.add_argument("--stats-type", choices=('PhyML', 'FastTree', 'RAxML'),
+                        help="""stats file type [default: attempt to guess from
+                        file contents]""")
+    stats_group.add_argument("--frequency-type", choices=('empirical', 'model'),
+                        help="""Residue frequency type from the model. Required
+                        for PhyML Amino Acid alignments.""")
+
 
 def action(args):
     """Updates a Refpkg with new files.
@@ -52,26 +62,36 @@ def action(args):
     """
     log.info('loading reference package')
 
-    pairs = [p.split('=',1) for p in args.changes]
+    pairs = [p.split('=', 1) for p in args.changes]
     if args.metadata:
         rp = refpkg.Refpkg(args.refpkg, create=False)
         rp.start_transaction()
-        for (key,value) in pairs:
+        for key, value in pairs:
             rp.update_metadata(key, value)
         rp.commit_transaction('Updated metadata: ' + \
                                   ', '.join(['%s=%s' % (a,b)
                                              for a,b in pairs]))
     else:
-        for (key,filename) in pairs:
+        for key, filename in pairs:
             if not(os.path.exists(filename)):
                 print "No such file: %s" % filename
                 exit(1)
 
         rp = refpkg.Refpkg(args.refpkg, create=False)
         rp.start_transaction()
-        for (key,filename) in pairs:
-            rp.update_file(key, os.path.abspath(filename))
-        rp.commit_transaction('Updates files: ' + \
+        for key, filename in pairs:
+            if key == 'tree_stats':
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", refpkg.DerivedFileNotUpdatedWarning)
+                    rp.update_file(key, os.path.abspath(filename))
+                # Trigger model update
+                log.info('Updating phylo_model to match tree_stats')
+                rp.update_phylo_model(args.stats_type, filename,
+                                      args.frequency_type)
+            else:
+                rp.update_file(key, os.path.abspath(filename))
+
+        rp.commit_transaction('Updates files: ' +
                                   ', '.join(['%s=%s' % (a,b)
-                                             for a,b in pairs]))
+                                             for a, b in pairs]))
     return 0
