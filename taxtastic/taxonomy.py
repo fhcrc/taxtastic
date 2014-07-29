@@ -129,6 +129,8 @@ class Taxonomy(object):
 
         s1 = select([names.c.tax_id, names.c.is_primary], names.c.tax_name == tax_name)
 
+        log.debug(str(s1))
+
         res = s1.execute().fetchone()
         if res:
             tax_id, is_primary = res
