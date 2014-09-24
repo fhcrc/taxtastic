@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Installation &mdash; taxtastic 0.5.3 documentation</title>
+    <title>Installation &mdash; taxtastic 0.5.3-3-g3d73975 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.3',
+        VERSION:     '0.5.3-3-g3d73975',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="taxtastic 0.5.3 documentation" href="index.html" />
+    <link rel="top" title="taxtastic 0.5.3-3-g3d73975 documentation" href="index.html" />
     <link rel="next" title="Quickstart" href="quickstart.html" />
     <link rel="prev" title="taxtastic" href="index.html" /> 
   </head>
@@ -40,7 +40,7 @@
         <li class="right" >
           <a href="index.html" title="taxtastic"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">taxtastic 0.5.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">taxtastic 0.5.3-3-g3d73975 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -51,12 +51,39 @@
             
   <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p><tt class="docutils literal"><span class="pre">taxtastic</span></tt> requires Python 2.7.  The simplest method of installing is susing <a class="reference external" href="http://pip-installer.org">pip</a>:</p>
+<p><tt class="docutils literal"><span class="pre">taxtastic</span></tt> requires Python 2.7.  The simplest method of installing
+is using <a class="reference external" href="http://pip-installer.org">pip</a>:</p>
 <div class="highlight-python"><div class="highlight"><pre>pip install taxtastic
 </pre></div>
 </div>
-<p>If you don&#8217;t have pip, download the latest version from <a class="reference external" href="https://pypi.python.org/pypi/taxtastic">https://pypi.python.org/pypi/taxtastic</a>, extract the archive, and install with:</p>
+<p>If you don&#8217;t have pip, download the latest version from
+<a class="reference external" href="https://pypi.python.org/pypi/taxtastic">https://pypi.python.org/pypi/taxtastic</a>, decompress the archive, enter
+the directory containing the source code, and install with:</p>
 <div class="highlight-python"><div class="highlight"><pre>python setup.py install
+</pre></div>
+</div>
+<p>Note that either method above will attempt to download and install
+several additional Python packages, which, in turn have their own
+system requirements. For example, at least one of the dependencies
+require that the Python libraries are available to compile C
+extensions. On Ubuntu (or another system using apt), the Python
+libraries can be installed with:</p>
+<div class="highlight-python"><div class="highlight"><pre>sudo apt-get install python-dev
+</pre></div>
+</div>
+<p>Although you can certainly install to the system, we recommend
+installing <tt class="docutils literal"><span class="pre">taxtastic</span></tt> in a <a class="reference external" href="http://virtualenv.readthedocs.org/en/latest/virtualenv.html">virtualenv</a> to
+avoid conflicts with system packages that may already be installed (or
+that may be installed later).</p>
+<p>So to put this all together, the following will result in
+<tt class="docutils literal"><span class="pre">taxtastic</span></tt> and dependencies installed in a new virtualenv named
+<tt class="docutils literal"><span class="pre">taxit-env</span></tt> (tested on Ubuntu 12.04 and 14.04):</p>
+<div class="highlight-python"><div class="highlight"><pre>sudo apt-get update
+sudo apt-get install python-pip python-virtualenv python-dev
+virtualenv taxit-env
+source taxit-env/bin/activate
+pip install taxtastic
+taxit -h
 </pre></div>
 </div>
 </div>
@@ -107,12 +134,12 @@
         <li class="right" >
           <a href="index.html" title="taxtastic"
              >previous</a> |</li>
-        <li><a href="index.html">taxtastic 0.5.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">taxtastic 0.5.3-3-g3d73975 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2011-2014, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>
