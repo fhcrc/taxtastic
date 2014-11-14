@@ -30,22 +30,28 @@ import sys
 
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
 
     parser.add_argument(
         '-d', '--database-file',
-        dest = 'database_file',
-        metavar = 'FILE',
-        required = True,
-        help = 'Name of the sqlite database file')
+        dest='database_file',
+        metavar='FILE',
+        required=True,
+        help='Name of the sqlite database file')
+
+    parser.add_argument(
+        '--full',
+        action='store_true',
+        help='Show all ranks in output file.')
 
     input_group = parser.add_argument_group(
         "Input options").add_mutually_exclusive_group()
 
     input_group.add_argument(
         '-n', '--tax-names',
-        dest = 'taxnames',
-        metavar = 'FILE',
+        dest='taxnames',
+        metavar='FILE',
         help="""A file identifing taxa in the form of taxonomic
         names. Names are matched against both primary names and
         synonyms. Lines beginning with "#" are ignored. Taxa
@@ -54,9 +60,9 @@ def build_parser(parser):
 
     input_group.add_argument(
         '-t', '--tax-ids',
-        dest = 'taxids',
-        metavar = 'FILE-OR-LIST',
-        help = """File containing a whitespace-delimited list of
+        dest='taxids',
+        metavar='FILE-OR-LIST',
+        help="""File containing a whitespace-delimited list of
         tax_ids (ie, separated by tabs, spaces, or newlines; lines
         beginning with "#" are ignored). This option can also be
         passed a comma-delited list of taxids on the command line.""")
@@ -72,14 +78,16 @@ def build_parser(parser):
     output_group.add_argument(
         '-o', '--out-file',
         dest='out_file',
-        type = argparse.FileType('w'),
-        default = sys.stdout,
+        type=argparse.FileType('w'),
+        default=sys.stdout,
         metavar='FILE',
         help="""Output file containing lineages for the specified taxa
         in csv format; writes to stdout if unspecified""")
 
+
 def action(args):
-    engine = create_engine('sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
+    engine = create_engine(
+        'sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
     tax = Taxonomy(engine, ncbi.ranks)
 
     taxids = set()
@@ -89,18 +97,21 @@ def action(args):
             for line in getlines(args.taxids):
                 taxids.update(set(re.split(r'[\s,;]+', line)))
         else:
-            taxids.update([x.strip() for x in re.split(r'[\s,;]+', args.taxids)])
+            taxids.update([x.strip()
+                           for x in re.split(r'[\s,;]+', args.taxids)])
 
     if args.taxnames:
         for taxname in getlines(args.taxnames):
             for name in re.split(r'\s*[,;]\s*', taxname):
-                tax_id, primary_name, is_primary = tax.primary_from_name(name.strip())
+                tax_id, primary_name, is_primary = tax.primary_from_name(
+                    name.strip())
                 taxids.add(tax_id)
 
     if args.seq_info:
         with args.seq_info:
             reader = csv.DictReader(args.seq_info)
-            taxids.update(frozenset(i['tax_id'] for i in reader if i['tax_id']))
+            taxids.update(frozenset(i['tax_id']
+                                    for i in reader if i['tax_id']))
 
     # Before digging into lineages, make sure all the taxids exist in
     # the taxonomy database.
@@ -112,21 +123,22 @@ def action(args):
             # Check for merged
             m = tax._get_merged(t)
             if m and m != t:
-                print >> sys.stderr, ("Taxid {0} has been replaced by {1}. "
-                        "Please update your records").format(t, m)
+                msg = ("Taxid {0} has been replaced by {1}. "
+                       "Please update your records").format(t, m)
+                print >> sys.stderr, msg
             else:
                 print >>sys.stderr, "Taxid %s not found in taxonomy." % t
             valid_taxids = False
     if not(valid_taxids):
         print >>sys.stderr, "Some taxids were invalid.  Exiting."
-        return 1 # exits with code 1
+        return 1  # exits with code 1
 
     # Extract all the taxids to be exported in the CSV file.
     taxids_to_export = set()
     for t in taxids:
-        taxids_to_export.update([y for (x,y) in tax._get_lineage(t)])
+        taxids_to_export.update([y for (x, y) in tax._get_lineage(t)])
 
-    tax.write_table(taxids_to_export, csvfile = args.out_file)
+    tax.write_table(taxids_to_export, csvfile=args.out_file, full=args.full)
 
     engine.dispose()
     return 0

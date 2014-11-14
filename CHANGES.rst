@@ -2,6 +2,11 @@
  change log for taxtastic
 ==========================
 
+0.5.4-master
+=====
+
+ * Add ``taxit taxtable --full`` for outputing all ranks in header.
+
 0.5.3
 =====
 

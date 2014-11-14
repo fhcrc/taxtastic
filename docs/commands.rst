@@ -121,19 +121,19 @@ A command meant to follow ``lonelynodes`` (below). Given a list of tax_ids produ
 
 Examples::
 
-    taxit findcompany taxonomy.db -i taxids.txt -o newtaxids.txt
-    taxit findcompany taxonomy.db 31661 5213 564
+  taxit findcompany taxonomy.db -i taxids.txt -o newtaxids.txt
+  taxit findcompany taxonomy.db 31661 5213 564
 
-Arguments::
+Arguments:
 
 ``-c``
-    Produce only one output tax_id per input tax_id, whether or not the output species would themselves be lonely.
+  Produce only one output tax_id per input tax_id, whether or not the output species would themselves be lonely.
 
 ``-o``
-    Write new taxids to the specified file. Otherwise they are written to ``stdout``
+  Write new taxids to the specified file. Otherwise they are written to ``stdout``
 
 ``-i``
-    Read taxids from the specified file in addition to any given as command line arguments.
+  Read taxids from the specified file in addition to any given as command line arguments.
 
 
 lonelynodes
@@ -148,7 +148,7 @@ Examples::
     # Find lonely nodes in RefPkg mypkg-0.1.refpkg
     taxit lonelynodes mypkg-0.1.refpkg
 
-Arguments::
+Arguments:
 
 ``-h``
   Print help and exit
@@ -170,7 +170,7 @@ Examples::
 
     # Download the NCBI taxonomy and create taxonomy.db if it does not exist
     taxit new_database -d taxonomy.db
-    
+
     # Force the creation of taxonomy.db in the parent directory, putting
     # the downloaded NCBI data in /tmp/ncbi.
     taxit new_database -d ../taxonomy.db -x -p /tmp/ncbi
@@ -201,7 +201,7 @@ Examples::
     # Reroot the tree in my_refpkg
     taxit reroot my_refpkg
 
-    # Try running reroot without modifying the refpkg, using a particular 
+    # Try running reroot without modifying the refpkg, using a particular
     # version of rppr
     taxit reroot --rppr ~/local/bin/rppr -p my_refpkg
 

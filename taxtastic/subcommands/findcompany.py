@@ -25,8 +25,10 @@ from taxtastic import ncbi
 
 log = logging.getLogger(__name__)
 
+
 class ConfigError(Exception):
     pass
+
 
 def build_parser(parser):
     parser.add_argument("taxdb",
@@ -35,12 +37,13 @@ def build_parser(parser):
                         help='Tax IDs to look up')
     parser.add_argument("-c", "--cut",
                         action="store_true", default=False,
-                        help="Return one output per input (probably also lonely)")
+                        help=('Produce only one output tax_id per input tax_id, '
+                              'whether or not the output species would themselves be lonely.'))
     parser.add_argument("-i", "--input", type=argparse.FileType('r'),
-            default=None, help="Text file to read Tax IDs from, one per line")
+                        default=None, help="Text file to read Tax IDs from, one per line")
     parser.add_argument('-o', '--output',
                         default=None,
-                        help='Write output to given file')
+                        help='Output file for new taxids')
 
 
 def action(args):
