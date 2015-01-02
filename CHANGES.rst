@@ -6,6 +6,8 @@
 =====
 
  * Add ``taxit taxtable --full`` for outputing all ranks in header.
+ * ``taxit taxids`` can process accession numbers by querying NCBI
+ * ``taxit taxids`` output now in csv format query,tax_id
 
 0.5.3
 =====

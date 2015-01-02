@@ -14,6 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
+import csv
 import logging
 import argparse
 import sys
@@ -25,7 +26,8 @@ from taxtastic.ncbi import ranks as ncbi_ranks
 
 log = logging.getLogger(__name__)
 
-def get_children(engine, parent_ids, rank = 'species'):
+
+def get_children(engine, parent_ids, rank='species'):
     """
     Recursively fetch children of tax_ids in `parent_ids` until the
     rank of `rank`
@@ -45,7 +47,9 @@ def get_children(engine, parent_ids, rank = 'species'):
         result = engine.execute(cmd % parent_id)
         keys = result.keys()
         rows = [dict(zip(keys, row)) for row in result.fetchall()]
-        species.extend([r for r in rows if r['rank'] == rank and 'sp.' not in r['tax_name']])
+        species.extend(
+            [r for r in rows if r['rank'] == rank
+                and 'sp.' not in r['tax_name']])
 
         others = [r for r in rows if r['rank'] not in (rank, 'no_rank')]
         if others:
@@ -55,76 +59,124 @@ def get_children(engine, parent_ids, rank = 'species'):
     return keys, species
 
 
+def id_from_accessions(accessions, email=None):
+    from Bio import Entrez
+    from Bio._py3k import HTTPError
+
+    if isinstance(accessions, str):
+        accessions = accessions.split(',')
+
+    if email:
+        Entrez.email = email
+
+    try:
+        handle = Entrez.efetch(
+            db='nucleotide',
+            id=list(accessions),
+            retmode='xml',
+            rettype='fasta')
+
+        for record in Entrez.parse(handle):
+            # split to remove accession version number
+            yield (record['TSeq_accver'].split('.', 1)[0],
+                   record['TSeq_taxid'])
+    except HTTPError as err:
+        # no need to crash everything if no results
+        log.error(err)
+
+
 def build_parser(parser):
 
     parser.add_argument(
-        '-d', '--database-file',
-        action='store', dest='dbfile', default='ncbi_taxonomy.db',
+        '--email',
+        help='email address for use with Bio.Entrez.efetch')
+    parser.add_argument(
+        '--accession', metavar='ACCESSIONS',
+        dest='accessions',
+        help=('list of accession numbers provided as '
+              'a comma-delimited list on the command line')
+    )
+    parser.add_argument(
+        '--accession-file', metavar='FILE',
+        dest='accessions_file', type=argparse.FileType('rU'),
+        help=('file containing a list of accession numbers, one per line')
+    )
+    parser.add_argument(
+        '--database-file', dest='dbfile',
+        action='store',
         help='Filename of sqlite database [%(default)s].',
-        metavar='FILE', required = True)
-
-    input_group = parser.add_argument_group(
-        "Input options").add_mutually_exclusive_group()
-
-    input_group.add_argument(
-        '-f', '--name-file', metavar='FILE', type = argparse.FileType('rU'),
-        dest = 'taxnames_file',
-        help = 'file containing a list of taxonomic names, one per line'
-        )
-    input_group.add_argument(
+        metavar='FILE')
+    parser.add_argument(
+        '-f', '--name-file', metavar='FILE', type=argparse.FileType('rU'),
+        dest='taxnames_file',
+        help=('file containing a list of taxonomic names, one per line')
+    )
+    parser.add_argument(
         '-n', '--name', metavar='NAMES',
-        dest = 'taxnames',
-        help = 'list of taxonomic names provided as a comma-delimited list on the command line'
-        )
+        dest='taxnames',
+        help=('list of taxonomic names provided as '
+              'a comma-delimited list on the command line')
+    )
 
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
     output_group.add_argument(
-        '-o', '--out-file', metavar='FILE', type = argparse.FileType('w'),
-        dest = 'outfile',
-        help = 'output file', default = sys.stdout
-        )
+        '-o', '--out-file', metavar='CSV', type=argparse.FileType('w'),
+        dest='outfile',
+        help='output file', default=sys.stdout
+    )
+
 
 def action(args):
+    csv_out = csv.writer(args.outfile)
 
-    dbfile = args.dbfile
-    taxnames_file = args.taxnames_file
-    taxnames = args.taxnames
+    if args.dbfile:
+        dbfile = args.dbfile
+        taxnames_file = args.taxnames_file
+        taxnames = args.taxnames
 
-    outfile = args.outfile
+        engine = create_engine('sqlite:///{}'.format(dbfile), echo=False)
+        tax = Taxonomy(engine, ncbi_ranks)
 
-    engine = create_engine('sqlite:///%s' % dbfile, echo = False)
-    tax = Taxonomy(engine, ncbi_ranks)
+        names = []
+        if taxnames_file:
+            names += [line.split('#', 1)[0].strip()
+                      for line in taxnames_file if line.strip()
+                      and not line.startswith('#')]
 
-    names = []
-    if taxnames_file:
-        names += [line.split('#', 1)[0].strip() for line in taxnames_file if line.strip() and not line.startswith('#')]
+        if taxnames:
+            names += [x.strip() for x in taxnames.split(',')]
 
-    if taxnames:
-        names += [x.strip() for x in taxnames.split(',')]
+        for name in set(names):
+            tax_id, tax_name, is_primary, rank, note = '', '', '', '', ''
 
-    taxa = {}
-    for name in set(names):
-        tax_id, tax_name, is_primary, rank, note = '','','','', ''
+            try:
+                tax_id, tax_name, is_primary = tax.primary_from_name(name)
+            except KeyError:
+                note = 'not found'
+            else:
+                parent, rank = tax._node(tax_id)
+                note = '' if is_primary else 'not primary'
 
-        try:
-            tax_id, tax_name, is_primary = tax.primary_from_name(name)
-        except KeyError:
-            note = 'not found'
-        else:
-            parent, rank = tax._node(tax_id)
-            note = '' if is_primary else 'not primary'
+            if note:
+                msg = '{name:>20} | {tax_id:>7} {tax_name:>20} {note}'
+                msg = msg.format(**locals())
+                log.warn(msg)
 
-        if note:
-            log.warning('%(name)20s | %(tax_id)7s %(tax_name)20s %(note)s' % locals())
+            if rank == 'species':
+                csv_out.writerow((tax_name, tax_id))
+            else:
+                _, rows = get_children(engine, [tax_id])
+                csv_out.writerows((r['tax_name'], r['tax_id']) for r in rows)
+    elif args.taxnames or args.taxnames_file:
+        log.error('no taxonomy database file specified')
 
-        if rank == 'species':
-            taxa[tax_id] = dict(tax_id=tax_id, tax_name=tax_name, rank=rank)
-        else:
-            keys, rows = get_children(engine, [tax_id])
-            taxa.update(dict((row['tax_id'], row) for row in rows))
+    accessions = set()
+    if args.accessions:
+        accessions |= set(args.accessions.split(','))
 
-    for d in sorted(taxa.values(), key = lambda x: x['tax_name']):
-        outfile.write('%(tax_id)s # %(tax_name)s\n' % d)
+    if args.accessions_file:
+        accessions |= set(a.rstrip() for a in args.accessions_file)
 
-
+    if accessions:
+        csv_out.writerows(id_from_accessions(accessions, email=args.email))
