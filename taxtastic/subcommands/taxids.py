@@ -60,26 +60,45 @@ def get_children(engine, parent_ids, rank='species'):
 
 
 def id_from_accessions(accessions, email=None):
+    """
+    Retrieve tax ids from a list of accessions.
+
+    ncbi.efetch can work unexpectedly when querying a large number of tax ids.
+    The best way to mitigate is to send it only its documented max of 10k ids
+    at a time.  Ncbi claims it can handle more than 10k ids but will
+    occassionally and unexpectedly return an http 503 error when doing so.
+    """
     from Bio import Entrez
     from Bio._py3k import HTTPError
 
     if isinstance(accessions, str):
         accessions = accessions.split(',')
 
+    accessions = list(accessions)
+
     if email:
         Entrez.email = email
 
-    try:
-        handle = Entrez.efetch(
-            db='nucleotide',
-            id=list(accessions),
-            retmode='xml',
-            rettype='fasta')
+    head = 0
+    tail = retmax = 10000
 
-        for record in Entrez.parse(handle):
-            # split to remove accession version number
-            yield (record['TSeq_accver'].split('.', 1)[0],
-                   record['TSeq_taxid'])
+    try:
+        while accessions[head:tail]:
+            handle = Entrez.efetch(
+                db='nucleotide',
+                id=accessions[head:tail],
+                retmode='xml',
+                retmax=retmax,
+                rettype='fasta')
+
+            head = tail
+            tail += retmax
+
+            for record in Entrez.parse(handle):
+                # split to remove accession version number
+                yield (record['TSeq_accver'].split('.', 1)[0],
+                       record['TSeq_taxid'])
+
     except HTTPError as err:
         # no need to crash everything if no results
         log.error(err)
@@ -107,7 +126,8 @@ def build_parser(parser):
         help='Filename of sqlite database [%(default)s].',
         metavar='FILE')
     parser.add_argument(
-        '-f', '--name-file', metavar='FILE', type=argparse.FileType('rU'),
+        '-f', '--name-file', metavar='FILE',
+        type=argparse.FileType('rU'),
         dest='taxnames_file',
         help=('file containing a list of taxonomic names, one per line')
     )
@@ -117,6 +137,9 @@ def build_parser(parser):
         help=('list of taxonomic names provided as '
               'a comma-delimited list on the command line')
     )
+    parser.add_argument(
+        '--no-children', action='store_true',
+        help='return only immediate tax_id ignoring species level children')
 
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
@@ -163,11 +186,12 @@ def action(args):
                 msg = msg.format(**locals())
                 log.warn(msg)
 
-            if rank == 'species':
-                csv_out.writerow((tax_name, tax_id))
+            if args.no_children or rank == 'species':
+                csv_out.writerow((name, tax_name, tax_id))
             else:
-                _, rows = get_children(engine, [tax_id])
-                csv_out.writerows((r['tax_name'], r['tax_id']) for r in rows)
+                _, rows = get_children(engine, [tax_id], rank='species')
+                for r in rows:
+                    csv_out.writerow((name, r['tax_name'], r['tax_id']))
     elif args.taxnames or args.taxnames_file:
         log.error('no taxonomy database file specified')
 

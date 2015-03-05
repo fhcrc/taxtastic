@@ -6,15 +6,21 @@ import copy
 import os
 import os.path
 
+from cStringIO import StringIO
+
 from taxtastic import refpkg
-from taxtastic.subcommands import update, create, strip, rollback, rollforward, taxtable, check, add_to_taxtable
+from taxtastic.subcommands import (update, create, strip, rollback, rollforward,
+                                   taxtable, check, add_to_taxtable, taxids)
 
 import config
 from config import OutputRedirectMixin
 
+
 class TestUpdate(OutputRedirectMixin, unittest.TestCase):
+
     def setUp(self):
         super(TestUpdate, self).setUp()
+
         class _Args(object):
             refpkg = None
             changes = []
@@ -30,7 +36,7 @@ class TestUpdate(OutputRedirectMixin, unittest.TestCase):
             test_file = config.data_path('bv_refdata.csv')
 
             self.args.refpkg = pkg_path
-            self.args.changes = ['meep='+test_file, 'hilda='+test_file]
+            self.args.changes = ['meep=' + test_file, 'hilda=' + test_file]
 
             update.action(self.args)
             r._sync_from_disk()
@@ -74,12 +80,15 @@ class TestUpdate(OutputRedirectMixin, unittest.TestCase):
 
             self.assertIn('tree_stats', r.contents['files'])
             self.assertIn('phylo_model', r.contents['files'])
-            self.assertTrue(r.contents['files']['phylo_model'].endswith('.json'))
+            self.assertTrue(
+                r.contents['files']['phylo_model'].endswith('.json'))
+
 
 class TestCreate(OutputRedirectMixin, unittest.TestCase):
 
     def setUp(self):
         super(TestCreate, self).setUp()
+
         class _Args(object):
             clobber = True
             locus = 'Nowhere'
@@ -100,6 +109,7 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
             reroot = False
             rppr = 'rppr'
             frequency_type = None
+
             def __init__(self, scratch):
                 self.package_name = os.path.join(scratch, 'test.refpkg')
         self._Args = _Args
@@ -135,8 +145,10 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
     def test_create_phyml_aa(self):
         stats_path = os.path.join(config.datadir, 'phyml_aa_stats.txt')
         self._test_create_phylo_model(stats_path, frequency_type='model')
-        self._test_create_phylo_model(stats_path, 'PhyML', frequency_type='model')
-        self._test_create_phylo_model(stats_path, 'PhyML', frequency_type='empirical')
+        self._test_create_phylo_model(
+            stats_path, 'PhyML', frequency_type='model')
+        self._test_create_phylo_model(
+            stats_path, 'PhyML', frequency_type='empirical')
         self.assertRaises(ValueError, self._test_create_phylo_model,
                           stats_path, 'FastTree', frequency_type='empirical')
         self.assertRaises(ValueError, self._test_create_phylo_model,
@@ -144,10 +156,12 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
 
 
 class TestStrip(OutputRedirectMixin, unittest.TestCase):
+
     def test_strip(self):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
-            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            shutil.copytree(
+                config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             r.update_metadata('boris', 'hilda')
             r.update_metadata('meep', 'natasha')
@@ -160,12 +174,15 @@ class TestStrip(OutputRedirectMixin, unittest.TestCase):
             self.assertEqual(r.contents['rollback'], None)
             self.assertEqual(r.contents['rollforward'], None)
 
+
 class TestRollback(OutputRedirectMixin, unittest.TestCase):
     maxDiff = None
+
     def test_rollback(self):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
-            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            shutil.copytree(
+                config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             original_contents = copy.deepcopy(r.contents)
             r.update_metadata('boris', 'hilda')
@@ -174,6 +191,7 @@ class TestRollback(OutputRedirectMixin, unittest.TestCase):
 
             class _Args(object):
                 refpkg = rpkg
+
                 def __init__(self, n):
                     self.n = n
 
@@ -183,16 +201,20 @@ class TestRollback(OutputRedirectMixin, unittest.TestCase):
 
             self.assertEqual(rollback.action(_Args(2)), 0)
             r._sync_from_disk()
-            self.assertEqual(r.contents['metadata'], original_contents['metadata'])
+            self.assertEqual(
+                r.contents['metadata'], original_contents['metadata'])
             self.assertEqual(r.contents['rollback'], None)
             self.assertNotEqual(r.contents['rollforward'], None)
 
+
 class TestRollforward(OutputRedirectMixin, unittest.TestCase):
     maxDiff = None
+
     def test_rollforward(self):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
-            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            shutil.copytree(
+                config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             original_contents = copy.deepcopy(r.contents)
             r.update_metadata('boris', 'hilda')
@@ -203,16 +225,19 @@ class TestRollforward(OutputRedirectMixin, unittest.TestCase):
 
             class _Args(object):
                 refpkg = rpkg
+
                 def __init__(self, n):
                     self.n = n
 
             self.assertEqual(rollforward.action(_Args(3)), 1)
             r._sync_from_disk()
-            self.assertEqual(r.contents['metadata'], original_contents['metadata'])
+            self.assertEqual(
+                r.contents['metadata'], original_contents['metadata'])
 
             self.assertEqual(rollforward.action(_Args(2)), 0)
             r._sync_from_disk()
-            self.assertEqual(r.contents['metadata'], updated_contents['metadata'])
+            self.assertEqual(
+                r.contents['metadata'], updated_contents['metadata'])
             self.assertEqual(r.contents['rollforward'], None)
             self.assertNotEqual(r.contents['rollback'], None)
 
@@ -254,7 +279,7 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
 
     def test_seqinfo(self):
         with tempfile.TemporaryFile() as tf, \
-             open(config.data_path('simple_seqinfo.csv')) as ifp:
+                open(config.data_path('simple_seqinfo.csv')) as ifp:
             class _Args(object):
                 database_file = config.ncbi_master_db
                 taxids = None
@@ -267,13 +292,14 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
             # No output check at present
             self.assertTrue(tf.tell() > 0)
 
+
 class TestAddToTaxtable(OutputRedirectMixin, unittest.TestCase):
     maxDiff = None
 
     def test_seqinfo(self):
         with tempfile.TemporaryFile() as tf, \
-             open(config.data_path('minimal_taxonomy.csv')) as taxtable_fp, \
-             open(config.data_path('minimal_add_taxonomy.csv')) as extra_nodes_fp:
+                open(config.data_path('minimal_taxonomy.csv')) as taxtable_fp, \
+                open(config.data_path('minimal_add_taxonomy.csv')) as extra_nodes_fp:
             class _Args(object):
                 extra_nodes_csv = extra_nodes_fp
                 taxtable = taxtable_fp
@@ -283,8 +309,44 @@ class TestAddToTaxtable(OutputRedirectMixin, unittest.TestCase):
             # No output check at present
             self.assertTrue(tf.tell() > 0)
 
+
 class TestCheck(OutputRedirectMixin, unittest.TestCase):
+
     def test_runs(self):
         class _Args(object):
             refpkg = config.data_path('lactobacillus2-0.2.refpkg')
         self.assertEqual(check.action(_Args()), 0)
+
+
+class TestTaxids(unittest.TestCase):
+
+    def test01(self):
+        """with children
+        """
+
+        out = StringIO()
+        class _Args(object):
+            dbfile = config.data_path('small_taxonomy.db')
+            taxnames = 'Staphylococcus'
+            no_children = False
+            accessions = None
+            accessions_file = None
+            taxnames_file = None
+            outfile = out
+        taxids.action(_Args)
+        self.assertTrue(out.getvalue().strip() == 'Staphylococcus,Staphylococcus aureus,1280')
+
+    def test02(self):
+        """without children
+        """
+        out = StringIO()
+        class _Args(object):
+            dbfile = config.data_path('small_taxonomy.db')
+            taxnames = 'Staphylococcus'
+            no_children = True
+            accessions = None
+            accessions_file = None
+            taxnames_file = None
+            outfile = out
+        taxids.action(_Args)
+        self.assertTrue(out.getvalue().strip() == 'Staphylococcus,Staphylococcus,1279')
