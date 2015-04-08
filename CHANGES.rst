@@ -6,10 +6,10 @@
 =====
 
  * Added ``taxit taxtable --full`` for outputing all ranks in header plus test case
- * ``taxit taxids`` can process accession numbers by querying NCBI
  * ``taxit taxids`` output now in csv format query,tax_id
  * ``taxit taxids --no-children`` return only immediate taxid ignoring all children taxids
  * Added some taxit taxids unittests in test_subcommands.py
+ * ``taxit entrez`` can process accession numbers by querying NCBI
 
 0.5.3
 =====
