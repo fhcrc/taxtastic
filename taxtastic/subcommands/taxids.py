@@ -111,7 +111,11 @@ def action(args):
         if taxnames:
             names += [x.strip() for x in taxnames.split(',')]
 
-        for name in set(names):
+        names = set(names)
+        # remove brackets from names
+        names = (n.replace('[', '').replace(']', '') for n in names)
+
+        for name in names:
             tax_id, tax_name, is_primary, rank, note = '', '', '', '', ''
 
             try:

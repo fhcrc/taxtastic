@@ -10,6 +10,7 @@
  * ``taxit taxids --no-children`` return only immediate taxid ignoring all children taxids
  * Added some taxit taxids unittests in test_subcommands.py
  * ``taxit entrez`` can process accession numbers by querying NCBI
+ * Removing brackets in ``taxit taxids`` "name" queries
 
 0.5.3
 =====
