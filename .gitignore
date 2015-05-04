@@ -8,3 +8,4 @@ doctrees/
 *-env
 *.egg-info
 html
+/docs/_helptext/

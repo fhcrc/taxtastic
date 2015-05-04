@@ -32,15 +32,21 @@ commands = [
     ]
 
 import glob
-from os.path import splitext, split, join
+from os.path import splitext, split, join, dirname
 
-def itermodules(subcommands_path, root=__name__):
+
+def itermodules(subcommands_path=None, root=__name__):
+
+    if subcommands_path is None:
+        subcommands_path = dirname(__file__)
 
     modules = sorted(glob.glob(join(subcommands_path, '*.py')))
     # excluded = set(['lonelynodes'])
     excluded = set()
 
-    commands = [x for x in [splitext(split(p)[1])[0] for p in modules] if not x.startswith('_') and x not in excluded]
+    commands = [x for x in [splitext(split(p)[1])[0]
+                            for p in modules]
+                if not x.startswith('_') and x not in excluded]
 
     for command in commands:
         yield command, __import__('%s.%s' % (root, command), fromlist=[command])
