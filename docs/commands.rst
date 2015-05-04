@@ -7,7 +7,7 @@ This section gives the detailed documentation on ``taxit``'s subcommands, organi
 add_nodes
 ---------
 
-``taxit add_nodes [...] -d database_file -N nodes.csv``
+.. include:: _helptext/add_nodes.txt
 
 Add additional nodes, specified in ``nodes.csv`` to the taxonomy in ``database_file``.  ``nodes.csv`` should be a CSV file with its first line naming fields or an Excel 97 (``.xls``) file.  It *must* specify the columns
 
@@ -37,52 +37,30 @@ Examples::
     # Add the same taxa, but force the source name to be hetty_lab
     taxit add_nodes -d taxonomy.db -N new_taxa.csv -S hetty_lab
 
-Arguments:
+add_to_taxtable
+---------------
 
-``-h``
-  Print help and exit.
-``-d``, ``--database-file``
-  Add the new new nodes to the specified database, which should be one created by the ``taxit new_database`` command.
-``-N``, ``--new-nodes``
-  Pull the new nodes from this file.  The format is specified above.
-``-S``, ``--source-name``
-  Force all the nodes added from this command to have a particular source name.
+.. literalinclude:: _helptext/add_to_taxtable.txt
 
 check
 -----
 
-``taxit check /path/to/refpkg``
+.. include:: _helptext/check.txt
 
-Check whether ``/path/to/refpkg`` is a valid input for ``pplacer``, that is, does it have a FASTA file of the reference sequences, a Stockholm file of their multiple alignment, a Newick formatted tree build from the aligned sequences, and all the necessary auxiliary information.
+composition
+-----------
 
+.. include:: _helptext/composition.txt
 
 create
 ------
 
-``taxit create [...] -P refpkg -l "Locus description"``
+.. include:: _helptext/create.txt
 
-Create a new refpkg at the location specified by the argument to ``-P`` with locus name ``-l``.  All other fields are used to specify initial metadata and files to add to the refpkg.  If there is already a refpkg at ``refpkg``, this command will fail unless you specify ``-c`` or ``--clobber``.
+**Input files**
 
-**General options**
-
-``-c``, ``--clobber``
-  If there is an existing refpkg at the given path, delete it and create a new one.
-``-P``, ``--package-name``
-  Specify the refpkg to create (required).
-
-**Metadata options**
-
-=============================     ===================
-          Option                  Metadata key
-=============================     ===================
-``-a``, ``--author``              ``author``
-``-d``, ``--description``         ``description``
-``-l``, ``--locus``               ``locus``
-``-r``, ``--package-version``     ``package_version``
-=============================     ===================
-
-
-**File options**
+Input files are identified in the refpkg using the following labels
+(see, for example ``taxit rp``):
 
 =========================     ==============     =====================================
           Option                File key         Description
@@ -115,257 +93,175 @@ Examples::
 findcompany
 -----------
 
-``taxit findcompany [-c] taxonomy.db [-i taxids.txt] [taxid ...] [-o output.txt]``
-
-A command meant to follow ``lonelynodes`` (below). Given a list of tax_ids produced by ``taxit lonelynodes``, produces another list of species tax_ids that can be added to the taxtable that would render those tax_ids no longer lonely.
+.. include:: _helptext/findcompany.txt
 
 Examples::
 
   taxit findcompany taxonomy.db -i taxids.txt -o newtaxids.txt
   taxit findcompany taxonomy.db 31661 5213 564
 
-Arguments:
+info
+----
 
-``-c``
-  Produce only one output tax_id per input tax_id, whether or not the output species would themselves be lonely.
-
-``-o``
-  Write new taxids to the specified file. Otherwise they are written to ``stdout``
-
-``-i``
-  Read taxids from the specified file in addition to any given as command line arguments.
+.. include:: _helptext/info.txt
 
 
 lonelynodes
 -----------
 
-``taxit lonelynodes target [-o output.txt]``
-
-Find nodes in ``target`` (which can be a CSV file extracted by ``taxit taxtable`` or a RefPkg containing such a file) which are lonely -- that is, whose parents have only one child. Print them, one per line, to ``stdout`` or to the file specified by the ``-o`` option.
+.. include:: _helptext/lonelynodes.txt
 
 Examples::
 
     # Find lonely nodes in RefPkg mypkg-0.1.refpkg
     taxit lonelynodes mypkg-0.1.refpkg
 
-Arguments:
+merge
+-----
 
-``-h``
-  Print help and exit
-
-``-o``
-  Write resulting tax_ids to a specified filename instead of ``stdout``.
-
-``-v``
-  Run verbosely.
+.. include:: _helptext/merge.txt
 
 new_database
 ------------
 
-``taxit new_database [...] -d database_file``
+.. include:: _helptext/new_database.txt
 
-Download the current version of the NCBI taxonomy and load it into ``database_file`` as an SQLite3 database.  If ``database_file`` already exists, it will fail and leave it untouched unless you specify ``-x`` or ``--clobber``.  The NCBI taxonomy will be downloaded into the same directory as ``database_file`` will be created in unless you specify ``-p`` or ``--download-dir``.
+Examples:
 
-Examples::
+    Download the NCBI taxonomy and create taxonomy.db if it does not exist::
 
-    # Download the NCBI taxonomy and create taxonomy.db if it does not exist
-    taxit new_database -d taxonomy.db
+      taxit new_database -d taxonomy.db
 
-    # Force the creation of taxonomy.db in the parent directory, putting
-    # the downloaded NCBI data in /tmp/ncbi.
-    taxit new_database -d ../taxonomy.db -x -p /tmp/ncbi
+    Force the creation of taxonomy.db in the parent directory, putting
+    the downloaded NCBI data in /tmp/ncbi::
 
-Arguments:
+      taxit new_database -d ../taxonomy.db -x -p /tmp/ncbi
 
-``-h``
-  Print help and exit.
+refpkg_intersection
+-------------------
 
-``-d``, ``--database-file``
-  Specify the file in which the NCBI taxonomy should be written.
-
-``--x``, ``--clobber``
-  Replace ``database_file`` if it already exists.
-
-``-p``, ``--download-dir``
-  Download the NCBI taxonomy into the specified path.  If not specified, the taxonomy will be downloaded into the same directory where the final database will be created.
+.. include:: _helptext/refpkg_intersection.txt
 
 reroot
 ------
 
-``taxit reroot refpkg``
+.. include:: _helptext/reroot.txt
 
-Calls ``rppr reroot`` to generate a rerooted tree from the tree in ``refpkg`` and writes it back to the refpkg.  The refpkg ``refpkg`` must contain the necessary inputs for ``pplacer`` for this to work.
+Examples:
 
-Examples::
+Reroot the tree in my_refpkg::
 
-    # Reroot the tree in my_refpkg
-    taxit reroot my_refpkg
+  taxit reroot my_refpkg
 
-    # Try running reroot without modifying the refpkg, using a particular
-    # version of rppr
-    taxit reroot --rppr ~/local/bin/rppr -p my_refpkg
+Try running reroot without modifying the refpkg, using a particular
+version of rppr::
 
-Arguments:
-
-``--rppr``
-  Specify the path to the ``rppr`` executable to use.
-``-p``, ``--pretend``
-  Calculate the rerooted tree, but don't actually change the tree file in the refpkg.
+  taxit reroot --rppr ~/local/bin/rppr -p my_refpkg
 
 
 rollback
 --------
 
-``taxit rollback [-n N] refpkg``
+.. include:: _helptext/rollback.txt
 
-Rollback ``N`` operations on ``refpkg`` (default to 1 operation if ``-n`` is omitted).  This is equivalent to calling the ``rollback()`` method of ``taxtastic.refpkg.Refpkg``.  If there are not at least ``N`` operations that can be rolled back, an error is returned and no changes are made to the refpkg.
 
-Examples::
+Examples:
 
-    # Update the author on my_refpkg, then roll back the change so
-    # that it is in the same state it was.
-    taxit update --metadata 'author=Boris the mad baboon'
-    taxit rollback my_refpkg
+Update the author on my_refpkg, then revert the change::
 
-    # Roll back the last 3 operations on my_refpkg
-    taxit rollback -n 3 my_refpkg
+  taxit update --metadata 'author=Boris the mad baboon'
+  taxit rollback my_refpkg
 
-Arguments:
+Roll back the last 3 operations on my_refpkg::
 
-``-n``
-  Give an integer specifying the number of operations to roll back (default: 1)
-
+  taxit rollback -n 3 my_refpkg
 
 rollforward
 -----------
 
-``taxit rollforward [-n N] refpkg``
-
-Restore the last ``N`` rolled back operations on ``refpkg``, or the last operation if ``-n`` is omitted.  If there are not at least ``N`` operations that can be rolled forward on this refpkg, then an error is returned and no changes are made to the refpkg.
-
-Note that operations can only be rolled forward immediately after being rolled back.  If any operation besides a rollback occurs, all roll forward information is removed.
-
-Examples::
-
-    # Roll back the last operation on my_refpkg, then restore it.
-    taxit rollback my_refpkg
-    taxit rollforward my_refpkg
-
-    # Roll forward the last 3 rollbacks on my_refpkg
-    taxit rollforward -n 3 my_refpkg
-
-Arguments:
-
-``-n``
-  Give an integer specifying the number of operations to roll back (default: 1)
+.. include:: _helptext/rollforward.txt
 
 
+Examples:
+
+Roll back the last operation on my_refpkg, then restore it::
+
+  taxit rollback my_refpkg
+  taxit rollforward my_refpkg
+
+Roll forward the last 3 rollbacks on my_refpkg::
+
+  taxit rollforward -n 3 my_refpkg
+
+rp (resolve path)
+-----------------
+
+.. include:: _helptext/rp.txt
 
 strip
 -----
 
-``taxit strip refpkg``
+.. include:: _helptext/strip.txt
 
-Delete everything in the refpkg not relevant to the current state: all files not referred to in the current state and all rollback and rollforward information.  The log is preserved, with a new entry entered indicating that ``refpkg`` was stripped.
+Examples:
 
-Examples::
+Perform an update::
 
-    taxit update my_refpkg hilda=file1
+  taxit update my_refpkg hilda=file1
 
-    # After this, file1 is still in the refpkg, but not referred to
-    # except by the rollback information.
-    taxit update my_refpkg hilda=file2
+After this, file1 is still in the refpkg, but not referred to except
+by the rollback information::
 
-    # strip deletes file1, and the rollback and rollforward information
-    taxit strip my_refpkg
+  taxit update my_refpkg hilda=file2
+
+Now ``strip`` deletes file1, and the rollback and rollforward information::
+
+  taxit strip my_refpkg
 
 
 taxids
 ------
 
-``taxit taxids -d ncbi_taxonomy.db [-f file_of_names.txt|-n name1,name2,...] [-o taxids.txt]``
+.. include:: _helptext/taxids.txt
 
-Convert a list of taxonomic names into a list of tax_ids.  ``ncbi_taxonomy.db`` must be a database created by ``taxit new_database``, containing a taxonomy.  The names to convert can be specified in a text file with one name per line (the ``-f`` or ``--name-file`` options) or on the command line as a comma delimited list (the ``-n`` of ``--name`` options).
+Examples:
 
-Examples::
+Look up two species and print their tax_ids to stdout, one per line::
 
-    # Look up two species and print their tax_ids to stdout, one per line
-    taxit taxids -d ncbi_database.db -n "Lactobacillus crispatus,Lactobacillus helveticus"
+  taxit taxids -d ncbi_database.db -n "Lactobacillus crispatus,Lactobacillus helveticus"
 
-    # Read the species from some_names.txt and write their tax_ids to some_taxids.txt
-    taxit taxids -d ncbi_database.db -f some_names.txt -o some_taxids.txt
+Read the species from some_names.txt and write their tax_ids to some_taxids.txt::
 
-Arguments:
-
-``-d``, ``--database-file``
-  The taxonomy file to look up names in.  Must be an SQLite3 database as created by ``taxit new_database``. (Required)
-``-f``, ``--name-file``
-  Read names, one per line, from this file to convert to tax_ids.
-``-n``, ``--name``
-  Specify a comma separated list of names to look up in the taxonomy and convert to tax_ids.
-``-o``, ``--out-file``
-  Write the tax_ids looked up in the taxonomy to this file.  (Default: stdout)
-
+  taxit taxids -d ncbi_database.db -f some_names.txt -o some_taxids.txt
 
 taxtable
 --------
 
-``taxit taxtable [...] -d database_file [-n taxa_names.txt] [-t tax_ids] [-o output.csv]``
+.. include:: _helptext/taxtable.txt
 
-Write a CSV file containing the minimal subset of the taxonomy in ``database_file`` which encompasses all the taxa specified in ``taxa_names.txt`` and ``tax_ids`` and all nodes connecting them to the root of the taxonomy.  By default the CSV is written to ``stdout``, unless redirectored with ``-o`` or ``--out-file``.
+Examples:
 
-``taxa_names.txt`` should be a text file specifying names of taxa.  Python style comments are ignored as are empty lines.  Names may be separated by commas, semicolons, and arbitrary amounts of whitespace on both sides of those separators, but the whitespace within them must be exact (e.g., ``Lactobacillus crispati`` must have exactly one space between the two words to match the entry in the taxonomy).
+Extract tax_ids 47770 and 33945 and all nodes connecting them to the root.::
 
-``tax_ids`` is either a comma or semicolon delimited list of tax_ids (e.g., ``4522,2213;44;221``) or the name of a text file containing tax_ids.  The text file also allows Python style comments, and any non-comment text separated by and combination of spaces, commas, and semicolons is considered a tax_id.
+  taxit taxtable -d taxonomy.db -t 47770,33945
 
-tax_ids and taxa names can overlap, nor does anything have to be unique within either file.  The nodes will only be written once in the CSV output no matter how many times a particular taxon is mentioned.
+The same as above, but write the output to subtax.csv instead of stdout::
 
-Examples::
+  taxit taxtable -d taxonomy.db -t 47770,33945 -o subtax.csv
 
-    # Extract tax_ids 47770 and 33945 and all nodes connecting them to the root.
-    taxit taxtable -d taxonomy.db -t 47770,33945
+Extract the same tax_ids, plus the taxa specifies in taxnames.txt::
 
-    # The same as above, but write the output to subtax.csv instead of stdout
-    taxit taxtable -d taxonomy.db -t 47770,33945 -o subtax.csv
-
-    # Extract the same tax_ids, plus the taxa specifies in taxnames.txt
-    taxit taxtable -d taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv
-
-Arguments:
-
-``-h``
-  Print help and exit.
-``-d``, ``--database-file``
-  Use the specified database as the taxonomy to subset.  The database should be one created by ``taxit new_database``.
-``-n``, ``--tax-names``
-  Include these taxa names and all nodes connecting them to the root of the taxonomy in the output.
-``-t``, ``--tax-ids``
-  Include these tax_ids and all nodes connecting them to the root of the taxonomy in the output.  The argument can be either a filename or a list of tax_ids separated by commas or semicolons.
-``-o``, ``--out-file``
-  Write the output to the given filename instead of stdout.
-
+  taxit taxtable -d taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv
 
 update
 ------
 
-``taxit update refpkg [--metadata] "key=some value" ...``
+.. include:: _helptext/update.txt
 
-Update ``refpkg`` to set ``key`` to ``some value``.  If ``--metadata`` is specified, the update is done to the metadata.  Otherwise ``some value`` is treated as the path to a file, and that file is updated in ``refpkg``.  An arbitrary of "key=value" pairs can be specified on the command line.  If the same key is specified twice, the later occurrence dominates.
 
-All updates specified to an instance of this command are run as a single operation, and will all be undone by a single rollback.
+update_taxids
+-------------
 
-Examples::
+.. include:: _helptext/update_taxids.txt
 
-    # Set the author in my_refpkg
-    taxit update my_refpkg --metadata "author=Boris the mad baboon"
 
-    # Set the author and version at once
-    taxit update my_refpkg --metadata "author=Bill" "package_version=1.7.2"
-
-    # Insert a file into the refpkg
-    taxit update my_refpkg "aln_fasta=/path/to/a/file.fasta"
-
-Arguments:
-
-``--metadata``
-  Treat all the updates as changes to metadata, not files.

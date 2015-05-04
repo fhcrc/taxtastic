@@ -1,5 +1,5 @@
-
 """Add new nodes to a database containing a taxonomy."""
+
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify

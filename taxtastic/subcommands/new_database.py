@@ -1,4 +1,13 @@
-"""Create a database containing an entire taxonomy"""
+"""Create a database containing an entire taxonomy
+
+Download the current version of the NCBI taxonomy and load it into
+``database_file`` as an SQLite3 database.  If ``database_file``
+already exists, it will fail and leave it untouched unless you specify
+``-x`` or ``--clobber``.  The NCBI taxonomy will be downloaded into
+the same directory as ``database_file`` will be created in unless you
+specify ``-p`` or ``--download-dir``.
+
+"""
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify

@@ -1,15 +1,41 @@
-"""
-Adds or updates files or metdata in a refpkg.
+"""Add or modify files or metadata in a refpkg
 
-The update subcommand takes a refpkg to operate on, then a series of changes to make, expressed as key=file.  So to add a file ../otherdir/boris under the key 'meep' and abcd under the key 'hilda' in a refpkg 'my-refpkg', you would run
+Update ``refpkg`` to set ``key`` to ``some value``.  If ``--metadata``
+is specified, the update is done to the metadata.  Otherwise ``some
+value`` is treated as the path to a file, and that file is updated in
+``refpkg``.  An arbitrary of "key=value" pairs can be specified on the
+command line.  If the same key is specified twice, the later
+occurrence dominates.
 
-$ taxit update my-refpkg meep=../otherdir/boris hilda=abcd
+All updates specified to an instance of this command are run as a
+single operation, and will all be undone by a single rollback.
+
+For example::
+
+  taxit update my-refpkg meep=../otherdir/boris hilda=abcd
 
 If a file already exists under a given key, it is overwritten.
 
-Passing taxit update the --metadata option makes it update the metadata instead of files.  For example, to set the author field to "Genghis Khan" and the version to 0.4.3, run
+The --metadata option causes a change to the metadata instead of
+files.  For example, to set the author field to "Genghis Khan" and the
+version to 0.4.3::
 
-$ taxit update --metadata "author=Genghis Khan" version=0.4.3
+  taxit update --metadata "author=Genghis Khan" version=0.4.3
+
+Other examples:
+
+Set the author in my_refpkg::
+
+  taxit update my_refpkg --metadata "author=Boris the mad baboon"
+
+Set the author and version at once::
+
+  taxit update my_refpkg --metadata "author=Bill" "package_version=1.7.2"
+
+Insert a file into the refpkg::
+
+  taxit update my_refpkg "aln_fasta=/path/to/a/file.fasta"
+
 """
 # This file is part of taxtastic.
 #

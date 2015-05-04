@@ -33,9 +33,7 @@ def main(arguments):
     # subcommand.
     for name, module in subcommands.itermodules():
         with open(os.path.join(args.outdir, name + '.txt'), 'w') as f:
-            subprocess.Popen([args.taxit, name, '-h'], stdout=f)
-
+            subprocess.call([args.taxit, name, '-h'], stdout=f)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
-

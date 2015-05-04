@@ -1,4 +1,5 @@
-"""Identify merged taxids and provide new ones."""
+"""Identify merged taxids and provide replacements."""
+
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -30,23 +31,24 @@ import sys
 
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
 
     parser.add_argument(
         '-d', '--database-file',
-        dest = 'database_file',
-        metavar = 'FILE',
-        required = True,
-        help = 'Name of the sqlite database file')
+        dest='database_file',
+        metavar='FILE',
+        required=True,
+        help='Name of the sqlite database file')
 
     input_group = parser.add_argument_group(
         "Input options").add_mutually_exclusive_group()
 
     input_group.add_argument(
         '-t', '--tax-ids',
-        dest = 'taxids',
-        metavar = 'FILE-OR-LIST',
-        help = """File containing a whitespace-delimited list of
+        dest='taxids',
+        metavar='FILE-OR-LIST',
+        help="""File containing a whitespace-delimited list of
         tax_ids (ie, separated by tabs, spaces, or newlines; lines
         beginning with "#" are ignored). This option can also be
         passed a comma-delited list of taxids on the command line.""")
@@ -62,10 +64,11 @@ def build_parser(parser):
     output_group.add_argument(
         '-o', '--out-file',
         dest='out_file',
-        type = argparse.FileType('w'),
-        default = sys.stdout,
+        type=argparse.FileType('w'),
+        default=sys.stdout,
         metavar='FILE',
         help="""headerless csv file containing old_id,new_id""")
+
 
 def action(args):
     engine = create_engine('sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
@@ -94,9 +97,9 @@ def action(args):
             # Check for merged
             m = tax._get_merged(t)
             if m and m != t:
-                writer.writerow([t,m])
+                writer.writerow([t, m])
             else:
-                writer.writerow([t,None])
+                writer.writerow([t, None])
 
     engine.dispose()
     return 0
