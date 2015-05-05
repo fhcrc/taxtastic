@@ -2,10 +2,12 @@
  change log for taxtastic
 ==========================
 
-0.5.4-master
+0.5.4
 =====
 
  * Add ``taxit taxtable --full`` for outputing all ranks in header.
+ * Update subcommand help text
+ * Generate Sphinx docs using help text emitted by subcommands (#70)
 
 0.5.3
 =====
