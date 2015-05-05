@@ -7,7 +7,7 @@ This section gives the detailed documentation on ``taxit``'s subcommands, organi
 add_nodes
 ---------
 
-.. include:: _helptext/add_nodes.txt
+.. literalinclude:: _helptext/add_nodes.txt
 
 Add additional nodes, specified in ``nodes.csv`` to the taxonomy in ``database_file``.  ``nodes.csv`` should be a CSV file with its first line naming fields or an Excel 97 (``.xls``) file.  It *must* specify the columns
 
@@ -45,17 +45,17 @@ add_to_taxtable
 check
 -----
 
-.. include:: _helptext/check.txt
+.. literalinclude:: _helptext/check.txt
 
 composition
 -----------
 
-.. include:: _helptext/composition.txt
+.. literalinclude:: _helptext/composition.txt
 
 create
 ------
 
-.. include:: _helptext/create.txt
+.. literalinclude:: _helptext/create.txt
 
 **Input files**
 
@@ -93,7 +93,7 @@ Examples::
 findcompany
 -----------
 
-.. include:: _helptext/findcompany.txt
+.. literalinclude:: _helptext/findcompany.txt
 
 Examples::
 
@@ -103,13 +103,13 @@ Examples::
 info
 ----
 
-.. include:: _helptext/info.txt
+.. literalinclude:: _helptext/info.txt
 
 
 lonelynodes
 -----------
 
-.. include:: _helptext/lonelynodes.txt
+.. literalinclude:: _helptext/lonelynodes.txt
 
 Examples::
 
@@ -119,12 +119,12 @@ Examples::
 merge
 -----
 
-.. include:: _helptext/merge.txt
+.. literalinclude:: _helptext/merge.txt
 
 new_database
 ------------
 
-.. include:: _helptext/new_database.txt
+.. literalinclude:: _helptext/new_database.txt
 
 Examples:
 
@@ -140,12 +140,12 @@ Examples:
 refpkg_intersection
 -------------------
 
-.. include:: _helptext/refpkg_intersection.txt
+.. literalinclude:: _helptext/refpkg_intersection.txt
 
 reroot
 ------
 
-.. include:: _helptext/reroot.txt
+.. literalinclude:: _helptext/reroot.txt
 
 Examples:
 
@@ -162,7 +162,7 @@ version of rppr::
 rollback
 --------
 
-.. include:: _helptext/rollback.txt
+.. literalinclude:: _helptext/rollback.txt
 
 
 Examples:
@@ -179,7 +179,7 @@ Roll back the last 3 operations on my_refpkg::
 rollforward
 -----------
 
-.. include:: _helptext/rollforward.txt
+.. literalinclude:: _helptext/rollforward.txt
 
 
 Examples:
@@ -196,12 +196,12 @@ Roll forward the last 3 rollbacks on my_refpkg::
 rp (resolve path)
 -----------------
 
-.. include:: _helptext/rp.txt
+.. literalinclude:: _helptext/rp.txt
 
 strip
 -----
 
-.. include:: _helptext/strip.txt
+.. literalinclude:: _helptext/strip.txt
 
 Examples:
 
@@ -222,7 +222,7 @@ Now ``strip`` deletes file1, and the rollback and rollforward information::
 taxids
 ------
 
-.. include:: _helptext/taxids.txt
+.. literalinclude:: _helptext/taxids.txt
 
 Examples:
 
@@ -237,7 +237,7 @@ Read the species from some_names.txt and write their tax_ids to some_taxids.txt:
 taxtable
 --------
 
-.. include:: _helptext/taxtable.txt
+.. literalinclude:: _helptext/taxtable.txt
 
 Examples:
 
@@ -256,12 +256,12 @@ Extract the same tax_ids, plus the taxa specifies in taxnames.txt::
 update
 ------
 
-.. include:: _helptext/update.txt
+.. literalinclude:: _helptext/update.txt
 
 
 update_taxids
 -------------
 
-.. include:: _helptext/update_taxids.txt
+.. literalinclude:: _helptext/update_taxids.txt
 
 
