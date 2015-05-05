@@ -1,13 +1,16 @@
+"""Restore a change to a refpkg immediately after being reverted.
+
+Restore the last ``N`` rolled back operations on ``refpkg``, or the
+last operation if ``-n`` is omitted.  If there are not at least ``N``
+operations that can be rolled forward on this refpkg, then an error is
+returned and no changes are made to the refpkg.
+
+Note that operations can only be rolled forward immediately after
+being rolled back.  If any operation besides a rollback occurs, all
+roll forward information is removed.
+
 """
-Rollforward a rolled back command on a refpkg.
 
-$ taxit rollforward my-refpkg
-
-You can also specify -n # to specify the number of operations to roll
-forward (defaults to 1), as in
-
-$ taxit rollforward -n 3 my-refpkg
-"""
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -24,11 +27,11 @@ $ taxit rollforward -n 3 my-refpkg
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import sys
 
 from taxtastic import refpkg
 
 log = logging.getLogger(__name__)
+
 
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',
@@ -36,6 +39,7 @@ def build_parser(parser):
     parser.add_argument('-n', action='store', metavar='int',
                         default=1, type=int,
                         help='Number of operations to roll back')
+
 
 def action(args):
     """Roll forward previously rolled back commands on a refpkg.
@@ -51,8 +55,10 @@ def action(args):
     # First check if we can do n rollforwards
     q = r.contents
     for i in xrange(args.n):
-        if q['rollforward'] == None:
-            print >>sys.stderr, 'Cannot rollforward %d changes; refpkg only records %d rolled back changes.' % (args.n, i)
+        if q['rollforward'] is None:
+            log.error(
+                'Cannot rollforward {} changes; '
+                'refpkg only records {} rolled back changes.'.format(args.n, i))
             return 1
         else:
             q = q['rollforward'][1]
@@ -60,4 +66,3 @@ def action(args):
     for i in xrange(args.n):
         r.rollforward()
     return 0
-

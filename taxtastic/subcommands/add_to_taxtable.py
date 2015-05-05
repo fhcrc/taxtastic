@@ -1,4 +1,5 @@
-"""Adds some nodes to a taxtable"""
+"""Add nodes to a taxtable"""
+
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -23,16 +24,19 @@ from taxtastic import taxtable
 
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
-    parser.add_argument("taxtable", type=argparse.FileType('r'),
-            help="""A taxtable to augment""")
-    parser.add_argument("extra_nodes_csv", type=argparse.FileType('r'),
-            help="""A CSV file containing nodes to add to `taxtable`. Must
-            contain columns "tax_id", "tax_name", "rank", and "parent_id". Each
-            record must have a parent_id already in the taxtable, or defined on
-            an earlier row.""")
-    parser.add_argument('-o', '--out-file', type=argparse.FileType('w'), default=sys.stdout,
-            help="""Destination for output taxtable [default: stdout]""")
+    parser.add_argument(
+        "taxtable", type=argparse.FileType('r'), help="""A taxtable to augment""")
+    parser.add_argument(
+        'extra_nodes_csv', type=argparse.FileType('r'), help="""A CSV
+        file containing nodes to add to taxtable. Must contain columns
+        'tax_id', 'tax_name', 'rank', and 'parent_id'. Each record
+        must have a parent_id already in the taxtable, or defined on
+        an earlier row.""")
+    parser.add_argument(
+        '-o', '--out-file', type=argparse.FileType('w'), default=sys.stdout,
+        help="""Destination for output taxtable [default: stdout]""")
 
 
 def add_rank(tax, parent_node, rank):
@@ -44,19 +48,21 @@ def add_rank(tax, parent_node, rank):
     # intervening ranks, but we don't have enough information to sort that.
     tax.ranks.insert(parent_idx + 1, rank)
 
+
 def action(args):
     with args.taxtable as fp:
         tax = taxtable.read(fp)
 
     with args.extra_nodes_csv:
         reader = csv.DictReader(args.extra_nodes_csv)
-        missing_fields = frozenset(['tax_id', 'tax_name', 'rank', 'parent_id']) - frozenset(reader.fieldnames)
+        missing_fields = frozenset(
+            ['tax_id', 'tax_name', 'rank', 'parent_id']) - frozenset(reader.fieldnames)
         if missing_fields:
             raise IOError("Missing expected fields: {0}".format(','.join(missing_fields)))
         for row in reader:
             if row['tax_id'] in tax.index:
                 logging.warn("tax_id %s already represented in taxtable. [row %d]",
-                        row['tax_id'], reader.line_num)
+                             row['tax_id'], reader.line_num)
                 continue
 
             parent_id = row['parent_id']
@@ -64,15 +70,17 @@ def action(args):
             try:
                 parent_node = tax.get_node(parent_id)
             except KeyError:
-                raise KeyError("Parent {parent_id} of {tax_id}[{tax_name}] not found.".format(
-                    **row))
+                raise KeyError(
+                    "Parent {parent_id} of {tax_id}[{tax_name}] not found.".format(**row))
             if rank not in tax.ranks:
                 add_rank(tax, parent_node, rank)
-            node = taxtable.TaxNode(tax_id=row['tax_id'],
-                name=row['tax_name'], rank=rank)
+            node = taxtable.TaxNode(
+                tax_id=row['tax_id'], name=row['tax_name'], rank=rank)
             parent_node.add_child(node)
-            logging.info("Added %s %s[%s] below %s %s[%s]", node.rank, node.tax_id, node.name,
-                    parent_node.rank, parent_node.tax_id, parent_node.name)
+            logging.info(
+                "Added %s %s[%s] below %s %s[%s]",
+                node.rank, node.tax_id, node.name,
+                parent_node.rank, parent_node.tax_id, parent_node.name)
 
     tax.write_taxtable(args.out_file)
 

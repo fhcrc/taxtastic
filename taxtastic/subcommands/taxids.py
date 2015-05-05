@@ -1,4 +1,13 @@
-"""Look up a set of tax_ids from taxonomic names"""
+"""Convert a list of taxonomic names into a list of tax_ids
+
+``ncbi_taxonomy.db`` must be a database created by ``taxit
+new_database``, containing a taxonomy. The names to convert can be
+specified in a text file with one name per line (the ``-f`` or
+``--name-file`` options) or on the command line as a comma delimited
+list (the ``-n`` of ``--name`` options).
+
+"""
+
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -25,7 +34,8 @@ from taxtastic.ncbi import ranks as ncbi_ranks
 
 log = logging.getLogger(__name__)
 
-def get_children(engine, parent_ids, rank = 'species'):
+
+def get_children(engine, parent_ids, rank='species'):
     """
     Recursively fetch children of tax_ids in `parent_ids` until the
     rank of `rank`
@@ -45,7 +55,8 @@ def get_children(engine, parent_ids, rank = 'species'):
         result = engine.execute(cmd % parent_id)
         keys = result.keys()
         rows = [dict(zip(keys, row)) for row in result.fetchall()]
-        species.extend([r for r in rows if r['rank'] == rank and 'sp.' not in r['tax_name']])
+        species.extend([r for r in rows
+                        if r['rank'] == rank and 'sp.' not in r['tax_name']])
 
         others = [r for r in rows if r['rank'] not in (rank, 'no_rank')]
         if others:
@@ -61,29 +72,29 @@ def build_parser(parser):
         '-d', '--database-file',
         action='store', dest='dbfile', default='ncbi_taxonomy.db',
         help='Filename of sqlite database [%(default)s].',
-        metavar='FILE', required = True)
+        metavar='FILE', required=True)
 
     input_group = parser.add_argument_group(
         "Input options").add_mutually_exclusive_group()
 
     input_group.add_argument(
-        '-f', '--name-file', metavar='FILE', type = argparse.FileType('rU'),
-        dest = 'taxnames_file',
-        help = 'file containing a list of taxonomic names, one per line'
-        )
+        '-f', '--name-file', metavar='FILE', type=argparse.FileType('rU'),
+        dest='taxnames_file',
+        help='file containing a list of taxonomic names, one per line')
+
     input_group.add_argument(
         '-n', '--name', metavar='NAMES',
-        dest = 'taxnames',
-        help = 'list of taxonomic names provided as a comma-delimited list on the command line'
-        )
+        dest='taxnames',
+        help=('list of taxonomic names provided as a comma-delimited '
+              'list on the command line'))
 
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
     output_group.add_argument(
-        '-o', '--out-file', metavar='FILE', type = argparse.FileType('w'),
-        dest = 'outfile',
-        help = 'output file', default = sys.stdout
-        )
+        '-o', '--out-file', metavar='FILE', type=argparse.FileType('w'),
+        dest='outfile',
+        help='output file', default=sys.stdout)
+
 
 def action(args):
 
@@ -93,19 +104,21 @@ def action(args):
 
     outfile = args.outfile
 
-    engine = create_engine('sqlite:///%s' % dbfile, echo = False)
+    engine = create_engine('sqlite:///%s' % dbfile, echo=False)
     tax = Taxonomy(engine, ncbi_ranks)
 
     names = []
     if taxnames_file:
-        names += [line.split('#', 1)[0].strip() for line in taxnames_file if line.strip() and not line.startswith('#')]
+        names += [line.split('#', 1)[0].strip()
+                  for line in taxnames_file
+                  if line.strip() and not line.startswith('#')]
 
     if taxnames:
         names += [x.strip() for x in taxnames.split(',')]
 
     taxa = {}
     for name in set(names):
-        tax_id, tax_name, is_primary, rank, note = '','','','', ''
+        tax_id, tax_name, is_primary, rank, note = '', '', '', '', ''
 
         try:
             tax_id, tax_name, is_primary = tax.primary_from_name(name)
@@ -124,7 +137,5 @@ def action(args):
             keys, rows = get_children(engine, [tax_id])
             taxa.update(dict((row['tax_id'], row) for row in rows))
 
-    for d in sorted(taxa.values(), key = lambda x: x['tax_name']):
+    for d in sorted(taxa.values(), key=lambda x: x['tax_name']):
         outfile.write('%(tax_id)s # %(tax_name)s\n' % d)
-
-

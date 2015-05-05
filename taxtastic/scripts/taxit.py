@@ -89,6 +89,7 @@ def parse_arguments(argv):
         # individual subcommand ((`script action -h`)).
         subparser = subparsers.add_parser(
             name,
+            prog='taxit {}'.format(name),
             help=mod.__doc__.lstrip().split('\n', 1)[0],
             description=mod.__doc__,
             formatter_class=RawDescriptionHelpFormatter,

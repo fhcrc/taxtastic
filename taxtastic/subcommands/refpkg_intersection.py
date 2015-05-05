@@ -14,6 +14,7 @@ from taxtastic.taxdb import Taxdb
 
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
     parser.add_argument('infile', type=argparse.FileType('r'),
                         help='taxtable to compare against')
@@ -23,8 +24,9 @@ def build_parser(parser):
                         help='ranks to list in the output')
     parser.add_argument('--all-ranks', default=False, action='store_true',
                         help="don't filter by the lowest rank; list all intersections")
-    parser.add_argument('-o','--outfile', type=argparse.FileType('w'), default=sys.stdout,
+    parser.add_argument('-o', '--outfile', type=argparse.FileType('w'), default=sys.stdout,
                         help='output file in csv format (default is stdout)')
+
 
 def test_output(infile, outfile, ranks):
     """

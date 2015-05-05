@@ -1,4 +1,12 @@
-"""Find company for lonely nodes."""
+"""Find company for lonely nodes.
+
+A command meant to follow ``lonelynodes``. Given a list of tax_ids
+produced by ``taxit lonelynodes``, produces another list of species
+tax_ids that can be added to the taxtable that would render those
+tax_ids no longer lonely.
+
+"""
+
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -35,10 +43,11 @@ def build_parser(parser):
                         help="Taxonomy database to work from")
     parser.add_argument("tax_ids", type=str, nargs='*',
                         help='Tax IDs to look up')
-    parser.add_argument("-c", "--cut",
-                        action="store_true", default=False,
-                        help=('Produce only one output tax_id per input tax_id, '
-                              'whether or not the output species would themselves be lonely.'))
+    parser.add_argument(
+        "-c", "--cut",
+        action="store_true", default=False,
+        help=('Produce only one output tax_id per input tax_id, '
+              'whether or not the output species would themselves be lonely.'))
     parser.add_argument("-i", "--input", type=argparse.FileType('r'),
                         default=None, help="Text file to read Tax IDs from, one per line")
     parser.add_argument('-o', '--output',
