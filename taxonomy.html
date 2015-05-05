@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Manipulating the NCBI taxonomy &mdash; taxtastic 0.5.3-3-g3d73975 documentation</title>
+    <title>Manipulating the NCBI taxonomy &mdash; taxtastic 0.5.4 documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.3-3-g3d73975',
+        VERSION:     '0.5.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,12 +23,12 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="taxtastic 0.5.3-3-g3d73975 documentation" href="index.html" />
+    <link rel="top" title="taxtastic 0.5.4 documentation" href="index.html" />
     <link rel="next" title="Creating and manipulating refpkgs" href="refpkg.html" />
     <link rel="prev" title="Quickstart" href="quickstart.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -40,18 +40,18 @@
         <li class="right" >
           <a href="quickstart.html" title="Quickstart"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">taxtastic 0.5.3-3-g3d73975 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.5.4 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="manipulating-the-ncbi-taxonomy">
 <h1>Manipulating the NCBI taxonomy<a class="headerlink" href="#manipulating-the-ncbi-taxonomy" title="Permalink to this headline">¶</a></h1>
-<p>The first thing we must do is download a copy of the NCBI taxonomy.  The taxit subcommand <tt class="docutils literal"><span class="pre">new_database</span></tt> does this for us and loads the taxonomy into an SQLite3 database that taxit can use.:</p>
+<p>The first thing we must do is download a copy of the NCBI taxonomy.  The taxit subcommand <code class="docutils literal"><span class="pre">new_database</span></code> does this for us and loads the taxonomy into an SQLite3 database that taxit can use.:</p>
 <div class="highlight-python"><div class="highlight"><pre>$ taxit new_database -d taxonomy.db
 </pre></div>
 </div>
@@ -59,7 +59,7 @@
 <div class="highlight-python"><div class="highlight"><pre>$ taxit taxtable -d taxonomy.db -t 47770,33945 -o minimal_taxonomy.csv
 </pre></div>
 </div>
-<p>The file <tt class="docutils literal"><span class="pre">minimal_taxonomy.csv</span></tt> contains the entries for the two species we specified, along with all nodes of the taxonomy which connect them to the root of the taxonomy.  The file&#8217;s contents are:</p>
+<p>The file <code class="docutils literal"><span class="pre">minimal_taxonomy.csv</span></code> contains the entries for the two species we specified, along with all nodes of the taxonomy which connect them to the root of the taxonomy.  The file&#8217;s contents are:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="s">&quot;tax_id&quot;</span><span class="p">,</span><span class="s">&quot;parent_id&quot;</span><span class="p">,</span><span class="s">&quot;rank&quot;</span><span class="p">,</span><span class="s">&quot;tax_name&quot;</span><span class="p">,</span><span class="s">&quot;root&quot;</span><span class="p">,</span><span class="s">&quot;below_root&quot;</span><span class="p">,</span><span class="s">&quot;superkingdom&quot;</span><span class="p">,</span><span class="s">&quot;phylum&quot;</span><span class="p">,</span><span class="s">&quot;class&quot;</span><span class="p">,</span><span class="s">&quot;order&quot;</span><span class="p">,</span><span class="s">&quot;family&quot;</span><span class="p">,</span><span class="s">&quot;genus&quot;</span><span class="p">,</span><span class="s">&quot;species&quot;</span>
 <span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;root&quot;</span><span class="p">,</span><span class="s">&quot;root&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
 <span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;below_root&quot;</span><span class="p">,</span><span class="s">&quot;cellular organisms&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
@@ -76,7 +76,7 @@
 </pre></div>
 </div>
 <p>Each entry is listed with the information about its node (tax_id, parent, rank, etc.), and a series of fields giving the lineage of taxids connecting this node to the root of the taxonomy.</p>
-<p>For large numbers of tax_ids, it is awkard or impossible to pass them on the command line to <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></tt>.  In these cases, you can also give the <tt class="docutils literal"><span class="pre">-t</span></tt> option a filename containing taxids.  The file understands Python style comments, and extracts tax_ids from each line seperated by spaces, commas, or semicolons, as in:</p>
+<p>For large numbers of tax_ids, it is awkard or impossible to pass them on the command line to <code class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></code>.  In these cases, you can also give the <code class="docutils literal"><span class="pre">-t</span></code> option a filename containing taxids.  The file understands Python style comments, and extracts tax_ids from each line seperated by spaces, commas, or semicolons, as in:</p>
 <div class="highlight-python"><div class="highlight"><pre># This is an example file of tax_ids
 47770 # one per line works just fine
 33945 87541, 358;    1383 # or separations with spaces, commas, or semicolons
@@ -85,38 +85,38 @@
 47770 # repeating taxids is just fine; they will only be included one
 </pre></div>
 </div>
-<p>If this were placed in <tt class="docutils literal"><span class="pre">taxids.txt</span></tt>, we would extract the minimal taxonomy containing these taxids with:</p>
+<p>If this were placed in <code class="docutils literal"><span class="pre">taxids.txt</span></code>, we would extract the minimal taxonomy containing these taxids with:</p>
 <div class="highlight-python"><div class="highlight"><pre>$ taxit taxtable -d taxonomy.db -t taxids.txt -o taxonomy_from_taxids.csv
 </pre></div>
 </div>
-<p>Sometimes you will have the names of taxonomic nodes instead of tax_ids or some names and some tax_ids.  <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></tt> also accepts names, passed in a file via the <tt class="docutils literal"><span class="pre">-n</span></tt> option.  For instance, if we had the tax_ids from the above file besides 47770 and 33945 as names instead,:</p>
+<p>Sometimes you will have the names of taxonomic nodes instead of tax_ids or some names and some tax_ids.  <code class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></code> also accepts names, passed in a file via the <code class="docutils literal"><span class="pre">-n</span></code> option.  For instance, if we had the tax_ids from the above file besides 47770 and 33945 as names instead,:</p>
 <div class="highlight-python"><div class="highlight"><pre>Aerococcus christensenii # Python style comments work here as well
 Agrobacterium tumefaciens, Atopobium rimae # but only , and ; separate fields, not space
 Atopobium rimae # Again, repeated names don&#39;t matter
 </pre></div>
 </div>
-<p>If this were placed in <tt class="docutils literal"><span class="pre">taxnames.txt</span></tt> and we passed the original tax_ids of 47770 and 33945 as well, we would extract the same subtaxonomy as above with:</p>
+<p>If this were placed in <code class="docutils literal"><span class="pre">taxnames.txt</span></code> and we passed the original tax_ids of 47770 and 33945 as well, we would extract the same subtaxonomy as above with:</p>
 <div class="highlight-python"><div class="highlight"><pre>$ taxit taxtable -d taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv
 </pre></div>
 </div>
-<p>In these examples we have used only species level tax_ids.  This is not necessary.  If you pass <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></tt> a family level tax_id, it will add the family and all nodes connecting it to the root of the taxonomy.  However, it will not add any species, genera, or the like below the level of that family, so passing higher rank tax_ids in this manner is not terribly useful.</p>
-<p>Occasionally you will want to augment the NCBI taxonomy with entries of your own.  The <tt class="docutils literal"><span class="pre">taxit</span> <span class="pre">add_nodes</span></tt> command takes an Excel 97 or CSV file, with a header line, and adds its entries to the database.  The new nodes must include fields for <tt class="docutils literal"><span class="pre">tax_id</span></tt>, <tt class="docutils literal"><span class="pre">parent_id</span></tt>, <tt class="docutils literal"><span class="pre">rank</span></tt>, and <tt class="docutils literal"><span class="pre">tax_name</span></tt>.  For instance, if we want to add a new species Lactobacillus borisii, to which we have assigned the arbitrary tax_id AA1 (the NCBI taxonomy doesn&#8217;t use letters in its tax_ids, so a safe way to avoid collisions is to choose a couple letters as a prefix for your own additions), we would put it in the following form::</p>
+<p>In these examples we have used only species level tax_ids.  This is not necessary.  If you pass <code class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></code> a family level tax_id, it will add the family and all nodes connecting it to the root of the taxonomy.  However, it will not add any species, genera, or the like below the level of that family, so passing higher rank tax_ids in this manner is not terribly useful.</p>
+<p>Occasionally you will want to augment the NCBI taxonomy with entries of your own.  The <code class="docutils literal"><span class="pre">taxit</span> <span class="pre">add_nodes</span></code> command takes an Excel 97 or CSV file, with a header line, and adds its entries to the database.  The new nodes must include fields for <code class="docutils literal"><span class="pre">tax_id</span></code>, <code class="docutils literal"><span class="pre">parent_id</span></code>, <code class="docutils literal"><span class="pre">rank</span></code>, and <code class="docutils literal"><span class="pre">tax_name</span></code>.  For instance, if we want to add a new species Lactobacillus borisii, to which we have assigned the arbitrary tax_id AA1 (the NCBI taxonomy doesn&#8217;t use letters in its tax_ids, so a safe way to avoid collisions is to choose a couple letters as a prefix for your own additions), we would put it in the following form::</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="s">&quot;tax_id&quot;</span><span class="p">,</span><span class="s">&quot;parent_id&quot;</span><span class="p">,</span><span class="s">&quot;rank&quot;</span><span class="p">,</span><span class="s">&quot;tax_name&quot;</span>
 <span class="s">&quot;AA1&quot;</span><span class="p">,</span><span class="s">&quot;1578&quot;</span><span class="p">,</span><span class="s">&quot;species&quot;</span><span class="p">,</span><span class="s">&quot;Lactobacillus borisii&quot;</span>
 </pre></div>
 </div>
-<p>where 1578 is the tax_id of the genus Lactobacillus.  If we put this text in <tt class="docutils literal"><span class="pre">new_taxa.csv</span></tt>, we would add it with the command:</p>
+<p>where 1578 is the tax_id of the genus Lactobacillus.  If we put this text in <code class="docutils literal"><span class="pre">new_taxa.csv</span></code>, we would add it with the command:</p>
 <div class="highlight-python"><div class="highlight"><pre>$ taxit add_nodes -d taxonomy.db -N new_taxa.csv
 </pre></div>
 </div>
-<p>Then we could refer to either Lactobacillus borisii or the tax_id AA1 when extracting subtaxonomies from <tt class="docutils literal"><span class="pre">taxonomy.db</span></tt>.</p>
+<p>Then we could refer to either Lactobacillus borisii or the tax_id AA1 when extracting subtaxonomies from <code class="docutils literal"><span class="pre">taxonomy.db</span></code>.</p>
 </div>
 
 
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="quickstart.html"
@@ -124,12 +124,14 @@ Atopobium rimae # Again, repeated names don&#39;t matter
   <h4>Next topic</h4>
   <p class="topless"><a href="refpkg.html"
                         title="next chapter">Creating and manipulating refpkgs</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/taxonomy.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/taxonomy.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -146,7 +148,7 @@ Atopobium rimae # Again, repeated names don&#39;t matter
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -158,12 +160,12 @@ Atopobium rimae # Again, repeated names don&#39;t matter
         <li class="right" >
           <a href="quickstart.html" title="Quickstart"
              >previous</a> |</li>
-        <li><a href="index.html">taxtastic 0.5.3-3-g3d73975 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.5.4 documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
-        &copy; Copyright 2011-2014, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2011-2015, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>
