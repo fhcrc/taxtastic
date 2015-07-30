@@ -1,8 +1,12 @@
-"""
-Removes all rollback and rollforward information and files not attached to the current state from a refpkg.
+"""Remove rollback and rollforward information from a refpkg
 
-$ taxit strip my-refpkg
+Delete everything in the refpkg not relevant to the current state,
+including all files no longer referred to, as well as all rollback and
+rollforward information. The log is preserved, with a new entry
+entered indicating that ``refpkg`` was stripped.
+
 """
+
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -23,6 +27,7 @@ import logging
 from taxtastic import refpkg
 
 log = logging.getLogger(__name__)
+
 
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',

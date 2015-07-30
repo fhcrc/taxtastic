@@ -1,6 +1,7 @@
+"""Show taxonomic composition of a reference package.
+
 """
-Show taxonomic composition of a reference package.
-"""
+
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -30,19 +31,19 @@ log = logging.getLogger(__name__)
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',
                         help='the reference package to operate on', nargs='?')
-    parser.add_argument('-t', '--taxonomy', metavar = 'csv file',
-                        help = 'Path to taxtable '
+    parser.add_argument('-t', '--taxonomy', metavar='csv file',
+                        help='Path to taxtable '
                         '(ignored if refpkg is provided, required otherwise)')
-    parser.add_argument('-i', '--seq_info', metavar = 'csv file',
-                        help = 'Path to seq_info '
+    parser.add_argument('-i', '--seq_info', metavar='csv file',
+                        help='Path to seq_info '
                         '(ignored if refpkg is provided, required otherwise)')
-    parser.add_argument('-r', '--rank', default = 'species', metavar = 'RANK',
-                        help = 'show composition at RANK [%(default)s]')
-    parser.add_argument('-o', '--outfile', default = sys.stdout,
-                        type = argparse.FileType('w'),
-                        help = ('rank at which to show composition. Use '
-                                '--rank=tax_id to show original '
-                                'classifications [%(default)s]'))
+    parser.add_argument('-r', '--rank', default='species', metavar='RANK',
+                        help='show composition at RANK [%(default)s]')
+    parser.add_argument('-o', '--outfile', default=sys.stdout,
+                        type=argparse.FileType('w'),
+                        help=('rank at which to show composition. Use '
+                              '--rank=tax_id to show original '
+                              'classifications [stdout]'))
 
 
 def action(args):

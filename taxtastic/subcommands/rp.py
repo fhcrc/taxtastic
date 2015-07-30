@@ -1,8 +1,17 @@
-"""
-Resolve path; get the path to a file in the reference package.
+"""Resolve path; get the path to a file in the reference package.
 
-Usage is simple: `taxit rp my.refpkg tree` will cause the absolute path to the
-`tree` file in the refpkg to be written to stdout.
+See online documentation for ``taxit create`` for a list of
+permissible values for ``KEY``
+
+For example, write the absolute path to the file containing the
+phylogenetic tree in ``my.refpkg`` to stdout::
+
+  taxit rp my.refpkg tree
+
+Examine the contents of the seq_info file::
+
+  less $(taxit rp my.refpkg seq_info)
+
 """
 # This file is part of taxtastic.
 #
@@ -26,11 +35,12 @@ from taxtastic import refpkg
 
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',
                         help='the reference package to operate on')
-    parser.add_argument('item', action='store', metavar='item',
-                        help='the item to get out of the reference package')
+    parser.add_argument('item', action='store', metavar='KEY',
+                        help='show the path for file identified by KEY')
 
 
 def action(args):

@@ -1,4 +1,11 @@
-"""Taxonomically reroots a reference package"""
+"""Taxonomically reroots a reference package
+
+Calls ``rppr reroot`` to generate a rerooted tree from the tree in
+``refpkg`` and writes it back to the refpkg.  The refpkg ``refpkg``
+must contain the necessary inputs for ``pplacer`` for this to work.
+
+"""
+
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -19,6 +26,7 @@ from taxtastic import refpkg
 
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',
                         help='the reference package to operate on')
@@ -27,6 +35,7 @@ def build_parser(parser):
     parser.add_argument('-p', '--pretend',
                         action='store_true', default=False,
                         help="don't save the rerooted tree; just attempt the rerooting.")
+
 
 def action(args):
     r = refpkg.Refpkg(args.refpkg, create=False)

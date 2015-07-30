@@ -2,15 +2,19 @@
  change log for taxtastic
 ==========================
 
-0.5.4-master
+0.5.5
 =====
-
- * Added ``taxit taxtable --full`` for outputing all ranks in header plus test case
  * ``taxit taxids`` output now in csv format query,tax_id
  * ``taxit taxids --no-children`` return only immediate taxid ignoring all children taxids
  * Added some taxit taxids unittests in test_subcommands.py
  * ``taxit entrez`` can process accession numbers by querying NCBI
  * Removing brackets in ``taxit taxids`` "name" queries
+
+0.5.4
+=====
+ * Add ``taxit taxtable --full`` for outputing all ranks in header.
+ * Update subcommand help text
+ * Generate Sphinx docs using help text emitted by subcommands (#70)
 
 0.5.3
 =====

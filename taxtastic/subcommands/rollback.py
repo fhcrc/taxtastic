@@ -1,12 +1,11 @@
-"""
-Rollback a refpkg to undo the previous command.
+"""Undo an operation performed on a refpkg.
 
-$ taxit rollback my-refpkg
+Rollback ``N`` operations on ``refpkg`` (default to 1 operation if
+``-n`` is omitted).  This is equivalent to calling the ``rollback()``
+method of ``taxtastic.refpkg.Refpkg``.  If there are not at least
+``N`` operations that can be rolled back, an error is returned and no
+changes are made to the refpkg.
 
-You can also specify -n # to specify the number of operations to roll
-back (defaults to 1), as in
-
-$ taxit rollback -n 3 my-refpkg
 """
 # This file is part of taxtastic.
 #

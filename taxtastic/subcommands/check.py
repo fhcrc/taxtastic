@@ -1,5 +1,10 @@
-"""
-Run a series of deeper checks on a RefPkg.
+"""Validate a reference package.
+
+Checks whether ``REFPKG`` is a valid input for ``pplacer``, that is,
+does it have a FASTA file of the reference sequences; a Stockholm file
+of their multiple alignment; a Newick formatted tree build from the
+aligned sequences; and all the necessary auxiliary information.
+
 """
 # This file is part of taxtastic.
 #
@@ -18,9 +23,11 @@ Run a series of deeper checks on a RefPkg.
 
 import taxtastic.refpkg
 
+
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='REFPKG',
-        help='Path to Refpkg to check')
+                        help='Path to Refpkg to check')
+
 
 def action(args):
     r = taxtastic.refpkg.Refpkg(args.refpkg, create=False)

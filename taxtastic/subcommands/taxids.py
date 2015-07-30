@@ -1,4 +1,13 @@
-"""Look up a set of tax_ids from taxonomic names"""
+"""Convert a list of taxonomic names into a list of tax_ids
+
+``ncbi_taxonomy.db`` must be a database created by ``taxit
+new_database``, containing a taxonomy. The names to convert can be
+specified in a text file with one name per line (the ``-f`` or
+``--name-file`` options) or on the command line as a comma delimited
+list (the ``-n`` of ``--name`` options).
+
+"""
+
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -50,7 +59,6 @@ def get_children(engine, parent_ids, rank='species'):
         species.extend(
             [r for r in rows if r['rank'] == rank
                 and 'sp.' not in r['tax_name']])
-
         others = [r for r in rows if r['rank'] not in (rank, 'no_rank')]
         if others:
             _, s = get_children(engine, [r['tax_id'] for r in others])
