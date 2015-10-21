@@ -32,15 +32,18 @@ from taxtastic import lonely, refpkg
 
 log = logging.getLogger(__name__)
 
+
 class ConfigError(Exception):
     pass
+
 
 def comma_separated_set(s):
     return frozenset(i.strip() for i in s.split(','))
 
+
 def build_parser(parser):
     parser.add_argument("target",
-                        metavar = "taxtable_or_refpkg",
+                        metavar="taxtable_or_refpkg",
                         action="store",
                         help='A taxtable or a refpkg containing a taxtable')
     parser.add_argument('-o', '--output',
@@ -49,6 +52,7 @@ def build_parser(parser):
                         help="""Write output to given file [default: stdout]""")
     parser.add_argument('-r', '--ranks', help="""Comma separated list of ranks
             to consider [default: all ranks]""", type=comma_separated_set)
+
 
 def action(args):
     if not(os.path.exists(args.target)):
@@ -70,5 +74,5 @@ def action(args):
         result = (n for n in result if n.rank in args.ranks)
 
     writer = csv.writer(args.output)
-    writer.writerow(['tax_name','tax_id','rank'])
+    writer.writerow(['tax_name', 'tax_id', 'rank'])
     writer.writerows(sorted((n.tax_name, n.key, n.rank) for n in result))

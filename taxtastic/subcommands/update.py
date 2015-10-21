@@ -60,6 +60,7 @@ from taxtastic import refpkg
 
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',
                         help='the reference package to operate on')
@@ -71,10 +72,10 @@ def build_parser(parser):
     stats_group = parser.add_argument_group('Tree inference log file parsing '
                                             '(for updating `tree_stats`)')
     stats_group.add_argument("--stats-type", choices=('PhyML', 'FastTree', 'RAxML'),
-                        help="""stats file type [default: attempt to guess from
+                             help="""stats file type [default: attempt to guess from
                         file contents]""")
     stats_group.add_argument("--frequency-type", choices=('empirical', 'model'),
-                        help="""Residue frequency type from the model. Required
+                             help="""Residue frequency type from the model. Required
                         for PhyML Amino Acid alignments.""")
 
 
@@ -94,9 +95,9 @@ def action(args):
         rp.start_transaction()
         for key, value in pairs:
             rp.update_metadata(key, value)
-        rp.commit_transaction('Updated metadata: ' + \
-                                  ', '.join(['%s=%s' % (a,b)
-                                             for a,b in pairs]))
+        rp.commit_transaction('Updated metadata: ' +
+                              ', '.join(['%s=%s' % (a, b)
+                                         for a, b in pairs]))
     else:
         for key, filename in pairs:
             if not(os.path.exists(filename)):
@@ -108,7 +109,8 @@ def action(args):
         for key, filename in pairs:
             if key == 'tree_stats':
                 with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", refpkg.DerivedFileNotUpdatedWarning)
+                    warnings.simplefilter(
+                        "ignore", refpkg.DerivedFileNotUpdatedWarning)
                     rp.update_file(key, os.path.abspath(filename))
                 # Trigger model update
                 log.info('Updating phylo_model to match tree_stats')
@@ -118,6 +120,6 @@ def action(args):
                 rp.update_file(key, os.path.abspath(filename))
 
         rp.commit_transaction('Updates files: ' +
-                                  ', '.join(['%s=%s' % (a,b)
-                                             for a, b in pairs]))
+                              ', '.join(['%s=%s' % (a, b)
+                                         for a, b in pairs]))
     return 0

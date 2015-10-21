@@ -29,12 +29,14 @@ from taxtastic import refpkg
 
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',
                         help='the reference package to operate on')
     parser.add_argument('-n', action='store', metavar='int',
                         default=1, type=int,
                         help='Number of operations to roll back')
+
 
 def action(args):
     """Roll back commands on a refpkg.
@@ -51,7 +53,8 @@ def action(args):
     q = r.contents
     for i in xrange(args.n):
         if q['rollback'] == None:
-            print >>sys.stderr, 'Cannot rollback %d changes; refpkg only records %d changes.' % (args.n, i)
+            print >>sys.stderr, 'Cannot rollback %d changes; refpkg only records %d changes.' % (
+                args.n, i)
             return 1
         else:
             q = q['rollback']
@@ -60,4 +63,3 @@ def action(args):
         r.rollback()
 
     return 0
-

@@ -52,7 +52,8 @@ if xlrd:
         w = xlrd.open_workbook(filename)
         datemode = w.datemode
         s = w.sheet_by_index(0)
-        rows = ([_cellval(c, datemode) for c in s.row(i)] for i in xrange(s.nrows))
+        rows = ([_cellval(c, datemode) for c in s.row(i)]
+                for i in xrange(s.nrows))
 
         firstrow = rows.next()
         headers = [str('_'.join(x.split())) for x in firstrow]
@@ -81,6 +82,7 @@ if xlrd:
 
         return headers, iter(lines)
 
+
 def get_new_nodes(fname):
     """
     Return an iterator of dicts given either an .xls spreadsheet or
@@ -89,9 +91,10 @@ def get_new_nodes(fname):
 
     if fname.endswith('.xls'):
         if not xlrd:
-            raise AttributeError('xlrd not installed: cannot parse .xls files.')
+            raise AttributeError(
+                'xlrd not installed: cannot parse .xls files.')
 
-        fmts = {'tax_id':'%i', 'parent_id':'%i'}
+        fmts = {'tax_id': '%i', 'parent_id': '%i'}
         headers, rows = read_spreadsheet(fname, fmts)
     elif fname.endswith('.csv'):
         with open(fname, 'rU') as infile:
@@ -99,7 +102,6 @@ def get_new_nodes(fname):
             rows = (d for d in reader if d['tax_id'])
     else:
         raise ValueError('Error: %s must be in .csv or .xls format')
-
 
     # for now, children are provided as a semicolon-delimited list
     # within a cell (yes, yuck). We need to convert thit into a list
@@ -111,6 +113,7 @@ def get_new_nodes(fname):
             else:
                 del d['children']
         yield d
+
 
 def getlines(fname):
     """
@@ -128,12 +131,14 @@ def getlines(fname):
 def try_set_fields(d, regex, text, hook=lambda x: x):
     v = re.search(regex, text, re.MULTILINE)
     if v:
-        d.update(dict([(key,hook(val)) for key,val
+        d.update(dict([(key, hook(val)) for key, val
                        in v.groupdict().iteritems()]))
     return d
 
+
 class InvalidLogError(ValueError):
     pass
+
 
 def parse_raxml(handle):
     """Parse RAxML's summary output.
@@ -146,12 +151,12 @@ def parse_raxml(handle):
     try_set_fields(result, r'(?P<program>RAxML version [0-9.]+)', s)
     try_set_fields(result, r'(?P<datatype>DNA|RNA|AA)', s)
     result['empirical_frequencies'] = (result['datatype'] != 'AA' or
-        re.search('empirical base frequencies', s, re.IGNORECASE) is not None)
+                                       re.search('empirical base frequencies', s, re.IGNORECASE) is not None)
     try_set_fields(result, r'Substitution Matrix: (?P<subs_model>\w+)', s)
     rates = {}
     if result['datatype'] != 'AA':
         try_set_fields(rates,
-                    (r"rates\[0\] ac ag at cg ct gt: "
+                       (r"rates\[0\] ac ag at cg ct gt: "
                         r"(?P<ac>[0-9.]+) (?P<ag>[0-9.]+) (?P<at>[0-9.]+) "
                         r"(?P<cg>[0-9.]+) (?P<ct>[0-9.]+) (?P<gt>[0-9.]+)"), s, hook=float)
         try_set_fields(rates, r'rate A <-> C: (?P<ac>[0-9.]+)', s, hook=float)
@@ -172,6 +177,7 @@ def parse_raxml(handle):
 JTT_MODEL = 'ML Model: Jones-Taylor-Thorton, CAT approximation with 20 rate categories'
 WAG_MODEL = 'ML Model: Whelan-And-Goldman, CAT approximation with 20 rate categories'
 
+
 def parse_fasttree(fobj):
     data = {
         'empirical_frequencies': True,
@@ -181,7 +187,8 @@ def parse_fasttree(fobj):
         'Price-CAT': {},
     }
     for line in fobj:
-        if not line.strip(): continue
+        if not line.strip():
+            continue
         splut = line.split()
         if splut[0] == 'FastTree':
             data['program'] = line.strip()
@@ -210,6 +217,7 @@ def parse_fasttree(fobj):
 
     return data
 
+
 def parse_phyml(fobj, frequency_type=None):
     if frequency_type not in (None, 'empirical', 'model'):
         raise ValueError("Unknown frequency_type: {0}".format(frequency_type))
@@ -219,7 +227,7 @@ def parse_phyml(fobj, frequency_type=None):
     try_set_fields(result['gamma'], r'Number of categories:\s+(?P<n_cats>\d+)',
                    s, hook=int)
     try_set_fields(result['gamma'],
-            r'Gamma shape parameter:\s+(?P<alpha>\d+\.\d+)', s, hook=float)
+                   r'Gamma shape parameter:\s+(?P<alpha>\d+\.\d+)', s, hook=float)
     result['ras_model'] = 'gamma'
     if 'nucleotides' in s:
         result['datatype'] = 'DNA'
@@ -252,6 +260,7 @@ def parse_phyml(fobj, frequency_type=None):
         raise ValueError('Could not determine if alignment is AA or DNA')
 
     return result
+
 
 def has_rppr(rppr_name='rppr'):
     """

@@ -24,6 +24,7 @@ from sqlalchemy.sql import select
 
 from . import ncbi
 
+
 class Taxonomy(object):
 
     def __init__(self, engine, ranks=ncbi.ranks, undefined_rank='no_rank', undef_prefix='below'):
@@ -127,7 +128,8 @@ class Taxonomy(object):
 
         names = self.names
 
-        s1 = select([names.c.tax_id, names.c.is_primary], names.c.tax_name == tax_name)
+        s1 = select([names.c.tax_id, names.c.is_primary],
+                    names.c.tax_name == tax_name)
 
         log.debug(str(s1))
 
@@ -155,13 +157,15 @@ class Taxonomy(object):
         );
         """
 
-        s = select([self.merged.c.new_tax_id], self.merged.c.old_tax_id == old_tax_id)
+        s = select([self.merged.c.new_tax_id],
+                   self.merged.c.old_tax_id == old_tax_id)
         res = s.execute()
         output = res.fetchall() or None
 
         if output is not None:
             if len(output) > 1:
-                raise ValueError('There is more than one value for merged.old_tax_id = "%s"' % old_tax_id)
+                raise ValueError(
+                    'There is more than one value for merged.old_tax_id = "%s"' % old_tax_id)
             else:
                 output = output[0][0]
         else:
@@ -179,10 +183,10 @@ class Taxonomy(object):
             tax_id = self._get_merged(tax_id)
 
         # Note: indent is referenced through locals() below
-        indent = '.'*_level
+        indent = '.' * _level
 
         undefined = self.undefined_rank
-        prefix = self.undef_prefix+'_'
+        prefix = self.undef_prefix + '_'
 
         lineage = self.cached.get(tax_id)
 
@@ -195,7 +199,7 @@ class Taxonomy(object):
 
             # recursively add parent_ids until we reach the root
             if parent_id != tax_id:
-                lineage = self._get_lineage(parent_id, _level+1) + lineage
+                lineage = self._get_lineage(parent_id, _level + 1) + lineage
 
             # now that we've reached the root, rename any undefined ranks
             _parent_rank, _parent_id = None, None
@@ -209,7 +213,7 @@ class Taxonomy(object):
                     lineage[i] = (_rank, _tax_id)
                     self.cached[_tax_id] = lineage
                     log.debug('renamed undefined rank to %s in element %s of lineage of %s',
-                            _rank, i, tax_id)
+                              _rank, i, tax_id)
 
                 _parent_rank, _parent_id = _rank, _tax_id
 
@@ -219,7 +223,8 @@ class Taxonomy(object):
 
     def synonyms(self, tax_id=None, tax_name=None):
         if not bool(tax_id) ^ bool(tax_name):
-            raise ValueError('Exactly one of tax_id and tax_name may be provided.')
+            raise ValueError(
+                'Exactly one of tax_id and tax_name may be provided.')
 
         names = self.names
 
@@ -241,14 +246,14 @@ class Taxonomy(object):
 
         return output
 
-
     def lineage(self, tax_id=None, tax_name=None):
         """
         Public method for returning a lineage; includes tax_name and rank
         """
 
         if not bool(tax_id) ^ bool(tax_name):
-            raise ValueError('Exactly one of tax_id and tax_name may be provided.')
+            raise ValueError(
+                'Exactly one of tax_id and tax_name may be provided.')
 
         if tax_name:
             tax_id, primary_name, is_primary = self.primary_from_name(tax_name)
@@ -291,7 +296,7 @@ class Taxonomy(object):
             ranks = self.ranks
         else:
             represented = set(itertools.chain.from_iterable(
-                    [[node[0] for node in lineage] for lineage in lin]))
+                [[node[0] for node in lineage] for lineage in lin]))
             ranks = [r for r in self.ranks if r in represented]
 
         lineages = [self.lineage(tax_id) for tax_id in taxa]
@@ -304,7 +309,7 @@ class Taxonomy(object):
         writer.writeheader()
 
         for lin in sorted(lineages, key=lambda x: (ranks.index(x['rank']), x['tax_name'])):
-             writer.writerow(lin)
+            writer.writerow(lin)
 
     def add_source(self, name, description=None):
         """
@@ -313,7 +318,7 @@ class Taxonomy(object):
         """
 
         try:
-            result = self.source.insert().execute(name = name, description = description)
+            result = self.source.insert().execute(name=name, description=description)
             source_id, success = result.inserted_primary_key[0], True
         except sqlalchemy.exc.IntegrityError:
             s = select([self.source.c.id], self.source.c.name == name)
@@ -321,30 +326,31 @@ class Taxonomy(object):
 
         return source_id, success
 
-    def add_node(self, tax_id, parent_id, rank, tax_name, children = None, source_id=None, source_name=None, **kwargs):
-
+    def add_node(self, tax_id, parent_id, rank, tax_name, children=None, source_id=None, source_name=None, **kwargs):
         """
         Add a node to the taxonomy.
         """
 
         if not (source_id or source_name):
-            raise ValueError('Taxonomy.add_node requires source_id or source_name')
+            raise ValueError(
+                'Taxonomy.add_node requires source_id or source_name')
 
         if not source_id:
             source_id, source_is_new = self.add_source(name=source_name)
 
-        self.nodes.insert().execute(tax_id = tax_id,
-                                    parent_id = parent_id,
-                                    rank = rank,
-                                    source_id = source_id)
+        self.nodes.insert().execute(tax_id=tax_id,
+                                    parent_id=parent_id,
+                                    rank=rank,
+                                    source_id=source_id)
 
-        self.names.insert().execute(tax_id = tax_id,
-                                    tax_name = tax_name,
-                                    is_primary = 1)
+        self.names.insert().execute(tax_id=tax_id,
+                                    tax_name=tax_name,
+                                    is_primary=1)
 
         if children:
             for child in children:
-                ret = self.nodes.update(self.nodes.c.tax_id == child, {'parent_id':tax_id})
+                ret = self.nodes.update(self.nodes.c.tax_id == child, {
+                                        'parent_id': tax_id})
                 ret.execute()
 
         lineage = self.lineage(tax_id)
@@ -368,7 +374,8 @@ class Taxonomy(object):
         res = s.execute()
         output = res.fetchone()
         if not output:
-            log.warning('No sibling of tax_id %s with rank %s found in taxonomy' % (tax_id, rank))
+            log.warning(
+                'No sibling of tax_id %s with rank %s found in taxonomy' % (tax_id, rank))
             return None
         else:
             return output[0]
@@ -406,7 +413,8 @@ class Taxonomy(object):
         res = s.execute()
         output = res.fetchone()
         if not output:
-            log.warning("No children of tax_id %s with rank below %s found in database" % (tax_id, rank))
+            log.warning(
+                "No children of tax_id %s with rank below %s found in database" % (tax_id, rank))
             return None
         else:
             r = output[0]
@@ -439,7 +447,6 @@ class Taxonomy(object):
                 return q[0]
             else:
                 return None
-
 
     def nary_subtree(self, tax_id, n=2):
         """Return a list of species tax_ids under *tax_id* such that
@@ -474,6 +481,7 @@ class Taxonomy(object):
 
 ranks = ['species', 'genus', 'family', 'order', 'class', 'phylum', 'kingdom']
 
+
 def is_below(lower, upper):
     try:
         lindex = ranks.index(lower)
@@ -482,12 +490,14 @@ def is_below(lower, upper):
     except:
         return False
 
+
 def ranks_below(rank):
     try:
         idx = ranks.index(rank)
         return ranks[:idx]
     except:
         return []
+
 
 def rank_below(rank):
     return {'kingdom': 'phylum',
@@ -496,4 +506,3 @@ def rank_below(rank):
             'order': 'family',
             'family': 'genus',
             'genus': 'species'}[rank]
-

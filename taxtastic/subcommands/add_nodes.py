@@ -25,21 +25,22 @@ from sqlalchemy.exc import IntegrityError
 import logging
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
 
     parser.add_argument(
         '-d', '--database-file',
-        dest = 'database_file',
-        metavar = 'FILE',
-        required = True,
-        help = 'Name of the sqlite database file')
+        dest='database_file',
+        metavar='FILE',
+        required=True,
+        help='Name of the sqlite database file')
 
     parser.add_argument(
         '-N', '--new-nodes',
-        dest = 'new_nodes',
-        metavar = 'FILE',
-        required = True,
-        help = """An Excel spreadsheet (.xls/pre-Excel 2007 format
+        dest='new_nodes',
+        metavar='FILE',
+        required=True,
+        help="""An Excel spreadsheet (.xls/pre-Excel 2007 format
         only; requires xlrd) or csv-format file defining nodes to add
         to the taxonomy.  Mandatory fields include "tax_id",
         "parent_id", "rank", "tax_name"; optional fields include
@@ -55,8 +56,8 @@ def build_parser(parser):
         "source_name" in the input provided by
         `--new-nodes`). [%(default)s]""")
 
-def action(args):
 
+def action(args):
 
     dbname = args.database_file
     new_nodes = args.new_nodes

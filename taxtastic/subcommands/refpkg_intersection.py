@@ -35,7 +35,8 @@ def test_output(infile, outfile, ranks):
     """
 
     with open(infile, 'rU') as i, open(outfile, 'rU') as o:
-        taxids_in = set(d['tax_id'] for d in csv.DictReader(i) if d['rank'] in ranks)
+        taxids_in = set(d['tax_id']
+                        for d in csv.DictReader(i) if d['rank'] in ranks)
         taxids_out = set(d['tax_id'] for d in csv.DictReader(o))
 
         assert len(taxids_in - taxids_out) == 0, taxids_in - taxids_out
