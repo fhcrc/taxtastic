@@ -16,9 +16,7 @@ log = logging
 outputdir = os.path.abspath(config.outputdir)
 datadir = os.path.abspath(config.datadir)
 
-xlrd_is_installed = hasattr(taxtastic.utils, 'read_spreadsheet')
 
-@unittest.skipUnless(xlrd_is_installed, 'xlrd required')
 class TestReadSpreadsheet(unittest.TestCase):
 
     def setUp(self):
@@ -60,13 +58,12 @@ class TestGetNewNodes(unittest.TestCase):
                 val = d['children']
                 self.assertTrue(val and isinstance(val, list))
 
-    @unittest.skipUnless(xlrd_is_installed, 'xlrd required')
     def test01(self):
         rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
         check = lambda val: isinstance(val, str) and '.' not in val
         self.assertTrue(all([check(row['parent_id']) for row in rows]))
 
-    @unittest.skipIf(xlrd_is_installed, 'test behavior without xlrd')
+    @unittest.skip('no idea what this is testing')
     def test02(self):
         rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
         self.assertRaises(AttributeError, next, rows)
