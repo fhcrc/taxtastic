@@ -19,6 +19,7 @@ passed to ``taxit create --seq-info``
 
 """
 
+import csv
 import logging
 import pandas
 import sys
@@ -128,6 +129,6 @@ def action(args):
     if args.unknowns:
         # unknown taxids are set to empty string in taxid_updater
         rows[rows['tax_id'].isnull()].to_csv(
-            args.unknowns, index=False, columns=columns)
+            args.unknowns, index=False, columns=columns, quoting=csv.QUOTE_NONNUMERIC)
 
-    rows.to_csv(args.out_file, index=False, columns=columns)
+    rows.to_csv(args.out_file, index=False, columns=columns, quoting=csv.QUOTE_NONNUMERIC)
