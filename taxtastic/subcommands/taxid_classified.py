@@ -74,7 +74,7 @@ def action(args):
         raise ValueError("No tax_id column")
 
     if 'taxid_classified' in rows.columns:
-        rows.drop('taxid_classified', axis=1)
+        rows = rows.drop('taxid_classified', axis=1)
 
     e = sqlalchemy.create_engine('sqlite:///{0}'.format(args.database_file))
     tax = Taxonomy(e, ncbi.ranks)
