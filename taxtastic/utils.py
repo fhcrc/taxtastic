@@ -18,69 +18,64 @@ import logging
 import os
 import re
 import subprocess
+import xlrd
 
 log = logging
 
-try:
-    # download: http://pypi.python.org/pypi/xlrd
-    # docs: http://www.lexicon.net/sjmachin/xlrd.html
-    import xlrd
-except ImportError:
-    xlrd = None
 
-if xlrd:
-    def _cellval(cell_obj, datemode):
-        if cell_obj.ctype == xlrd.XL_CELL_DATE:
-            timetup = xlrd.xldate_as_tuple(cell_obj.value, datemode)
-            val = datetime.datetime(*timetup)
-        elif cell_obj.ctype == xlrd.XL_CELL_TEXT:
-            # coerce to pain text from unicode
-            val = str(cell_obj.value).strip()
-        else:
-            val = cell_obj.value
+def _cellval(cell_obj, datemode):
+    if cell_obj.ctype == xlrd.XL_CELL_DATE:
+        timetup = xlrd.xldate_as_tuple(cell_obj.value, datemode)
+        val = datetime.datetime(*timetup)
+    elif cell_obj.ctype == xlrd.XL_CELL_TEXT:
+        # coerce to pain text from unicode
+        val = str(cell_obj.value).strip()
+    else:
+        val = cell_obj.value
 
-        return val
+    return val
 
-    def read_spreadsheet(filename, fmts=None):
-        """
-        Read excel spreadsheet, performing type coersion as specified
-        in fmts (dict keyed by column name returning either a
-        formatting string or a function such as str, int, float,
-        etc). Returns (list headers, iter rows)
-        """
 
-        w = xlrd.open_workbook(filename)
-        datemode = w.datemode
-        s = w.sheet_by_index(0)
-        rows = ([_cellval(c, datemode) for c in s.row(i)]
-                for i in xrange(s.nrows))
+def read_spreadsheet(filename, fmts=None):
+    """
+    Read excel spreadsheet, performing type coersion as specified
+    in fmts (dict keyed by column name returning either a
+    formatting string or a function such as str, int, float,
+    etc). Returns (list headers, iter rows)
+    """
 
-        firstrow = rows.next()
-        headers = [str('_'.join(x.split())) for x in firstrow]
+    w = xlrd.open_workbook(filename)
+    datemode = w.datemode
+    s = w.sheet_by_index(0)
+    rows = ([_cellval(c, datemode) for c in s.row(i)]
+            for i in xrange(s.nrows))
 
-        lines = []
-        for row in rows:
-            # valid rows have at least one value
-            if not any([bool(cell) for cell in row]):
-                continue
+    firstrow = rows.next()
+    headers = [str('_'.join(x.split())) for x in firstrow]
 
-            d = dict(zip(headers, row))
+    lines = []
+    for row in rows:
+        # valid rows have at least one value
+        if not any([bool(cell) for cell in row]):
+            continue
 
-            if fmts:
-                for colname in fmts.keys():
-                    if hasattr(fmts[colname], '__call__'):
-                        formatter = fmts[colname]
-                    else:
-                        formatter = lambda val: fmts[colname] % val
+        d = dict(zip(headers, row))
 
-                    try:
-                        d[colname] = formatter(d[colname])
-                    except (TypeError, ValueError, AttributeError):
-                        pass
+        if fmts:
+            for colname in fmts.keys():
+                if hasattr(fmts[colname], '__call__'):
+                    formatter = fmts[colname]
+                else:
+                    formatter = lambda val: fmts[colname] % val
 
-            lines.append(d)
+                try:
+                    d[colname] = formatter(d[colname])
+                except (TypeError, ValueError, AttributeError):
+                    pass
 
-        return headers, iter(lines)
+        lines.append(d)
+
+    return headers, iter(lines)
 
 
 def get_new_nodes(fname):
@@ -90,10 +85,6 @@ def get_new_nodes(fname):
     """
 
     if fname.endswith('.xls'):
-        if not xlrd:
-            raise AttributeError(
-                'xlrd not installed: cannot parse .xls files.')
-
         fmts = {'tax_id': '%i', 'parent_id': '%i'}
         headers, rows = read_spreadsheet(fname, fmts)
     elif fname.endswith('.csv'):
@@ -150,15 +141,17 @@ def parse_raxml(handle):
     result = {}
     try_set_fields(result, r'(?P<program>RAxML version [0-9.]+)', s)
     try_set_fields(result, r'(?P<datatype>DNA|RNA|AA)', s)
-    result['empirical_frequencies'] = (result['datatype'] != 'AA' or
-                                       re.search('empirical base frequencies', s, re.IGNORECASE) is not None)
+    result['empirical_frequencies'] = (
+        result['datatype'] != 'AA' or
+        re.search('empirical base frequencies', s, re.IGNORECASE) is not None)
     try_set_fields(result, r'Substitution Matrix: (?P<subs_model>\w+)', s)
     rates = {}
     if result['datatype'] != 'AA':
         try_set_fields(rates,
                        (r"rates\[0\] ac ag at cg ct gt: "
                         r"(?P<ac>[0-9.]+) (?P<ag>[0-9.]+) (?P<at>[0-9.]+) "
-                        r"(?P<cg>[0-9.]+) (?P<ct>[0-9.]+) (?P<gt>[0-9.]+)"), s, hook=float)
+                        r"(?P<cg>[0-9.]+) (?P<ct>[0-9.]+) (?P<gt>[0-9.]+)"),
+                       s, hook=float)
         try_set_fields(rates, r'rate A <-> C: (?P<ac>[0-9.]+)', s, hook=float)
         try_set_fields(rates, r'rate A <-> G: (?P<ag>[0-9.]+)', s, hook=float)
         try_set_fields(rates, r'rate A <-> T: (?P<at>[0-9.]+)', s, hook=float)
@@ -174,8 +167,10 @@ def parse_raxml(handle):
     return result
 
 
-JTT_MODEL = 'ML Model: Jones-Taylor-Thorton, CAT approximation with 20 rate categories'
-WAG_MODEL = 'ML Model: Whelan-And-Goldman, CAT approximation with 20 rate categories'
+JTT_MODEL = ('ML Model: Jones-Taylor-Thorton, CAT '
+             'approximation with 20 rate categories')
+WAG_MODEL = ('ML Model: Whelan-And-Goldman, CAT '
+             'approximation with 20 rate categories')
 
 
 def parse_fasttree(fobj):
@@ -224,16 +219,18 @@ def parse_phyml(fobj, frequency_type=None):
     s = ''.join(fobj)
     result = {'gamma': {}}
     try_set_fields(result, r'---\s*(?P<program>PhyML.*?)\s*---', s)
-    try_set_fields(result['gamma'], r'Number of categories:\s+(?P<n_cats>\d+)',
-                   s, hook=int)
-    try_set_fields(result['gamma'],
-                   r'Gamma shape parameter:\s+(?P<alpha>\d+\.\d+)', s, hook=float)
+    try_set_fields(
+        result['gamma'],
+        r'Number of categories:\s+(?P<n_cats>\d+)', s, hook=int)
+    try_set_fields(
+        result['gamma'],
+        r'Gamma shape parameter:\s+(?P<alpha>\d+\.\d+)', s, hook=float)
     result['ras_model'] = 'gamma'
     if 'nucleotides' in s:
         result['datatype'] = 'DNA'
-        try_set_fields(result,
-                       r'Model of nucleotides substitution:\s+(?P<subs_model>\w+)',
-                       s)
+        try_set_fields(
+            result,
+            r'Model of nucleotides substitution:\s+(?P<subs_model>\w+)', s)
         rates = {}
         try_set_fields(rates, r'A <-> C\s+(?P<ac>\d+\.\d+)', s, hook=float)
         try_set_fields(rates, r'A <-> G\s+(?P<ag>\d+\.\d+)', s, hook=float)
@@ -253,9 +250,9 @@ def parse_phyml(fobj, frequency_type=None):
         if not frequency_type:
             raise ValueError("frequency type required for PhyML AA models.")
         result['empirical_frequencies'] = frequency_type == 'empirical'
-        try_set_fields(result,
-                       r'Model of amino acids substitution:\s+(?P<subs_model>\w+)',
-                       s)
+        try_set_fields(
+            result,
+            r'Model of amino acids substitution:\s+(?P<subs_model>\w+)', s)
     else:
         raise ValueError('Could not determine if alignment is AA or DNA')
 
