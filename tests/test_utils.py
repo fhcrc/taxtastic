@@ -5,7 +5,6 @@ import os
 import json
 import unittest
 
-#import taxtastic
 import taxtastic.utils
 from . import config
 
@@ -27,19 +26,21 @@ class TestReadSpreadsheet(unittest.TestCase):
 
     def test01(self):
         headers, rows = taxtastic.utils.read_spreadsheet(
-            os.path.join(datadir,'new_taxa.xls'))
+            os.path.join(datadir, 'new_taxa.xls'))
         check = lambda val: isinstance(val, float)
         self.assertTrue(all([check(row['parent_id']) for row in rows]))
 
     def test02(self):
         headers, rows = taxtastic.utils.read_spreadsheet(
-            os.path.join(datadir,'new_taxa.xls'),
-            fmts={'tax_id':'%i','parent_id':'%i'}
-            )
+            os.path.join(datadir, 'new_taxa.xls'),
+            fmts={'tax_id': '%i', 'parent_id': '%i'}
+        )
         check = lambda val: isinstance(val, str) and '.' not in val
         self.assertTrue(all([check(row['parent_id']) for row in rows]))
 
-## TODO: need to test creation of new nodes with csv (as opposed to xls) output
+# TODO: need to test creation of new nodes with csv (as opposed to xls) output
+
+
 class TestGetNewNodes(unittest.TestCase):
 
     def setUp(self):
@@ -59,23 +60,22 @@ class TestGetNewNodes(unittest.TestCase):
                 self.assertTrue(val and isinstance(val, list))
 
     def test01(self):
-        rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
+        rows = taxtastic.utils.get_new_nodes(
+            os.path.join(datadir, 'new_taxa.xls'))
         check = lambda val: isinstance(val, str) and '.' not in val
         self.assertTrue(all([check(row['parent_id']) for row in rows]))
 
-    @unittest.skip('no idea what this is testing')
     def test02(self):
-        rows = taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.xls'))
-        self.assertRaises(AttributeError, next, rows)
-
-    def test03(self):
-        rows = list(taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa.csv')))
+        rows = list(taxtastic.utils.get_new_nodes(
+            os.path.join(datadir, 'new_taxa.csv')))
         self.check_parent_id(rows)
         self.check_children(rows)
 
-    def test04(self):
-        rows = list(taxtastic.utils.get_new_nodes(os.path.join(datadir,'new_taxa_mac.csv')))
+    def test03(self):
+        rows = list(taxtastic.utils.get_new_nodes(
+            os.path.join(datadir, 'new_taxa_mac.csv')))
         self.check_parent_id(rows)
+
 
 class StatsFileParsingMixIn(object):
     """
@@ -83,7 +83,8 @@ class StatsFileParsingMixIn(object):
 
     Classes using this mixing should define a property returning the
 
-    Requires two files in datadir: example.txt and example.txt.json with expected results.
+    Requires two files in datadir: example.txt and example.txt.json
+    with expected results.
     """
     # Example. Will look for example.txt.json for expected
     test_file_name = 'example.txt'
@@ -109,7 +110,9 @@ class StatsFileParsingMixIn(object):
         # Example
         raise ValueError("Override")
 
+
 class FastTreeStatsMixin(StatsFileParsingMixIn):
+
     @property
     def parse_func(self):
         return taxtastic.utils.parse_fasttree
@@ -117,51 +120,66 @@ class FastTreeStatsMixin(StatsFileParsingMixIn):
 
 class FastTreeMissingGTRTestCase(FastTreeStatsMixin, unittest.TestCase):
     test_file_name = 'fasttree-missing-rates.txt'
+
     def test_parse(self):
         with open(self.test_path) as fp:
             self.assertRaises(taxtastic.utils.InvalidLogError,
-                    self.parse_func, fp)
+                              self.parse_func, fp)
+
 
 class FastTreeDNATestCase(FastTreeStatsMixin, unittest.TestCase):
     test_file_name = 'fastree_dna_stats.txt'
 
+
 class FastTreeAATestCase(FastTreeStatsMixin, unittest.TestCase):
     test_file_name = 'V278.updated.pruned.log'
 
+
 class PhyMLStatsMixIn(StatsFileParsingMixIn):
     frequency_type = None
+
     @property
     def parse_func(self):
         return functools.partial(taxtastic.utils.parse_phyml,
                                  frequency_type=self.frequency_type)
 
+
 class PhyMLAminoAcidTestCase(PhyMLStatsMixIn, unittest.TestCase):
     test_file_name = 'phyml_aa_stats.txt'
     frequency_type = 'model'
+
 
 class PhyMLEmpiricalAminoAcidTestCase(PhyMLStatsMixIn, unittest.TestCase):
     test_file_name = 'phyml_aa_stats_empirical.txt'
     frequency_type = 'empirical'
 
+
 class PhyMLDNATestCase(PhyMLStatsMixIn, unittest.TestCase):
     test_file_name = 'phyml_dna_stats.txt'
 
+
 class RAxMLStatsMixIn(StatsFileParsingMixIn):
+
     @property
     def parse_func(self):
         return taxtastic.utils.parse_raxml
 
+
 class RAxMLAminoAcidTestCase(RAxMLStatsMixIn, unittest.TestCase):
     test_file_name = 'RAxML_info.aa'
+
 
 class RAxML772AminoAcidTestCase(RAxMLStatsMixIn, unittest.TestCase):
     test_file_name = 'RAxML_info_7.7.2.aa'
 
+
 class RAxML772EmpAminoAcidTestCase(RAxMLStatsMixIn, unittest.TestCase):
     test_file_name = 'RAxML_info_7.7.2.aa_empfreq'
 
+
 class RAxMLDNATestCase(RAxMLStatsMixIn, unittest.TestCase):
     test_file_name = 'RAxML_info.testNuc'
+
 
 class RAxMLDNA772TestCase(RAxMLStatsMixIn, unittest.TestCase):
     test_file_name = 'RAxML_info_7.7.2.dna'
