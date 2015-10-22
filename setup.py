@@ -79,6 +79,7 @@ params = {'author': 'Noah Hoffman',
               'sqlalchemy>=0.7',
               'decorator',
               'biopython',
-              'xlrd']}
+              'xlrd',
+              'pandas>=0.17.0']}
 
 setup(**params)

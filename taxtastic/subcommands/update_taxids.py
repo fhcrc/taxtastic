@@ -1,10 +1,3 @@
-"""Update obsolete tax_ids
-
-Use in preparation for ``taxit taxtable``. Takes sequence info file as
-passed to ``taxit create --seq-info``
-
-"""
-
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -19,11 +12,15 @@ passed to ``taxit create --seq-info``
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Update obsolete tax_ids
 
-import argparse
-import csv
+Use in preparation for ``taxit taxtable``. Takes sequence info file as
+passed to ``taxit create --seq-info``
+
+"""
+
 import logging
-import os.path
+import pandas
 import sys
 
 import sqlalchemy
@@ -36,101 +33,100 @@ log = logging.getLogger(__name__)
 
 def build_parser(parser):
     parser.add_argument(
-        'infile', type=argparse.FileType('r'),
+        'infile',
         help="""Input CSV file to process, minimally containing the
-        fields 'seqname' and 'tax_id'. Rows with missing tax_ids are
-        left unchanged.""")
+        fields 'tax_id'. Rows with missing tax_ids are left unchanged.""")
     parser.add_argument(
-        '-d', '--database-file', required=True,
-        help="""Path to the taxonomy database""")
+        'database_file', help="""Path to the taxonomy database""")
     parser.add_argument(
-        '-o', '--out-file', type=argparse.FileType('w'), default=sys.stdout,
+        '-o', '--out-file', default=sys.stdout,
         help="""Output file to write updates [default: stdout]""")
     parser.add_argument(
-        '--unknowns', type=argparse.FileType('w'),
+        '--unknowns',
         help="""csv file with single column 'seqname' identifying
-        records with unknown taxids (only if
-        --unknown-action=remove)""")
+        records with unknown taxids (works with --remove-unknown)""")
     parser.add_argument(
-        '-u', '--unknown-action', choices=('halt', 'remove'), default='halt',
-        help="""Action to take on encountering an unknown tax_id
-        [default: %(default)s]""")
+        '--keyword-column',
+        help='column with keyword to help find tax_ids. ex: organism name')
 
 
-def load_csv(fp):
-    """
-    Load a CSV file from fp, returning (headers, dialect, row_iter)
-
-    fp must be seekable.
-    """
-    sample = fp.read(1024)
-    fp.seek(0)
-    dialect = csv.Sniffer().sniff(sample)
-    reader = csv.DictReader(fp, dialect=dialect)
-    return (reader.fieldnames, dialect, reader)
-
-
-def taxid_updater(taxonomy, action='halt'):
+def taxid_updater(taxonomy, halt=True):
     """
     Create a function to update obsolete taxonomies in
     """
-    def update_taxid(row):
-        current_tax_id = row['tax_id']
-        if not current_tax_id:
-            # Skip blank
-            return row
+
+    def update_taxid(tax_id, keyword=None):
         try:
-            taxonomy._node(current_tax_id)
+            taxonomy._node(tax_id)
             # _node raises KeyError if the taxon couldn't be found in the
             # current taxonomy. If found, no update needed.
-            return row
         except KeyError:
-            pass
-        new_tax_id = taxonomy._get_merged(current_tax_id)
+            new_tax_id = taxonomy._get_merged(tax_id)
 
-        if new_tax_id and new_tax_id != current_tax_id:
-            row['tax_id'] = new_tax_id
-            log.warn('Replacing %s with %s [%s]', current_tax_id, new_tax_id,
-                     row['seqname'])
-        elif action == 'halt':
-            raise KeyError("Unknown taxon {0}".format(current_tax_id))
-        elif action == 'remove':
-            logging.warn('Unknown Taxon: %s. Removing.', current_tax_id)
-            row['tax_id'] = ''
-        else:
-            assert False
+            if new_tax_id != tax_id:
+                msg = 'tax_id {} merged to {}'.format(tax_id, new_tax_id)
+                log.info(msg)
+                tax_id = new_tax_id
+            elif keyword:
+                try:
+                    tax_id, _, _ = taxonomy.primary_from_name(keyword)
+                except KeyError as err:
+                    log.warn(err)
+                    tax_id = None
+            else:
+                msg = "Unknown taxon {}".format(tax_id)
+                log.warn(msg)
+                tax_id = None
+                if halt:
+                    raise KeyError(msg)
 
-        return row
+        return tax_id
 
     return update_taxid
 
 
 def action(args):
-    """
-    Show information about reference packages.
-    """
-    if not os.path.exists(args.database_file):
-        log.error("Database does not exist: %s", args.database_file)
-        return 1
+    rows = pandas.read_csv(args.infile, dtype='str')
+    columns = rows.columns  # preserve column order
+
+    if 'tax_id' not in columns:
+        raise ValueError("No tax_id column")
+
+    index = ['tax_id']
+
+    if args.keyword_column:
+        if args.keyword_column not in columns:
+            raise ValueError("No " + args.keyword_column + " column")
+        else:
+            index.append(args.keyword_column)
 
     e = sqlalchemy.create_engine('sqlite:///{0}'.format(args.database_file))
     tax = Taxonomy(e, ncbi.ranks)
 
-    headers, dialect, rows = load_csv(args.infile)
+    tax_ids = rows[index].drop_duplicates()
+    tax_ids.loc[:, 'new_tax_id'] = None
 
-    for header in 'seqname', 'tax_id':
-        if header not in headers:
-            raise ValueError("Missing required field: {0}".format(header))
+    updater = taxid_updater(tax, halt=bool(args.unknowns))
 
-    update = taxid_updater(tax, args.unknown_action)
-    updated = [update(row) for row in rows]
+    if args.keyword_column:
+        def set_new_tax_id(row):
+            row['new_tax_id'] = updater(
+                row['tax_id'], keyword=row[args.keyword_column])
+            return row
+    else:
+        def set_new_tax_id(row):
+            row['new_tax_id'] = updater(row['tax_id'])
+            return row
+
+    tax_ids = tax_ids.apply(set_new_tax_id, axis=1)
+
+    rows = rows.merge(tax_ids, on=index, how='left')
+    rows = rows.drop('tax_id', axis=1)
+    rows = rows.rename(columns={'new_tax_id': 'tax_id'})
 
     if args.unknowns:
         # unknown taxids are set to empty string in taxid_updater
-        csv.writer(args.unknowns).writerows(
-            [r['seqname']] for r in updated if not r['tax_id'])
+        rows[rows['tax_id'].isnull()].to_csv(
+            args.unknowns, index=False, columns=columns)
 
-    with args.out_file as fp:
-        writer = csv.DictWriter(fp, headers, dialect)
-        writer.writeheader()
-        writer.writerows(updated)
+    rows.to_csv(args.out_file, index=False, columns=columns)
