@@ -2,12 +2,19 @@
  change log for taxtastic
 ==========================
 
+0.5.4-dev
+=========
+
+ * ``taxit update_taxids`` will halt on unknown tax_ids unless ``--unknowns FILE`` is specified
+ * ``taxit update_taxids`` only requires a csv file with 'tax_id' column
+ * ``taxit update_taxids`` takes an optional ``--name-column`` to assist in assigning tax_ids
+
 0.5.4
 =====
 
  * Add ``taxit taxtable --full`` for outputing all ranks in header.
  * Update subcommand help text
- * Generate Sphinx docs using help text emitted by subcommands (#70)
+ * Generate Sphinx docs using help text emitted by subcommands (GH-70)
 
 0.5.3
 =====

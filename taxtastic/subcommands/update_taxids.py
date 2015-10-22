@@ -46,8 +46,9 @@ def build_parser(parser):
         help="""csv file with single column 'seqname' identifying
         records with unknown taxids (works with --remove-unknown)""")
     parser.add_argument(
-        '--keyword-column',
-        help='column with keyword to help find tax_ids. ex: organism name')
+        '--name-column',
+        help=('column with taxon name(s) to help '
+              'find tax_ids. ex: organism name'))
 
 
 def taxid_updater(taxonomy, halt=True):
@@ -94,11 +95,11 @@ def action(args):
 
     index = ['tax_id']
 
-    if args.keyword_column:
-        if args.keyword_column not in columns:
-            raise ValueError("No " + args.keyword_column + " column")
+    if args.name_column:
+        if args.name_column not in columns:
+            raise ValueError("No " + args.name_column + " column")
         else:
-            index.append(args.keyword_column)
+            index.append(args.name_column)
 
     e = sqlalchemy.create_engine('sqlite:///{0}'.format(args.database_file))
     tax = Taxonomy(e, ncbi.ranks)
@@ -106,12 +107,12 @@ def action(args):
     tax_ids = rows[index].drop_duplicates()
     tax_ids.loc[:, 'new_tax_id'] = None
 
-    updater = taxid_updater(tax, halt=bool(args.unknowns))
+    updater = taxid_updater(tax, halt=not bool(args.unknowns))
 
-    if args.keyword_column:
+    if args.name_column:
         def set_new_tax_id(row):
             row['new_tax_id'] = updater(
-                row['tax_id'], keyword=row[args.keyword_column])
+                row['tax_id'], keyword=row[args.name_column])
             return row
     else:
         def set_new_tax_id(row):
