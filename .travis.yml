@@ -18,17 +18,6 @@ env:
     - PIP_WHEEL_DIR=$HOME/.cache/pip/wheels
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 
-#env:
-#  - EXTRA_PACKAGES=
-#  - EXTRA_PACKAGES=xlrd
-
-#addons:
-#  apt:
-#    packages:
-#      - gfortran
-#      - libopenblas-dev
-#      - liblapack-dev
-
 # Install numpy, then BioPython and other dependencies
 # BioPython doesn't always play well with pip install.
 before_install: 
@@ -38,6 +27,6 @@ install: pip install .
 
 script: ./test -v
 
-#notifications:
-#  email:
-#    - noah.hoffman@gmail.com
+notifications:
+  email:
+    - noah.hoffman@gmail.com
