@@ -1,4 +1,4 @@
-"""Create a database containing an entire taxonomy
+"""Download NCBI taxonomy and create a database
 
 Download the current version of the NCBI taxonomy and load it into
 ``database_file`` as an SQLite3 database.  If ``database_file``
@@ -30,27 +30,28 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
 
     parser.add_argument(
         '-d', '--database-file',
-        dest = 'database_file',
-        default = 'ncbi_taxonomy.db',
-        metavar = 'FILE',
-        help = """Name of the sqlite database file [%(default)s].""")
+        dest='database_file',
+        default='ncbi_taxonomy.db',
+        metavar='FILE',
+        help="""Name of the sqlite database file [%(default)s].""")
 
     parser.add_argument(
         '-p', '--download-dir',
-        dest = 'download_dir',
-        default = None,
-        metavar = 'PATH',
-        help = """Name of the directory into which to download the zip
+        dest='download_dir',
+        default=None,
+        metavar='PATH',
+        help="""Name of the directory into which to download the zip
         archive. [default is the same directory as the database file]""")
 
     parser.add_argument(
-        '-x', '--clobber', action = 'store_true',
-        dest = 'clobber', default = False,
-        help = """Download a new zip archive containing NCBI taxonomy
+        '-x', '--clobber', action='store_true',
+        dest='clobber', default=False,
+        help="""Download a new zip archive containing NCBI taxonomy
         and/or re-create the database even if one or both already
         exists. [%(default)s]""")
 
@@ -60,6 +61,7 @@ def build_parser(parser):
         help="""If a node has the same rank as its parent, do *not* its rank
         set to no_rank.""")
 
+
 def action(args):
 
     dbname = args.database_file
@@ -67,28 +69,13 @@ def action(args):
     zip_dest = args.download_dir or pth or '.'
 
     zfile, downloaded = ncbi.fetch_data(
-        dest_dir = zip_dest,
-        clobber = args.clobber)
+        dest_dir=zip_dest,
+        clobber=args.clobber)
 
     if not os.access(dbname, os.F_OK) or args.clobber:
-        log.warning('creating new database in %s using data in %s' % \
-                        (dbname, zfile))
+        log.warning('creating new database in %s using data in %s' %
+                    (dbname, zfile))
         engine = ncbi.db_connect(dbname, clobber=True)
-        if True:
-            ncbi.db_load(engine, zfile)
-            #if not args.preserve_inconsistent_taxonomies:
-                #curs = con.cursor()
-                #curs.execute("""
-                    #UPDATE nodes
-                       #SET rank = 'no_rank'
-                     #WHERE tax_id IN (SELECT n1.tax_id
-                                        #FROM nodes n1
-                                             #JOIN nodes n2
-                                               #ON n1.parent_id = n2.tax_id
-                                       #WHERE n1.rank = n2.rank
-                                         #AND n1.rank NOT IN ('root', 'no_rank'))
-                #""")
-        #con.close()
+        ncbi.db_load(engine, zfile)
     else:
         log.warning('taxonomy database already exists in %s' % dbname)
-

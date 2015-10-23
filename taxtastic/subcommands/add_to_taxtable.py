@@ -58,7 +58,8 @@ def action(args):
         missing_fields = frozenset(
             ['tax_id', 'tax_name', 'rank', 'parent_id']) - frozenset(reader.fieldnames)
         if missing_fields:
-            raise IOError("Missing expected fields: {0}".format(','.join(missing_fields)))
+            raise IOError("Missing expected fields: {0}".format(
+                ','.join(missing_fields)))
         for row in reader:
             if row['tax_id'] in tax.index:
                 logging.warn("tax_id %s already represented in taxtable. [row %d]",

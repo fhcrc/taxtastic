@@ -129,7 +129,8 @@ def action(args):
             note = '' if is_primary else 'not primary'
 
         if note:
-            log.warning('%(name)20s | %(tax_id)7s %(tax_name)20s %(note)s' % locals())
+            log.warning(
+                '%(name)20s | %(tax_id)7s %(tax_name)20s %(note)s' % locals())
 
         if rank == 'species':
             taxa[tax_id] = dict(tax_id=tax_id, tax_name=tax_name, rank=rank)

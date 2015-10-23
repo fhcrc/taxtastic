@@ -1,4 +1,3 @@
-import sqlite3
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -13,11 +12,14 @@ import sqlite3
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+import sqlite3
 
 # TODO: inherit errors from other database engines
 
+
 class OperationalError(sqlite3.OperationalError):
     pass
+
 
 class IntegrityError(sqlite3.IntegrityError):
     pass

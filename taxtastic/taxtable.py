@@ -5,10 +5,12 @@ Representation of a taxonomic hierarchy.
 import collections
 import csv
 
+
 class TaxNode(object):
     """
     Taxonomic tree, with optional sequence IDs on nodes.
     """
+
     def __init__(self, rank, tax_id, parent=None, sequence_ids=None,
                  children=None, name=None, ranks=None):
         self.ranks = ranks
@@ -103,7 +105,7 @@ class TaxNode(object):
                 return s
             s = s.parent
         raise KeyError("No node at rank {0} for {1}".format(rank,
-            self.tax_id))
+                                                            self.tax_id))
 
     def depth_first_iter(self, self_first=True):
         """
@@ -150,7 +152,8 @@ class TaxNode(object):
         """
         Return all nodes between this node and the root, including this one.
         """
-        if not self.parent: return [self]
+        if not self.parent:
+            return [self]
         else:
             l = self.parent.lineage()
             l.append(self)
@@ -169,7 +172,7 @@ class TaxNode(object):
         including the lineage leading to this node.
         """
         ranks_represented = frozenset(i.rank for i in self) | \
-                            frozenset(i.rank for i in self.lineage())
+            frozenset(i.rank for i in self.lineage())
         ranks = [i for i in self.ranks if i in ranks_represented]
         assert len(ranks_represented) == len(ranks)
 
@@ -185,7 +188,7 @@ class TaxNode(object):
 
         header = ['tax_id', 'parent_id', 'rank', 'tax_name'] + ranks
         w = csv.DictWriter(out_fp, header, quoting=csv.QUOTE_NONNUMERIC,
-                lineterminator='\n')
+                           lineterminator='\n')
         w.writeheader()
         # All nodes leading to this one
         for i in self.lineage()[:-1]:
@@ -231,7 +234,7 @@ class TaxNode(object):
             header.append('tax_name')
 
         w = csv.DictWriter(out_fp, header, quoting=csv.QUOTE_NONNUMERIC,
-                lineterminator = '\n', extrasaction='ignore')
+                           lineterminator='\n', extrasaction='ignore')
         w.writeheader()
 
         rows = ({'seqname': seq_id, 'tax_id': node.tax_id, 'tax_name': node.name}
@@ -251,10 +254,12 @@ class TaxNode(object):
         rows = (collections.OrderedDict(zip(headers, i)) for i in r)
 
         row = next(rows)
-        root = cls(rank=row['rank'], tax_id=row['tax_id'], name=row['tax_name'])
+        root = cls(rank=row['rank'], tax_id=row[
+                   'tax_id'], name=row['tax_name'])
         root.ranks = headers[4:]
         for row in rows:
-            rank, tax_id, name = [row[i] for i in ('rank', 'tax_id', 'tax_name')]
+            rank, tax_id, name = [row[i]
+                                  for i in ('rank', 'tax_id', 'tax_name')]
             path = filter(None, row.values()[4:])
             parent = root.path(path[:-1])
             parent.add_child(cls(rank, tax_id, name=name))
@@ -268,9 +273,11 @@ class TaxNode(object):
         """
         cursor = con.cursor()
         if root is None:
-            cursor.execute("SELECT tax_id, rank FROM nodes WHERE tax_id = parent_id")
+            cursor.execute(
+                "SELECT tax_id, rank FROM nodes WHERE tax_id = parent_id")
         else:
-            cursor.execute("SELECT tax_id, rank FROM nodes WHERE tax_id = ?", [root])
+            cursor.execute(
+                "SELECT tax_id, rank FROM nodes WHERE tax_id = ?", [root])
 
         tax_id, rank = cursor.fetchone()
         root = cls(rank=rank, tax_id=tax_id)

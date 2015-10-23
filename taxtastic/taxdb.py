@@ -1,7 +1,9 @@
 import itertools
 import sqlite3
 
+
 class OnUpdate(object):
+
     def __init__(self, proxied):
         self.proxied = proxied
         self.setter = None
@@ -20,7 +22,9 @@ class OnUpdate(object):
         self.setter = f
         return self
 
+
 class _IntermediateTaxon(object):
+
     def __init__(self, tax_id, parent, rank, tax_name):
         self.children = set()
         self.tax_id = tax_id
@@ -55,7 +59,9 @@ class _IntermediateTaxon(object):
                 yield node
             search_stack.append((node, node.children.copy()))
 
+
 class Taxdb(object):
+
     def __init__(self, sqlite_db=None):
         if sqlite_db is None:
             sqlite_db = sqlite3.connect(':memory:')
@@ -120,6 +126,7 @@ class Taxdb(object):
         while root.parent is not None:
             root = root.parent
         counter = itertools.count(1).next
+
         def on_pop(parent):
             if parent is not None:
                 parent.rgt = counter()
@@ -128,9 +135,9 @@ class Taxdb(object):
 
         fieldnames = fieldnames_cb()
         curs.executemany("INSERT INTO ranks (rank_order, rank) VALUES (?, ?)",
-            enumerate(fieldnames[4:]))
+                         enumerate(fieldnames[4:]))
         curs.executemany("INSERT INTO taxa VALUES (?, ?, ?)",
-            ((t.tax_id, t.tax_name, t.rank) for t in taxon_map.itervalues()))
+                         ((t.tax_id, t.tax_name, t.rank) for t in taxon_map.itervalues()))
         curs.executemany("INSERT INTO hierarchy VALUES (?, ?, ?)",
-            ((t.tax_id, t.lft, t.rgt) for t in taxon_map.itervalues()))
+                         ((t.tax_id, t.lft, t.rgt) for t in taxon_map.itervalues()))
         self.db.commit()

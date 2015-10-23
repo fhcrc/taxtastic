@@ -71,7 +71,8 @@ def build_parser(parser):
 
 
 def action(args):
-    engine = create_engine('sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
+    engine = create_engine('sqlite:///%s' %
+                           args.database_file, echo=args.verbosity > 2)
     tax = Taxonomy(engine, ncbi.ranks)
 
     taxids = set()
@@ -81,12 +82,14 @@ def action(args):
             for line in getlines(args.taxids):
                 taxids.update(set(re.split(r'[\s,;]+', line)))
         else:
-            taxids.update([x.strip() for x in re.split(r'[\s,;]+', args.taxids)])
+            taxids.update([x.strip()
+                           for x in re.split(r'[\s,;]+', args.taxids)])
 
     if args.seq_info:
         with args.seq_info:
             reader = csv.DictReader(args.seq_info)
-            taxids.update(frozenset(i['tax_id'] for i in reader if i['tax_id']))
+            taxids.update(frozenset(i['tax_id']
+                                    for i in reader if i['tax_id']))
 
     writer = csv.writer(args.out_file)
 

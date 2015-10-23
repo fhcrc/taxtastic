@@ -16,8 +16,9 @@ import versioneer
 
 versioneer.versionfile_source = 'taxtastic/_version.py'
 versioneer.versionfile_build = 'taxtastic/_version.py'
-versioneer.tag_prefix = 'v' # tags are like v1.2.0
+versioneer.tag_prefix = 'v'  # tags are like v1.2.0
 versioneer.parentdir_prefix = 'taxtastic-'
+
 
 class run_audit(Command):
     """Audits source code using PyFlakes for following issues:
@@ -34,7 +35,8 @@ class run_audit(Command):
         pass
 
     def run(self):
-        import os, sys
+        import os
+        import sys
         try:
             import pyflakes.scripts.pyflakes as flakes
         except ImportError:
@@ -47,7 +49,7 @@ class run_audit(Command):
         for dir in dirs:
             for root, _, files in os.walk(dir):
                 for file in files:
-                    if file != '__init__.py' and file.endswith('.py') :
+                    if file != '__init__.py' and file.endswith('.py'):
                         warns += flakes.checkPath(os.path.join(root, file))
         if warns > 0:
             print "Audit finished with total %d warnings." % warns
@@ -72,12 +74,12 @@ params = {'author': 'Noah Hoffman',
               'Programming Language :: Python :: 2.7',
               'Topic :: Scientific/Engineering :: Bio-Informatics'],
           'download_url': 'https://github.com/fhcrc/taxtastic',
-          'package_data': {'taxtastic': [join('data',f) for f in ['sha']]},
+          'package_data': {'taxtastic': [join('data', f) for f in ['sha']]},
           'install_requires': [
               'sqlalchemy>=0.7',
               'decorator',
               'biopython',
-              'xlrd']}
+              'xlrd',
+              'pandas>=0.17.0']}
 
 setup(**params)
-

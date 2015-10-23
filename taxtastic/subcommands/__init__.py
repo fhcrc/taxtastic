@@ -29,7 +29,7 @@ commands = [
     'rp',
     'refpkg_intersection',
     'merge'
-    ]
+]
 
 import glob
 from os.path import splitext, split, join, dirname

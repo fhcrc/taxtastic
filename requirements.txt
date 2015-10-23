@@ -1,7 +1,3 @@
-sqlalchemy
-decorator
-biopython
-xlrd
 sphinx
 ghp-import
 twine

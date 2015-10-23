@@ -142,6 +142,7 @@ def transaction(f, self, *args, **kwargs):
 class NoAncestor(Exception):
     pass
 
+
 class Refpkg(object):
     _manifest_name = 'CONTENTS.json'
 
@@ -174,7 +175,7 @@ class Refpkg(object):
                     h.write('\n')
             else:
                 raise ValueError(
-                        "Reference package {0} does not exist.".format(path))
+                    "Reference package {0} does not exist.".format(path))
 
         if zipfile.is_zipfile(path):
             self._install_zipfile_handlers()
@@ -303,7 +304,8 @@ class Refpkg(object):
             fobj = self.open_manifest('r')
         except IOError, e:
             if e.errno == errno.ENOENT:
-                raise ValueError("couldn't find manifest file in %s" % (self.path,))
+                raise ValueError(
+                    "couldn't find manifest file in %s" % (self.path,))
             elif e.errno == errno.ENOTDIR:
                 raise ValueError("%s is not a directory" % (self.path,))
             else:
@@ -403,8 +405,8 @@ class Refpkg(object):
         if self.contents['files'].viewkeys() != self.contents['md5'].viewkeys():
             return ("Files and MD5 sums in manifest do not "
                     "match (files: %s, MD5 sums: %s)") % \
-                    (self.contents['files'].keys(),
-                     self.contents['md5'].keys())
+                (self.contents['files'].keys(),
+                 self.contents['md5'].keys())
         # All files in the manifest exist and match the MD5 sums
         for key, filename in self.contents['files'].iteritems():
             # we don't need to explicitly check for existence;
@@ -414,7 +416,7 @@ class Refpkg(object):
             if found_md5 != expected_md5:
                 return ("File %s referred to by key %s did "
                         "not match its MD5 sum (found: %s, expected %s)") % \
-                        (filename, key, found_md5, expected_md5)
+                    (filename, key, found_md5, expected_md5)
         return False
 
     def _check_refpkg(self):
@@ -431,7 +433,7 @@ class Refpkg(object):
         """
         old_value = self.contents['metadata'].get(key)
         self.contents['metadata'][key] = value
-        self._log('Updated metadata: %s=%s' % (key,value))
+        self._log('Updated metadata: %s=%s' % (key, value))
         return old_value
 
     @transaction
@@ -505,7 +507,8 @@ class Refpkg(object):
         """
 
         if frequency_type not in (None, 'model', 'empirical'):
-            raise ValueError('Unknown frequency type: "{0}"'.format(frequency_type))
+            raise ValueError(
+                'Unknown frequency type: "{0}"'.format(frequency_type))
         if frequency_type and stats_type not in (None, 'PhyML'):
             raise ValueError('Frequency type should only be specified for '
                              'PhyML alignments.')
@@ -612,9 +615,10 @@ class Refpkg(object):
         """Commit a transaction, with *log* as the log entry."""
         self.current_transaction['rollback'].pop('log')
         self.current_transaction['rollback'].pop('rollforward')
-        self.contents['log'].insert(0, log and log or self.current_transaction['log'])
+        self.contents['log'].insert(
+            0, log and log or self.current_transaction['log'])
         self.contents['rollback'] = self.current_transaction['rollback']
-        self.contents['rollforward'] = None # We can't roll forward anymore
+        self.contents['rollforward'] = None  # We can't roll forward anymore
         self.current_transaction = None
         self._sync_to_disk()
 
@@ -630,7 +634,7 @@ class Refpkg(object):
             return m
 
         required_keys = ('aln_fasta', 'aln_sto', 'seq_info', 'tree',
-                'taxonomy', 'phylo_model')
+                         'taxonomy', 'phylo_model')
         for k in required_keys:
             if k not in self.contents['files']:
                 return "RefPkg has no key " + k
@@ -674,7 +678,8 @@ class Refpkg(object):
         with self.open_resource('aln_fasta') as f:
             fasta_names = set([s.id for s in Bio.SeqIO.parse(f, 'fasta')])
         with self.open_resource('seq_info') as f:
-            csv_names = set([s[0] for s in csv.reader(f)][1:]) # Remove header with [1:]
+            csv_names = set([s[0] for s in csv.reader(f)][
+                            1:])  # Remove header with [1:]
         with self.open_resource('tree') as f:
             tree_names = set([n.name for n in
                               Bio.Phylo.read(f, 'newick').get_terminals()])
@@ -710,7 +715,6 @@ class Refpkg(object):
 
         return False
 
-
     def load_db(self):
         """Load the taxonomy into a sqlite3 database.
 
@@ -726,7 +730,7 @@ class Refpkg(object):
         curs = db.cursor()
         reader = csv.DictReader(self.open_resource('seq_info', 'rU'))
         curs.executemany("INSERT INTO sequences VALUES (?, ?)",
-            ((row['seqname'], row['tax_id']) for row in reader))
+                         ((row['seqname'], row['tax_id']) for row in reader))
 
         db.commit()
         self.db = db
@@ -803,7 +807,6 @@ class Refpkg(object):
         """ % qmarks, ts + (len(ts),))
 
         return cursor.fetchall()
-
 
     def file_abspath(self, resource):
         """Deprecated alias for *resource_path*."""

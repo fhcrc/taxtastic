@@ -27,15 +27,16 @@ from taxtastic import refpkg
 
 log = logging.getLogger(__name__)
 
+
 def build_parser(parser):
     parser.add_argument('refpkg', action='store', metavar='refpkg',
                         help='the reference package to operate on')
-    parser.add_argument('-n', '--seq-names', action = 'store_true', default = False,
-                        help = 'print a list of sequence names')
-    parser.add_argument('-t', '--tally', action = 'store_true', default = False,
-                        help = 'print a tally of sequences representing each taxon at rank RANK')
-    parser.add_argument('-l', '--lengths', action = 'store_true', default = False,
-                        help = 'print sequence lengths')
+    parser.add_argument('-n', '--seq-names', action='store_true', default=False,
+                        help='print a list of sequence names')
+    parser.add_argument('-t', '--tally', action='store_true', default=False,
+                        help='print a tally of sequences representing each taxon at rank RANK')
+    parser.add_argument('-l', '--lengths', action='store_true', default=False,
+                        help='print sequence lengths')
 
 
 def tally_taxa(pkg):
@@ -48,17 +49,20 @@ def tally_taxa(pkg):
     for tax_id in tax_ids:
         tally[tax_id] += 1
 
-    rows = [(taxdict[tax_id]['tax_name'], tax_id, count) for tax_id, count in tally.items()]
+    rows = [(taxdict[tax_id]['tax_name'], tax_id, count)
+            for tax_id, count in tally.items()]
 
-    writer = csv.writer(sys.stdout, quoting = csv.QUOTE_NONNUMERIC)
+    writer = csv.writer(sys.stdout, quoting=csv.QUOTE_NONNUMERIC)
     writer.writerows(sorted(rows))
+
 
 def print_lengths(pkg):
     seqs = SeqIO.parse(pkg.file_abspath('aln_fasta'), 'fasta')
     writer = csv.writer(sys.stdout)
-    writer.writerow(["seqname","length"])
+    writer.writerow(["seqname", "length"])
     for seq in seqs:
-        writer.writerow([seq.id, len(str(seq.seq).replace('-',''))])
+        writer.writerow([seq.id, len(str(seq.seq).replace('-', ''))])
+
 
 def action(args):
     """

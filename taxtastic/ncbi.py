@@ -38,6 +38,7 @@ Base = declarative_base()
 
 ncbi_data_url = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
+
 class Node(Base):
     __tablename__ = 'nodes'
     tax_id = Column(String, primary_key=True, nullable=False)
@@ -48,11 +49,13 @@ class Node(Base):
     source_id = Column(Integer, server_default='1')
     is_valid = Column(Boolean, server_default='1', index=True)
 
+
 class Name(Base):
     __tablename__ = 'names'
     id = Column(Integer, primary_key=True)
 
-    tax_id = Column(String, ForeignKey('nodes.tax_id', ondelete='CASCADE'), index=True)
+    tax_id = Column(String, ForeignKey(
+        'nodes.tax_id', ondelete='CASCADE'), index=True)
     node = relationship('Node', backref='names')
     tax_name = Column(String, index=True)
     unique_name = Column(String)
@@ -61,12 +64,15 @@ class Name(Base):
     is_classified = Column(Boolean)
 Index('ix_names_tax_id_is_primary', Name.tax_id, Name.is_primary)
 
+
 class Merge(Base):
     __tablename__ = 'merged'
 
     old_tax_id = Column(String, primary_key=True, index=True)
-    new_tax_id = Column(String, ForeignKey('nodes.tax_id', ondelete='CASCADE'), index=True)
+    new_tax_id = Column(String, ForeignKey(
+        'nodes.tax_id', ondelete='CASCADE'), index=True)
     merged_node = relationship('Node', backref='merged_ids')
+
 
 class Source(Base):
     __tablename__ = 'source'
@@ -117,77 +123,78 @@ forma
 # Components of a regex to apply to all names. Names matching this regex are
 # marked as invalid.
 UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
-                                r'\bactinomycete\b',
-                                r'\bcrenarchaeote\b',
-                                r'\bculture\b',
-                                r'\bchimeric\b',
-                                r'\bcyanobiont\b',
-                                r'degrading',
-                                r'\beuryarchaeote\b',
-                                r'disease',
-                                r'\b[cC]lone',
-                                r'\bmethanogen(ic)?\b',
-                                r'\bplanktonic\b',
-                                r'\bplanctomycete\b',
-                                r'\bsymbiote\b',
-                                r'\btransconjugant\b',
-                                r'^[a-z]', # starts with lower-case character
-                                r'^\W+\s+[a-zA-Z]*\d', # Digit in second word
-                                r'\d\d',
-                                r'atypical',
-                                r'^cf\.',
-                                r'acidophile',
-                                r'\bactinobacterium\b',
-                                r'aerobic',
-                                r'.+\b[Al]g(um|a)\b',
-                                r'\b[Bb]acteri(um|al)\b',
-                                r'.+\b[Bb]acteria\b',
-                                r'Barophile',
-                                r'cyanobacterium',
-                                r'Chloroplast',
-                                r'Cloning',
-                                r'\bclone\b',
-                                r'cluster',
-                                r'^diazotroph',
-                                r'\bcoccus\b',
-                                r'archaeon',
-                                r'-containing',
-                                r'epibiont',
-                                # 'et al',
-                                r'environmental samples',
-                                r'eubacterium',
-                                r'\b[Gg]roup\b',
-                                r'halophilic',
-                                r'hydrothermal\b',
-                                r'isolate',
-                                r'\bmarine\b',
-                                r'methanotroph',
-                                r'microorganism',
-                                r'mollicute',
-                                r'pathogen',
-                                r'[Pp]hytoplasma',
-                                r'proteobacterium',
-                                r'putative',
-                                r'\bsp\.',
-                                r'species',
-                                r'spirochete',
-                                r'str\.',
-                                r'strain',
-                                r'symbiont',
-                                r'\b[Tt]axon\b',
-                                r'unicellular',
-                                r'uncultured',
-                                r'unclassified',
-                                r'unidentified',
-                                r'unknown',
-                                r'vector\b',
-                                r'vent\b',
-                               ]
+                                 r'\bactinomycete\b',
+                                 r'\bcrenarchaeote\b',
+                                 r'\bculture\b',
+                                 r'\bchimeric\b',
+                                 r'\bcyanobiont\b',
+                                 r'degrading',
+                                 r'\beuryarchaeote\b',
+                                 r'disease',
+                                 r'\b[cC]lone',
+                                 r'\bmethanogen(ic)?\b',
+                                 r'\bplanktonic\b',
+                                 r'\bplanctomycete\b',
+                                 r'\bsymbiote\b',
+                                 r'\btransconjugant\b',
+                                 r'^[a-z]',  # starts with lower-case character
+                                 r'^\W+\s+[a-zA-Z]*\d',  # Digit in second word
+                                 r'\d\d',
+                                 r'atypical',
+                                 r'^cf\.',
+                                 r'acidophile',
+                                 r'\bactinobacterium\b',
+                                 r'aerobic',
+                                 r'.+\b[Al]g(um|a)\b',
+                                 r'\b[Bb]acteri(um|al)\b',
+                                 r'.+\b[Bb]acteria\b',
+                                 r'Barophile',
+                                 r'cyanobacterium',
+                                 r'Chloroplast',
+                                 r'Cloning',
+                                 r'\bclone\b',
+                                 r'cluster',
+                                 r'^diazotroph',
+                                 r'\bcoccus\b',
+                                 r'archaeon',
+                                 r'-containing',
+                                 r'epibiont',
+                                 # 'et al',
+                                 r'environmental samples',
+                                 r'eubacterium',
+                                 r'\b[Gg]roup\b',
+                                 r'halophilic',
+                                 r'hydrothermal\b',
+                                 r'isolate',
+                                 r'\bmarine\b',
+                                 r'methanotroph',
+                                 r'microorganism',
+                                 r'mollicute',
+                                 r'pathogen',
+                                 r'[Pp]hytoplasma',
+                                 r'proteobacterium',
+                                 r'putative',
+                                 r'\bsp\.',
+                                 r'species',
+                                 r'spirochete',
+                                 r'str\.',
+                                 r'strain',
+                                 r'symbiont',
+                                 r'\b[Tt]axon\b',
+                                 r'unicellular',
+                                 r'uncultured',
+                                 r'unclassified',
+                                 r'unidentified',
+                                 r'unknown',
+                                 r'vector\b',
+                                 r'vent\b',
+                                 ]
 
 # provides criteria for defining matching tax_ids as "unclassified"
 UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
-ranks = [k.strip().replace(' ','_') for k in _ranks.splitlines() if k.strip()]
+ranks = [k.strip().replace(' ', '_') for k in _ranks.splitlines() if k.strip()]
+
 
 def db_connect(dbname='ncbi_taxonomy.db', clobber=False):
     """
@@ -206,6 +213,7 @@ def db_connect(dbname='ncbi_taxonomy.db', clobber=False):
     engine = sqlalchemy.create_engine('sqlite:///{0}'.format(dbname))
     Base.metadata.create_all(bind=engine)
     return engine
+
 
 def db_load(engine, archive, root_name='root', maxrows=None):
     """
@@ -245,6 +253,7 @@ def db_load(engine, archive, root_name='root', maxrows=None):
     except sqlite3.IntegrityError, err:
         raise IntegrityError(err)
 
+
 def fix_missing_primary(engine):
     with engine.begin() as cursor:
         missing_primary = """SELECT tax_id
@@ -262,20 +271,21 @@ def fix_missing_primary(engine):
             # Prefer scientific name
             if sum(list(i)[-1] == 'scientific name' for i in records) == 1:
                 tax_id, tax_name, unique_name, name_class = next(i for i in records
-                        if list(i)[-1] == 'scientific name')
+                                                                 if list(i)[-1] == 'scientific name')
                 cursor.execute("""UPDATE names
                     SET is_primary = 1
                     WHERE tax_id = ? AND name_class = ?""",
-                    [tax_id, 'scientific name'])
+                               [tax_id, 'scientific name'])
             else:
                 tax_id, tax_name, unique_name, name_class = records[0]
             logging.warn("No primary name for tax_id %s. Arbitrarily using %s[%s].",
-                    tax_id, tax_name, name_class)
+                         tax_id, tax_name, name_class)
             cursor.execute("""UPDATE names
                 SET is_primary = 1
                 WHERE tax_id = ? AND tax_name = ? AND
                     unique_name = ? AND name_class = ?""",
-                [tax_id, tax_name, unique_name, name_class])
+                           [tax_id, tax_name, unique_name, name_class])
+
 
 def mark_is_valid(engine, regex=UNCLASSIFIED_REGEX):
     """
@@ -287,6 +297,7 @@ def mark_is_valid(engine, regex=UNCLASSIFIED_REGEX):
         sql = """UPDATE nodes SET is_valid = (SELECT is_classified FROM names WHERE names.tax_id = nodes.tax_id AND names.is_primary = 1)"""
         connection.execute(sql)
 
+
 def partition(iterable, size):
     iterable = iter(iterable)
     while True:
@@ -295,6 +306,7 @@ def partition(iterable, size):
             yield chunk
         else:
             break
+
 
 def update_subtree_validity(engine, mark_below_rank='species'):
     """
@@ -309,12 +321,13 @@ def update_subtree_validity(engine, mark_below_rank='species'):
 
     def mark_subtrees(conn, tax_ids, is_valid):
         to_mark = list(tax_ids)
-        logging.info("Marking %d subtrees as is_valid=%s", len(to_mark), is_valid)
+        logging.info("Marking %d subtrees as is_valid=%s",
+                     len(to_mark), is_valid)
         while to_mark:
             # First, mark nodes
             conn.execute("""UPDATE nodes SET is_valid = ?
                 WHERE tax_id = ?""",
-                [[is_valid, tax_id] for tax_id in to_mark])
+                         [[is_valid, tax_id] for tax_id in to_mark])
 
             # Find children - can exceed the maximum number of parameters in a sqlite query,
             # so chunk:
@@ -323,8 +336,8 @@ def update_subtree_validity(engine, mark_below_rank='species'):
                            FROM nodes
                            WHERE parent_id IN {0}"""
             to_mark = [i[0] for i in itertools.chain.from_iterable(
-                           conn.execute(child_sql.format(generate_in_param(len(chunk))),
-                                chunk) for chunk in chunked)]
+                conn.execute(child_sql.format(generate_in_param(len(chunk))),
+                             chunk) for chunk in chunked)]
 
     below_rank_query = """
     SELECT nodes.tax_id, pnodes.is_valid
@@ -344,7 +357,7 @@ def update_subtree_validity(engine, mark_below_rank='species'):
 
         # Special case: unclassified bacteria
         result = list(conn.execute("""SELECT tax_id FROM names WHERE tax_name = ? and is_primary = ?""",
-            ['unclassified Bacteria', 1]))
+                                   ['unclassified Bacteria', 1]))
         assert len(result) < 2
         logging.info("marking subtrees for unclassified Bacteria invalid")
         for i, in result:
@@ -358,7 +371,8 @@ def do_insert(engine, tablename, rows, maxrows=None, add=True, chunk_size=5000):
     """
     meta = Base.metadata
     table = meta.tables[tablename]
-    has_data = table.select(bind=engine).limit(1).count().execute().first()[0] > 0
+    has_data = table.select(bind=engine).limit(
+        1).count().execute().first()[0] > 0
 
     if not add and has_data:
         log.info('Table "%s" already contains data; load not performed.' % tablename)
@@ -375,6 +389,7 @@ def do_insert(engine, tablename, rows, maxrows=None, add=True, chunk_size=5000):
         logging.info("Inserted %d rows into %s", count, tablename)
 
     return True
+
 
 def fetch_data(dest_dir='.', clobber=False, url=ncbi_data_url):
     """
@@ -410,6 +425,7 @@ def fetch_data(dest_dir='.', clobber=False, url=ncbi_data_url):
 
     return (fout, downloaded)
 
+
 def read_archive(archive, fname):
     """
     Return an iterator of rows from a zip archive.
@@ -422,9 +438,11 @@ def read_archive(archive, fname):
     for line in zfile.read(fname).splitlines():
         yield line.rstrip('\t|\n').split('\t|\t')
 
+
 def read_dmp(fname):
     for line in open(fname, 'rU'):
         yield line.rstrip('\t|\n').split('\t|\t')
+
 
 def read_nodes(rows, root_name, ncbi_source_id):
     """
@@ -435,7 +453,7 @@ def read_nodes(rows, root_name, ncbi_source_id):
     """
 
     keys = 'tax_id parent_id rank embl_code division_id'.split()
-    idx = dict((k,i) for i,k in enumerate(keys))
+    idx = dict((k, i) for i, k in enumerate(keys))
     rank = idx['rank']
 
     # assume the first row is the root
@@ -452,7 +470,8 @@ def read_nodes(rows, root_name, ncbi_source_id):
         row['rank'] = '_'.join(row['rank'].split())
         yield row
 
-def read_names(rows, unclassified_regex = None):
+
+def read_names(rows, unclassified_regex=None):
     """
     Return an iterator of rows ready to insert into table
     "names". Adds columns "is_primary" and "is_classified". If
@@ -466,7 +485,7 @@ def read_names(rows, unclassified_regex = None):
     """
 
     keys = 'tax_id tax_name unique_name name_class'.split()
-    idx = dict((k,i) for i,k in enumerate(keys))
+    idx = dict((k, i) for i, k in enumerate(keys))
     tax_name, unique_name, name_class = \
         [idx[k] for k in ['tax_name', 'unique_name', 'name_class']]
 

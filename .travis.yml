@@ -1,22 +1,32 @@
+sudo: false
 language: python
-python:
-  - "2.7"
+python: 2.7
+
+cache:
+  # must specify pip dir
+  # https://github.com/travis-ci/travis-ci/issues/3239
+  directories:
+    - $HOME/.cache/pip
 
 env:
-  - EXTRA_PACKAGES=
-  - EXTRA_PACKAGES=xlrd
+  global:
+    # These two environment variables could be set by Travis itself, or Travis
+    # could configure itself in /etc/, ~/, or inside of the virtual
+    # environments. In any case if these two values get configured then end
+    # users only need to enable the pip cache and manually run pip wheel before
+    # running pip install.
+    - PIP_WHEEL_DIR=$HOME/.cache/pip/wheels
+    - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 
 # Install numpy, then BioPython and other dependencies
 # BioPython doesn't always play well with pip install.
 before_install: 
-  - pip install -q numpy
-  - pip install -q biopython decorator sqlalchemy $EXTRA_PACKAGES
+  - pip wheel pandas sqlalchemy decorator biopython xlrd
 
-install:
-  - python setup.py build install
+install: pip install .
 
 script: ./test -v
 
 notifications:
   email:
-    - cmccoy@fhcrc.org
+    - noah.hoffman@gmail.com
