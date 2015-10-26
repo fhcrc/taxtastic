@@ -32,6 +32,8 @@ log = logging.getLogger(__name__)
 def build_parser(parser):
     parser.add_argument(
         'infile',
+        nargs='?',
+        default=sys.stdin,
         help="""Input CSV file to process, minimally containing the
         fields 'tax_id'. Rows with missing tax_ids are left unchanged.""")
     parser.add_argument(

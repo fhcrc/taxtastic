@@ -35,6 +35,8 @@ log = logging.getLogger(__name__)
 def build_parser(parser):
     parser.add_argument(
         'infile',
+        nargs='?',
+        default=sys.stdin,
         help="""Input CSV file to process, minimally containing the
         fields 'tax_id'. Rows with missing tax_ids are left unchanged.""")
     parser.add_argument(
@@ -129,7 +131,8 @@ def action(args):
     if args.unknowns:
         # unknown taxids are set to empty string in taxid_updater
         rows[rows['tax_id'].isnull()].to_csv(
-            args.unknowns, index=False, columns=columns, quoting=csv.QUOTE_NONNUMERIC)
+            args.unknowns, index=False,
+            columns=columns, quoting=csv.QUOTE_NONNUMERIC)
 
     rows.to_csv(args.out_file, index=False, columns=columns,
                 quoting=csv.QUOTE_NONNUMERIC)
