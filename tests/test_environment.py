@@ -12,6 +12,7 @@ log = logging
 outputdir = os.path.abspath(config.outputdir)
 datadir = os.path.abspath(config.datadir)
 
+
 class TestWhereWeAre(unittest.TestCase):
 
     def setUp(self):
@@ -28,4 +29,3 @@ class TestWhereWeAre(unittest.TestCase):
         taxtastic_path = os.path.abspath(os.path.dirname(taxtastic.__file__))
         exp_path = os.path.abspath(os.path.join(outputdir, '..', 'taxtastic'))
         self.assertEqual(exp_path, taxtastic_path)
-

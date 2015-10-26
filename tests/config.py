@@ -12,6 +12,7 @@ import tempfile
 
 log = logging
 
+
 def funcname(idstr):
     return '.'.join(idstr.split('.')[1:])
 
@@ -22,18 +23,20 @@ except IndexError:
     logflag = ''
 
 logging.basicConfig(
-    file = sys.stdout,
-    format = '%(levelname)s %(module)s %(lineno)s %(message)s' \
-        if logflag.startswith('-v') else '%(message)s',
-    level = {'-q':logging.ERROR,
-             '':logging.WARNING,
-             '-v': logging.INFO,
-             '-vv': logging.DEBUG}[logflag]
-    )
+    file=sys.stdout,
+    format='%(levelname)s %(module)s %(lineno)s %(message)s'
+    if logflag.startswith('-v') else '%(message)s',
+    level={'-q': logging.ERROR,
+           '': logging.WARNING,
+           '-v': logging.INFO,
+           '-vv': logging.DEBUG}[logflag]
+)
 
 # module data
 datadir = path.abspath(path.join(path.dirname(__file__), '..', 'testfiles'))
-outputdir = path.abspath(path.join(path.dirname(__file__), '..', 'test_output'))
+outputdir = path.abspath(
+    path.join(path.dirname(__file__), '..', 'test_output'))
+
 
 def mkdir(dirpath, clobber=False):
     """
@@ -58,11 +61,14 @@ def mkdir(dirpath, clobber=False):
 if not os.path.isdir(outputdir):
     mkdir(outputdir)
 
+
 def data_path(*args):
     return os.path.join(datadir, *args)
 
+
 def output_path(*args):
     return os.path.join(outputdir, *args)
+
 
 @contextlib.contextmanager
 def tempdir(*args, **kwargs):
@@ -72,7 +78,9 @@ def tempdir(*args, **kwargs):
     finally:
         shutil.rmtree(d)
 
+
 class OutputRedirectMixin(object):
+
     def setUp(self):
         self.old_stdout = sys.stdout
         self.old_stderr = sys.stderr
@@ -134,11 +142,11 @@ class TestScriptBase(OutputRedirectMixin, TestBase):
         """
         return getattr(self, i)
 
-    def wrap_cmd(self, args = None, cmd = None):
+    def wrap_cmd(self, args=None, cmd=None):
         if cmd is None:
             cmd = self.executable
         input = (cmd + ' ' + args) % self
-        log.info('--> '+ input)
+        log.info('--> ' + input)
         status, output = commands.getstatusoutput(input)
         log.info(output)
         return status, output

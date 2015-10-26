@@ -54,7 +54,7 @@ class TestRefpkg(unittest.TestCase):
         try:
             pkg_path = os.path.join(scratch, 'test.refpkg')
             os.mkdir(pkg_path)
-            boris = os.path.join(pkg_path,'boris')
+            boris = os.path.join(pkg_path, 'boris')
             with open(boris, 'w') as h:
                 print >>h, "Hello, world!"
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
@@ -65,7 +65,8 @@ class TestRefpkg(unittest.TestCase):
                            'files': {'meep': 'boris'},
                            'md5': {'meep': 0}},
                           h)
-                self.assertRaises(ValueError, refpkg.Refpkg, pkg_path, create=False)
+                self.assertRaises(ValueError, refpkg.Refpkg,
+                                  pkg_path, create=False)
         finally:
             shutil.rmtree(scratch)
 
@@ -74,7 +75,7 @@ class TestRefpkg(unittest.TestCase):
         try:
             pkg_path = os.path.join(scratch, 'test.refpkg')
             os.mkdir(pkg_path)
-            boris = os.path.join(pkg_path,'boris')
+            boris = os.path.join(pkg_path, 'boris')
             with open(boris, 'w') as h:
                 print >>h, "Hello, world!"
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
@@ -83,7 +84,8 @@ class TestRefpkg(unittest.TestCase):
                            'files': {'meep': 'boris', 'hilda': 'boris'},
                            'md5': {'meep': 0}},
                           h)
-                self.assertRaises(ValueError, refpkg.Refpkg, pkg_path, create=False)
+                self.assertRaises(ValueError, refpkg.Refpkg,
+                                  pkg_path, create=False)
         finally:
             shutil.rmtree(scratch)
 
@@ -136,7 +138,8 @@ class TestRefpkg(unittest.TestCase):
     def test_reroot(self):
         with config.tempdir() as d:
             rpkg = os.path.join(d, 'reroot.refpkg')
-            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            shutil.copytree(config.data_path(
+                'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             r.reroot()
             self.assertEqual('9bdbf22f8bf140074d126f3d27989100',
@@ -147,7 +150,8 @@ class TestRefpkg(unittest.TestCase):
     def test_pretend_reroot(self):
         with config.tempdir() as d:
             rpkg = os.path.join(d, 'reroot.refpkg')
-            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            shutil.copytree(config.data_path(
+                'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             r.reroot(pretend=True)
             self.assertEqual('2f11faa616fc7f04d7694436b5cca05f',
@@ -156,7 +160,8 @@ class TestRefpkg(unittest.TestCase):
     def test_transaction(self):
         with config.tempdir() as d:
             rpkg = os.path.join(d, 'test.refpkg')
-            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            shutil.copytree(config.data_path(
+                'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             self.assertEqual(r.update_metadata('author', 'Boris and Hilda'),
                              "Noah Hoffman <ngh2@uw.edu>, Sujatha Srinivasan <ssriniva@fhcrc.org>, Erick Matsen <matsen@fhcrc.org>")
@@ -174,13 +179,13 @@ class TestRefpkg(unittest.TestCase):
             r.commit_transaction()
             self.assertFalse('boris' in r.contents['rollback']['metadata'])
             self.assertFalse('hilda' in r.contents['rollback']['metadata'])
-            self.assertEqual(r.log(), ["Meep!"]+original_log)
-
+            self.assertEqual(r.log(), ["Meep!"] + original_log)
 
     def test_failed_transaction(self):
         with config.tempdir() as d:
             rpkg = os.path.join(d, 'test.refpkg')
-            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            shutil.copytree(config.data_path(
+                'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             r = refpkg.Refpkg(rpkg, create=False)
             v = copy.deepcopy(r.contents)
@@ -191,7 +196,8 @@ class TestRefpkg(unittest.TestCase):
     def test_rollback(self):
         with config.tempdir() as d:
             rpkg = os.path.join(d, 'test.refpkg')
-            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            shutil.copytree(config.data_path(
+                'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             self.assertRaises(ValueError, r.rollback)
             self.maxDiff = None
@@ -208,7 +214,6 @@ class TestRefpkg(unittest.TestCase):
             self.assertFalse('boris' in r.contents['rollback']['metadata'])
             self.assertTrue('boris' in r.contents['metadata'])
 
-
             v1 = copy.deepcopy(r.contents)
             r.rollback()
             self.assertFalse('boris' in r.contents['files'])
@@ -221,7 +226,8 @@ class TestRefpkg(unittest.TestCase):
             r.rollforward()
             self.assertEqual(v1, r.contents)
 
-            # We shouldn't be able to roll forward after running an unrelated operation
+            # We shouldn't be able to roll forward after running an unrelated
+            # operation
             r.rollback()
             r.update_metadata('boris', 'hilda')
             self.assertRaises(ValueError, r.rollforward)
@@ -229,26 +235,30 @@ class TestRefpkg(unittest.TestCase):
     def test_strip(self):
         with config.tempdir() as d:
             rpkg = os.path.join(d, 'test.refpkg')
-            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            shutil.copytree(config.data_path(
+                'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             self.assertFalse('boris' in r.contents['files'])
             r.update_file('boris', config.data_path('taxids1.txt'))
             boris_path = r.resource_path('boris')
             r.rollback()
             self.assertFalse('boris' in r.contents['files'])
-            original_log= r.log()
+            original_log = r.log()
             r.strip()
 
             self.assertFalse('boris' in r.contents['files'])
-            self.assertEqual(r.log(), ['Stripped refpkg (removed 1 files)'] + original_log)
+            self.assertEqual(
+                r.log(), ['Stripped refpkg (removed 1 files)'] + original_log)
             self.assertFalse(os.path.exists(boris_path))
             self.assertFalse(r.is_invalid())
-            self.assertEqual(len(r.contents['files']), len(os.listdir(r.path))-1)
+            self.assertEqual(len(r.contents['files']), len(
+                os.listdir(r.path)) - 1)
 
     def test_is_ill_formed(self):
         with config.tempdir() as d:
             rpkg = os.path.join(d, 'test.refpkg')
-            shutil.copytree(config.data_path('lactobacillus2-0.2.refpkg'), rpkg)
+            shutil.copytree(config.data_path(
+                'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             self.assertFalse(r.is_ill_formed())
             r.update_file('aln_fasta', config.data_path('little.fasta'))
@@ -262,5 +272,3 @@ class TestRefpkg(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-

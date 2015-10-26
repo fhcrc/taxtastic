@@ -9,6 +9,7 @@ DN = os.path.dirname(__file__)
 
 
 class TaxNodeTestCase(unittest.TestCase):
+
     def setUp(self):
         with open(data_path('simple_taxtable.csv')) as fp:
             self.root = TaxNode.from_taxtable(fp)
@@ -24,7 +25,7 @@ class TaxNodeTestCase(unittest.TestCase):
         node = self.root.get_node('1303')
         lineage = node.lineage()
         self.assertEqual(['1', '131567', '2', '1239', '91061', '186826', '1300', '1301', '1303'],
-                [i.tax_id for i in lineage])
+                         [i.tax_id for i in lineage])
 
     def test_write_taxtable(self):
         expected = '''"tax_id","parent_id","rank","tax_name","root","below_root","superkingdom","phylum","class","order","family","genus","species"
@@ -45,12 +46,11 @@ class TaxNodeTestCase(unittest.TestCase):
         v = s.getvalue()
         self.assertEquals(expected, v)
 
-
     def test_prune_unrepresented(self):
         self.root.get_node('1303').sequence_ids.add('sequence1')
         self.root.prune_unrepresented()
         self.assertEqual(set(['1', '131567', '2', '1239', '91061', '186826', '1300', '1301', '1303']),
-                set(self.root.index))
+                         set(self.root.index))
 
     def test_collapse(self):
         node = self.root.get_node('1300')

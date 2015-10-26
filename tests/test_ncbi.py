@@ -43,14 +43,18 @@ ncbi_data = config.ncbi_data
 #         fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir, clobber=True)
 #         self.assertTrue(downloaded)
 
+
 class TestDbconnect(TestBase):
 
     def test01(self):
         engine = taxtastic.ncbi.db_connect(ncbi_master_db)
         with engine.begin() as con:
-            result = con.execute('select name from sqlite_master where type = "table"')
+            result = con.execute(
+                'select name from sqlite_master where type = "table"')
             tables = set(i[0] for i in result)
-            self.assertTrue(set(['nodes','names','merged','source']).issubset(tables))
+            self.assertTrue(
+                set(['nodes', 'names', 'merged', 'source']).issubset(tables))
+
 
 class TestLoadData(TestBase):
 
@@ -80,8 +84,8 @@ class TestLoadData(TestBase):
             # shouldn't be able to load data a second time, so number
             # of rows should not change
             taxtastic.ncbi.db_load(
-                    engine, archive=ncbi_data,
-                    maxrows=self.maxrows)
+                engine, archive=ncbi_data,
+                maxrows=self.maxrows)
             result = conn.execute('select 1 AS i from names')
             self.assertEqual(self.maxrows, len(list(result)))
 
@@ -98,15 +102,18 @@ class TestReadNames(TestBase):
 
         rows = read_names(rows=read_archive(self.zipfile, 'names.dmp'),
                           unclassified_regex=UNCLASSIFIED_REGEX)
-        self.assertEquals(set(row['is_classified'] for row in rows), set([0,1]))
+        self.assertEquals(set(row['is_classified']
+                              for row in rows), set([0, 1]))
 
     def test02(self):
         """
         is_classified always None if unclassified_regex not provided
         """
 
-        rows = read_names(rows = read_archive(self.zipfile, 'names.dmp'))
-        self.assertEquals(set(row['is_classified'] for row in rows), set([None]))
+        rows = read_names(rows=read_archive(self.zipfile, 'names.dmp'))
+        self.assertEquals(set(row['is_classified']
+                              for row in rows), set([None]))
+
 
 class TestUnclassifiedRegex(TestBase):
     """
@@ -124,39 +131,37 @@ class TestUnclassifiedRegex(TestBase):
             for regex in self.regexes:
                 m = regex.search(strain_name)
                 if m:
-                    self.fail('"{0}" matches "{1}"'.format(strain_name, regex.pattern))
+                    self.fail('"{0}" matches "{1}"'.format(
+                        strain_name, regex.pattern))
 
-#def generate_test_unclassified_regex():
+# def generate_test_unclassified_regex():
     #"""
-    #Generate a test class verifying that none of the type strains in
-    #type_strain_names.txt match the unclassified regex.
+    # Generate a test class verifying that none of the type strains in
+    # type_strain_names.txt match the unclassified regex.
     #"""
-    #def generate_test(strain_name):
-        #def do_test(self):
-            #for regex in self.regexes:
+    # def generate_test(strain_name):
+        # def do_test(self):
+            # for regex in self.regexes:
                 #m = regex.search(strain_name)
-                #if m:
+                # if m:
                     #self.fail('"{0}" matches "{1}"'.format(strain_name, regex.pattern))
-        #return do_test
+        # return do_test
 
-    #class TestUnclassifiedRegex(TestBase):
-        #def setUp(self):
+    # class TestUnclassifiedRegex(TestBase):
+        # def setUp(self):
             #self.pieces = taxtastic.ncbi.UNCLASSIFIED_REGEX_COMPONENTS
             #self.regexes = [re.compile(piece) for piece in self.pieces]
 
-    #with open(config.data_path('type_strain_names.txt')) as fp:
+    # with open(config.data_path('type_strain_names.txt')) as fp:
         #type_strain_names = [i.rstrip() for i in fp]
 
-    #for s in type_strain_names:
+    # for s in type_strain_names:
         #test_fn = generate_test(s)
         #func_name = 'test_{0}_no_match'.format(re.sub(r'[ -.]', '_', s).lower())
         #test_fn.__name__ = func_name
         #setattr(TestUnclassifiedRegex, func_name, test_fn)
 
-    #return TestUnclassifiedRegex
+    # return TestUnclassifiedRegex
 
 #TestUnclassifiedRegex = generate_test_unclassified_regex()
 #del generate_test_unclassified_regex
-
-
-

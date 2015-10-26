@@ -15,6 +15,7 @@ TestScriptBase.outputdir = config.outputdir
 TestScriptBase.taxdb = config.ncbi_master_db
 TestScriptBase.datadir = config.datadir
 
+
 class TestHelp(TestScriptBase):
 
     def test01(self):
@@ -64,13 +65,14 @@ class TestCreate(TestScriptBase):
         self.cmd_ok('create -P %(packagename)s -l 16s')
         self.assertTrue(path.exists(self.packagename))
 
-        contents_json = path.join(self.packagename,'CONTENTS.json')
+        contents_json = path.join(self.packagename, 'CONTENTS.json')
         self.assertTrue(path.exists(contents_json))
 
         with open(contents_json) as f:
             contents = json.load(f)
 
-        self.assertEqual(contents['metadata']['format_version'], refpkg.FORMAT_VERSION)
+        self.assertEqual(contents['metadata'][
+                         'format_version'], refpkg.FORMAT_VERSION)
 
         # test the --clobber option
         self.cmd_ok('create -P %(packagename)s -l 16s --clobber')
@@ -117,15 +119,18 @@ class TestTaxTable(TestScriptBase):
 
     def test06(self):
         """taxids using an input file"""
-        self.cmd_ok('taxtable -d %(taxdb)s -o %(outfile)s -t %(datadir)s/taxids1.txt')
+        self.cmd_ok(
+            'taxtable -d %(taxdb)s -o %(outfile)s -t %(datadir)s/taxids1.txt')
         self.assertTrue(path.isfile(self.outfile))
 
 
 class LonelyNodesTestCase(TestScriptBase):
+
     def setUp(self):
         super(LonelyNodesTestCase, self).setUp()
         self.outfile = path.join(self.mkoutdir(), 'lonely.txt')
         self.refpkg = config.data_path('lactobacillus2-0.2.refpkg')
+
     def test_all_ranks(self):
         self.cmd_ok('lonelynodes %(refpkg)s -o %(outfile)s')
         self.assertTrue(path.isfile(self.outfile))
@@ -148,4 +153,4 @@ cellular organisms,131567,below_root""", fp.read().strip().replace('\r', ''))
         self.assertTrue(path.isfile(self.outfile))
         with open(self.outfile) as fp:
             self.assertEqual("""tax_name,tax_id,rank\r\nEscherichia coli,562,species""",
-                    fp.read().strip())
+                             fp.read().strip())

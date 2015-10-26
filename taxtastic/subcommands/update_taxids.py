@@ -131,4 +131,5 @@ def action(args):
         rows[rows['tax_id'].isnull()].to_csv(
             args.unknowns, index=False, columns=columns, quoting=csv.QUOTE_NONNUMERIC)
 
-    rows.to_csv(args.out_file, index=False, columns=columns, quoting=csv.QUOTE_NONNUMERIC)
+    rows.to_csv(args.out_file, index=False, columns=columns,
+                quoting=csv.QUOTE_NONNUMERIC)
