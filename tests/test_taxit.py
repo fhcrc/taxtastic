@@ -98,29 +98,19 @@ class TestTaxTable(TestScriptBase):
         self.assertFalse(path.isfile(self.outfile))
 
     def test02(self):
-        """ Minimal test: a existing database is opened and that's it."""
-        self.cmd_ok('taxtable -d %(taxdb)s > %(outfile)s')
+        """Specify a single tax_id"""
+        self.cmd_ok('taxtable %(taxdb)s -o %(outfile)s -t 180164')
         self.assertTrue(path.isfile(self.outfile))
 
     def test03(self):
-        """ Minimal test: a existing database is opened and that's it."""
-        self.cmd_ok('taxtable -d %(taxdb)s -o %(outfile)s')
+        """Specify more than one tax_id"""
+        self.cmd_ok('taxtable %(taxdb)s -o %(outfile)s -t 180164,166486')
         self.assertTrue(path.isfile(self.outfile))
 
     def test04(self):
-        """Specify a single tax_id"""
-        self.cmd_ok('taxtable -d %(taxdb)s -o %(outfile)s -t 180164')
-        self.assertTrue(path.isfile(self.outfile))
-
-    def test05(self):
-        """Specify more than one tax_id"""
-        self.cmd_ok('taxtable -d %(taxdb)s -o %(outfile)s -t 180164,166486')
-        self.assertTrue(path.isfile(self.outfile))
-
-    def test06(self):
         """taxids using an input file"""
         self.cmd_ok(
-            'taxtable -d %(taxdb)s -o %(outfile)s -t %(datadir)s/taxids1.txt')
+            'taxtable %(taxdb)s -o %(outfile)s -t %(datadir)s/taxids1.txt')
         self.assertTrue(path.isfile(self.outfile))
 
 
@@ -152,5 +142,5 @@ cellular organisms,131567,below_root""", fp.read().strip().replace('\r', ''))
         self.cmd_ok('lonelynodes %(refpkg)s -o %(outfile)s -r species')
         self.assertTrue(path.isfile(self.outfile))
         with open(self.outfile) as fp:
-            self.assertEqual("""tax_name,tax_id,rank\r\nEscherichia coli,562,species""",
-                             fp.read().strip())
+            line = 'tax_name,tax_id,rank\r\nEscherichia coli,562,species'
+            self.assertEqual(line, fp.read().strip())

@@ -60,10 +60,8 @@ log = logging.getLogger(__name__)
 def build_parser(parser):
 
     parser.add_argument(
-        '-d', '--database-file',
-        dest='database_file',
+        'database_file',
         metavar='FILE',
-        required=True,
         help='Name of the sqlite database file')
 
     parser.add_argument(
@@ -72,7 +70,7 @@ def build_parser(parser):
         help='Show all ranks in output file.')
 
     input_group = parser.add_argument_group(
-        "Input options").add_mutually_exclusive_group()
+        "Input options").add_mutually_exclusive_group(required=True)
 
     input_group.add_argument(
         '-n', '--tax-names',
