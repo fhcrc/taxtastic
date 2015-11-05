@@ -26,6 +26,7 @@ import sys
 
 import sqlalchemy
 
+from sqlalchemy.sql import select
 from taxtastic.taxonomy import Taxonomy
 from taxtastic import ncbi
 
@@ -48,6 +49,9 @@ def build_parser(parser):
         '--unknowns',
         help="""csv file with single column 'seqname' identifying
         records with unknown taxids (works with --remove-unknown)""")
+    parser.add_argument(
+        '--taxid-classified', action='store_true',
+        help='add column True/False column if the tax_id is primary and valid')
     parser.add_argument(
         '--name-column',
         help=('column with taxon name(s) to help '
@@ -89,9 +93,35 @@ def taxid_updater(taxonomy, halt=True):
     return update_taxid
 
 
+def species_is_classified(tax_id, taxonomy):
+    """
+    returns is_valid from ncbi taxonomy
+    """
+    res = fetch_tax_info(tax_id, taxonomy)
+    if not res:
+        return False
+
+    tax_id, is_valid, parent_id, rank = res
+    if rank == 'species':
+        return is_valid
+    elif tax_id == parent_id:
+        return False
+    else:
+        # instead of recursion create a table of ranks by index. code
+        # will be something liek ranks.index(rank) > species_index
+        return species_is_classified(parent_id, taxonomy)
+
+
+def fetch_tax_info(tax_id, taxonomy):
+    c = taxonomy.nodes.c  # columns
+    s = select([c.tax_id, c.is_valid, c.parent_id, c.rank])
+    s = s.where(c.tax_id == tax_id)
+    return s.execute().fetchone()
+
+
 def action(args):
     rows = pandas.read_csv(args.infile, dtype='str')
-    columns = rows.columns  # preserve column order
+    columns = rows.columns.tolist()  # preserve column order
 
     if 'tax_id' not in columns:
         raise ValueError("No tax_id column")
@@ -123,6 +153,21 @@ def action(args):
             return row
 
     tax_ids = tax_ids.apply(set_new_tax_id, axis=1)
+
+    if args.taxid_classified:
+        if 'taxid_classified' in columns:
+            rows = rows.drop('taxid_classified', axis=1)
+        else:
+            columns.append('taxid_classified')
+
+        tax_ids.loc[:, 'taxid_classified'] = None
+
+        def is_classified(row):
+            row['taxid_classified'] = species_is_classified(
+                row['new_tax_id'], tax)
+            return row
+
+        tax_ids = tax_ids.apply(is_classified, axis=1)
 
     rows = rows.merge(tax_ids, on=index, how='left')
     rows = rows.drop('tax_id', axis=1)
