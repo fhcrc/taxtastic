@@ -27,7 +27,8 @@ from . import ncbi
 
 class Taxonomy(object):
 
-    def __init__(self, engine, ranks=ncbi.ranks, undefined_rank='no_rank', undef_prefix='below'):
+    def __init__(self, engine, ranks=ncbi.ranks,
+                 undefined_rank='no_rank', undef_prefix='below'):
         """
         The Taxonomy class defines an object providing an interface to
         the taxonomy database.
@@ -93,7 +94,7 @@ class Taxonomy(object):
         """
         Returns parent, rank
         """
-        if tax_id == None:
+        if tax_id is None:
             return None
 
         s = select([self.nodes.c.parent_id, self.nodes.c.rank],
@@ -193,7 +194,10 @@ class Taxonomy(object):
         if lineage:
             log.debug('%s tax_id "%s" is cached', indent, tax_id)
         else:
-            log.debug('%s reconstructing lineage of tax_id "%s"', indent, tax_id)
+            log.debug(
+                '%s reconstructing lineage of tax_id "%s"',
+                indent,
+                tax_id)
             parent_id, rank = self._node(tax_id)
             lineage = [(rank, tax_id)]
 
@@ -308,7 +312,8 @@ class Taxonomy(object):
         # header row
         writer.writeheader()
 
-        for lin in sorted(lineages, key=lambda x: (ranks.index(x['rank']), x['tax_name'])):
+        for lin in sorted(lineages, key=lambda x: (
+                ranks.index(x['rank']), x['tax_name'])):
             writer.writerow(lin)
 
     def add_source(self, name, description=None):
@@ -326,7 +331,8 @@ class Taxonomy(object):
 
         return source_id, success
 
-    def add_node(self, tax_id, parent_id, rank, tax_name, children=None, source_id=None, source_name=None, **kwargs):
+    def add_node(self, tax_id, parent_id, rank, tax_name,
+                 children=None, source_id=None, source_name=None, **kwargs):
         """
         Add a node to the taxonomy.
         """
@@ -364,7 +370,7 @@ class Taxonomy(object):
         If *tax_id* is None, then always returns None. Otherwise,
         returns None if there is no sibling.
         """
-        if tax_id == None:
+        if tax_id is None:
             return None
         parent_id, rank = self._node(tax_id)
         s = select([self.nodes.c.tax_id],
@@ -404,7 +410,7 @@ class Taxonomy(object):
         a proper rank below that of tax_id (i.e., genus, species, but
         not no_rank or below_below_kingdom).
         """
-        if tax_id == None:
+        if tax_id is None:
             return None
         parent_id, rank = self._node(tax_id)
         s = select([self.nodes.c.tax_id],
@@ -422,7 +428,7 @@ class Taxonomy(object):
             return r
 
     def children_of(self, tax_id, n):
-        if tax_id == None:
+        if tax_id is None:
             return None
         parent_id, rank = self._node(tax_id)
         s = select([self.nodes.c.tax_id],
@@ -452,7 +458,7 @@ class Taxonomy(object):
         """Return a list of species tax_ids under *tax_id* such that
         node under *tax_id* and above the species has two children.
         """
-        if tax_id == None:
+        if tax_id is None:
             return None
         parent_id, rank = self._node(tax_id)
         if rank == 'species':
@@ -465,7 +471,7 @@ class Taxonomy(object):
             return species_taxids
 
     def species_below(self, tax_id):
-        if tax_id == None:
+        if tax_id is None:
             return None
         try:
             parent_id, rank = self._node(tax_id)

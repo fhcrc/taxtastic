@@ -82,7 +82,8 @@ def parse_arguments(argv):
 
     actions = {}
 
-    for name, mod in subcommands.itermodules(os.path.split(subcommands.__file__)[0]):
+    for name, mod in subcommands.itermodules(
+            os.path.split(subcommands.__file__)[0]):
         # set up subcommand help text. The first line of the dosctring
         # in the module is displayed as the help text in the
         # script-level help message (`script -h`). The entire

@@ -17,6 +17,11 @@
 Use in preparation for ``taxit taxtable``. Takes sequence info file as
 passed to ``taxit create --seq-info``
 
+FIXME: only include --name-column column on unknown tax_ids.  As is we are
+losing a lot of efficiency by dedupicating on both tax_id,organism columns
+for all rows.
+
+TODO: implement --append-column RANK.
 """
 
 import csv

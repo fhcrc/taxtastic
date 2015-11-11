@@ -302,7 +302,7 @@ class Refpkg(object):
 
         try:
             fobj = self.open_manifest('r')
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.ENOENT:
                 raise ValueError(
                     "couldn't find manifest file in %s" % (self.path,))
@@ -378,15 +378,17 @@ class Refpkg(object):
 
         if not('rollback' in self.contents):
             return "Manifest file missing key rollback"
-        if not(isinstance(self.contents['rollback'], dict)) and self.contents["rollback"] != None:
+        if not(isinstance(self.contents['rollback'], dict)) and self.contents[
+                "rollback"] is not None:
             return ("Key rollback in manifest did not refer to a "
                     "dictionary or None, found %s") % str(self.contents['rollback'])
 
         if not('rollforward' in self.contents):
             return "Manifest file missing key rollforward"
-        if self.contents['rollforward'] != None:
+        if self.contents['rollforward'] is not None:
             if not(isinstance(self.contents['rollforward'], list)):
-                return "Key rollforward was not a list, found %s" % str(self.contents['rollforward'])
+                return "Key rollforward was not a list, found %s" % str(self.contents[
+                                                                        'rollforward'])
             elif len(self.contents['rollforward']) != 2:
                 return "Key rollforward had wrong length, found %d" % \
                     len(self.contents['rollforward'])
@@ -402,7 +404,8 @@ class Refpkg(object):
         if not(isinstance(self.contents['log'], list)):
             return "Key 'log' in manifest did not refer to a list"
         # MD5 keys and filenames are in one to one correspondence
-        if self.contents['files'].viewkeys() != self.contents['md5'].viewkeys():
+        if self.contents['files'].viewkeys() != self.contents[
+                'md5'].viewkeys():
             return ("Files and MD5 sums in manifest do not "
                     "match (files: %s, MD5 sums: %s)") % \
                 (self.contents['files'].keys(),
@@ -551,7 +554,7 @@ class Refpkg(object):
         # This is slightly complicated because of Python's freakish
         # assignment semantics and because we don't store multiple
         # copies of the log.
-        if self.contents['rollback'] == None:
+        if self.contents['rollback'] is None:
             raise ValueError("No operation to roll back on refpkg")
         future_msg = self.contents['log'][0]
         rolledback_log = self.contents['log'][1:]
@@ -565,7 +568,7 @@ class Refpkg(object):
     def rollforward(self):
         """Restore a reverted modification to the refpkg.
         """
-        if self.contents['rollforward'] == None:
+        if self.contents['rollforward'] is None:
             raise ValueError("No operation to roll forward on refpkg")
         new_log_message = self.contents['rollforward'][0]
         new_contents = self.contents['rollforward'][1]
@@ -646,7 +649,7 @@ class Refpkg(object):
         with self.open_resource('aln_fasta') as f:
             try:
                 Bio.SeqIO.read(f, 'fasta')
-            except ValueError, v:
+            except ValueError as v:
                 if v[0] == 'No records found in handle':
                     return 'aln_fasta file is not valid FASTA.'
 
@@ -665,7 +668,7 @@ class Refpkg(object):
         with self.open_resource('aln_sto') as f:
             try:
                 Bio.SeqIO.read(f, 'stockholm')
-            except ValueError, v:
+            except ValueError as v:
                 if v[0] == 'No records found in handle':
                     return 'aln_sto file is not valid Stockholm.'
 
@@ -710,7 +713,7 @@ class Refpkg(object):
         with self.open_resource('phylo_model') as f:
             try:
                 json.load(f)
-            except ValueError, v:
+            except ValueError as v:
                 return "phylo_model is not valid JSON."
 
         return False

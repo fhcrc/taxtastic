@@ -250,7 +250,7 @@ def db_load(engine, archive, root_name='root', maxrows=None):
         mark_is_valid(engine)
         update_subtree_validity(engine)
 
-    except sqlite3.IntegrityError, err:
+    except sqlite3.IntegrityError as err:
         raise IntegrityError(err)
 
 
@@ -364,7 +364,8 @@ def update_subtree_validity(engine, mark_below_rank='species'):
             mark_subtrees(conn, [i], 0)
 
 
-def do_insert(engine, tablename, rows, maxrows=None, add=True, chunk_size=5000):
+def do_insert(engine, tablename, rows, maxrows=None,
+              add=True, chunk_size=5000):
     """
     Insert rows into a table. Do not perform the insert if
     add is False and table already contains data.
@@ -375,7 +376,9 @@ def do_insert(engine, tablename, rows, maxrows=None, add=True, chunk_size=5000):
         1).count().execute().first()[0] > 0
 
     if not add and has_data:
-        log.info('Table "%s" already contains data; load not performed.' % tablename)
+        log.info(
+            'Table "%s" already contains data; load not performed.' %
+            tablename)
         return False
     if maxrows:
         rows = itertools.islice(rows, maxrows)
