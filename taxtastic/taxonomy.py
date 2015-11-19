@@ -12,17 +12,17 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-import logging
 import csv
 import itertools
-
-log = logging
+import logging
 
 import sqlalchemy
 from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
 
 from . import ncbi
+
+log = logging.getLogger(__name__)
 
 
 class Taxonomy(object):
@@ -44,18 +44,17 @@ class Taxonomy(object):
         Example:
         >>> from sqlalchemy import create_engine
         >>> from taxtastic.taxonomy import Taxonomy
-        >>> engine = create_engine('sqlite:///%s' % dbname, echo=False)
+        >>> engine = create_engine('sqlite:///' + dbname, echo=False)
         >>> tax = Taxonomy(engine)
 
+        TODO: should ranks be defined in a table in the database?
+        TODO: assertions to check for database components
+
+        see http://www.sqlalchemy.org/docs/reference/sqlalchemy/inspector.html
+        http://www.sqlalchemy.org/docs/metadata.html#metadata-reflection
         """
 
-        # TODO: should ranks be defined in a table in the database?
-        # TODO: assertions to check for database components
-
-        # see http://www.sqlalchemy.org/docs/reference/sqlalchemy/inspector.html
-        # http://www.sqlalchemy.org/docs/metadata.html#metadata-reflection
-
-        log.debug('using database %s' % engine.url)
+        log.debug('using database ' + str(engine.url))
 
         self.engine = engine
         self.meta = MetaData()
@@ -92,20 +91,20 @@ class Taxonomy(object):
 
     def _node(self, tax_id):
         """
-        Returns parent, rank
-        """
-        if tax_id is None:
-            return None
+        Returns parent_id, rank
 
+        FIXME: expand return rank to include custom 'below' ranks built when
+               get_lineage is caled
+        """
         s = select([self.nodes.c.parent_id, self.nodes.c.rank],
                    self.nodes.c.tax_id == tax_id)
         res = s.execute()
         output = res.fetchone()
         if not output:
-            raise KeyError('value "%s" not found in nodes.tax_id' % tax_id)
-
-        # parent_id, rank
-        return output
+            msg = 'value "{}" not found in nodes.tax_id'.format(tax_id)
+            raise ValueError(msg)
+        else:
+            return output  # parent_id, rank
 
     def primary_from_id(self, tax_id):
         """
@@ -113,12 +112,14 @@ class Taxonomy(object):
         """
 
         s = select([self.names.c.tax_name],
-                   and_(self.names.c.tax_id == tax_id, self.names.c.is_primary == 1))
+                   and_(self.names.c.tax_id == tax_id,
+                        self.names.c.is_primary == 1))
         res = s.execute()
         output = res.fetchone()
 
         if not output:
-            raise KeyError('value "%s" not found in names.tax_id' % tax_id)
+            msg = 'value "{}" not found in names.tax_id'.format(tax_id)
+            raise ValueError(msg)
         else:
             return output[0]
 
@@ -138,11 +139,13 @@ class Taxonomy(object):
         if res:
             tax_id, is_primary = res
         else:
-            raise KeyError('"%s" not found in names.tax_names' % tax_name)
+            msg = '"{}" not found in names.tax_names'.format(tax_name)
+            raise ValueError(msg)
 
         if not is_primary:
             s2 = select([names.c.tax_name],
-                        and_(names.c.tax_id == tax_id, names.c.is_primary == 1))
+                        and_(names.c.tax_id == tax_id,
+                             names.c.is_primary == 1))
             tax_name = s2.execute().fetchone()[0]
 
         return tax_id, tax_name, bool(is_primary)
@@ -165,8 +168,9 @@ class Taxonomy(object):
 
         if output is not None:
             if len(output) > 1:
-                raise ValueError(
-                    'There is more than one value for merged.old_tax_id = "%s"' % old_tax_id)
+                msg = ('There is more than one value '
+                       'for merged.old_tax_id = "{}"').format(old_tax_id)
+                raise ValueError(msg)
             else:
                 output = output[0][0]
         else:
@@ -178,6 +182,8 @@ class Taxonomy(object):
         """
         Returns cached lineage from self.cached or recursively builds
         lineage of tax_id until the root node is reached.
+
+        SIDE EFFECT: Updates self.ranks with unknown or 'no_rank' designations
         """
         # Be sure we aren't working with an obsolete tax_id
         if merge_obsolete:
@@ -192,12 +198,11 @@ class Taxonomy(object):
         lineage = self.cached.get(tax_id)
 
         if lineage:
-            log.debug('%s tax_id "%s" is cached', indent, tax_id)
+            log.debug('{} tax_id "{}" is cached'.format(indent, tax_id))
         else:
-            log.debug(
-                '%s reconstructing lineage of tax_id "%s"',
-                indent,
-                tax_id)
+            msg = '{} reconstructing lineage of tax_id "{}"'
+            msg = msg.format(indent, tax_id)
+            log.debug(msg)
             parent_id, rank = self._node(tax_id)
             lineage = [(rank, tax_id)]
 
@@ -206,7 +211,7 @@ class Taxonomy(object):
                 lineage = self._get_lineage(parent_id, _level + 1) + lineage
 
             # now that we've reached the root, rename any undefined ranks
-            _parent_rank, _parent_id = None, None
+            _parent_rank = None
             for i, node in enumerate(lineage):
                 _rank, _tax_id = node
 
@@ -216,14 +221,27 @@ class Taxonomy(object):
 
                     lineage[i] = (_rank, _tax_id)
                     self.cached[_tax_id] = lineage
-                    log.debug('renamed undefined rank to %s in element %s of lineage of %s',
-                              _rank, i, tax_id)
+                    msg = ('renamed undefined rank to {} in '
+                           'element {} of lineage of {}')
+                    msg = msg.format(_rank, i, tax_id)
+                    log.debug(msg)
 
-                _parent_rank, _parent_id = _rank, _tax_id
+                _parent_rank = _rank
 
             self.cached[tax_id] = lineage
 
         return lineage
+
+    def is_below(self, lower, upper):
+        return lower in self.ranks_below(upper)
+
+    def ranks_below(self, rank):
+        below = []
+        try:
+            below = self.ranks[self.ranks.index(rank):]
+        except ValueError as err:
+            log.error(err)
+        return below
 
     def synonyms(self, tax_id=None, tax_name=None):
         if not bool(tax_id) ^ bool(tax_name):
@@ -239,14 +257,15 @@ class Taxonomy(object):
             if res:
                 tax_id = res[0]
             else:
-                raise KeyError('"%s" not found in names.tax_names' % tax_name)
+                msg = '"{}" not found in names.tax_names'.format(tax_name)
+                raise ValueError(msg)
 
         s = select([names.c.tax_name, names.c.is_primary],
                    names.c.tax_id == tax_id)
         output = s.execute().fetchall()
 
         if not output:
-            raise KeyError('"%s" not found in names.tax_id' % tax_id)
+            raise ValueError('"{}" not found in names.tax_id'.format(tax_id))
 
         return output
 
@@ -256,15 +275,11 @@ class Taxonomy(object):
         """
 
         if not bool(tax_id) ^ bool(tax_name):
-            raise ValueError(
-                'Exactly one of tax_id and tax_name may be provided.')
+            msg = 'Exactly one of tax_id and tax_name may be provided.'
+            raise ValueError(msg)
 
         if tax_name:
             tax_id, primary_name, is_primary = self.primary_from_name(tax_name)
-
-        new_tax_id = self._get_merged(tax_id)
-        if new_tax_id:
-            tax_id = new_tax_id
 
         ldict = dict(self._get_lineage(tax_id))
 
@@ -283,10 +298,13 @@ class Taxonomy(object):
         specific ranks.
 
          * taxa - list of taxids to include in the output; if none are
-           provided, use self.cached.keys() (ie, those taxa loaded into the cache).
-         * csvfile - an open file-like object (see "csvfile" argument to csv.writer)
-         * full - if True (the default), includes a column for each rank in self.ranks;
-           otherwise, omits ranks (columns) the are undefined for all taxa.
+           provided, use self.cached.keys()
+           (ie, those taxa loaded into the cache).
+         * csvfile - an open file-like object
+           (see "csvfile" argument to csv.writer)
+         * full - if True (the default), includes a column
+                  for each rank in self.ranks; otherwise, omits ranks (columns)
+                  the are undefined for all taxa.
         """
 
         if not taxa:
@@ -307,7 +325,8 @@ class Taxonomy(object):
 
         fields = ['tax_id', 'parent_id', 'rank', 'tax_name'] + ranks
         writer = csv.DictWriter(csvfile, fieldnames=fields,
-                                extrasaction='ignore', quoting=csv.QUOTE_NONNUMERIC)
+                                extrasaction='ignore',
+                                quoting=csv.QUOTE_NONNUMERIC)
 
         # header row
         writer.writeheader()
@@ -323,7 +342,8 @@ class Taxonomy(object):
         """
 
         try:
-            result = self.source.insert().execute(name=name, description=description)
+            result = self.source.insert().execute(name=name,
+                                                  description=description)
             source_id, success = result.inserted_primary_key[0], True
         except sqlalchemy.exc.IntegrityError:
             s = select([self.source.c.id], self.source.c.name == name)
@@ -380,8 +400,9 @@ class Taxonomy(object):
         res = s.execute()
         output = res.fetchone()
         if not output:
-            log.warning(
-                'No sibling of tax_id %s with rank %s found in taxonomy' % (tax_id, rank))
+            msg = 'No sibling of tax_id {} with rank {} found in taxonomy'
+            msg = msg.format(tax_id, rank)
+            log.warning(msg)
             return None
         else:
             return output[0]
@@ -415,12 +436,15 @@ class Taxonomy(object):
         parent_id, rank = self._node(tax_id)
         s = select([self.nodes.c.tax_id],
                    and_(self.nodes.c.parent_id == tax_id,
-                        or_(*[self.nodes.c.rank == r for r in ranks_below(rank)])))
+                        or_(*[self.nodes.c.rank == r
+                              for r in self.ranks_below(rank)])))
         res = s.execute()
         output = res.fetchone()
         if not output:
-            log.warning(
-                "No children of tax_id %s with rank below %s found in database" % (tax_id, rank))
+            msg = ('No children of tax_id {} with '
+                   'rank below {} found in database')
+            msg = msg.format(tax_id, rank)
+            log.warning(msg)
             return None
         else:
             r = output[0]
@@ -433,7 +457,8 @@ class Taxonomy(object):
         parent_id, rank = self._node(tax_id)
         s = select([self.nodes.c.tax_id],
                    and_(self.nodes.c.parent_id == tax_id,
-                        or_(*[self.nodes.c.rank == r for r in ranks_below(rank)]))).limit(n)
+                        or_(*[self.nodes.c.rank == r
+                              for r in self.ranks_below(rank)]))).limit(n)
         res = s.execute()
         output = res.fetchall()
         if not output:
@@ -444,15 +469,18 @@ class Taxonomy(object):
                 assert self.is_ancestor_of(x, tax_id)
             return r
 
-    def parent_id(self, tax_id):
-        if tax_id is None:
-            return None
-        else:
-            q = self._node(tax_id)
-            if q:
-                return q[0]
-            else:
-                return None
+    def parent_id(self, tax_id, rank=None):
+        parent_id, tax_rank = self._node(tax_id)
+
+        if rank:
+            if tax_rank == rank:
+                msg = 'tax_id {} already at rank {}, returning None'
+                msg = msg.format(tax_id, rank)
+                log.warn(msg)
+
+            parent_id = dict(self._get_lineage(parent_id)).get(rank, None)
+
+        return parent_id
 
     def nary_subtree(self, tax_id, n=2):
         """Return a list of species tax_ids under *tax_id* such that
@@ -475,7 +503,7 @@ class Taxonomy(object):
             return None
         try:
             parent_id, rank = self._node(tax_id)
-        except KeyError:
+        except ValueError:
             return None
         if rank == 'species':
             return tax_id
@@ -484,31 +512,3 @@ class Taxonomy(object):
             newc = self.species_below(c)
             assert self.is_ancestor_of(newc, tax_id)
             return newc
-
-ranks = ['species', 'genus', 'family', 'order', 'class', 'phylum', 'kingdom']
-
-
-def is_below(lower, upper):
-    try:
-        lindex = ranks.index(lower)
-        uindex = ranks.index(upper)
-        return lindex < uindex
-    except:
-        return False
-
-
-def ranks_below(rank):
-    try:
-        idx = ranks.index(rank)
-        return ranks[:idx]
-    except:
-        return []
-
-
-def rank_below(rank):
-    return {'kingdom': 'phylum',
-            'phylum': 'class',
-            'class': 'order',
-            'order': 'family',
-            'family': 'genus',
-            'genus': 'species'}[rank]
