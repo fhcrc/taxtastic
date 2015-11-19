@@ -61,41 +61,42 @@ def build_parser(parser):
         '--name-column',
         help=('column with taxon name(s) to help '
               'find tax_ids. ex: organism name'))
+    parser.add_argument(
+        '--append-lineage',
+        help=('rank to append to seq_info'))
 
 
-def taxid_updater(taxonomy, halt=True):
-    """
-    Create a function to update obsolete taxonomies in
-    """
+def update_taxid(tax_id, taxonomy, halt=True):
+    try:
+        taxonomy._node(tax_id)
+        # _node raises ValueError if the taxon couldn't be found in the
+        # current taxonomy. If found, no update needed.
+    except ValueError as err:
+        new_tax_id = taxonomy._get_merged(tax_id)
 
-    def update_taxid(tax_id, keyword=None):
-        try:
-            taxonomy._node(tax_id)
-            # _node raises KeyError if the taxon couldn't be found in the
-            # current taxonomy. If found, no update needed.
-        except KeyError:
-            new_tax_id = taxonomy._get_merged(tax_id)
-
-            if new_tax_id != tax_id:
-                msg = 'tax_id {} merged to {}'.format(tax_id, new_tax_id)
-                log.info(msg)
-                tax_id = new_tax_id
-            elif keyword:
-                try:
-                    tax_id, _, _ = taxonomy.primary_from_name(keyword)
-                except KeyError as err:
-                    log.warn(err)
-                    tax_id = None
+        if new_tax_id != tax_id:
+            log.info('tax_id {} merged to {}'.format(tax_id, new_tax_id))
+            tax_id = new_tax_id
+        else:
+            if halt:
+                raise err
             else:
-                msg = "Unknown taxon {}".format(tax_id)
-                log.warn(msg)
+                log.warn(err)
                 tax_id = None
-                if halt:
-                    raise KeyError(msg)
 
-        return tax_id
+    return tax_id
 
-    return update_taxid
+
+def update_by_name(name, taxonomy, halt=True):
+    try:
+        tax_id, _, _ = taxonomy.primary_from_name(name)
+    except ValueError as err:
+        if halt:
+            raise err
+        else:
+            log.warn(err)
+            tax_id = None
+    return tax_id
 
 
 def species_is_classified(tax_id, taxonomy):
@@ -131,33 +132,48 @@ def action(args):
     if 'tax_id' not in columns:
         raise ValueError("No tax_id column")
 
-    index = ['tax_id']
-
     if args.name_column:
         if args.name_column not in columns:
             raise ValueError("No " + args.name_column + " column")
-        else:
-            index.append(args.name_column)
 
     e = sqlalchemy.create_engine('sqlite:///{0}'.format(args.database_file))
     tax = Taxonomy(e, ncbi.ranks)
 
-    tax_ids = rows[index].drop_duplicates()
-    tax_ids.loc[:, 'new_tax_id'] = None
+    row_total = len(rows)
 
-    updater = taxid_updater(tax, halt=not bool(args.unknowns))
+    def print_status(msg, row_num):
+        sys.stderr.write(msg + ' {:.2%}\r'.format(float(row_num) / row_total))
 
-    if args.name_column:
-        def set_new_tax_id(row):
-            row['new_tax_id'] = updater(
-                row['tax_id'], keyword=row[args.name_column])
-            return row
-    else:
-        def set_new_tax_id(row):
-            row['new_tax_id'] = updater(row['tax_id'])
-            return row
+    tax_ids = rows['tax_id'].drop_duplicates()
+    halt = not (bool(args.unknowns) or bool(args.name_column))
+
+    def set_new_tax_id(row):
+        print_status('updating taxids: ', row.name)
+        row['new_tax_id'] = update_taxid(row['tax_id'], tax, halt=halt)
+        return row
 
     tax_ids = tax_ids.apply(set_new_tax_id, axis=1)
+
+    if args.name_column:
+        rows = rows.merge(tax_ids, on='tax_id', how='left')
+        no_ids = rows['new_tax_id'].isnull()
+        rows_no_ids = rows[no_ids].drop('new_tax_id', axis=1)
+
+        name_ids = rows_no_ids[args.name_column].drop_duplicates()
+
+        halt = not bool(args.unknowns)
+
+        def set_name_taxid(row):
+            row['new_tax_id'] = update_by_name(row['name'], tax, halt=halt)
+            return row
+
+        log.info('searching unknown tax_ids by ' + args.name_column)
+        name_ids = name_ids.apply(set_name_taxid, axis=1)
+        rows_no_ids = rows_no_ids.merge(
+            name_ids, on=args.name_column, how='left')
+
+        rows = pandas.concat(rows[~no_ids], rows_no_ids)
+        tax_ids = rows['tax_id'].drop_duplicates()
 
     if args.taxid_classified:
         if 'taxid_classified' in columns:
@@ -168,15 +184,32 @@ def action(args):
         tax_ids.loc[:, 'taxid_classified'] = None
 
         def is_classified(row):
+            print_status('determining taxon name validity: ', row.name)
             row['taxid_classified'] = species_is_classified(
-                row['new_tax_id'], tax)
+                row['tax_id'], tax)
             return row
 
         tax_ids = tax_ids.apply(is_classified, axis=1)
 
-    rows = rows.merge(tax_ids, on=index, how='left')
-    rows = rows.drop('tax_id', axis=1)
-    rows = rows.rename(columns={'new_tax_id': 'tax_id'})
+    if args.append_lineage:
+        if args.append_lineage in columns:
+            rows = rows.drop(args.append_lineage, axis=1)
+        else:
+            columns.append(args.append_lineage)
+
+        tax_ids.loc[:, args.append_lineage] = None
+
+        msg = 'appending lineage {}: '.format(args.append_lineage)
+
+        def add_rank_column(row):
+            print_status(msg, row.name)
+            lineage = tax.lineage(row['tax_id'])
+            row[args.append_lineage] = lineage.get(args.append_lineage, None)
+            return row
+
+        tax_ids = tax_ids.apply(add_rank_column, axis=1)
+
+    rows = rows.merge(tax_ids, on='tax_id', how='left')
 
     if args.unknowns:
         # unknown taxids are set to empty string in taxid_updater
