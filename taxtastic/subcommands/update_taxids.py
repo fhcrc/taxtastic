@@ -27,13 +27,13 @@ TODO: implement --append-column RANK.
 import csv
 import logging
 import pandas
+import sqlalchemy
 import sys
 
-import sqlalchemy
-
 from sqlalchemy.sql import select
+
 from taxtastic.taxonomy import Taxonomy
-from taxtastic import ncbi
+from taxtastic import ncbi, utils
 
 log = logging.getLogger(__name__)
 
@@ -90,6 +90,7 @@ def update_taxid(tax_id, taxonomy, halt=True):
 def update_by_name(name, taxonomy, halt=True):
     try:
         tax_id, _, _ = taxonomy.primary_from_name(name)
+        log.info('name {} associated with tax_id {}'.format(name, tax_id))
     except ValueError as err:
         if halt:
             raise err
@@ -139,83 +140,98 @@ def action(args):
     e = sqlalchemy.create_engine('sqlite:///{0}'.format(args.database_file))
     tax = Taxonomy(e, ncbi.ranks)
 
-    row_total = len(rows)
-
-    def print_status(msg, row_num):
-        sys.stderr.write(msg + ' {:.2%}\r'.format(float(row_num) / row_total))
-
-    tax_ids = rows['tax_id'].drop_duplicates()
+    tax_ids = rows[['tax_id']].drop_duplicates()
     halt = not (bool(args.unknowns) or bool(args.name_column))
 
     def set_new_tax_id(row):
-        print_status('updating taxids: ', row.name)
         row['new_tax_id'] = update_taxid(row['tax_id'], tax, halt=halt)
         return row
 
-    tax_ids = tax_ids.apply(set_new_tax_id, axis=1)
+    msg = 'updating taxids:'
+    tax_ids = utils.apply_df_status(set_new_tax_id, tax_ids, msg)
 
     if args.name_column:
-        rows = rows.merge(tax_ids, on='tax_id', how='left')
-        no_ids = rows['new_tax_id'].isnull()
-        rows_no_ids = rows[no_ids].drop('new_tax_id', axis=1)
-
-        name_ids = rows_no_ids[args.name_column].drop_duplicates()
+        """
+        Seperate new_tax_ids that are not found and use the name_column
+        to search for an id.
+        """
+        null_ids = tax_ids['new_tax_id'].isnull()
+        no_tax_ids = tax_ids[null_ids]
+        no_tax_ids = no_tax_ids.drop('new_tax_id', axis=1)  # drop empty column
+        all_names = rows[['tax_id', args.name_column]].drop_duplicates()
+        no_tax_ids = no_tax_ids.merge(all_names, on='tax_id', how='left')
+        names = no_tax_ids[[args.name_column]].drop_duplicates()
 
         halt = not bool(args.unknowns)
 
         def set_name_taxid(row):
-            row['new_tax_id'] = update_by_name(row['name'], tax, halt=halt)
+            row['new_tax_id'] = update_by_name(
+                row[args.name_column], tax, halt=halt)
             return row
 
-        log.info('searching unknown tax_ids by ' + args.name_column)
-        name_ids = name_ids.apply(set_name_taxid, axis=1)
-        rows_no_ids = rows_no_ids.merge(
-            name_ids, on=args.name_column, how='left')
+        msg = 'updating tax_ids by ' + args.name_column
+        names = utils.apply_df_status(set_name_taxid, names, msg)
 
-        rows = pandas.concat(rows[~no_ids], rows_no_ids)
-        tax_ids = rows['tax_id'].drop_duplicates()
+        no_tax_ids = no_tax_ids.merge(names, on=args.name_column, how='left')
+        no_tax_ids = no_tax_ids.drop(args.name_column, axis=1)
+        tax_ids = [tax_ids[~null_ids], no_tax_ids]
+        tax_ids = pandas.concat(tax_ids)
 
+    # remove new_tax_id.isnull()
+    tax_ids = tax_ids[~tax_ids['new_tax_id'].isnull()]
+
+    new_tax_ids = tax_ids[['new_tax_id']].drop_duplicates()
     if args.taxid_classified:
+        """
+        Decide if tax_id is a valid taxon
+        """
         if 'taxid_classified' in columns:
             rows = rows.drop('taxid_classified', axis=1)
         else:
             columns.append('taxid_classified')
 
-        tax_ids.loc[:, 'taxid_classified'] = None
+        new_tax_ids.loc[:, 'taxid_classified'] = None
 
         def is_classified(row):
-            print_status('determining taxon name validity: ', row.name)
             row['taxid_classified'] = species_is_classified(
-                row['tax_id'], tax)
+                row['new_tax_id'], tax)
             return row
 
-        tax_ids = tax_ids.apply(is_classified, axis=1)
+        msg = 'validating tax_ids:'
+        new_tax_ids = utils.apply_df_status(is_classified, new_tax_ids, msg)
 
     if args.append_lineage:
+        """
+        Append a column from the taxonomy to seq_info
+        """
         if args.append_lineage in columns:
             rows = rows.drop(args.append_lineage, axis=1)
         else:
             columns.append(args.append_lineage)
 
-        tax_ids.loc[:, args.append_lineage] = None
-
-        msg = 'appending lineage {}: '.format(args.append_lineage)
+        new_tax_ids.loc[:, args.append_lineage] = None
 
         def add_rank_column(row):
-            print_status(msg, row.name)
-            lineage = tax.lineage(row['tax_id'])
+            lineage = tax.lineage(row['new_tax_id'])
             row[args.append_lineage] = lineage.get(args.append_lineage, None)
             return row
 
-        tax_ids = tax_ids.apply(add_rank_column, axis=1)
+        msg = 'appending {} column'.format(args.append_lineage)
+        new_tax_ids = utils.apply_df_status(add_rank_column, new_tax_ids, msg)
 
+    tax_ids = tax_ids.merge(new_tax_ids, on='new_tax_id', how='left')
     rows = rows.merge(tax_ids, on='tax_id', how='left')
 
+    unknowns = rows['new_tax_id'].isnull()
     if args.unknowns:
-        # unknown taxids are set to empty string in taxid_updater
-        rows[rows['tax_id'].isnull()].to_csv(
-            args.unknowns, index=False,
-            columns=columns, quoting=csv.QUOTE_NONNUMERIC)
+        unknown_rows = rows[unknowns].drop('new_tax_id', axis=1)
+        unknown_rows.to_csv(args.unknowns,
+                            index=False, columns=columns,
+                            quoting=csv.QUOTE_NONNUMERIC)
 
-    rows.to_csv(args.out_file, index=False, columns=columns,
-                quoting=csv.QUOTE_NONNUMERIC)
+    # output seq_info with new tax_ids
+    known_rows = rows[~unknowns].drop('tax_id', axis=1)
+    known_rows = known_rows.rename(columns={'new_tax_id': 'tax_id'})
+    known_rows.to_csv(args.out_file,
+                      index=False, columns=columns,
+                      quoting=csv.QUOTE_NONNUMERIC)
