@@ -18,9 +18,27 @@ import logging
 import os
 import re
 import subprocess
+import sys
 import xlrd
 
 log = logging
+
+
+def apply_df_status(func, df, msg=''):
+    """
+
+    """
+    tmp_column = 'index_number'
+    row_count = float(len(df))
+    df[tmp_column] = xrange(int(row_count))
+    msg += ' {:.0%}\r'
+
+    def apply_func(item, msg):
+        sys.stderr.write(msg.format(item[tmp_column] / row_count))
+        return func(item)
+
+    df = df.apply(apply_func, args=[msg], axis=1)
+    return df.drop(tmp_column, axis=1)
 
 
 def _cellval(cell_obj, datemode):
