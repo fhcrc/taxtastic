@@ -4,6 +4,7 @@
 
 0.5.4-dev
 =========
+ * new ``taxit count_taxids`` counts every tax_id occurance in a ``taxit taxtable`` lineage
  * new ``taxit taxid_classified`` decides if a tax_id is primary and valid (True/False)
  * ``taxit update_taxids`` will halt on unknown tax_ids unless ``--unknowns FILE`` is specified
  * ``taxit update_taxids`` only requires a csv file with 'tax_id' column
