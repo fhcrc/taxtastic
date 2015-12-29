@@ -122,7 +122,7 @@ def action(args):
 
         try:
             tax_id, tax_name, is_primary = tax.primary_from_name(name)
-        except KeyError:
+        except ValueError:
             note = 'not found'
         else:
             parent, rank = tax._node(tax_id)

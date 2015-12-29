@@ -70,8 +70,8 @@ def action(args):
             rank = row['rank']
             try:
                 parent_node = tax.get_node(parent_id)
-            except KeyError:
-                raise KeyError(
+            except ValueError:
+                raise ValueError(
                     "Parent {parent_id} of {tax_id}[{tax_name}] not found.".format(**row))
             if rank not in tax.ranks:
                 add_rank(tax, parent_node, rank)

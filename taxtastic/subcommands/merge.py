@@ -96,7 +96,7 @@ def action(args):
     for t in taxids:
         try:
             tax._node(t)
-        except KeyError:
+        except ValueError:
             # Check for merged
             m = tax._get_merged(t)
             if m and m != t:
