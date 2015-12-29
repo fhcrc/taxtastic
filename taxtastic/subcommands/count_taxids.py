@@ -1,4 +1,4 @@
-"""Count tax_id appearances in a taxtable
+"""Count tax_id appearances in a taxtable lineage
 
 Can narrow tax_id count by seq_info if provided.
 
