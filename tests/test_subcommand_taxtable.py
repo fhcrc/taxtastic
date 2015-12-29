@@ -151,7 +151,7 @@ class TestGetLineagePublic(TaxTableSetup):
         # self.assertTrue(lineage['rank'] == 'genus')
 
     def test07(self):
-        tax_id = '537919'  # deprecated; Microtus levis Taxonomy ID: 537919
+        tax_id = '537919'
         self.tax.lineage(tax_id=tax_id)
 
 
