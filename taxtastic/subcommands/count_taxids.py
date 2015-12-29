@@ -50,5 +50,5 @@ def action(args):
     results = results.sort_values(
         by=['count', 'rank_index', 'tax_name'], ascending=[False, True, True])
 
-    out_cols = ['tax_id', 'tax_name', 'rank', 'count', 'rank_index']
+    out_cols = ['tax_id', 'tax_name', 'rank', 'count']
     results[out_cols].to_csv(args.out, index=False)
