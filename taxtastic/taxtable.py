@@ -98,7 +98,9 @@ class TaxNode(object):
         Remove nodes without sequences or children below this node.
         """
         for node in self.depth_first_iter(self_first=False):
-            if not node.children and not node.sequence_ids and node is not self:
+            if (not node.children and
+                    not node.sequence_ids and
+                    node is not self):
                 node.parent.remove_child(node)
 
     @property
@@ -118,8 +120,8 @@ class TaxNode(object):
             if s.rank == rank:
                 return s
             s = s.parent
-        raise KeyError("No node at rank {0} for {1}".format(rank,
-                                                            self.tax_id))
+        raise ValueError("No node at rank {0} for {1}".format(
+            rank, self.tax_id))
 
     def depth_first_iter(self, self_first=True):
         """
@@ -152,7 +154,7 @@ class TaxNode(object):
         try:
             child = next(i for i in self.children if i.tax_id == n)
         except StopIteration:
-            raise KeyError(n)
+            raise ValueError(n)
 
         return child.path(tax_ids[1:])
 
@@ -174,7 +176,8 @@ class TaxNode(object):
             return l
 
     def __repr__(self):
-        return "<TaxNode {0.tax_id}:{0.name} [rank={0.rank};children={1};sequences={2}]>".format(
+        return ("<TaxNode {0.tax_id}:{0.name} [rank={0.rank};"
+                "children={1};sequences={2}]>").format(
             self, len(self.children), len(self.sequence_ids))
 
     def __iter__(self):
@@ -251,7 +254,9 @@ class TaxNode(object):
                            lineterminator='\n', extrasaction='ignore')
         w.writeheader()
 
-        rows = ({'seqname': seq_id, 'tax_id': node.tax_id, 'tax_name': node.name}
+        rows = ({'seqname': seq_id,
+                 'tax_id': node.tax_id,
+                 'tax_name': node.name}
                 for node in self
                 for seq_id in node.sequence_ids)
 
@@ -314,6 +319,7 @@ class TaxNode(object):
 
 def read(fp):
     """
-    Read a taxtable into a taxonomic tree. Shortcut for :meth:`TaxNode.from_taxtable`.
+    Read a taxtable into a taxonomic tree.
+    Shortcut for :meth:`TaxNode.from_taxtable`.
     """
     return TaxNode.from_taxtable(fp)

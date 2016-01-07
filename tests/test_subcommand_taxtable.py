@@ -37,7 +37,7 @@ class TestTaxonomyInit(TaxTableSetup):
         self.tax._node('2')
 
     def test02(self):
-        self.assertRaises(KeyError, self.tax._node, 'buh')
+        self.assertRaises(ValueError, self.tax._node, 'buh')
 
 
 class TestGetLineagePrivate(TaxTableSetup):
@@ -59,7 +59,7 @@ class TestGetLineagePrivate(TaxTableSetup):
         tax_id = '30630'  # deprecated; Microtus levis Taxonomy ID: 537919
 
         self.assertFalse(tax_id in self.tax.cached)
-        self.assertRaises(KeyError, self.tax._get_lineage, tax_id,
+        self.assertRaises(ValueError, self.tax._get_lineage, tax_id,
                           merge_obsolete=False)
 
 
@@ -84,7 +84,7 @@ class TestTaxNameSearch(TaxTableSetup):
         self.assertTrue(is_primary)
 
     def test02(self):
-        self.assertRaises(KeyError, self.tax.primary_from_name, 'buggabugga')
+        self.assertRaises(ValueError, self.tax.primary_from_name, 'buggabugga')
 
     def test03(self):
         tax_id, tax_name, is_primary = self.tax.primary_from_name(
@@ -151,7 +151,7 @@ class TestGetLineagePublic(TaxTableSetup):
         # self.assertTrue(lineage['rank'] == 'genus')
 
     def test07(self):
-        tax_id = '30630'  # deprecated; Microtus levis Taxonomy ID: 537919
+        tax_id = '537919'
         self.tax.lineage(tax_id=tax_id)
 
 
@@ -162,20 +162,7 @@ class TestMethods(TaxTableSetup):
         self.assertTrue(taxname == 'Staphylococcus aureus')
 
     def test02(self):
-        self.assertRaises(KeyError, self.tax.primary_from_id, 'buh')
-
-    # Commented: Too varying
-    # def test03(self):
-    #     res = self.tax.add_source(name='new source', description='really new!')
-    #     res = self.tax.add_source(name='new source', description='really new!')
-    #     self.assertEqual(res, (2, False))
-
-    # def test04(self):
-    #     self.tax.add_node(tax_id = "186802_1",
-    #                       parent_id = "186802",
-    #                       rank = "species",
-    #                       source_name = "Fredricks Lab",
-    #                       tax_name = 'BVAB1')
+        self.assertRaises(ValueError, self.tax.primary_from_id, 'buh')
 
 
 class TestWriteTable(TaxTableSetup):
