@@ -30,3 +30,4 @@ script: ./test -v
 notifications:
   email:
     - noah.hoffman@gmail.com
+    - crosenth@uw.edu
