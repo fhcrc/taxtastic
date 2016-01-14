@@ -89,7 +89,7 @@ class TestAddNode(TestTaxonomyBase):
     def test03(self):
 
         rows = taxtastic.utils.get_new_nodes(
-            os.path.join(datadir, 'new_taxa.xls'))
+            os.path.join(datadir, 'new_taxa.csv'))
         for d in rows:
             d['source_id'] = 2
             self.tax.add_node(**d)

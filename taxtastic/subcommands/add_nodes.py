@@ -40,13 +40,11 @@ def build_parser(parser):
         dest='new_nodes',
         metavar='FILE',
         required=True,
-        help="""An Excel spreadsheet (.xls/pre-Excel 2007 format
-        only; requires xlrd) or csv-format file defining nodes to add
-        to the taxonomy.  Mandatory fields include "tax_id",
-        "parent_id", "rank", "tax_name"; optional fields include
-        "source_name", "source_id", and "children". The "children"
-        field should specify one or more existing taxids in a
-        semicolon-delimited list. Other columns are ignored.""")
+        help="""A csv file defining nodes to add to the taxonomy.  Mandatory fields
+        include "tax_id", "parent_id", "rank", "tax_name"; optional
+        fields include "source_name", "source_id", and "children". The
+        "children" field should specify one or more existing taxids in
+        a semicolon-delimited list. Other columns are ignored.""")
 
     parser.add_argument(
         '-S', '--source-name',

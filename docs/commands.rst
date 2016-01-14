@@ -9,7 +9,9 @@ add_nodes
 
 .. literalinclude:: _helptext/add_nodes.txt
 
-Add additional nodes, specified in ``nodes.csv`` to the taxonomy in ``database_file``.  ``nodes.csv`` should be a CSV file with its first line naming fields or an Excel 97 (``.xls``) file.  It *must* specify the columns
+Add additional nodes, specified in ``nodes.csv`` to the taxonomy in
+``database_file``.  ``nodes.csv`` should be a CSV file with its first
+line naming fields.  It *must* specify the columns
 
 ``tax_id``
   The tax_id for this new node in the taxonomy, which must not conflict with an existing tax_id.  NCBI's tax_ids are all integers, so it works well to choose an alphabetic prefix for the tax_ids for all new nodes (e.g., name them AB1, AB2, AB3, etc.).

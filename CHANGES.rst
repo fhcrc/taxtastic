@@ -2,6 +2,11 @@
  change log for taxtastic
 ==========================
 
+pending
+=======
+ * remove support for reading excel spreadsheets (issue #71)
+ * requirements.txt identifies all direct dependencies
+
 0.5.5
 =====
  * new ``taxit count_taxids`` counts every tax_id occurance in a ``taxit taxtable`` lineage [GH-75]
