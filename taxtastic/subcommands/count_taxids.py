@@ -15,7 +15,7 @@ def build_parser(p):
         help="""Taxonomy metadata, minimum columns with
         ordered column taxonomy - [tax_id, root,...,{last_rank}]""")
     p.add_argument(
-        '-i', '--seqinfo',
+        '-i', '--seq-info',
         help=('csv of actual sequence representatives. '
               'Minimum column [tax_id]'))
     p.add_argument(
@@ -27,8 +27,8 @@ def build_parser(p):
 def action(args):
     lineage = pandas.read_csv(args.taxonomy, dtype=str)
 
-    if args.seqinfo:
-        seqinfo = pandas.read_csv(args.seqinfo, usecols=['tax_id'], dtype=str)
+    if args.seq_info:
+        seqinfo = pandas.read_csv(args.seq_info, usecols=['tax_id'], dtype=str)
         taxonomy = seqinfo.merge(lineage, on='tax_id', how='left')
     else:
         taxonomy = lineage
