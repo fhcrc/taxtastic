@@ -1,3 +1,10 @@
+pandas
+sqlalchemy
+decorator
+biopython
+# xlrd
+
+# for development
 sphinx
 ghp-import
 twine
