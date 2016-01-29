@@ -6,6 +6,7 @@ pending
 =======
  * remove support for reading excel spreadsheets (issue #71)
  * requirements.txt identifies all direct dependencies
+ * add ``taxit merge_taxtables``
 
 0.5.5
 =====
