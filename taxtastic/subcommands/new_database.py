@@ -55,8 +55,8 @@ def build_parser(parser):
         '-p', '--download-dir',
         dest='download_dir',
         metavar='PATH',
-        help="""Directory into which to download the zip
-        archive. [%(default)s]""")
+        help="""Name of the directory into which to download the zip
+             archive. [default is the same directory as the database file]""")
 
     parser.add_argument(
         '-x', '--clobber', action='store_true',
