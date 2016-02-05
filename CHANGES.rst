@@ -2,11 +2,13 @@
  change log for taxtastic
 ==========================
 
-pending
-=======
+0.5.5-dev
+=========
  * remove support for reading excel spreadsheets (issue #71)
  * requirements.txt identifies all direct dependencies
  * add ``taxit merge_taxtables``
+ * New ``taxit new_database --taxdump`` and ``taxit new_database--taxdump-url`` arguments
+   for flexibility on taxdump.zip location(s)
 
 0.5.5
 =====
