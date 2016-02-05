@@ -74,13 +74,13 @@ def build_parser(parser):
 
 def action(args):
     dbname = args.database_file
-    pth = os.path.split(dbname)[0]
-    zip_dest = args.download_dir or pth or '.'
 
     if not os.access(args.database_file, os.F_OK) or args.clobber:
         if args.taxdump_file:
             zfile = args.taxdump_file
         else:
+            pth = os.path.split(dbname)[0]
+            zip_dest = args.download_dir or pth or '.'
             zfile, _ = taxtastic.ncbi.fetch_data(
                 dest_dir=zip_dest,
                 clobber=args.clobber,
