@@ -148,7 +148,7 @@ class TaxNode(object):
         """
         Remove node and all children from tree
         """
-        if self.is_root():
+        if self.is_root:
             raise ValueError('Cannot remove root as subtree')
 
         self.parent.remove_child(self)
