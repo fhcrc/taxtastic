@@ -144,6 +144,15 @@ class TaxNode(object):
             for s in node.sequence_ids:
                 yield s
 
+    def remove_subtree(self):
+        """
+        Remove node and all children from tree
+        """
+        if self.is_root():
+            raise ValueError('Cannot remove root as subtree')
+
+        self.parent.remove_child(self)
+
     def path(self, tax_ids):
         """Get the node at the end of the path described by tax_ids."""
         assert tax_ids[0] == self.tax_id
