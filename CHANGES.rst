@@ -4,11 +4,12 @@
 
 0.5.5-dev
 =========
- * remove support for reading excel spreadsheets (issue #71)
+ * remove support for reading excel spreadsheets (GH-71)
  * requirements.txt identifies all direct dependencies
  * add ``taxit merge_taxtables``
  * New ``taxit new_database --taxdump`` and ``taxit new_database--taxdump-url`` arguments
    for flexibility on taxdump.zip location(s)
+ * New function taxtable.remove_subtree() (GH-80)
 
 0.5.5
 =====
