@@ -46,7 +46,6 @@ def build_parser(parser):
 
     parser.add_argument(
         '-u', '--taxdump-url',
-        dest='taxdmp_url',
         default=taxtastic.ncbi.ncbi_data_url,
         metavar='URL',
         help='Url to taxdump file [%(default)s]')
@@ -84,7 +83,7 @@ def action(args):
             zfile, _ = taxtastic.ncbi.fetch_data(
                 dest_dir=zip_dest,
                 clobber=args.clobber,
-                ncbi_data_url=args.taxdump_url)
+                url=args.taxdump_url)
         msg = 'creating new database in {} using data in {}'
         log.warning(msg.format(dbname, zfile))
         engine = taxtastic.ncbi.db_connect(dbname, clobber=True)
