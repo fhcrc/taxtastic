@@ -62,27 +62,6 @@ def build_parser(parser):
         help=('rank to append to seq_info'))
 
 
-def update_taxid(tax_id, taxonomy, halt=True):
-    try:
-        taxonomy._node(tax_id)
-        # _node raises ValueError if the taxon couldn't be found in the
-        # current taxonomy. If found, no update needed.
-    except ValueError as err:
-        new_tax_id = taxonomy._get_merged(tax_id)
-
-        if new_tax_id != tax_id:
-            log.info('tax_id {} merged to {}'.format(tax_id, new_tax_id))
-            tax_id = new_tax_id
-        else:
-            if halt:
-                raise err
-            else:
-                log.warn(err)
-                tax_id = None
-
-    return tax_id
-
-
 def update_by_name(name, taxonomy, halt=True):
     try:
         tax_id, _, _ = taxonomy.primary_from_name(name)
@@ -131,70 +110,76 @@ def action(args):
 
     if args.name_column:
         if args.name_column not in columns:
-            raise ValueError("No " + args.name_column + " column")
+            msg = '"No "' + args.name_column + '" column'
+            raise ValueError(msg)
 
-    e = sqlalchemy.create_engine('sqlite:///{0}'.format(args.database_file))
+    con = 'sqlite:///{0}'.format(args.database_file)
+    e = sqlalchemy.create_engine(con)
     tax = Taxonomy(e, ncbi.ranks)
 
-    tax_ids = rows[['tax_id']].drop_duplicates()
-    halt = not (bool(args.unknowns) or bool(args.name_column))
+    merged = pandas.read_sql_table('merged', con, index_col='old_tax_id')
+    log.info('updating tax_ids')
+    rows = rows.join(merged, on='tax_id')
 
-    def set_new_tax_id(row):
-        row['new_tax_id'] = update_taxid(row['tax_id'], tax, halt=halt)
-        return row
+    # overwrite tax_ids where there is a new_tax_id
+    inew_tax_ids = ~rows['new_tax_id'].isnull()
+    rows.loc[inew_tax_ids, 'tax_id'] = rows[inew_tax_ids]['new_tax_id']
+    rows = rows.drop('new_tax_id', axis=1)
 
-    msg = 'updating taxids:'
-    tax_ids = utils.apply_df_status(set_new_tax_id, tax_ids, msg)
+    log.info('loading names table')
+    names = pandas.read_sql_table(
+        'names', con, columns=['tax_id', 'tax_name', 'is_primary'])
 
     if args.name_column:
         """
-        Seperate new_tax_ids that are not found and use the name_column
-        to search for an id.
+        use the args.name_column to do a string comparison with
+        names.tax_name column to find a suitable tax_id
         """
-        null_ids = tax_ids['new_tax_id'].isnull()
-        no_tax_ids = tax_ids[null_ids]
-        no_tax_ids = no_tax_ids.drop('new_tax_id', axis=1)  # drop empty column
-        all_names = rows[['tax_id', args.name_column]].drop_duplicates()
-        no_tax_ids = no_tax_ids.merge(all_names, on='tax_id', how='left')
-        names = no_tax_ids[[args.name_column]].drop_duplicates()
+        unknowns = rows[~rows['tax_id'].isin(names['tax_id'])]
 
-        halt = not bool(args.unknowns)
+        if not unknowns.empty:
+            """
+            Take any tax_id associated with a string match
+            to tax_name prioritizing is_primary=True
+            """
+            unknowns = unknowns.drop('tax_id', axis=1)
+            names = names.sort_values('is_primary', ascending=False)
+            names = names.drop_duplicates(subset='tax_name', keep='first')
+            names = names.set_index('tax_name')
+            found = unknowns.join(names, on=args.name_column, how='inner')
+            rows.loc[found.index, 'tax_id'] = found['tax_id']
 
-        def set_name_taxid(row):
-            row['new_tax_id'] = update_by_name(
-                row[args.name_column], tax, halt=halt)
-            return row
+    unknowns = rows[~rows['tax_id'].isin(names['tax_id'])]
 
-        msg = 'updating tax_ids by ' + args.name_column
-        names = utils.apply_df_status(set_name_taxid, names, msg)
+    if not unknowns.empty:
+        if args.unknowns:
+            """
+            Output unkown tax_ids
+            """
+            unknowns.to_csv(
+                args.unknowns,
+                index=False,
+                columns=columns,
+                quoting=csv.QUOTE_NONNUMERIC)
+        else:
+            raise ValueError('Unknown or missing tax_ids present')
 
-        no_tax_ids = no_tax_ids.merge(names, on=args.name_column, how='left')
-        no_tax_ids = no_tax_ids.drop(args.name_column, axis=1)
-        tax_ids = [tax_ids[~null_ids], no_tax_ids]
-        tax_ids = pandas.concat(tax_ids)
+        rows = rows[~rows.index.isin(unknowns.index)]
 
-    # remove new_tax_id.isnull()
-    tax_ids = tax_ids[~tax_ids['new_tax_id'].isnull()]
-
-    new_tax_ids = tax_ids[['new_tax_id']].drop_duplicates()
     if args.taxid_classified:
         """
-        Decide if tax_id is a valid taxon
         """
         if 'taxid_classified' in columns:
             rows = rows.drop('taxid_classified', axis=1)
         else:
             columns.append('taxid_classified')
 
-        new_tax_ids.loc[:, 'taxid_classified'] = None
-
         def is_classified(row):
-            row['taxid_classified'] = species_is_classified(
-                row['new_tax_id'], tax)
+            row['taxid_classified'] = species_is_classified(row['tax_id'], tax)
             return row
 
         msg = 'validating tax_ids:'
-        new_tax_ids = utils.apply_df_status(is_classified, new_tax_ids, msg)
+        rows = utils.apply_df_status(is_classified, rows, msg)
 
     if args.append_lineage:
         """
@@ -205,29 +190,17 @@ def action(args):
         else:
             columns.append(args.append_lineage)
 
-        new_tax_ids.loc[:, args.append_lineage] = None
-
         def add_rank_column(row):
-            lineage = tax.lineage(row['new_tax_id'])
+            lineage = tax.lineage(row['tax_id'])
             row[args.append_lineage] = lineage.get(args.append_lineage, None)
             return row
 
         msg = 'appending {} column'.format(args.append_lineage)
-        new_tax_ids = utils.apply_df_status(add_rank_column, new_tax_ids, msg)
-
-    tax_ids = tax_ids.merge(new_tax_ids, on='new_tax_id', how='left')
-    rows = rows.merge(tax_ids, on='tax_id', how='left')
-
-    unknowns = rows['new_tax_id'].isnull()
-    if args.unknowns:
-        unknown_rows = rows[unknowns].drop('new_tax_id', axis=1)
-        unknown_rows.to_csv(args.unknowns,
-                            index=False, columns=columns,
-                            quoting=csv.QUOTE_NONNUMERIC)
+        rows = utils.apply_df_status(add_rank_column, rows, msg)
 
     # output seq_info with new tax_ids
-    known_rows = rows[~unknowns].drop('tax_id', axis=1)
-    known_rows = known_rows.rename(columns={'new_tax_id': 'tax_id'})
-    known_rows.to_csv(args.out_file,
-                      index=False, columns=columns,
-                      quoting=csv.QUOTE_NONNUMERIC)
+    rows.to_csv(
+        args.out_file,
+        index=False,
+        columns=columns,
+        quoting=csv.QUOTE_NONNUMERIC)

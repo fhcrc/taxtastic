@@ -2,8 +2,12 @@
  change log for taxtastic
 ==========================
 
-0.5.5-dev
+0.5.6-dev
 =========
+ * ``taxit update_taxids`` is significantly faster but can still use some optimizations [GH-78]
+
+0.5.6
+=====
  * remove support for reading excel spreadsheets (GH-71)
  * requirements.txt identifies all direct dependencies
  * add ``taxit merge_taxtables``
