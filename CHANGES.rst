@@ -2,8 +2,8 @@
  change log for taxtastic
 ==========================
 
-0.5.6-dev
-=========
+0.5.7
+=====
  * ``taxit update_taxids`` is significantly faster but can still use some optimizations [GH-78]
 
 0.5.6
