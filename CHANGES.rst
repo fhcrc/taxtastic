@@ -2,6 +2,10 @@
  change log for taxtastic
 ==========================
 
+0.5.7-dev
+=========
+ * ``taxit update_taxids --taxid-column`` allows updating of any tax_id column
+
 0.5.7
 =====
  * ``taxit update_taxids`` is significantly faster but can still use some optimizations [GH-78]

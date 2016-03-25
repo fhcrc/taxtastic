@@ -47,6 +47,9 @@ def build_parser(parser):
         '-o', '--out-file', default=sys.stdout,
         help="""Output file to write updates [default: stdout]""")
     parser.add_argument(
+        '--taxid-column', default='tax_id',
+        help='name of tax_id column to update [%(default)s]')
+    parser.add_argument(
         '--unknowns',
         help="""csv file with single column 'seqname' identifying
         records with unknown taxids (works with --remove-unknown)""")
@@ -60,19 +63,6 @@ def build_parser(parser):
     parser.add_argument(
         '--append-lineage',
         help=('rank to append to seq_info'))
-
-
-def update_by_name(name, taxonomy, halt=True):
-    try:
-        tax_id, _, _ = taxonomy.primary_from_name(name)
-        log.info('name {} associated with tax_id {}'.format(name, tax_id))
-    except ValueError as err:
-        if halt:
-            raise err
-        else:
-            log.warn(err)
-            tax_id = None
-    return tax_id
 
 
 def species_is_classified(tax_id, taxonomy):
@@ -105,8 +95,8 @@ def action(args):
     rows = pandas.read_csv(args.infile, dtype='str')
     columns = rows.columns.tolist()  # preserve column order
 
-    if 'tax_id' not in columns:
-        raise ValueError("No tax_id column")
+    if args.taxid_column not in columns:
+        raise ValueError("No column " + args.taxid_column)
 
     if args.name_column:
         if args.name_column not in columns:
@@ -119,11 +109,12 @@ def action(args):
 
     merged = pandas.read_sql_table('merged', con, index_col='old_tax_id')
     log.info('updating tax_ids')
-    rows = rows.join(merged, on='tax_id')
+    rows = rows.join(merged, on=args.taxid_column)
 
     # overwrite tax_ids where there is a new_tax_id
     inew_tax_ids = ~rows['new_tax_id'].isnull()
-    rows.loc[inew_tax_ids, 'tax_id'] = rows[inew_tax_ids]['new_tax_id']
+    rows.loc[inew_tax_ids, args.taxid_column] = \
+        rows[inew_tax_ids]['new_tax_id']
     rows = rows.drop('new_tax_id', axis=1)
 
     log.info('loading names table')
@@ -135,21 +126,21 @@ def action(args):
         use the args.name_column to do a string comparison with
         names.tax_name column to find a suitable tax_id
         """
-        unknowns = rows[~rows['tax_id'].isin(names['tax_id'])]
+        unknowns = rows[~rows[args.taxid_column].isin(names['tax_id'])]
 
         if not unknowns.empty:
             """
             Take any tax_id associated with a string match
             to tax_name prioritizing is_primary=True
             """
-            unknowns = unknowns.drop('tax_id', axis=1)
+            unknowns = unknowns.drop(args.taxid_column, axis=1)
             names = names.sort_values('is_primary', ascending=False)
             names = names.drop_duplicates(subset='tax_name', keep='first')
             names = names.set_index('tax_name')
             found = unknowns.join(names, on=args.name_column, how='inner')
-            rows.loc[found.index, 'tax_id'] = found['tax_id']
+            rows.loc[found.index, args.taxid_column] = found['tax_id']
 
-    unknowns = rows[~rows['tax_id'].isin(names['tax_id'])]
+    unknowns = rows[~rows[args.taxid_column].isin(names['tax_id'])]
 
     if not unknowns.empty:
         if args.unknowns:
@@ -175,7 +166,8 @@ def action(args):
             columns.append('taxid_classified')
 
         def is_classified(row):
-            row['taxid_classified'] = species_is_classified(row['tax_id'], tax)
+            row['taxid_classified'] = species_is_classified(
+                row[args.taxid_column], tax)
             return row
 
         msg = 'validating tax_ids:'
@@ -191,7 +183,7 @@ def action(args):
             columns.append(args.append_lineage)
 
         def add_rank_column(row):
-            lineage = tax.lineage(row['tax_id'])
+            lineage = tax.lineage(row[args.taxid_column])
             row[args.append_lineage] = lineage.get(args.append_lineage, None)
             return row
 
