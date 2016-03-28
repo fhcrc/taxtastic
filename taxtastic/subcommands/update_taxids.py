@@ -39,23 +39,31 @@ def build_parser(parser):
         'infile',
         nargs='?',
         default=sys.stdin,
-        help="""Input CSV file to process, minimally containing the
-        fields 'tax_id'. Rows with missing tax_ids are left unchanged.""")
+        help=('Input CSV file to process, minimally '
+              'containing the fields `tax_id`. Rows with '
+              'missing tax_ids are left unchanged.'))
     parser.add_argument(
         'database_file', help="""Path to the taxonomy database""")
     parser.add_argument(
-        '-o', '--out-file', default=sys.stdout,
-        help="""Output file to write updates [default: stdout]""")
+        '-o', '--out-file',
+        default=sys.stdout,
+        help='Output file to write updates [default: stdout]')
     parser.add_argument(
-        '--taxid-column', default='tax_id',
+        '--taxid-column',
+        default='tax_id',
         help='name of tax_id column to update [%(default)s]')
     parser.add_argument(
         '--unknowns',
-        help="""csv file with single column 'seqname' identifying
-        records with unknown taxids (works with --remove-unknown)""")
+        help=('unchanged taxonomy output of records with unknown taxids'))
     parser.add_argument(
-        '--taxid-classified', action='store_true',
-        help='add column True/False column if the tax_id is primary and valid')
+        '--ignore-unknowns',
+        action='store_true',
+        help='allow unknown tax_ids in final output')
+    parser.add_argument(
+        '--taxid-classified',
+        action='store_true',
+        help=('add column True/False column if '
+              'the tax_id is primary and valid'))
     parser.add_argument(
         '--name-column',
         help=('column with taxon name(s) to help '
@@ -140,19 +148,18 @@ def action(args):
             found = unknowns.join(names, on=args.name_column, how='inner')
             rows.loc[found.index, args.taxid_column] = found['tax_id']
 
-    unknowns = rows[~rows[args.taxid_column].isin(names['tax_id'])]
-
-    if not unknowns.empty:
+    if not args.ignore_unknowns:
+        unknowns = rows[~rows[args.taxid_column].isin(names['tax_id'])]
         if args.unknowns:
             """
-            Output unkown tax_ids
+            Output unknown tax_ids
             """
             unknowns.to_csv(
                 args.unknowns,
                 index=False,
                 columns=columns,
                 quoting=csv.QUOTE_NONNUMERIC)
-        else:
+        elif not unknowns.empty:
             raise ValueError('Unknown or missing tax_ids present')
 
         rows = rows[~rows.index.isin(unknowns.index)]
@@ -183,7 +190,11 @@ def action(args):
             columns.append(args.append_lineage)
 
         def add_rank_column(row):
-            lineage = tax.lineage(row[args.taxid_column])
+            try:
+                lineage = tax.lineage(row[args.taxid_column])
+            except ValueError as e:
+                log.warn(e)
+                lineage = {}
             row[args.append_lineage] = lineage.get(args.append_lineage, None)
             return row
 
