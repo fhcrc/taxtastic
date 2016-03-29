@@ -3,21 +3,22 @@ Create unix package:    python setup.py sdist
 Upload to pypi:         python setup.py sdist upload
 """
 
-from os.path import join
-
-try:
-    from setuptools import setup, find_packages, Command
-except ImportError:
-    import distribute_setup
-    distribute_setup.use_setuptools()
-    from setuptools import setup, find_packages, Command
-
 import versioneer
+from setuptools import setup, find_packages, Command
+# To use a consistent encoding
+from codecs import open
+from os import path
 
 versioneer.versionfile_source = 'taxtastic/_version.py'
 versioneer.versionfile_build = 'taxtastic/_version.py'
 versioneer.tag_prefix = 'v'  # tags are like v1.2.0
 versioneer.parentdir_prefix = 'taxtastic-'
+
+here = path.abspath(path.dirname(__file__))
+
+# Get the long description from the README file
+with open(path.join(here, 'README.rst'), encoding='utf-8') as fi:
+    long_description = fi.read()
 
 
 class run_audit(Command):
@@ -58,10 +59,13 @@ class run_audit(Command):
 
 scripts = ['taxit']
 
-params = {'author': 'Noah Hoffman',
+params = {'name': 'taxtastic',
+          'author': 'Noah Hoffman',
           'author_email': 'ngh2@uw.edu',
+          'maintainer': 'Chris Rosenthal',
+          'maintainer_email': 'crosenth@uw.edu',
           'description': 'Tools for taxonomic naming and annotation',
-          'name': 'taxtastic',
+          'long_description': long_description,
           'packages': find_packages(exclude=['tests']),
           'scripts': scripts,
           'url': 'https://github.com/fhcrc/taxtastic',
@@ -74,12 +78,12 @@ params = {'author': 'Noah Hoffman',
               'Programming Language :: Python :: 2.7',
               'Topic :: Scientific/Engineering :: Bio-Informatics'],
           'download_url': 'https://github.com/fhcrc/taxtastic',
-          'package_data': {'taxtastic': [join('data', f) for f in ['sha']]},
+          'package_data': {
+              'taxtastic': [path.join('data', f) for f in ['sha']]},
           'install_requires': [
               'sqlalchemy>=0.7',
               'decorator',
               'biopython',
-              # 'xlrd',
               'pandas>=0.17.1']}
 
 setup(**params)
