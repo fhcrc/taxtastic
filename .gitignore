@@ -1,11 +1,15 @@
 *.pyc
-/build
-/dist
+build/
+dist/
 _build
 test_output/
 doctrees/
 /MANIFEST
 *-env
-*.egg-info
+*.egg-info/
 html
 /docs/_helptext/
+
+# due to using tox and pytest
+.tox
+.cache
