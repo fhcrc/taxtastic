@@ -4,11 +4,11 @@ dist/
 _build
 test_output/
 doctrees/
-/MANIFEST
 *-env
 *.egg-info/
 html
 /docs/_helptext/
+MANIFEST
 
 # due to using tox and pytest
 .tox
