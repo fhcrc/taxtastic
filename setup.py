@@ -80,6 +80,6 @@ params = {'author': 'Noah Hoffman',
               'decorator',
               'biopython',
               # 'xlrd',
-              'pandas>=0.17.0']}
+              'pandas>=0.17.1']}
 
 setup(**params)
