@@ -12,6 +12,9 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+import glob
+from os.path import splitext, split, join, dirname
+
 commands = [
     'add_nodes',
     'check',
@@ -30,9 +33,6 @@ commands = [
     'refpkg_intersection',
     'merge'
 ]
-
-import glob
-from os.path import splitext, split, join, dirname
 
 
 def itermodules(subcommands_path=None, root=__name__):

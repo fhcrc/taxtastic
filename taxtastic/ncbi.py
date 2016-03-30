@@ -519,7 +519,8 @@ def read_names(rows, unclassified_regex=None):
             tn = row[tax_name]
             return 0 if unclassified_regex.search(tn) else 1
     else:
-        _is_classified = lambda row: None
+        def _is_classified(row):
+            return None
 
     # appends additional field is_primary
     colnames = keys + ['is_primary', 'is_classified']

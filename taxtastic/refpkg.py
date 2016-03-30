@@ -659,7 +659,7 @@ class Refpkg(object):
 
             # Check required headers
             for req_header in 'seqname', 'tax_id':
-                if not req_header in headers:
+                if req_header not in headers:
                     return "seq_info is missing {0}".format(req_header)
             lens = [len(l) for l in lines]
             if not(all([l == lens[0] and l > 1 for l in lens])):

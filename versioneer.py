@@ -81,6 +81,7 @@ To use it:
 """
 
 import os
+import subprocess
 import sys
 import re
 from distutils.core import Command
@@ -306,10 +307,6 @@ def get_versions(default={"version": "unknown", "full": ""}, verbose=False):
 '''
 
 
-import subprocess
-import sys
-
-
 def run_command(args, cwd=None, verbose=False, hide_stderr=False):
     try:
         # remember shell=False, so use git.cmd on windows, not just git
@@ -329,11 +326,6 @@ def run_command(args, cwd=None, verbose=False, hide_stderr=False):
             print("unable to run %s (error)" % args[0])
         return None
     return stdout
-
-
-import sys
-import re
-import os.path
 
 
 def get_expanded_variables(versionfile_source):
@@ -486,8 +478,6 @@ def versions_from_parentdir(
                   (root, dirname, parentdir_prefix))
         return None
     return {"version": dirname[len(parentdir_prefix):], "full": ""}
-import os.path
-import sys
 
 # os.path.relpath only appeared in Python-2.6 . Define it here for 2.5.
 

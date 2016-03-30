@@ -43,7 +43,8 @@ def action(args):
     results = lineage.join(counts, on='tax_id', how='right')
 
     # apply rank indexing to sort by rank
-    rank_index = lambda x: ranks.index(x['rank'])
+    def rank_index(row):
+        return ranks.index(row['rank'])
     results['rank_index'] = results.apply(rank_index, axis=1)
 
     # sort by [count, rank, tax_name] in that priority

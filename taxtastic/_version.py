@@ -12,6 +12,11 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+import os
+import re
+import subprocess
+import sys
+
 IN_LONG_VERSION_PY = True
 # This file helps to compute a version number in source trees obtained from
 # git-archive tarball (such as those provided by githubs download-from-tag
@@ -25,10 +30,6 @@ IN_LONG_VERSION_PY = True
 # these strings will be replaced by git during git-archive
 git_refnames = "$Format:%d$"
 git_full = "$Format:%H$"
-
-
-import subprocess
-import sys
 
 
 def run_command(args, cwd=None, verbose=False, hide_stderr=False):
@@ -50,11 +51,6 @@ def run_command(args, cwd=None, verbose=False, hide_stderr=False):
             print("unable to run %s (error)" % args[0])
         return None
     return stdout
-
-
-import sys
-import re
-import os.path
 
 
 def get_expanded_variables(versionfile_source):
