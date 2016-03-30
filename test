@@ -1,9 +1,0 @@
-#!/bin/bash
-
-if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
-    echo "usage:" 
-    echo "./test [-v]"
-    exit 1
-fi
-
-python -m unittest discover -t . -s tests $1
