@@ -52,14 +52,16 @@ def action(args):
     empty_row = {f: None for f in reader.fieldnames}
 
     tax_ids = {}
-    for lineage in itertools.chain(reader, *(csv.DictReader(f) for f in others)):
+    for lineage in itertools.chain(
+            reader, *(csv.DictReader(f) for f in others)):
         if set(lineage.keys()) - initial_names:
             log.error('A file contains taxa not found in {}: {}'.format(
                 first.name, set(lineage.keys()) - initial_names))
             sys.exit(1)
 
         tax_id = lineage['tax_id']
-        new_lineage = dict(empty_row, **{k: v or None for k, v in lineage.items()})
+        new_lineage = dict(
+            empty_row, **{k: v or None for k, v in lineage.items()})
         if tax_id in tax_ids:
             existing_lineage = tax_ids[tax_id]
             if existing_lineage != new_lineage:
@@ -71,4 +73,3 @@ def action(args):
         else:
             writer.writerow(new_lineage)
             tax_ids[tax_id] = new_lineage
-

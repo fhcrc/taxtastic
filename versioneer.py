@@ -454,7 +454,8 @@ def versions_from_vcs(tag_prefix, versionfile_source, verbose=False):
     return {"version": tag, "full": full}
 
 
-def versions_from_parentdir(parentdir_prefix, versionfile_source, verbose=False):
+def versions_from_parentdir(
+        parentdir_prefix, versionfile_source, verbose=False):
     if IN_LONG_VERSION_PY:
         # We're running from _version.py. If it's from a source tree
         # (execute-in-place), we can work upwards to find the root of the

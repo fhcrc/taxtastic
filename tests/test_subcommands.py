@@ -254,7 +254,7 @@ def scratch_file(unlink=True):
         (tmp_fd, tmp_name) = tempfile.mkstemp(text=True)
         os.close(tmp_fd)
         yield tmp_name
-    except ValueError, v:
+    except ValueError as v:
         raise v
     else:
         if unlink:
@@ -319,6 +319,7 @@ class TestCheck(OutputRedirectMixin, unittest.TestCase):
 
 
 class TestMergeTaxtables(TestBase):
+
     def setUp(self):
         self.t1 = data_path('simple_taxtable.csv')
         self.t2 = data_path('taxids1.taxtable')
@@ -337,4 +338,3 @@ class TestMergeTaxtables(TestBase):
     def test03(self):
         args = self.parser.parse_args([self.t2, self.t1, '-o', self.outfile])
         self.assertRaises(SystemExit, merge_taxtables.action, args)
-

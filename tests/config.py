@@ -50,7 +50,7 @@ def mkdir(dirpath, clobber=False):
 
     try:
         os.mkdir(dirpath)
-    except OSError, msg:
+    except OSError as msg:
         log.debug(msg)
 
     if not path.exists(dirpath):
