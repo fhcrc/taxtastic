@@ -23,7 +23,7 @@ env:
 before_install: 
   - pip wheel pandas sqlalchemy decorator biopython
 # for tox
-  - pip wheel check-manifest readme_renderer flake8
+  - pip wheel check-manifest readme_renderer flake8 tox
 
 install: 
   - pip install .
