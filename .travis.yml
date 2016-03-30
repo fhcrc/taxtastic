@@ -21,13 +21,17 @@ env:
 # Install numpy, then BioPython and other dependencies
 # BioPython doesn't always play well with pip install.
 before_install: 
-  - pip wheel pandas sqlalchemy decorator biopython xlrd
+  - pip wheel pandas sqlalchemy decorator biopython
+# for tox
+  - pip wheel check-manifest readme_renderer flake8
 
-install: pip install .
+install: 
+  - pip install .
+  - pip install tox
 
-script: ./test -v
+script: tox
 
 notifications:
   email:
-    - noah.hoffman@gmail.com
+#    - noah.hoffman@gmail.com
     - crosenth@uw.edu
