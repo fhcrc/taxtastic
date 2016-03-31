@@ -2,7 +2,7 @@
 
 if [ "$1" = "" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "usage:" 
-    echo "./testone [-v] tests.[module[.class[.method]]]"
+    echo "./testone [-v] [module[.class[.method]]]"
     exit 1
 fi
 
