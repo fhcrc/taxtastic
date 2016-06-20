@@ -9,6 +9,7 @@ doctrees/
 html
 /docs/_helptext/
 MANIFEST
+TODO
 
 # due to using tox and pytest
 .tox
