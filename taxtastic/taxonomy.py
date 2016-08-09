@@ -27,8 +27,8 @@ log = logging.getLogger(__name__)
 
 class Taxonomy(object):
 
-    def __init__(self, engine, ranks=ncbi.ranks,
-                 undefined_rank='no_rank', undef_prefix='below'):
+    def __init__(self, engine, ranks=ncbi.RANKS,
+                 NO_RANK='no_rank', undef_prefix='below'):
         """
         The Taxonomy class defines an object providing an interface to
         the taxonomy database.
@@ -36,7 +36,7 @@ class Taxonomy(object):
         * engine - sqlalchemy engine instance providing a connection to a
           database defining the taxonomy
         * ranks - list of rank names, root first
-        * undefined_rank - label identifying a taxon without
+        * NO_RANK - label identifying a taxon without
           a specific rank in the taxonomy.
         * undef_prefix - string prepended to name of parent
           rank to create new labels for undefined ranks.
@@ -77,7 +77,7 @@ class Taxonomy(object):
         # vals: lineage represented as a dict of {rank:tax_id}
         # self.taxa = {}
 
-        self.undefined_rank = undefined_rank
+        self.NO_RANK = NO_RANK
         self.undef_prefix = undef_prefix
 
     def _add_rank(self, rank, parent_rank):
@@ -192,7 +192,6 @@ class Taxonomy(object):
         # Note: indent is referenced through locals() below
         indent = '.' * _level
 
-        undefined = self.undefined_rank
         prefix = self.undef_prefix + '_'
 
         lineage = self.cached.get(tax_id)
@@ -215,7 +214,7 @@ class Taxonomy(object):
             for i, node in enumerate(lineage):
                 _rank, _tax_id = node
 
-                if _rank == undefined:
+                if _rank == self.NO_RANK:
                     _rank = prefix + _parent_rank
                     self._add_rank(_rank, _parent_rank)
 
@@ -422,6 +421,14 @@ class Taxonomy(object):
                 return self._node(tax_id)[1]
             else:
                 return None
+
+    def tax_ids(self):
+        '''
+        Return all tax_ids in node table
+        '''
+        fetch = select([self.nodes.c.tax_id]).execute().fetchall()
+        ids = [t[0] for t in fetch]
+        return ids
 
     def child_of(self, tax_id):
         """Return None or a tax id of a child of *tax_id*.
