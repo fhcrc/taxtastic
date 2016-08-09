@@ -275,7 +275,7 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                     verbosity = 0
                     out_file = h
                     full = False
-                self.assertEqual(taxtable.action(_Args()), 1)
+                self.assertNotEqual(taxtable.action(_Args()), 0)
 
     def test_seqinfo(self):
         with tempfile.TemporaryFile() as tf, \
