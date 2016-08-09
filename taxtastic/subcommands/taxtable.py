@@ -129,7 +129,7 @@ def action(args):
                 taxids.update(
                     frozenset(i['tax_id'] for i in reader if i['tax_id']))
 
-        if not(are_valid(taxids)):
+        if not(are_valid(taxids, tax)):
             return "Some taxids were invalid.  Exiting."
 
         if args.taxnames:
