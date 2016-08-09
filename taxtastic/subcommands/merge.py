@@ -73,7 +73,7 @@ def build_parser(parser):
 def action(args):
     engine = create_engine('sqlite:///%s' %
                            args.database_file, echo=args.verbosity > 2)
-    tax = Taxonomy(engine, ncbi.ranks)
+    tax = Taxonomy(engine, ncbi.RANKS)
 
     taxids = set()
 

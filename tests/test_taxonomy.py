@@ -28,7 +28,7 @@ class TestTaxonomyBase(TestBase):
 
     def setUp(self):
         self.engine = create_engine('sqlite:///%s' % self.dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.RANKS)
 
     def tearDown(self):
         self.engine.dispose()
@@ -111,14 +111,14 @@ class TestAddNode(TestTaxonomyBase):
 def test__node():
     engine = create_engine(
         'sqlite:///../testfiles/small_taxonomy.db', echo=False)
-    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    tax = Taxonomy(engine, taxtastic.ncbi.RANKS)
     assert tax._node(None) is None
     assert tax._node('91061') == (u'1239', u'class')
 
 
 def test_sibling_of():
     engine = create_engine('sqlite:///../testfiles/taxonomy.db', echo=False)
-    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    tax = Taxonomy(engine, taxtastic.ncbi.RANKS)
     assert tax.sibling_of(None) is None
     assert tax.sibling_of('91061') == '186801'
     assert tax.sibling_of('1696') is None
@@ -127,7 +127,7 @@ def test_sibling_of():
 def test_child_of():
     engine = create_engine(
         'sqlite:///../testfiles/small_taxonomy.db', echo=False)
-    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    tax = Taxonomy(engine, taxtastic.ncbi.RANKS)
     assert tax.child_of(None) is None
     assert tax.child_of('1239') == '91061'
     assert tax.children_of('1239', 2) == ['91061', '186801']
@@ -135,7 +135,7 @@ def test_child_of():
 
 def test_is_ancestor_of():
     engine = create_engine('sqlite:///../testfiles/taxonomy.db', echo=False)
-    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    tax = Taxonomy(engine, taxtastic.ncbi.RANKS)
     assert tax.is_ancestor_of('1280', '1239')
     assert tax.is_ancestor_of(None, '1239') is False
     assert tax.is_ancestor_of('1239', None) is False
@@ -143,7 +143,7 @@ def test_is_ancestor_of():
 
 def test_rank_and_parent():
     engine = create_engine('sqlite:///../testfiles/taxonomy.db', echo=False)
-    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    tax = Taxonomy(engine, taxtastic.ncbi.RANKS)
     assert tax.rank(None) is None
     assert tax.rank('1239') == 'phylum'
     assert tax.rank('1280') == 'species'
@@ -153,7 +153,7 @@ def test_rank_and_parent():
 
 def test_species_below():
     engine = create_engine('sqlite:///../testfiles/taxonomy.db', echo=False)
-    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    tax = Taxonomy(engine, taxtastic.ncbi.RANKS)
     t = tax.species_below('1239')
     parent_id, rank = tax._node(t)
     for t in [None, '1239', '186801', '1117']:
@@ -173,7 +173,7 @@ def test_is_below():
 def test_nary_subtree():
     engine = create_engine(
         'sqlite:///../testfiles/small_taxonomy.db', echo=False)
-    tax = Taxonomy(engine, taxtastic.ncbi.ranks)
+    tax = Taxonomy(engine, taxtastic.ncbi.RANKS)
     assert tax.nary_subtree(None) is None
     t = tax.nary_subtree('1239')
     assert t == ['1280', '372074', '1579', '1580',

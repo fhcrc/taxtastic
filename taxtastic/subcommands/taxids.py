@@ -30,7 +30,7 @@ import sys
 from sqlalchemy import create_engine
 
 from taxtastic.taxonomy import Taxonomy
-from taxtastic.ncbi import ranks as ncbi_ranks
+from taxtastic import ncbi
 
 log = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ def action(args):
     outfile = args.outfile
 
     engine = create_engine('sqlite:///%s' % dbfile, echo=False)
-    tax = Taxonomy(engine, ncbi_ranks)
+    tax = Taxonomy(engine, ncbi.RANKS)
 
     names = []
     if taxnames_file:

@@ -62,7 +62,7 @@ def action(args):
     source_name = args.source_name
 
     engine = create_engine('sqlite:///%s' % dbname, echo=args.verbosity > 2)
-    tax = Taxonomy(engine, ncbi.ranks)
+    tax = Taxonomy(engine, ncbi.RANKS)
 
     log.warning('adding new nodes')
     nodes = get_new_nodes(new_nodes)

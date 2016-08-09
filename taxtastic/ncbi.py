@@ -36,7 +36,7 @@ log = logging
 
 Base = declarative_base()
 
-ncbi_data_url = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
+DATA_URL = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
 
 class Node(Base):
@@ -82,43 +82,37 @@ class Source(Base):
     description = Column(String)
 
 
-# define headers in names.dmp, etc (may not correspond to table columns above)
-merged_keys = 'old_tax_id new_tax_id'.split()
-
-undefined_rank = 'no_rank'
-root_name = 'root'
-
-_ranks = """
-root
-superkingdom
-kingdom
-subkingdom
-superphylum
-phylum
-subphylum
-superclass
-class
-subclass
-infraclass
-superorder
-order
-suborder
-infraorder
-parvorder
-superfamily
-family
-subfamily
-tribe
-subtribe
-genus
-subgenus
-species group
-species subgroup
-species
-subspecies
-varietas
-forma
-"""
+RANKS = [
+    'root',
+    'superkingdom',
+    'kingdom',
+    'subkingdom',
+    'superphylum',
+    'phylum',
+    'subphylum',
+    'superclass',
+    'class',
+    'subclass',
+    'infraclass',
+    'superorder',
+    'order',
+    'suborder',
+    'infraorder',
+    'parvorder',
+    'superfamily',
+    'family',
+    'subfamily',
+    'tribe',
+    'subtribe',
+    'genus',
+    'subgenus',
+    'species_group',
+    'species_subgroup',
+    'species',
+    'subspecies',
+    'varietas',
+    'forma'
+]
 
 # Components of a regex to apply to all names. Names matching this regex are
 # marked as invalid.
@@ -193,8 +187,6 @@ UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
 # provides criteria for defining matching tax_ids as "unclassified"
 UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
-ranks = [k.strip().replace(' ', '_') for k in _ranks.splitlines() if k.strip()]
-
 
 def db_connect(dbname='ncbi_taxonomy.db', clobber=False):
     """
@@ -215,7 +207,7 @@ def db_connect(dbname='ncbi_taxonomy.db', clobber=False):
     return engine
 
 
-def db_load(engine, archive, root_name='root', maxrows=None):
+def db_load(engine, archive, maxrows=None):
     """
     Load data from zip archive into database identified by con. Data
     is not loaded if target tables already contain data.
@@ -226,7 +218,6 @@ def db_load(engine, archive, root_name='root', maxrows=None):
         logging.info("Inserting nodes")
         rows = read_nodes(
             rows=read_archive(archive, 'nodes.dmp'),
-            root_name=root_name,
             ncbi_source_id=1)
         # Add is_valid
         do_insert(engine, 'nodes', rows, maxrows, add=False)
@@ -394,14 +385,14 @@ def do_insert(engine, tablename, rows, maxrows=None,
     return True
 
 
-def fetch_data(dest_dir='.', clobber=False, url=ncbi_data_url):
+def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
     """
     Download data from NCBI required to generate local taxonomy
-    database. Default url is ncbi.ncbi_data_url
+    database. Default url is ncbi.DATA_URL
 
     * dest_dir - directory in which to save output files (created if necessary).
     * clobber - don't download if False and target of url exists in dest_dir
-    * url - url to archive; default is ncbi.ncbi_data_url
+    * url - url to archive; default is ncbi.DATA_URL
 
     Returns (fname, downloaded), where fname is the name of the
     downloaded zip archive, and downloaded is True if a new files was
@@ -447,7 +438,7 @@ def read_dmp(fname):
         yield line.rstrip('\t|\n').split('\t|\t')
 
 
-def read_nodes(rows, root_name, ncbi_source_id):
+def read_nodes(rows, ncbi_source_id):
     """
     Return an iterator of rows ready to insert into table "nodes".
 
@@ -461,7 +452,7 @@ def read_nodes(rows, root_name, ncbi_source_id):
 
     # assume the first row is the root
     row = rows.next()
-    row[rank] = root_name
+    row[rank] = 'root'
     rows = itertools.chain([row], rows)
 
     colnames = keys + ['source_id']

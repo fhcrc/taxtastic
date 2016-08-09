@@ -113,7 +113,7 @@ def action(args):
 
     con = 'sqlite:///{0}'.format(args.database_file)
     e = sqlalchemy.create_engine(con)
-    tax = Taxonomy(e, ncbi.ranks)
+    tax = Taxonomy(e, ncbi.RANKS)
 
     merged = pandas.read_sql_table('merged', con, index_col='old_tax_id')
     log.info('updating tax_ids')

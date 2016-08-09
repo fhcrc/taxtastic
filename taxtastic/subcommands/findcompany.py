@@ -65,7 +65,7 @@ def action(args):
                 taxids.append(val)
     # Connect to the taxonomy
     engine = create_engine('sqlite:///%s' % args.taxdb, echo=False)
-    tax = Taxonomy(engine, ncbi.ranks)
+    tax = Taxonomy(engine, ncbi.RANKS)
     # Finally, real work...
     if args.cut:
         company = lonely.lonely_company(tax, taxids)

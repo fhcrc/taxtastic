@@ -46,7 +46,7 @@ def build_parser(parser):
 
     parser.add_argument(
         '-u', '--taxdump-url',
-        default=taxtastic.ncbi.ncbi_data_url,
+        default=taxtastic.ncbi.DATA_URL,
         metavar='URL',
         help='Url to taxdump file [%(default)s]')
 

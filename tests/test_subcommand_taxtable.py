@@ -25,7 +25,7 @@ class TaxTableSetup(TestBase):
 
     def setUp(self):
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.ranks)
+        self.tax = Taxonomy(self.engine, taxtastic.ncbi.RANKS)
 
     def tearDown(self):
         self.engine.dispose()
