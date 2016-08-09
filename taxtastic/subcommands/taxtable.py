@@ -69,8 +69,7 @@ def build_parser(parser):
         action='store_true',
         help='Show all ranks in output file.')
 
-    input_group = parser.add_argument_group(
-        "Input options").add_mutually_exclusive_group(required=True)
+    input_group = parser.add_argument_group("Input options")
 
     input_group.add_argument(
         '-n', '--tax-names',
@@ -112,35 +111,50 @@ def build_parser(parser):
 def action(args):
     engine = create_engine(
         'sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
-    tax = Taxonomy(engine, ncbi.ranks)
+    tax = Taxonomy(engine, ncbi.RANKS)
 
-    taxids = set()
+    if any([args.taxids, args.taxnames, args.seq_info]):
+        taxids = set()
+        if args.taxids:
+            if os.access(args.taxids, os.F_OK):
+                for line in getlines(args.taxids):
+                    taxids.update(set(re.split(r'[\s,;]+', line)))
+            else:
+                taxids.update(
+                    [x.strip() for x in re.split(r'[\s,;]+', args.taxids)])
 
-    if args.taxids:
-        if os.access(args.taxids, os.F_OK):
-            for line in getlines(args.taxids):
-                taxids.update(set(re.split(r'[\s,;]+', line)))
-        else:
-            taxids.update([x.strip()
-                           for x in re.split(r'[\s,;]+', args.taxids)])
+        if args.seq_info:
+            with args.seq_info:
+                reader = csv.DictReader(args.seq_info)
+                taxids.update(
+                    frozenset(i['tax_id'] for i in reader if i['tax_id']))
 
-    if args.taxnames:
-        for taxname in getlines(args.taxnames):
-            for name in re.split(r'\s*[,;]\s*', taxname):
-                tax_id, primary_name, is_primary = tax.primary_from_name(
-                    name.strip())
-                taxids.add(tax_id)
+        if not(are_valid(taxids)):
+            return "Some taxids were invalid.  Exiting."
 
-    if args.seq_info:
-        with args.seq_info:
-            reader = csv.DictReader(args.seq_info)
-            taxids.update(frozenset(i['tax_id']
-                                    for i in reader if i['tax_id']))
+        if args.taxnames:
+            for taxname in getlines(args.taxnames):
+                for name in re.split(r'\s*[,;]\s*', taxname):
+                    tax_id, primary_name, is_primary = tax.primary_from_name(
+                        name.strip())
+                    taxids.add(tax_id)
+    else:
+        taxids = set(tax.tax_ids())
 
-    # Before digging into lineages, make sure all the taxids exist in
-    # the taxonomy database.
-    valid_taxids = True
+    # Extract all the taxids to be exported in the CSV file.
+    taxids_to_export = set()
     for t in taxids:
+        taxids_to_export.update([y for (x, y) in tax._get_lineage(t)])
+
+    tax.write_table(taxids_to_export, csvfile=args.out_file, full=args.full)
+
+    engine.dispose()
+    return 0
+
+
+def are_valid(tax_ids, tax):
+    valid = True
+    for t in tax_ids:
         try:
             tax._node(t)
         except ValueError:
@@ -152,17 +166,6 @@ def action(args):
                 print >> sys.stderr, msg
             else:
                 print >>sys.stderr, "Taxid %s not found in taxonomy." % t
-            valid_taxids = False
-    if not(valid_taxids):
-        print >>sys.stderr, "Some taxids were invalid.  Exiting."
-        return 1  # exits with code 1
+            valid = False
 
-    # Extract all the taxids to be exported in the CSV file.
-    taxids_to_export = set()
-    for t in taxids:
-        taxids_to_export.update([y for (x, y) in tax._get_lineage(t)])
-
-    tax.write_table(taxids_to_export, csvfile=args.out_file, full=args.full)
-
-    engine.dispose()
-    return 0
+    return valid
