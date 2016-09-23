@@ -20,8 +20,8 @@ import itertools
 import logging
 import operator
 import os
+import pandas
 import re
-import sqlite3
 import urllib
 import zipfile
 
@@ -207,7 +207,7 @@ def db_connect(dbname='ncbi_taxonomy.db', clobber=False):
     return engine
 
 
-def db_load(engine, archive, maxrows=None):
+def db_load(engine, archive):
     """
     Load data from zip archive into database identified by con. Data
     is not loaded if target tables already contain data.
@@ -215,34 +215,113 @@ def db_load(engine, archive, maxrows=None):
 
     try:
         # nodes
-        logging.info("Inserting nodes")
         rows = read_nodes(
             rows=read_archive(archive, 'nodes.dmp'),
             ncbi_source_id=1)
-        # Add is_valid
-        do_insert(engine, 'nodes', rows, maxrows, add=False)
+        nodes = pandas.DataFrame(rows).set_index('tax_id')
+        nodes = nodes.join(nodes['rank'], on='parent_id', rsuffix='_parent')
+
+        log.info('Adjusting taxons with same rank as parent')
+        nodes = adjust_same_ranks(nodes)
+
+        log.info('Expanding `no_rank` taxons')
+        nodes, ranks = adjust_node_ranks(nodes, RANKS)
+
+        log.info('Inserting ranks')
+        # reverse list so lowest is first and gets the 0 index
+        pandas.Series(ranks[::-1], dtype=str, name='rank').to_sql(
+            'ranks', engine,
+            index=False,
+            flavor='sqlite',
+            if_exists='append')
+
+        log.info("Inserting nodes")
+        nodes.drop('rank_parent', axis=1).to_sql(
+            'nodes', engine,
+            flavor='sqlite',
+            if_exists='append')
 
         # names
-        logging.info("Inserting names")
         rows = read_names(
             rows=read_archive(archive, 'names.dmp'),
             unclassified_regex=UNCLASSIFIED_REGEX)
-        do_insert(engine, 'names', rows, maxrows, add=False)
+        names = pandas.DataFrame(rows)
+        log.info("Inserting names")
+        names.to_sql(
+            'names', engine,
+            flavor='sqlite',
+            if_exists='append',
+            index=False)
 
         # merged
-        logging.info("Inserting merged")
         rows = read_archive(archive, 'merged.dmp')
         rows = (dict(zip(['old_tax_id', 'new_tax_id'], row)) for row in rows)
-        do_insert(engine, 'merged', rows, maxrows, add=False)
+        merged = pandas.DataFrame(rows)
+        log.info("Inserting merged")
+        merged.to_sql(
+            'merged', engine,
+            flavor='sqlite',
+            if_exists='append',
+            index=False)
 
         fix_missing_primary(engine)
 
         # Mark names as valid/invalid
+        log.info("Marking nodes validity based on primary name")
         mark_is_valid(engine)
+
+        log.info("Updating subtree validity")
         update_subtree_validity(engine)
 
-    except sqlite3.IntegrityError as err:
+    except sqlalchemy.exc.IntegrityError as err:
         raise IntegrityError(err)
+
+
+def _isame_ranks(df):
+    '''
+    return boolean series whether row has same rank as parent
+    '''
+    return ((df['rank'] != 'root') &
+            (df['rank_parent'] != 'no_rank') &
+            (df['rank_parent'] == df['rank']))
+
+
+def adjust_same_ranks(df):
+    '''
+    reset bump parent_id to parent of parent for rows where rank is the same
+    as the parent rank
+    '''
+    same_rank = _isame_ranks(df)
+    while _isame_ranks(df).any():
+        parents = df[same_rank].join(df, on='parent_id', rsuffix='_new')
+        df.loc[same_rank, 'parent_id'] = parents['parent_id_new']
+        df.loc[same_rank, 'rank_parent'] = parents['rank_parent_new']
+        same_rank = _isame_ranks(df)
+
+    return df
+
+
+def adjust_node_ranks(df, ranks):
+    '''
+    replace no_ranks with below_ of parent rank
+    '''
+    for i, rank in enumerate(ranks):
+        no_rank = ((df['rank_parent'] == rank) &
+                   (df['rank'] == 'no_rank'))
+        if no_rank.any():
+            below_rank = 'below_' + rank
+            iat_rank = df[no_rank].index
+            df.at[iat_rank, 'rank'] = below_rank
+            # update `rank_parent` columns
+            below_children = df['parent_id'].isin(iat_rank)
+            df.loc[below_children, 'rank_parent'] = below_rank
+            ranks.insert(i + 1, below_rank)
+
+    # remove non-existent ranks
+    node_ranks = set(df['rank'].tolist())
+    ranks = [r for r in ranks if r in node_ranks]
+
+    return df, ranks
 
 
 def fix_missing_primary(engine):
@@ -255,7 +334,8 @@ def fix_missing_primary(engine):
             FROM names
             WHERE tax_id = ?"""
         tax_ids = [i[0] for i in cursor.execute(missing_primary)]
-        logging.warn("%d records lack primary names", len(tax_ids))
+        if tax_ids:
+            log.warn("%d records lack primary names", len(tax_ids))
 
         for tax_id in tax_ids:
             records = list(cursor.execute(rows_for_taxid, [tax_id]))
@@ -269,8 +349,8 @@ def fix_missing_primary(engine):
                                [tax_id, 'scientific name'])
             else:
                 tax_id, tax_name, unique_name, name_class = records[0]
-            logging.warn("No primary name for tax_id %s. Arbitrarily using %s[%s].",
-                         tax_id, tax_name, name_class)
+            log.warn("No primary name for tax_id %s. Arbitrarily using %s[%s].",
+                     tax_id, tax_name, name_class)
             cursor.execute("""UPDATE names
                 SET is_primary = 1
                 WHERE tax_id = ? AND tax_name = ? AND
@@ -278,14 +358,17 @@ def fix_missing_primary(engine):
                            [tax_id, tax_name, unique_name, name_class])
 
 
-def mark_is_valid(engine, regex=UNCLASSIFIED_REGEX):
+def mark_is_valid(engine):
     """
     Apply ``regex`` to primary names associated with tax_ids, marking those
     that match as invalid.
     """
-    logging.info("Marking nodes validity based on primary name")
     with engine.begin() as connection:
-        sql = """UPDATE nodes SET is_valid = (SELECT is_classified FROM names WHERE names.tax_id = nodes.tax_id AND names.is_primary = 1)"""
+        sql = ('UPDATE nodes SET is_valid = '
+               '(SELECT is_classified '
+               'FROM names '
+               'WHERE names.tax_id = nodes.tax_id AND names.is_primary = 1)')
+        log.debug(sql)
         connection.execute(sql)
 
 
@@ -312,8 +395,8 @@ def update_subtree_validity(engine, mark_below_rank='species'):
 
     def mark_subtrees(conn, tax_ids, is_valid):
         to_mark = list(tax_ids)
-        logging.info("Marking %d subtrees as is_valid=%s",
-                     len(to_mark), is_valid)
+        log.info("Marking %d subtrees as is_valid=%s",
+                 len(to_mark), is_valid)
         while to_mark:
             # First, mark nodes
             conn.execute("""UPDATE nodes SET is_valid = ?
@@ -350,39 +433,9 @@ def update_subtree_validity(engine, mark_below_rank='species'):
         result = list(conn.execute("""SELECT tax_id FROM names WHERE tax_name = ? and is_primary = ?""",
                                    ['unclassified Bacteria', 1]))
         assert len(result) < 2
-        logging.info("marking subtrees for unclassified Bacteria invalid")
+        log.info("marking subtrees for unclassified Bacteria invalid")
         for i, in result:
             mark_subtrees(conn, [i], 0)
-
-
-def do_insert(engine, tablename, rows, maxrows=None,
-              add=True, chunk_size=5000):
-    """
-    Insert rows into a table. Do not perform the insert if
-    add is False and table already contains data.
-    """
-    meta = Base.metadata
-    table = meta.tables[tablename]
-    has_data = table.select(bind=engine).limit(
-        1).count().execute().first()[0] > 0
-
-    if not add and has_data:
-        log.info(
-            'Table "%s" already contains data; load not performed.' %
-            tablename)
-        return False
-    if maxrows:
-        rows = itertools.islice(rows, maxrows)
-
-    insert = table.insert()
-    with engine.begin() as conn:
-        count = 0
-        for chunk in partition(rows, chunk_size):
-            result = conn.execute(insert, chunk)
-            count += result.rowcount
-        logging.info("Inserted %d rows into %s", count, tablename)
-
-    return True
 
 
 def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
@@ -455,13 +508,14 @@ def read_nodes(rows, ncbi_source_id):
     row[rank] = 'root'
     rows = itertools.chain([row], rows)
 
-    colnames = keys + ['source_id']
+    colnames = keys + ['source_id'] + ['is_valid']
     for r in rows:
         row = dict(zip(colnames, r))
         assert len(row) == len(colnames)
 
         # replace whitespace in "rank" with underscore
         row['rank'] = '_'.join(row['rank'].split())
+        row['is_valid'] = 1  # default is_valid
         yield row
 
 

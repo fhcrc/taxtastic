@@ -30,8 +30,3 @@ install:
   - pip install tox
 
 script: tox
-
-notifications:
-  email:
-#    - noah.hoffman@gmail.com
-    - crosenth@uw.edu

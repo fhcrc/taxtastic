@@ -86,7 +86,7 @@ def action(args):
                 url=args.taxdump_url)
         msg = 'creating new database in {} using data in {}'
         log.warning(msg.format(dbname, zfile))
-        engine = taxtastic.ncbi.db_connect(dbname, clobber=True)
+        engine = taxtastic.ncbi.db_connect(dbname, clobber=args.clobber)
         taxtastic.ncbi.db_load(engine, zfile)
     else:
         log.warning('taxonomy database already exists in %s' % dbname)

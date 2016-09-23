@@ -275,6 +275,8 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                     verbosity = 0
                     out_file = h
                     full = False
+                    from_table = None
+                    from_id = None
                 self.assertNotEqual(taxtable.action(_Args()), 0)
 
     def test_seqinfo(self):
@@ -288,7 +290,9 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                 out_file = tf
                 verbosity = 0
                 full = False
-            self.assertEqual(taxtable.action(_Args()), 0)
+                from_table = None
+                from_id = None
+            self.assertIsNone(taxtable.action(_Args()))
             # No output check at present
             self.assertTrue(tf.tell() > 0)
 
