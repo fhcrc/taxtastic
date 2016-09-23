@@ -116,8 +116,8 @@ def action(args):
     engine = create_engine(
         'sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
 
-    ranks = pandas.read_sql_table('ranks', engine, index_col='index')
-    ranks = ranks['rank'].tolist()
+    ranks = pandas.read_sql_table('ranks', engine)
+    ranks = ranks['rank'].tolist()[::-1]
 
     if args.from_table:
         log.info('using taxtable ' + args.from_table)
