@@ -25,6 +25,10 @@ from . import ncbi
 log = logging.getLogger(__name__)
 
 
+class TaxonIntegrityError(StandardError):
+    pass
+
+
 class Taxonomy(object):
 
     def __init__(self, engine, ranks=ncbi.RANKS,
@@ -84,10 +88,10 @@ class Taxonomy(object):
         """
         inserts rank into self.ranks.
         """
-
         if rank not in self.rankset:
             self.ranks.insert(self.ranks.index(parent_rank) + 1, rank)
         self.rankset = set(self.ranks)
+
 
     def _node(self, tax_id):
         """
@@ -110,7 +114,6 @@ class Taxonomy(object):
         """
         Returns primary taxonomic name associated with tax_id
         """
-
         s = select([self.names.c.tax_name],
                    and_(self.names.c.tax_id == tax_id,
                         self.names.c.is_primary == 1))
@@ -127,7 +130,6 @@ class Taxonomy(object):
         """
         Return tax_id and primary tax_name corresponding to tax_name.
         """
-
         names = self.names
 
         s1 = select([names.c.tax_id, names.c.is_primary],
@@ -160,7 +162,6 @@ class Taxonomy(object):
         new_tax_id    TEXT REFERENCES nodes(tax_id)
         );
         """
-
         s = select([self.merged.c.new_tax_id],
                    self.merged.c.old_tax_id == old_tax_id)
         res = s.execute()
@@ -268,6 +269,16 @@ class Taxonomy(object):
 
         return output
 
+    def ranksdict(self, tax_ids=[]):
+        """
+        return tax_id and rank in dictionary form. Can be limited with
+        optional tax_ids argument
+        """
+        s = select([self.nodes.c.tax_id, self.nodes.c.rank])
+        if tax_ids:
+            s = s.where(self.nodes.c.tax_id.in_(tax_ids))
+        return dict(s.execute().fetchall())
+
     def lineage(self, tax_id=None, tax_name=None):
         """
         Public method for returning a lineage; includes tax_name and rank
@@ -355,7 +366,6 @@ class Taxonomy(object):
         """
         Add a node to the taxonomy.
         """
-
         if not (source_id or source_name):
             raise ValueError(
                 'Taxonomy.add_node requires source_id or source_name')
@@ -374,8 +384,8 @@ class Taxonomy(object):
 
         if children:
             for child in children:
-                ret = self.nodes.update(self.nodes.c.tax_id == child, {
-                                        'parent_id': tax_id})
+                ret = self.nodes.update(
+                    self.nodes.c.tax_id == child, {'parent_id': tax_id})
                 ret.execute()
 
         lineage = self.lineage(tax_id)
