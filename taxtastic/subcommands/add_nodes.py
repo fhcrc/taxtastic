@@ -145,6 +145,7 @@ def action(args):
     if args.from_table:
         log.info('reading from_table ' + args.from_table)
         table = pandas.read_csv(args.from_table, dtype=str).set_index('tax_id')
+        table['rank'] = table['rank'].astype('category', categories=ranks)
         from_cols = table.columns  # preserve order of columns
         nodes_df = pandas.DataFrame(nodes, dtype=str).set_index('tax_id')
         lineage_cols = [c for c in table.columns if c in ranks]
@@ -158,14 +159,16 @@ def action(args):
             table = table.append(new_rows)
             nodes_df = nodes_df.drop(new_rows.index)
 
-        log.info('updating new node children')
+        log.info('updating new node children (of children)')
         for n in nodes:
             if 'children' in n:
                 rank = n['rank']
                 tax_id = n['tax_id']
                 for c in n['children']:
-                    table.loc[c, rank] = tax_id
+                    c_rank = table.loc[c]['rank']
+                    table.loc[table[c_rank] == c, rank] = tax_id
 
+        table = table.sort_values(by='rank', ascending=False)
         table.to_csv(args.to_table, columns=from_cols)
 
     engine.dispose()

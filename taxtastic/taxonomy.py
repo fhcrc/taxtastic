@@ -92,7 +92,6 @@ class Taxonomy(object):
             self.ranks.insert(self.ranks.index(parent_rank) + 1, rank)
         self.rankset = set(self.ranks)
 
-
     def _node(self, tax_id):
         """
         Returns parent_id, rank
@@ -235,10 +234,10 @@ class Taxonomy(object):
     def is_below(self, lower, upper):
         return lower in self.ranks_below(upper)
 
-    def ranks_below(self, rank):
+    def ranks_below(self, rank, depth=None):
         below = []
         try:
-            below = self.ranks[self.ranks.index(rank):]
+            below = self.ranks[self.ranks.index(rank):depth]
         except ValueError as err:
             log.error(err)
         return below
