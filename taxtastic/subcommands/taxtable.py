@@ -121,7 +121,8 @@ def action(args):
 
     if args.from_table:
         log.info('using taxtable ' + args.from_table)
-        taxtable = pandas.read_csv(args.from_table, dtype=str).set_index('tax_id')
+        taxtable = pandas.read_csv(args.from_table, dtype=str)
+        taxtable = taxtable.set_index('tax_id')
     else:
         log.info('building taxtable from ' + args.database_file)
         nodes = pandas.read_sql_table('nodes', engine, index_col='tax_id')
@@ -141,7 +142,8 @@ def action(args):
         # build taxtable up to root from args.from_id
         while from_taxon.name != '1':  # root
             parent = taxtable.loc[from_taxon['parent_id']]
-            from_table = pandas.concat([pandas.DataFrame(parent).T, from_table])
+            from_table = pandas.concat(
+                [pandas.DataFrame(parent).T, from_table])
             from_taxon = parent
         # reset lost index name after concatenating transposed series
         from_table.index.name = 'tax_id'
@@ -185,7 +187,8 @@ def action(args):
 
     # sort columns
     taxtable = taxtable[
-        ['rank', 'tax_name'] + [r for r in ranks if r in taxtable.columns]]
+        ['parent_id', 'rank', 'tax_name'] +
+        [r for r in ranks if r in taxtable.columns]]
 
     # sort rows
     taxtable['rank'] = taxtable['rank'].astype('category', categories=ranks)
@@ -223,17 +226,17 @@ def build_taxtable(df, ranks):
     given list of tax_ids with parent_ids and an ordered list of ranks return
     a table of taxonomic lineages with ranks as columns
     '''
-
     df_index_name = df.index.name
     rank_count = len(ranks)
 
     df = df.join(df['rank'], on='parent_id', rsuffix='_parent').reset_index()
-    df['rank_parent'] = df['rank_parent'].astype('category', categories=ranks)
+    df['rank_parent'] = df['rank_parent'].astype(
+        'category', categories=ranks, ordered=True)
+    df['rank'] = df['rank'].astype('category', categories=ranks, ordered=True)
     lineages = df[df['tax_id'] == '1'].iloc[[0]]
     lineages.loc[:, 'root'] = lineages['tax_id']
     df = df.drop(lineages.index)
     tax_parent_groups = df.groupby(by='rank_parent', sort=True)
-
     for i, (parent, pdf) in enumerate(tax_parent_groups):
         at_rank = []
         for child, df in pdf.groupby(by='rank', sort=False):
@@ -252,6 +255,7 @@ def build_taxtable(df, ranks):
                 how='inner')
             lineages = lineages.append(at_rank)
 
-        sys.stderr.write('{} of {} rank lineages completed\r'.format(i, rank_count))
+        msg = '{} of {} rank lineages completed\r'.format(i, rank_count)
+        sys.stderr.write(msg)
 
     return lineages.drop('rank_parent', axis=1).set_index(df_index_name)
