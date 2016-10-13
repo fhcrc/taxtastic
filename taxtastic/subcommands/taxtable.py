@@ -232,7 +232,6 @@ def build_taxtable(df, ranks):
     df = df.join(df['rank'], on='parent_id', rsuffix='_parent').reset_index()
     df['rank_parent'] = df['rank_parent'].astype(
         'category', categories=ranks, ordered=True)
-    df['rank'] = df['rank'].astype('category', categories=ranks, ordered=True)
     lineages = df[df['tax_id'] == '1'].iloc[[0]]
     lineages.loc[:, 'root'] = lineages['tax_id']
     df = df.drop(lineages.index)
@@ -255,6 +254,7 @@ def build_taxtable(df, ranks):
                 how='inner')
             lineages = lineages.append(at_rank)
 
+        # status message
         msg = '{} of {} rank lineages completed\r'.format(i, rank_count)
         sys.stderr.write(msg)
 
