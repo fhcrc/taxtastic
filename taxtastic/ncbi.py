@@ -227,9 +227,18 @@ def db_load(engine, archive):
         log.info('Expanding `no_rank` taxons')
         nodes, ranks = adjust_node_ranks(nodes, RANKS)
 
+        log.info('Confirming tax tree rank integrity')
+        nodes['rank'] = nodes['rank'].astype('category', categories=ranks, ordered=True)
+        nodes['rank_parent'] = nodes['rank_parent'].astype(
+            'category', categories=ranks, ordered=True)
+        bad_nodes = nodes[nodes['rank_parent'] < nodes['rank']]
+        if not bad_nodes.empty:
+            print(bad_nodes)
+            raise IntegrityError('some node ranks above parent ranks')
+
         log.info('Inserting ranks')
         # reverse list so lowest is first and gets the 0 index
-        pandas.Series(ranks[::-1], dtype=str, name='rank').to_sql(
+        pandas.Series(ranks, dtype=str, name='rank').to_sql(
             'ranks', engine,
             index=False,
             flavor='sqlite',
@@ -320,6 +329,7 @@ def adjust_node_ranks(df, ranks):
     # remove non-existent ranks
     node_ranks = set(df['rank'].tolist())
     ranks = [r for r in ranks if r in node_ranks]
+    ranks = ranks[::-1]  # reverse order so smallest rank is first
 
     return df, ranks
 
