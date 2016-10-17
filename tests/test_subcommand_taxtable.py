@@ -8,9 +8,7 @@ from sqlalchemy import create_engine
 from . import config
 from .config import TestBase
 
-import taxtastic
 from taxtastic.taxonomy import Taxonomy
-import taxtastic.ncbi
 
 log = logging
 
