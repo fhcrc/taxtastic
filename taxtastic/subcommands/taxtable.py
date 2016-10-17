@@ -119,36 +119,7 @@ def action(args):
     ranks = pandas.read_sql_table('ranks', engine)
     ranks = ranks['rank'].tolist()[::-1]
 
-    if args.from_table:
-        log.info('using taxtable ' + args.from_table)
-        taxtable = pandas.read_csv(args.from_table, dtype=str)
-        taxtable = taxtable.set_index('tax_id')
-    else:
-        log.info('building taxtable from ' + args.database_file)
-        nodes = pandas.read_sql_table('nodes', engine, index_col='tax_id')
-        names = pandas.read_sql_table(
-            'names', engine, columns=['tax_id', 'tax_name', 'is_primary'])
-        names = names[names['is_primary']].set_index('tax_id')
-        nodes = pandas.read_sql_table('nodes', engine, index_col='tax_id')
-        nodes = nodes.join(names['tax_name'])
-        taxtable = build_taxtable(nodes, ranks)
-
-    if args.from_id:
-        from_taxon = taxtable.loc[args.from_id]
-
-        # select all rows where rank column == args.from_id
-        from_table = taxtable[taxtable[from_taxon['rank']] == args.from_id]
-
-        # build taxtable up to root from args.from_id
-        while from_taxon.name != '1':  # root
-            parent = taxtable.loc[from_taxon['parent_id']]
-            from_table = pandas.concat(
-                [pandas.DataFrame(parent).T, from_table])
-            from_taxon = parent
-        # reset lost index name after concatenating transposed series
-        from_table.index.name = 'tax_id'
-        taxtable = from_table
-
+    # check tax_ids subsets first before building taxtable
     if any([args.taxids, args.taxnames, args.seq_info]):
         tax = Taxonomy(engine, ranks)
         tax_ids = set()
@@ -176,6 +147,44 @@ def action(args):
                         name.strip())
                     tax_ids.add(tax_id)
 
+        if not tax_ids:
+            log.warn('no tax_ids to subset taxtable, exiting')
+            return
+
+    # construct taxtable either from previously built taxtable or tax database
+    if args.from_table:
+        log.info('using taxtable ' + args.from_table)
+        taxtable = pandas.read_csv(args.from_table, dtype=str)
+        taxtable = taxtable.set_index('tax_id')
+    else:
+        log.info('building taxtable from ' + args.database_file)
+        nodes = pandas.read_sql_table('nodes', engine, index_col='tax_id')
+        names = pandas.read_sql_table(
+            'names', engine, columns=['tax_id', 'tax_name', 'is_primary'])
+        names = names[names['is_primary']].set_index('tax_id')
+        nodes = pandas.read_sql_table('nodes', engine, index_col='tax_id')
+        nodes = nodes.join(names['tax_name'])
+        taxtable = build_taxtable(nodes, ranks)
+
+    # subset taxtable lineage
+    if args.from_id:
+        from_taxon = taxtable.loc[args.from_id]
+
+        # select all rows where rank column == args.from_id
+        from_table = taxtable[taxtable[from_taxon['rank']] == args.from_id]
+
+        # build taxtable up to root from args.from_id
+        while from_taxon.name != '1':  # root
+            parent = taxtable.loc[from_taxon['parent_id']]
+            from_table = pandas.concat(
+                [pandas.DataFrame(parent).T, from_table])
+            from_taxon = parent
+        # reset lost index name after concatenating transposed series
+        from_table.index.name = 'tax_id'
+        taxtable = from_table
+
+    # subset taxtable by set of tax_ids
+    if tax_ids:
         keepers = taxtable.loc[tax_ids]
         for col in keepers.columns:
             if col in ranks:

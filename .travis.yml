@@ -18,15 +18,11 @@ env:
     - PIP_WHEEL_DIR=$HOME/.cache/pip/wheels
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 
-addons:
-  apt:
-    packages:
-      - cython
-
 # Install numpy, then BioPython and other dependencies
 # BioPython doesn't always play well with pip install.
 before_install: 
-  - pip wheel pandas sqlalchemy decorator biopython
+  - pip install Cython
+  - pip wheel Cython pandas sqlalchemy decorator biopython
 # for tox
   - pip wheel check-manifest readme_renderer flake8 tox
 
