@@ -225,7 +225,7 @@ def db_load(engine, archive):
         nodes = adjust_same_ranks(nodes)
 
         log.info('Expanding `no_rank` taxons')
-        nodes, ranks = adjust_node_ranks(nodes, RANKS)
+        nodes, ranks = adjust_node_ranks(nodes, RANKS[:])
 
         log.info('Confirming tax tree rank integrity')
         nodes['rank'] = nodes['rank'].astype('category', categories=ranks, ordered=True)

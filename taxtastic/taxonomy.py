@@ -20,8 +20,6 @@ import sqlalchemy
 from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
 
-from . import ncbi
-
 log = logging.getLogger(__name__)
 
 
@@ -31,8 +29,7 @@ class TaxonIntegrityError(StandardError):
 
 class Taxonomy(object):
 
-    def __init__(self, engine, ranks=ncbi.RANKS,
-                 NO_RANK='no_rank', undef_prefix='below'):
+    def __init__(self, engine, NO_RANK='no_rank', undef_prefix='below'):
         """
         The Taxonomy class defines an object providing an interface to
         the taxonomy database.
@@ -69,9 +66,8 @@ class Taxonomy(object):
         self.names = self.meta.tables['names']
         self.source = self.meta.tables['source']
         self.merged = self.meta.tables['merged']
-
-        self.ranks = ranks
-        self.rankset = set(self.ranks)
+        ranks = select([self.meta.tables['ranks'].c.rank]).execute().fetchall()
+        self.ranks = [r[0] for r in ranks]
 
         # keys: tax_id
         # vals: lineage represented as a list of tuples: (rank, tax_id)
