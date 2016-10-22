@@ -286,7 +286,7 @@ def db_load(engine, archive):
         raise IntegrityError(err)
 
 
-def _isame_ranks(df):
+def _isame_ancestor_rank(df):
     '''
     return boolean series whether row has same rank as parent
     '''
@@ -300,12 +300,12 @@ def adjust_same_ranks(df):
     reset bump parent_id to parent of parent for rows where rank is the same
     as the parent rank
     '''
-    same_rank = _isame_ranks(df)
-    while _isame_ranks(df).any():
+    same_rank = _isame_ancestor_rank(df)
+    while _isame_ancestor_rank(df).any():
         parents = df[same_rank].join(df, on='parent_id', rsuffix='_new')
         df.loc[same_rank, 'parent_id'] = parents['parent_id_new']
         df.loc[same_rank, 'rank_parent'] = parents['rank_parent_new']
-        same_rank = _isame_ranks(df)
+        same_rank = _isame_ancestor_rank(df)
 
     return df
 

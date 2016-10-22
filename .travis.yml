@@ -19,7 +19,8 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 
 # Install numpy, then BioPython and other dependencies
-# BioPython doesn't always play well with pip install.
+# BioPython doesn't always play well with pip install
+# Install Cython before Pandas
 before_install: 
   - pip install Cython
   - pip wheel Cython pandas sqlalchemy decorator biopython

@@ -116,28 +116,29 @@ def action(args):
     engine = create_engine(
         'sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
 
-    ranks = pandas.read_sql_table('ranks', engine)
-    ranks = ranks['rank'].tolist()[::-1]
+    # root first for this subcommand
+    ranks = pandas.read_sql_table('ranks', engine)['rank'].tolist()[::-1]
+
+    subset_ids = set()
 
     # check tax_ids subsets first before building taxtable
     if any([args.taxids, args.taxnames, args.seq_info]):
-        tax = Taxonomy(engine, ranks)
-        tax_ids = set()
+        tax = Taxonomy(engine)
         if args.taxids:
             if os.access(args.taxids, os.F_OK):
                 for line in getlines(args.taxids):
-                    tax_ids.update(set(re.split(r'[\s,;]+', line)))
+                    subset_ids.update(set(re.split(r'[\s,;]+', line)))
             else:
-                tax_ids.update(
+                subset_ids.update(
                     [x.strip() for x in re.split(r'[\s,;]+', args.taxids)])
 
         if args.seq_info:
             with args.seq_info:
                 reader = csv.DictReader(args.seq_info)
-                tax_ids.update(
+                subset_ids.update(
                     frozenset(i['tax_id'] for i in reader if i['tax_id']))
 
-        if not(are_valid(tax_ids, tax)):
+        if not(are_valid(subset_ids, tax)):
             return "Some taxids were invalid.  Exiting."
 
         if args.taxnames:
@@ -145,10 +146,10 @@ def action(args):
                 for name in re.split(r'\s*[,;]\s*', taxname):
                     tax_id, primary_name, is_primary = tax.primary_from_name(
                         name.strip())
-                    tax_ids.add(tax_id)
+                    subset_ids.add(tax_id)
 
-        if not tax_ids:
-            log.warn('no tax_ids to subset taxtable, exiting')
+        if not subset_ids:
+            log.error('no tax_ids to subset taxtable, exiting')
             return
 
     # construct taxtable either from previously built taxtable or tax database
@@ -184,12 +185,12 @@ def action(args):
         taxtable = from_table
 
     # subset taxtable by set of tax_ids
-    if tax_ids:
-        keepers = taxtable.loc[tax_ids]
+    if subset_ids:
+        keepers = taxtable.loc[subset_ids]
         for col in keepers.columns:
             if col in ranks:
-                tax_ids.update(keepers[col].dropna().values)
-        taxtable = taxtable.loc[tax_ids]
+                subset_ids.update(keepers[col].dropna().values)
+        taxtable = taxtable.loc[subset_ids]
 
     if not args.full:
         taxtable = taxtable.dropna(axis=1, how='all')
@@ -232,22 +233,24 @@ def are_valid(tax_ids, tax):
 
 def build_taxtable(df, ranks):
     '''
-    given list of tax_ids with parent_ids and an ordered list of ranks return
+    Given list of tax_ids with parent_ids and an ordered list of ranks return
     a table of taxonomic lineages with ranks as columns
+
+    Iterate by rank starting with root and joining on parent_id to build
+    lineages.
     '''
     df_index_name = df.index.name
     rank_count = len(ranks)
 
     df = df.join(df['rank'], on='parent_id', rsuffix='_parent').reset_index()
-    df['rank_parent'] = df['rank_parent'].astype(
-        'category', categories=ranks, ordered=True)
+    df['rank_parent'] = df['rank_parent'].astype('category', categories=ranks)
     lineages = df[df['tax_id'] == '1'].iloc[[0]]
     lineages.loc[:, 'root'] = lineages['tax_id']
     df = df.drop(lineages.index)
     tax_parent_groups = df.groupby(by='rank_parent', sort=True)
     for i, (parent, pdf) in enumerate(tax_parent_groups):
         at_rank = []
-        for child, df in pdf.groupby(by='rank', sort=False):
+        for child, df in pdf.groupby(by='rank'):
             df = df.copy()
             df[child] = df['tax_id']
             at_rank.append(df)
