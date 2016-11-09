@@ -241,13 +241,11 @@ def db_load(engine, archive):
         pandas.Series(ranks, dtype=str, name='rank').to_sql(
             'ranks', engine,
             index=False,
-            flavor='sqlite',
             if_exists='append')
 
         log.info("Inserting nodes")
         nodes.drop('rank_parent', axis=1).to_sql(
             'nodes', engine,
-            flavor='sqlite',
             if_exists='append')
 
         # names
@@ -258,7 +256,6 @@ def db_load(engine, archive):
         log.info("Inserting names")
         names.to_sql(
             'names', engine,
-            flavor='sqlite',
             if_exists='append',
             index=False)
 
@@ -269,7 +266,6 @@ def db_load(engine, archive):
         log.info("Inserting merged")
         merged.to_sql(
             'merged', engine,
-            flavor='sqlite',
             if_exists='append',
             index=False)
 
