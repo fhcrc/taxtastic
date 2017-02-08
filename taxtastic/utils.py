@@ -45,6 +45,7 @@ def get_new_nodes(fname):
     """
 
     with open(fname, 'rU') as infile:
+        infile = (line for line in infile if not line.startswith('#'))
         reader = list(csv.DictReader(infile))
         rows = (d for d in reader if d['tax_id'])
 
