@@ -388,6 +388,24 @@ class Taxonomy(object):
         log.debug(lineage)
         return lineage
 
+    def update_node(self, tax_id, **values):
+        if all(k not in values for k in ['source_id', 'source_name']):
+            msg = 'Taxonomy.update_node requires source_id or source_name: '
+            raise ValueError(msg + str(values))
+        if 'source_id' not in values:
+            source_id, _ = self.add_source(name=values['source_name'])
+            values['source_id'] = source_id
+
+        # drop columns not in nodes table
+        values = dict(c for c in values.items() if c[0] in self.nodes.c)
+
+        self.nodes.update(
+            whereclause=self.nodes.c.tax_id == tax_id,
+            values=values).execute()
+        lineage = self.lineage(tax_id)
+        log.debug(lineage)
+        return lineage
+
     def sibling_of(self, tax_id):
         """Return None or a tax_id of a sibling of *tax_id*.
 
