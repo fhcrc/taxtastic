@@ -57,6 +57,11 @@ def build_parser(parser):
               '"source_name" in the input provided '
               'by `--new-nodes`). [%(default)s]'))
 
+    parser.add_argument(
+        '--update',
+        action='store_true',
+        help='Update any existing nodes')
+
     table_parser = parser.add_argument_group('taxtable')
     table_parser.add_argument(
         '--from-table',
@@ -127,6 +132,7 @@ def action(args):
 
     tax = Taxonomy(engine, ranks)
     ranksdict = tax.ranksdict()
+    ranksdict.update(dict([(n['tax_id'], n['rank']) for n in nodes]))
     nodes = [verify_rank_integrity(n, ranksdict, ranks) for n in nodes]
     nodes = [verify_lineage_integrity(n, ranksdict, ranks, tax) for n in nodes]
 
@@ -138,7 +144,10 @@ def action(args):
                 try:
                     tax.add_node(**d)
                 except sqlalchemy.exc.IntegrityError:
-                    log.warn('node with tax_id %(tax_id)s already exists' % d)
+                    if args.update:
+                        tax.update_node(**d)
+                    else:
+                        log.warn('node with tax_id %(tax_id)s already exists' % d)
                 else:
                     log.info('added new node with tax_id %(tax_id)s' % d)
 
