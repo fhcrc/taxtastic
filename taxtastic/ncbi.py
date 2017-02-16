@@ -62,6 +62,8 @@ class Name(Base):
     name_class = Column(String)
     is_primary = Column(Boolean)
     is_classified = Column(Boolean)
+
+
 Index('ix_names_tax_id_is_primary', Name.tax_id, Name.is_primary)
 
 
@@ -188,7 +190,7 @@ UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
 UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
 
-def db_connect(dbname='ncbi_taxonomy.db', clobber=False):
+def db_connect(url='sqlite:///', dbname='ncbi_taxonomy.db', clobber=False):
     """
     Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
@@ -196,13 +198,14 @@ def db_connect(dbname='ncbi_taxonomy.db', clobber=False):
     """
 
     if clobber:
-        log.info('Creating new database %s' % dbname)
+        log.info('Clobbering database if exists ' + dbname)
         try:
             os.remove(dbname)
         except OSError:
             pass
 
-    engine = sqlalchemy.create_engine('sqlite:///{0}'.format(dbname))
+    log.debug('connecting to database ' + url + dbname)
+    engine = sqlalchemy.create_engine(url + dbname)
     Base.metadata.create_all(bind=engine)
     return engine
 
@@ -269,7 +272,7 @@ def db_load(engine, archive):
             if_exists='append',
             index=False)
 
-        fix_missing_primary(engine)
+        assert_primary_names(engine)
 
         # Mark names as valid/invalid
         log.info("Marking nodes validity based on primary name")
@@ -330,38 +333,24 @@ def adjust_node_ranks(df, ranks):
     return df, ranks
 
 
-def fix_missing_primary(engine):
+def assert_primary_names(engine):
+    '''
+    Search tax_id groups for missing primary names,
+    if exist raise IntegrityException
+    '''
     with engine.begin() as cursor:
-        missing_primary = """SELECT tax_id
-            FROM names
-            GROUP BY tax_id
-            HAVING SUM(is_primary) = 0;"""
-        rows_for_taxid = """SELECT tax_id, tax_name, unique_name, name_class
-            FROM names
-            WHERE tax_id = ?"""
+        missing_primary = (
+            'SELECT tax_id '
+            'FROM names '
+            'GROUP BY tax_id '
+            'HAVING SUM(CASE WHEN is_primary THEN 1 END) = 0;')
+        log.debug(missing_primary)
         tax_ids = [i[0] for i in cursor.execute(missing_primary)]
-        if tax_ids:
-            log.warn("%d records lack primary names", len(tax_ids))
 
-        for tax_id in tax_ids:
-            records = list(cursor.execute(rows_for_taxid, [tax_id]))
-            # Prefer scientific name
-            if sum(list(i)[-1] == 'scientific name' for i in records) == 1:
-                tax_id, tax_name, unique_name, name_class = next(i for i in records
-                                                                 if list(i)[-1] == 'scientific name')
-                cursor.execute("""UPDATE names
-                    SET is_primary = 1
-                    WHERE tax_id = ? AND name_class = ?""",
-                               [tax_id, 'scientific name'])
-            else:
-                tax_id, tax_name, unique_name, name_class = records[0]
-            log.warn("No primary name for tax_id %s. Arbitrarily using %s[%s].",
-                     tax_id, tax_name, name_class)
-            cursor.execute("""UPDATE names
-                SET is_primary = 1
-                WHERE tax_id = ? AND tax_name = ? AND
-                    unique_name = ? AND name_class = ?""",
-                           [tax_id, tax_name, unique_name, name_class])
+        if tax_ids:
+            for i in tax_ids:
+                log.debug('tax_id {} missing primary name'.format(i))
+            raise IntegrityError('taxon groups missing primary name')
 
 
 def mark_is_valid(engine):
@@ -373,19 +362,25 @@ def mark_is_valid(engine):
         sql = ('UPDATE nodes SET is_valid = '
                '(SELECT is_classified '
                'FROM names '
-               'WHERE names.tax_id = nodes.tax_id AND names.is_primary = 1)')
+               'WHERE names.tax_id = nodes.tax_id AND names.is_primary)')
         log.debug(sql)
         connection.execute(sql)
 
 
-def partition(iterable, size):
-    iterable = iter(iterable)
-    while True:
-        chunk = list(itertools.islice(iterable, 0, size))
-        if chunk:
-            yield chunk
-        else:
-            break
+def children_in_sql(items, sql_chunk_size=250):
+    '''
+    Returns chunked params and the sql text(s)
+
+    sql_remainder is the size of the last chunk since the params
+    are not always divided evenly by sql_chunk_size.
+    '''
+    sql = 'SELECT tax_id FROM nodes WHERE parent_id IN ({})'
+    params = []
+    for i in range(0, len(items), sql_chunk_size):  # chunk up the items
+        params.append(items[i:i + sql_chunk_size])
+    sql_in = ', '.join(':' + str(a) for a in range(sql_chunk_size))
+    sql_remainder = ', '.join(':' + str(a) for a in range(len(params[-1])))
+    return params, sql.format(sql_in), sql.format(sql_remainder)
 
 
 def update_subtree_validity(engine, mark_below_rank='species'):
@@ -396,38 +391,41 @@ def update_subtree_validity(engine, mark_below_rank='species'):
     Also covers the special case of marking the "unclassified Bacteria" subtree
     invalid.
     """
-    def generate_in_param(count):
-        return '(' + ', '.join('?' * count) + ')'
 
     def mark_subtrees(conn, tax_ids, is_valid):
         to_mark = list(tax_ids)
-        log.info("Marking %d subtrees as is_valid=%s",
-                 len(to_mark), is_valid)
+
         while to_mark:
+            msg = 'Marking {} subtrees as is_valid={}'
+            log.info(msg.format(len(to_mark), is_valid))
             # First, mark nodes
-            conn.execute("""UPDATE nodes SET is_valid = ?
-                WHERE tax_id = ?""",
-                         [[is_valid, tax_id] for tax_id in to_mark])
+            sql = ('UPDATE nodes '
+                   'SET is_valid = :is_valid '
+                   'WHERE tax_id = :tax_id')
+            log.debug(sql.replace(':is_valid', str(is_valid)))
+            args = [{'is_valid': is_valid, 'tax_id': i} for i in to_mark]
+            conn.execute(sql, args)
 
             # Find children - can exceed the maximum number of parameters in a sqlite query,
-            # so chunk:
-            chunked = partition(to_mark, 250)
-            child_sql = """SELECT tax_id
-                           FROM nodes
-                           WHERE parent_id IN {0}"""
-            to_mark = [i[0] for i in itertools.chain.from_iterable(
-                conn.execute(child_sql.format(generate_in_param(len(chunk))),
-                             chunk) for chunk in chunked)]
+            # so chunk by sql_chunk_size
+            params, sql, sql_remainder = children_in_sql(to_mark)
+            to_mark = []
+            # NOTE: executemany() can not be done on SELECT statements
+            for p in params[:-1]:  # iterate on params
+                to_mark.extend(conn.execute(sql, p))
+            to_mark.extend(conn.execute(sql_remainder, params[-1:]))  # finally
+            to_mark = [i[0] for i in to_mark]
 
-    below_rank_query = """
-    SELECT nodes.tax_id, pnodes.is_valid
-    FROM nodes
-        JOIN nodes pnodes ON pnodes.tax_id = nodes.parent_id
-    WHERE pnodes.rank = ?
-    ORDER BY pnodes.is_valid"""
+    below_rank_query = (
+        'SELECT nodes.tax_id, pnodes.is_valid '
+        'FROM nodes '
+        'JOIN nodes pnodes ON pnodes.tax_id = nodes.parent_id '
+        'WHERE pnodes.rank = :rank '
+        'ORDER BY pnodes.is_valid')
 
     with engine.begin() as conn:
-        result = list(conn.execute(below_rank_query, [mark_below_rank]))
+        log.debug(below_rank_query.replace(':rank', mark_below_rank))
+        result = conn.execute(below_rank_query, [{'rank': mark_below_rank}])
 
         # Group by validity
         grouped = itertools.groupby(result, operator.itemgetter(1))
@@ -436,10 +434,11 @@ def update_subtree_validity(engine, mark_below_rank='species'):
             mark_subtrees(conn, tax_ids, is_valid)
 
         # Special case: unclassified bacteria
-        result = list(conn.execute("""SELECT tax_id FROM names WHERE tax_name = ? and is_primary = ?""",
-                                   ['unclassified Bacteria', 1]))
+        sql = 'SELECT tax_id FROM names WHERE tax_name = "unclassified Bacteria" and is_primary'
+        log.debug(sql)
+        result = list(conn.execute(sql))
         assert len(result) < 2
-        log.info("marking subtrees for unclassified Bacteria invalid")
+        log.info('marking subtrees for unclassified Bacteria invalid')
         for i, in result:
             mark_subtrees(conn, [i], 0)
 
@@ -521,7 +520,7 @@ def read_nodes(rows, ncbi_source_id):
 
         # replace whitespace in "rank" with underscore
         row['rank'] = '_'.join(row['rank'].split())
-        row['is_valid'] = 1  # default is_valid
+        row['is_valid'] = True  # default is_valid
         yield row
 
 
@@ -538,7 +537,7 @@ def read_names(rows, unclassified_regex=None):
     * unclassified_regex - a compiled re matching "unclassified" names
     """
 
-    keys = 'tax_id tax_name unique_name name_class'.split()
+    keys = ['tax_id', 'tax_name', 'unique_name', 'name_class']
     idx = dict((k, i) for i, k in enumerate(keys))
     tax_name, unique_name, name_class = \
         [idx[k] for k in ['tax_name', 'unique_name', 'name_class']]
@@ -550,15 +549,15 @@ def read_names(rows, unclassified_regex=None):
         """
 
         if row[name_class] != 'scientific name':
-            result = 0
+            is_primary = False
         elif not row[unique_name]:
-            result = 1
+            is_primary = True
         elif row[tax_name] == row[unique_name].split('<')[0].strip():
-            result = 1
+            is_primary = True
         else:
-            result = 0
+            is_primary = False
 
-        return result
+        return is_primary
 
     if unclassified_regex:
         def _is_classified(row):
@@ -568,7 +567,7 @@ def read_names(rows, unclassified_regex=None):
             first two whitespace-delimited words.
             """
             tn = row[tax_name]
-            return 0 if unclassified_regex.search(tn) else 1
+            return not unclassified_regex.search(tn)
     else:
         def _is_classified(row):
             return None
