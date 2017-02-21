@@ -64,11 +64,13 @@ def build_parser(parser):
         dest='database_file',
         default='ncbi_taxonomy.db',
         help="""Name of the sqlite database file [%(default)s].""")
-
     db_parser.add_argument(
         '--url',
         default='sqlite:///',
         help='url to database [%(default)s]')
+    db_parser.add_argument(
+        '--schema',
+        help='database schema to use')
 
     parser.add_argument(
         '--preserve-inconsistent-taxonomies',
@@ -93,7 +95,10 @@ def action(args):
         msg = 'creating new database in {} using data in {}'
         log.warning(msg.format(dbname, zfile))
         engine = taxtastic.ncbi.db_connect(
-            url=args.url, dbname=dbname, clobber=args.clobber)
-        taxtastic.ncbi.db_load(engine, zfile)
+            url=args.url,
+            dbname=dbname,
+            schema=args.schema,
+            clobber=args.clobber)
+        taxtastic.ncbi.db_load(engine, zfile, schema=args.schema)
     else:
         log.warning('taxonomy database already exists in %s' % dbname)

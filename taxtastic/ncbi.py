@@ -18,7 +18,6 @@ Methods and variables specific to the NCBI taxonomy.
 
 import itertools
 import logging
-import operator
 import os
 import pandas
 import re
@@ -26,62 +25,17 @@ import urllib
 import zipfile
 
 import sqlalchemy
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Index
+from sqlalchemy import (Column, Integer, String, Boolean,
+                        ForeignKey, Index, MetaData)
 from sqlalchemy.orm import relationship
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
-
-from errors import IntegrityError
 
 log = logging
 
-Base = declarative_base()
+schema = 'test'
 
 DATA_URL = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
-
-
-class Node(Base):
-    __tablename__ = 'nodes'
-    tax_id = Column(String, primary_key=True, nullable=False)
-    parent_id = Column(String, index=True)
-    rank = Column(String, index=True)
-    embl_code = Column(String)
-    division_id = Column(String)
-    source_id = Column(Integer, server_default='1')
-    is_valid = Column(Boolean, server_default='1', index=True)
-
-
-class Name(Base):
-    __tablename__ = 'names'
-    id = Column(Integer, primary_key=True)
-
-    tax_id = Column(String, ForeignKey(
-        'nodes.tax_id', ondelete='CASCADE'), index=True)
-    node = relationship('Node', backref='names')
-    tax_name = Column(String, index=True)
-    unique_name = Column(String)
-    name_class = Column(String)
-    is_primary = Column(Boolean)
-    is_classified = Column(Boolean)
-
-
-Index('ix_names_tax_id_is_primary', Name.tax_id, Name.is_primary)
-
-
-class Merge(Base):
-    __tablename__ = 'merged'
-
-    old_tax_id = Column(String, primary_key=True, index=True)
-    new_tax_id = Column(String, ForeignKey(
-        'nodes.tax_id', ondelete='CASCADE'), index=True)
-    merged_node = relationship('Node', backref='merged_ids')
-
-
-class Source(Base):
-    __tablename__ = 'source'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
-    description = Column(String)
 
 
 RANKS = [
@@ -190,7 +144,48 @@ UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
 UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
 
-def db_connect(url='sqlite:///', dbname='ncbi_taxonomy.db', clobber=False):
+def define_tables(Base):
+    class Node(Base):
+        __tablename__ = 'nodes'
+        tax_id = Column(String, primary_key=True, nullable=False)
+        parent_id = Column(String, index=True)
+        rank = Column(String, index=True)
+        embl_code = Column(String)
+        division_id = Column(String)
+        source_id = Column(Integer, server_default='1')
+        is_valid = Column(Boolean, server_default='true', index=True)
+
+    class Name(Base):
+        __tablename__ = 'names'
+        id = Column(Integer, primary_key=True)
+        tax_id = Column(String, ForeignKey(
+            'nodes.tax_id', ondelete='CASCADE'), index=True)
+        node = relationship('Node', backref='names')
+        tax_name = Column(String, index=True)
+        unique_name = Column(String)
+        name_class = Column(String)
+        is_primary = Column(Boolean)
+        is_classified = Column(Boolean)
+
+    Index('ix_names_tax_id_is_primary', Name.tax_id, Name.is_primary)
+
+    class Merge(Base):
+        __tablename__ = 'merged'
+
+        old_tax_id = Column(String, primary_key=True, index=True)
+        new_tax_id = Column(String, ForeignKey(
+            'nodes.tax_id', ondelete='CASCADE'), index=True)
+        merged_node = relationship('Node', backref='merged_ids')
+
+    class Source(Base):
+        __tablename__ = 'source'
+        id = Column(Integer, primary_key=True)
+        name = Column(String, unique=True)
+        description = Column(String)
+
+
+def db_connect(url='sqlite:///', dbname='ncbi_taxonomy.db',
+               schema=None, clobber=False):
     """
     Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
@@ -206,83 +201,136 @@ def db_connect(url='sqlite:///', dbname='ncbi_taxonomy.db', clobber=False):
 
     log.debug('connecting to database ' + url + dbname)
     engine = sqlalchemy.create_engine(url + dbname)
-    Base.metadata.create_all(bind=engine)
+    if schema is not None:
+        engine.execute(sqlalchemy.schema.CreateSchema(schema))
+        base = declarative_base(metadata=MetaData(schema=schema))
+    else:
+        base = declarative_base()
+
+    define_tables(base)
+    base.metadata.create_all(bind=engine)
     return engine
 
 
-def db_load(engine, archive):
+def db_load(engine, archive, schema=None):
     """
     Load data from zip archive into database identified by con. Data
     is not loaded if target tables already contain data.
     """
 
-    try:
-        # nodes
-        rows = read_nodes(
-            rows=read_archive(archive, 'nodes.dmp'),
-            ncbi_source_id=1)
-        nodes = pandas.DataFrame(rows).set_index('tax_id')
-        nodes = nodes.join(nodes['rank'], on='parent_id', rsuffix='_parent')
+    # names
+    log.info("Reading names from archive")
+    rows = read_names(
+        rows=read_archive(archive, 'names.dmp'),
+        unclassified_regex=UNCLASSIFIED_REGEX)
+    names = pandas.DataFrame(rows)
+    assert_primaries(names)  # this should always exist
 
-        log.info('Adjusting taxons with same rank as parent')
-        nodes = adjust_same_ranks(nodes)
+    # nodes
+    log.info("Reading nodes from archive")
+    rows = read_nodes(
+        rows=read_archive(archive, 'nodes.dmp'),
+        ncbi_source_id=1)
+    nodes = pandas.DataFrame(rows).set_index('tax_id')
 
-        log.info('Expanding `no_rank` taxons')
-        nodes, ranks = adjust_node_ranks(nodes, RANKS[:])
+    log.info("Marking nodes validity based on primary name")
+    nodes = mark_is_valid(nodes, names)
 
-        log.info('Confirming tax tree rank integrity')
-        nodes['rank'] = nodes['rank'].astype('category', categories=ranks, ordered=True)
-        nodes['rank_parent'] = nodes['rank_parent'].astype(
-            'category', categories=ranks, ordered=True)
-        bad_nodes = nodes[nodes['rank_parent'] < nodes['rank']]
-        if not bad_nodes.empty:
-            print(bad_nodes)
-            raise IntegrityError('some node ranks above parent ranks')
+    # add parent rank column for rank adjustments
+    nodes = nodes.join(nodes['rank'], on='parent_id', rsuffix='_parent')
 
-        log.info('Inserting ranks')
-        # reverse list so lowest is first and gets the 0 index
-        pandas.Series(ranks, dtype=str, name='rank').to_sql(
-            'ranks', engine,
-            index=False,
-            if_exists='append')
+    log.info('Adjusting taxons with same rank as parent')
+    nodes = adjust_same_ranks(nodes)
 
-        log.info("Inserting nodes")
-        nodes.drop('rank_parent', axis=1).to_sql(
-            'nodes', engine,
-            if_exists='append')
+    log.info('Expanding `no_rank` taxons')
+    nodes, ranks = adjust_node_ranks(nodes, RANKS[:])
 
-        # names
-        rows = read_names(
-            rows=read_archive(archive, 'names.dmp'),
-            unclassified_regex=UNCLASSIFIED_REGEX)
-        names = pandas.DataFrame(rows)
-        log.info("Inserting names")
-        names.to_sql(
-            'names', engine,
-            if_exists='append',
-            index=False)
+    log.info('Confirming tax tree rank integrity')
+    assert_integrity(nodes, ranks)
 
-        # merged
-        rows = read_archive(archive, 'merged.dmp')
-        rows = (dict(zip(['old_tax_id', 'new_tax_id'], row)) for row in rows)
-        merged = pandas.DataFrame(rows)
-        log.info("Inserting merged")
-        merged.to_sql(
-            'merged', engine,
-            if_exists='append',
-            index=False)
+    subtree_msg = 'Marking {} subtree nodes is_valid={}'
 
-        assert_primary_names(engine)
+    valid_subtrees = ((nodes['rank'] == 'species') & nodes['is_valid'])
+    valid_subtrees = get_subtrees(nodes, valid_subtrees)
+    log.info(subtree_msg.format(valid_subtrees.sum(), True))
+    nodes.loc[valid_subtrees, 'is_valid'] = True
 
-        # Mark names as valid/invalid
-        log.info("Marking nodes validity based on primary name")
-        mark_is_valid(engine)
+    # mark false
+    invalid_subtrees = ((nodes['rank'] == 'species') & ~nodes['is_valid'])
+    invalid_subtrees = get_subtrees(nodes, invalid_subtrees)
+    log.info(subtree_msg.format(invalid_subtrees.sum(), False))
+    nodes.loc[invalid_subtrees, 'is_valid'] = False
 
-        log.info("Updating subtree validity")
-        update_subtree_validity(engine)
+    # unclassfied bacteria, tax_id 2323
+    unclassified_bacteria = get_subtrees(nodes, nodes.index == '2323')
+    log.info(subtree_msg.format(unclassified_bacteria.sum(), False))
+    nodes.loc[unclassified_bacteria, 'is_valid'] = False
 
-    except sqlalchemy.exc.IntegrityError as err:
-        raise IntegrityError(err)
+    # merged
+    rows = read_archive(archive, 'merged.dmp')
+    rows = (dict(zip(['old_tax_id', 'new_tax_id'], row)) for row in rows)
+    merged = pandas.DataFrame(rows)
+
+    log.info("Inserting nodes")
+    nodes.drop('rank_parent', axis=1).to_sql(
+        'nodes', engine,
+        schema=schema,
+        if_exists='append')
+
+    log.info("Inserting names")
+    names.to_sql(
+        'names', engine,
+        schema=schema,
+        if_exists='append',
+        index=False)
+
+    log.info('Inserting ranks')
+    # reverse list so lowest is first and gets the 0 index
+    pandas.Series(ranks, dtype=str, name='rank').to_sql(
+        'ranks', engine,
+        schema=schema,
+        index=False,
+        if_exists='append')
+
+    log.info("Inserting merged")
+    merged.to_sql(
+        'merged', engine,
+        schema=schema,
+        if_exists='append',
+        index=False)
+
+
+def get_subtrees(nodes, to_mark):
+    mark_children = to_mark
+    while mark_children.any():
+        mark_children = nodes['parent_id'].isin(nodes[mark_children].index)
+        to_mark |= mark_children
+    return to_mark
+
+
+def mark_is_valid(nodes, names):
+    """
+    After applying a ``regex`` to primary names associated with tax_ids,
+    marking those that match as invalid.
+    """
+    nodes = nodes.drop('is_valid', axis=1)
+    nodes = nodes.merge(
+        names[names['is_primary']][['is_classified', 'tax_id']],
+        right_on='tax_id',
+        left_index=True,
+        how='left')
+    nodes = nodes.rename(columns={'is_classified': 'is_valid'})
+    return nodes.set_index('tax_id')
+
+
+def assert_integrity(nodes, ranks):
+    nodes['rank'] = nodes['rank'].astype('category', categories=ranks, ordered=True)
+    nodes['rank_parent'] = nodes['rank_parent'].astype(
+        'category', categories=ranks, ordered=True)
+    bad_nodes = nodes[nodes['rank_parent'] < nodes['rank']]
+    if not bad_nodes.empty:
+        log.error(bad_nodes)
+        raise IntegrityError('some node ranks above parent ranks')
 
 
 def _isame_ancestor_rank(df):
@@ -333,38 +381,19 @@ def adjust_node_ranks(df, ranks):
     return df, ranks
 
 
-def assert_primary_names(engine):
+def assert_primaries(names):
     '''
     Search tax_id groups for missing primary names,
     if exist raise IntegrityException
     '''
-    with engine.begin() as cursor:
-        missing_primary = (
-            'SELECT tax_id '
-            'FROM names '
-            'GROUP BY tax_id '
-            'HAVING SUM(CASE WHEN is_primary THEN 1 END) = 0;')
-        log.debug(missing_primary)
-        tax_ids = [i[0] for i in cursor.execute(missing_primary)]
+    err = False
+    for i, df in names.groupby(by='tax_id'):
+        if not df['is_primary'].any():
+            err = True
+            log.error('tax_id {} missing primary name'.format(i))
 
-        if tax_ids:
-            for i in tax_ids:
-                log.debug('tax_id {} missing primary name'.format(i))
-            raise IntegrityError('taxon groups missing primary name')
-
-
-def mark_is_valid(engine):
-    """
-    Apply ``regex`` to primary names associated with tax_ids, marking those
-    that match as invalid.
-    """
-    with engine.begin() as connection:
-        sql = ('UPDATE nodes SET is_valid = '
-               '(SELECT is_classified '
-               'FROM names '
-               'WHERE names.tax_id = nodes.tax_id AND names.is_primary)')
-        log.debug(sql)
-        connection.execute(sql)
+    if err:
+        raise IntegrityError('taxon groups missing primary name')
 
 
 def children_in_sql(items, sql_chunk_size=250):
@@ -381,66 +410,6 @@ def children_in_sql(items, sql_chunk_size=250):
     sql_in = ', '.join(':' + str(a) for a in range(sql_chunk_size))
     sql_remainder = ', '.join(':' + str(a) for a in range(len(params[-1])))
     return params, sql.format(sql_in), sql.format(sql_remainder)
-
-
-def update_subtree_validity(engine, mark_below_rank='species'):
-    """
-    Update subtrees below rank "species" to match ``is_valid`` status at
-    rank "species"
-
-    Also covers the special case of marking the "unclassified Bacteria" subtree
-    invalid.
-    """
-
-    def mark_subtrees(conn, tax_ids, is_valid):
-        to_mark = list(tax_ids)
-
-        while to_mark:
-            msg = 'Marking {} subtrees as is_valid={}'
-            log.info(msg.format(len(to_mark), is_valid))
-            # First, mark nodes
-            sql = ('UPDATE nodes '
-                   'SET is_valid = :is_valid '
-                   'WHERE tax_id = :tax_id')
-            log.debug(sql.replace(':is_valid', str(is_valid)))
-            args = [{'is_valid': is_valid, 'tax_id': i} for i in to_mark]
-            conn.execute(sql, args)
-
-            # Find children - can exceed the maximum number of parameters in a sqlite query,
-            # so chunk by sql_chunk_size
-            params, sql, sql_remainder = children_in_sql(to_mark)
-            to_mark = []
-            # NOTE: executemany() can not be done on SELECT statements
-            for p in params[:-1]:  # iterate on params
-                to_mark.extend(conn.execute(sql, p))
-            to_mark.extend(conn.execute(sql_remainder, params[-1:]))  # finally
-            to_mark = [i[0] for i in to_mark]
-
-    below_rank_query = (
-        'SELECT nodes.tax_id, pnodes.is_valid '
-        'FROM nodes '
-        'JOIN nodes pnodes ON pnodes.tax_id = nodes.parent_id '
-        'WHERE pnodes.rank = :rank '
-        'ORDER BY pnodes.is_valid')
-
-    with engine.begin() as conn:
-        log.debug(below_rank_query.replace(':rank', mark_below_rank))
-        result = conn.execute(below_rank_query, [{'rank': mark_below_rank}])
-
-        # Group by validity
-        grouped = itertools.groupby(result, operator.itemgetter(1))
-        for is_valid, records in grouped:
-            tax_ids = [i[0] for i in records]
-            mark_subtrees(conn, tax_ids, is_valid)
-
-        # Special case: unclassified bacteria
-        sql = 'SELECT tax_id FROM names WHERE tax_name = "unclassified Bacteria" and is_primary'
-        log.debug(sql)
-        result = list(conn.execute(sql))
-        assert len(result) < 2
-        log.info('marking subtrees for unclassified Bacteria invalid')
-        for i, in result:
-            mark_subtrees(conn, [i], 0)
 
 
 def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
