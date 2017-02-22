@@ -177,6 +177,10 @@ def define_tables(Base):
             'nodes.tax_id', ondelete='CASCADE'), index=True)
         merged_node = relationship('Node', backref='merged_ids')
 
+    class Ranks(Base):
+        __tablename__ = 'ranks'
+        rank = Column(String, index=True, primary_key=True)
+
     class Source(Base):
         __tablename__ = 'source'
         id = Column(Integer, primary_key=True)
@@ -248,7 +252,7 @@ def db_load(engine, archive, schema=None):
     log.info('Confirming tax tree rank integrity')
     assert_integrity(nodes, ranks)
 
-    subtree_msg = 'Marking {} subtree nodes is_valid={}'
+    subtree_msg = 'Marking {} species subtree nodes is_valid={}'
 
     valid_subtrees = ((nodes['rank'] == 'species') & nodes['is_valid'])
     valid_subtrees = get_subtrees(nodes, valid_subtrees)
