@@ -4,6 +4,7 @@ import re
 import os
 from os import path
 import logging
+import sqlalchemy
 
 import taxtastic
 import taxtastic.ncbi
@@ -23,7 +24,7 @@ ncbi_data = config.ncbi_data
 class TestDbconnect(TestBase):
 
     def test01(self):
-        engine = taxtastic.ncbi.db_connect(ncbi_master_db)
+        engine = taxtastic.ncbi.db_connect(dbname=ncbi_master_db)
         with engine.begin() as con:
             result = con.execute(
                 'select name from sqlite_master where type = "table"')
@@ -34,7 +35,7 @@ class TestDbconnect(TestBase):
 
 class TestLoadData(TestBase):
 
-    names_rows_count = 1100
+    names_rows_count = 1108
 
     def setUp(self):
         outdir = self.mkoutdir()
@@ -44,21 +45,21 @@ class TestLoadData(TestBase):
         # we should be starting from scratch
         self.assertFalse(path.isfile(self.dbname))
 
-        engine = taxtastic.ncbi.db_connect(self.dbname)
+        engine = taxtastic.ncbi.db_connect(dbname=self.dbname)
         taxtastic.ncbi.db_load(engine, ncbi_data)
         with engine.begin() as conn:
             result = conn.execute('select 1 AS i from names')
             self.assertEqual(self.names_rows_count, len(list(result)))
 
         # test clobber argument
-        engine = taxtastic.ncbi.db_connect(self.dbname, clobber=True)
+        engine = taxtastic.ncbi.db_connect(dbname=self.dbname, clobber=True)
         taxtastic.ncbi.db_load(engine, ncbi_data)
         with engine.begin() as conn:
             result = conn.execute('select 1 AS i from names')
             self.assertEqual(self.names_rows_count, len(list(result)))
 
             # shouldn't be able to load data a second time
-            with self.assertRaises(taxtastic.errors.IntegrityError):
+            with self.assertRaises(sqlalchemy.exc.IntegrityError):
                 taxtastic.ncbi.db_load(engine, archive=ncbi_data)
 
 
