@@ -86,5 +86,6 @@ def main():
             for stmt in con.iterdump():
                 print >> fp, stmt
 
+
 if __name__ == '__main__':
     main()

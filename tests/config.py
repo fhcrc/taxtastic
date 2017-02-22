@@ -16,6 +16,7 @@ log = logging
 def funcname(idstr):
     return '.'.join(idstr.split('.')[1:])
 
+
 # set verbosity of logging output
 try:
     logflag = re.findall(r'-[vq]+\b', ' '.join(sys.argv[1:]))[0]
@@ -57,6 +58,7 @@ def mkdir(dirpath, clobber=False):
         raise OSError('Failed to create %s' % dirpath)
 
     return dirpath
+
 
 if not os.path.isdir(outputdir):
     mkdir(outputdir)
@@ -158,6 +160,7 @@ class TestScriptBase(OutputRedirectMixin, TestBase):
     def cmd_fails(self, cmd=None, args=None):
         status, output = self.wrap_cmd(cmd, args)
         self.assertFalse(status == 0)
+
 
 # Small NCBI taxonomy database
 # this database for all non-destructive, non-modifying tests. For

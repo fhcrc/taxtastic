@@ -270,5 +270,6 @@ class TestRefpkg(unittest.TestCase):
             assert not os.path.exists(rpkg)
             self.assertRaises(ValueError, refpkg.Refpkg, rpkg, create=False)
 
+
 if __name__ == '__main__':
     unittest.main()
