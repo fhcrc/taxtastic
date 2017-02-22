@@ -31,10 +31,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 
-log = logging
-
-schema = 'test'
-
 DATA_URL = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
 
@@ -148,19 +144,22 @@ def define_tables(Base):
     class Node(Base):
         __tablename__ = 'nodes'
         tax_id = Column(String, primary_key=True, nullable=False)
-        parent_id = Column(String, index=True)
-        rank = Column(String, index=True)
+        parent_id = Column(String, ForeignKey('nodes.tax_id'))
+        rank = Column(String, ForeignKey('ranks.rank'))
         embl_code = Column(String)
         division_id = Column(String)
-        source_id = Column(Integer, server_default='1')
-        is_valid = Column(Boolean, server_default='true', index=True)
+        source_id = Column(Integer, ForeignKey('source.id'))
+        is_valid = Column(Boolean, server_default='true')
+        names = relationship('Name')
+        ranks = relationship('Rank', back_populates='nodes')
+        sources = relationship('Source', back_populates='nodes')
 
     class Name(Base):
         __tablename__ = 'names'
         id = Column(Integer, primary_key=True)
         tax_id = Column(String, ForeignKey(
             'nodes.tax_id', ondelete='CASCADE'), index=True)
-        node = relationship('Node', backref='names')
+        node = relationship('Node', back_populates='names')
         tax_name = Column(String, index=True)
         unique_name = Column(String)
         name_class = Column(String)
@@ -171,21 +170,22 @@ def define_tables(Base):
 
     class Merge(Base):
         __tablename__ = 'merged'
-
         old_tax_id = Column(String, primary_key=True, index=True)
         new_tax_id = Column(String, ForeignKey(
             'nodes.tax_id', ondelete='CASCADE'), index=True)
         merged_node = relationship('Node', backref='merged_ids')
 
-    class Ranks(Base):
+    class Rank(Base):
         __tablename__ = 'ranks'
-        rank = Column(String, index=True, primary_key=True)
+        rank = Column(String, primary_key=True)
+        nodes = relationship('Node')
 
     class Source(Base):
         __tablename__ = 'source'
         id = Column(Integer, primary_key=True)
         name = Column(String, unique=True)
         description = Column(String)
+        nodes = relationship('Node')
 
 
 def db_connect(url='sqlite:///', dbname='ncbi_taxonomy.db',
@@ -196,23 +196,26 @@ def db_connect(url='sqlite:///', dbname='ncbi_taxonomy.db',
     True and return otherwise. Returns a sqlalchemy engine object.
     """
 
-    if clobber:
-        log.info('Clobbering database if exists ' + dbname)
-        try:
-            os.remove(dbname)
-        except OSError:
-            pass
-
-    log.debug('connecting to database ' + url + dbname)
+    logging.debug('Connecting to database ' + url + dbname)
     engine = sqlalchemy.create_engine(url + dbname)
+
     if schema is not None:
-        engine.execute(sqlalchemy.schema.CreateSchema(schema))
+        try:
+            engine.execute(sqlalchemy.schema.CreateSchema(schema))
+        except sqlalchemy.exc.ProgrammingError as err:
+            logging.warn(err)
         base = declarative_base(metadata=MetaData(schema=schema))
     else:
         base = declarative_base()
 
     define_tables(base)
+
+    if clobber:
+        logging.info('Clobbering database ' + dbname)
+        base.metadata.drop_all(bind=engine)
+
     base.metadata.create_all(bind=engine)
+
     return engine
 
 
@@ -222,52 +225,58 @@ def db_load(engine, archive, schema=None):
     is not loaded if target tables already contain data.
     """
 
+    # source
+    source = pandas.DataFrame(
+        data={'name': 'ncbi', 'description': DATA_URL}, index=[1])
+    source.index.name = 'id'
+
     # names
-    log.info("Reading names from archive")
+    logging.info("Reading names from archive")
     rows = read_names(
         rows=read_archive(archive, 'names.dmp'),
         unclassified_regex=UNCLASSIFIED_REGEX)
     names = pandas.DataFrame(rows)
+
     assert_primaries(names)  # this should always exist
 
     # nodes
-    log.info("Reading nodes from archive")
+    logging.info("Reading nodes from archive")
     rows = read_nodes(
         rows=read_archive(archive, 'nodes.dmp'),
         ncbi_source_id=1)
     nodes = pandas.DataFrame(rows).set_index('tax_id')
 
-    log.info("Marking nodes validity based on primary name")
+    logging.info("Marking nodes validity based on primary name")
     nodes = mark_is_valid(nodes, names)
 
     # add parent rank column for rank adjustments
     nodes = nodes.join(nodes['rank'], on='parent_id', rsuffix='_parent')
 
-    log.info('Adjusting taxons with same rank as parent')
+    logging.info('Adjusting taxons with same rank as parent')
     nodes = adjust_same_ranks(nodes)
 
-    log.info('Expanding `no_rank` taxons')
+    logging.info('Expanding `no_rank` taxons')
     nodes, ranks = adjust_node_ranks(nodes, RANKS[:])
 
-    log.info('Confirming tax tree rank integrity')
+    logging.info('Confirming tax tree rank integrity')
     assert_integrity(nodes, ranks)
 
     subtree_msg = 'Marking {} species subtree nodes is_valid={}'
 
     valid_subtrees = ((nodes['rank'] == 'species') & nodes['is_valid'])
     valid_subtrees = get_subtrees(nodes, valid_subtrees)
-    log.info(subtree_msg.format(valid_subtrees.sum(), True))
+    logging.info(subtree_msg.format(valid_subtrees.sum(), True))
     nodes.loc[valid_subtrees, 'is_valid'] = True
 
     # mark false
     invalid_subtrees = ((nodes['rank'] == 'species') & ~nodes['is_valid'])
     invalid_subtrees = get_subtrees(nodes, invalid_subtrees)
-    log.info(subtree_msg.format(invalid_subtrees.sum(), False))
+    logging.info(subtree_msg.format(invalid_subtrees.sum(), False))
     nodes.loc[invalid_subtrees, 'is_valid'] = False
 
     # unclassfied bacteria, tax_id 2323
     unclassified_bacteria = get_subtrees(nodes, nodes.index == '2323')
-    log.info(subtree_msg.format(unclassified_bacteria.sum(), False))
+    logging.info(subtree_msg.format(unclassified_bacteria.sum(), False))
     nodes.loc[unclassified_bacteria, 'is_valid'] = False
 
     # merged
@@ -275,20 +284,20 @@ def db_load(engine, archive, schema=None):
     rows = (dict(zip(['old_tax_id', 'new_tax_id'], row)) for row in rows)
     merged = pandas.DataFrame(rows)
 
-    log.info("Inserting nodes")
-    nodes.drop('rank_parent', axis=1).to_sql(
-        'nodes', engine,
+    # ## prepare nodes
+    nodes = nodes.drop('rank_parent', axis=1)
+    # source_id = 1
+    nodes['source_id'] = 1
+    # to avoid parent_id foreign key constrant Integrity errors
+    nodes = nodes.sort_values('rank', ascending=False)
+
+    logging.info('Inserting source')
+    source.to_sql(
+        'source', engine,
         schema=schema,
         if_exists='append')
 
-    log.info("Inserting names")
-    names.to_sql(
-        'names', engine,
-        schema=schema,
-        if_exists='append',
-        index=False)
-
-    log.info('Inserting ranks')
+    logging.info('Inserting ranks')
     # reverse list so lowest is first and gets the 0 index
     pandas.Series(ranks, dtype=str, name='rank').to_sql(
         'ranks', engine,
@@ -296,7 +305,20 @@ def db_load(engine, archive, schema=None):
         index=False,
         if_exists='append')
 
-    log.info("Inserting merged")
+    logging.info("Inserting nodes")
+    nodes.to_sql(
+        'nodes', engine,
+        schema=schema,
+        if_exists='append')
+
+    logging.info("Inserting names")
+    names.to_sql(
+        'names', engine,
+        schema=schema,
+        if_exists='append',
+        index=False)
+
+    logging.info("Inserting merged")
     merged.to_sql(
         'merged', engine,
         schema=schema,
@@ -305,6 +327,12 @@ def db_load(engine, archive, schema=None):
 
 
 def get_subtrees(nodes, to_mark):
+    '''
+    to_mark - Boolean Series of nodes for selection
+
+    Continuously grab children using parent_id and OR results on nodes table
+    to identify subtrees
+    '''
     mark_children = to_mark
     while mark_children.any():
         mark_children = nodes['parent_id'].isin(nodes[mark_children].index)
@@ -333,7 +361,7 @@ def assert_integrity(nodes, ranks):
         'category', categories=ranks, ordered=True)
     bad_nodes = nodes[nodes['rank_parent'] < nodes['rank']]
     if not bad_nodes.empty:
-        log.error(bad_nodes)
+        logging.error(bad_nodes)
         raise IntegrityError('some node ranks above parent ranks')
 
 
@@ -394,26 +422,10 @@ def assert_primaries(names):
     for i, df in names.groupby(by='tax_id'):
         if not df['is_primary'].any():
             err = True
-            log.error('tax_id {} missing primary name'.format(i))
+            logging.error('tax_id {} missing primary name'.format(i))
 
     if err:
         raise IntegrityError('taxon groups missing primary name')
-
-
-def children_in_sql(items, sql_chunk_size=250):
-    '''
-    Returns chunked params and the sql text(s)
-
-    sql_remainder is the size of the last chunk since the params
-    are not always divided evenly by sql_chunk_size.
-    '''
-    sql = 'SELECT tax_id FROM nodes WHERE parent_id IN ({})'
-    params = []
-    for i in range(0, len(items), sql_chunk_size):  # chunk up the items
-        params.append(items[i:i + sql_chunk_size])
-    sql_in = ', '.join(':' + str(a) for a in range(sql_chunk_size))
-    sql_remainder = ', '.join(':' + str(a) for a in range(len(params[-1])))
-    return params, sql.format(sql_in), sql.format(sql_remainder)
 
 
 def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
@@ -442,10 +454,10 @@ def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
 
     if os.access(fout, os.F_OK) and not clobber:
         downloaded = False
-        log.warning('%s exists; not downloading' % fout)
+        logging.warning('%s exists; not downloading' % fout)
     else:
         downloaded = True
-        log.warning('downloading %(url)s to %(fout)s' % locals())
+        logging.warning('downloading %(url)s to %(fout)s' % locals())
         urllib.urlretrieve(url, fout)
 
     return (fout, downloaded)
