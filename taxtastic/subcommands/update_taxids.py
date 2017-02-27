@@ -26,11 +26,6 @@ import pandas
 import sqlalchemy
 import sys
 
-from sqlalchemy.sql import select
-
-from taxtastic.taxonomy import Taxonomy
-from taxtastic import ncbi, utils
-
 log = logging.getLogger(__name__)
 
 
@@ -68,35 +63,6 @@ def build_parser(parser):
         '--name-column',
         help=('column with taxon name(s) to help '
               'find tax_ids. ex: organism name'))
-    parser.add_argument(
-        '--append-lineage',
-        help=('rank to append to seq_info'))
-
-
-def species_is_classified(tax_id, taxonomy):
-    """
-    returns is_valid from ncbi taxonomy
-    """
-    res = fetch_tax_info(tax_id, taxonomy)
-    if not res:
-        return False
-
-    tax_id, is_valid, parent_id, rank = res
-    if rank == 'species':
-        return is_valid
-    elif tax_id == parent_id:
-        return False
-    else:
-        # instead of recursion create a table of ranks by index. code
-        # will be something liek ranks.index(rank) > species_index
-        return species_is_classified(parent_id, taxonomy)
-
-
-def fetch_tax_info(tax_id, taxonomy):
-    c = taxonomy.nodes.c  # columns
-    s = select([c.tax_id, c.is_valid, c.parent_id, c.rank])
-    s = s.where(c.tax_id == tax_id)
-    return s.execute().fetchone()
 
 
 def action(args):
@@ -112,8 +78,7 @@ def action(args):
             raise ValueError(msg)
 
     con = 'sqlite:///{0}'.format(args.database_file)
-    e = sqlalchemy.create_engine(con)
-    tax = Taxonomy(e, ncbi.RANKS)
+    sqlalchemy.create_engine(con)
 
     merged = pandas.read_sql_table('merged', con, index_col='old_tax_id')
     log.info('updating tax_ids')
@@ -166,40 +131,22 @@ def action(args):
 
     if args.taxid_classified:
         """
+        split seq_info into two dfs rank <> species
+
+        ranks <= species get is_valid column
+        ranks > species get False
         """
+
         if 'taxid_classified' in columns:
             rows = rows.drop('taxid_classified', axis=1)
         else:
             columns.append('taxid_classified')
-
-        def is_classified(row):
-            row['taxid_classified'] = species_is_classified(
-                row[args.taxid_column], tax)
-            return row
-
-        msg = 'validating tax_ids:'
-        rows = utils.apply_df_status(is_classified, rows, msg)
-
-    if args.append_lineage:
-        """
-        Append a column from the taxonomy to seq_info
-        """
-        if args.append_lineage in columns:
-            rows = rows.drop(args.append_lineage, axis=1)
-        else:
-            columns.append(args.append_lineage)
-
-        def add_rank_column(row):
-            try:
-                lineage = tax.lineage(row[args.taxid_column])
-            except ValueError as e:
-                log.warn(e)
-                lineage = {}
-            row[args.append_lineage] = lineage.get(args.append_lineage, None)
-            return row
-
-        msg = 'appending {} column'.format(args.append_lineage)
-        rows = utils.apply_df_status(add_rank_column, rows, msg)
+        ranks = pandas.read_sql_table('ranks', con)
+        nodes = pandas.read_sql_table(
+            'nodes', con,
+            columns=['tax_id', 'rank', 'is_valid'],
+            index_col='tax_id')
+        rows = species_is_classified(rows, nodes, ranks)
 
     # output seq_info with new tax_ids
     rows.to_csv(
@@ -207,3 +154,12 @@ def action(args):
         index=False,
         columns=columns,
         quoting=csv.QUOTE_NONNUMERIC)
+
+
+def species_is_classified(rows, nodes, ranks):
+    rows = rows.join(nodes, on='tax_id')
+    rows['rank'] = rows['rank'].astype(
+        'category', categories=ranks['rank'].tolist(), ordered=True)
+    rows.loc[rows['rank'] > 'species', 'is_valid'] = False
+    rows = rows.rename(columns={'is_valid': 'taxid_classified'})
+    return rows

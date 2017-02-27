@@ -246,6 +246,7 @@ def _patch_file(path, content):
         f.close()
     return True
 
+
 _patch_file = _no_sandbox(_patch_file)
 
 
@@ -293,6 +294,7 @@ def _remove_flat_installation(placeholder):
                      'Setuptools distribution', element)
     return True
 
+
 _remove_flat_installation = _no_sandbox(_remove_flat_installation)
 
 
@@ -329,6 +331,7 @@ def _create_fake_setuptools_pkg_info(placeholder):
     finally:
         f.close()
 
+
 _create_fake_setuptools_pkg_info = _no_sandbox(
     _create_fake_setuptools_pkg_info)
 
@@ -350,6 +353,7 @@ def _patch_egg_dir(path):
     finally:
         f.close()
     return True
+
 
 _patch_egg_dir = _no_sandbox(_patch_egg_dir)
 

@@ -35,5 +35,6 @@ def main(arguments):
         with open(os.path.join(args.outdir, name + '.txt'), 'w') as f:
             subprocess.call([args.taxit, name, '-h'], stdout=f)
 
+
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

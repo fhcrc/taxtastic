@@ -8,9 +8,7 @@ from sqlalchemy import create_engine
 from . import config
 from .config import TestBase
 
-import taxtastic
 from taxtastic.taxonomy import Taxonomy
-import taxtastic.ncbi
 
 log = logging
 
@@ -25,7 +23,7 @@ class TaxTableSetup(TestBase):
 
     def setUp(self):
         self.engine = create_engine('sqlite:///%s' % dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.RANKS)
+        self.tax = Taxonomy(self.engine)
 
     def tearDown(self):
         self.engine.dispose()

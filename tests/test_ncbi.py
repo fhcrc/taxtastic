@@ -4,6 +4,7 @@ import re
 import os
 from os import path
 import logging
+import sqlalchemy
 
 import taxtastic
 import taxtastic.ncbi
@@ -19,35 +20,11 @@ datadir = config.datadir
 ncbi_master_db = config.ncbi_master_db
 ncbi_data = config.ncbi_data
 
-# class TestFetchData(unittest.TestCase):
-#     def setUp(self):
-#         self.funcname = '_'.join(self.id().split('.')[-2:])
-#         self.outdir = os.path.join(outputdir, self.funcname)
-#         newdir(self.outdir)
-#         _, self.zfilename = os.path.split(taxtastic.ncbi.ncbi_data_url)
-
-#     def test01(self):
-#         zfile = os.path.join(self.outdir, self.zfilename)
-#         fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir)
-
-#         # file is downloaded the first time
-#         self.assertTrue(downloaded)
-#         self.assertTrue(os.path.isfile(fout))
-#         self.assertTrue(zfile == fout)
-
-#         # ... but not the second time
-#         fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir)
-#         self.assertFalse(downloaded)
-
-#         # ... unless clobber = True
-#         fout, downloaded = taxtastic.ncbi.fetch_data(dest_dir=self.outdir, clobber=True)
-#         self.assertTrue(downloaded)
-
 
 class TestDbconnect(TestBase):
 
     def test01(self):
-        engine = taxtastic.ncbi.db_connect(ncbi_master_db)
+        engine = taxtastic.ncbi.db_connect(dbname=ncbi_master_db)
         with engine.begin() as con:
             result = con.execute(
                 'select name from sqlite_master where type = "table"')
@@ -58,7 +35,7 @@ class TestDbconnect(TestBase):
 
 class TestLoadData(TestBase):
 
-    maxrows = 10
+    names_rows_count = 1108
 
     def setUp(self):
         outdir = self.mkoutdir()
@@ -68,26 +45,22 @@ class TestLoadData(TestBase):
         # we should be starting from scratch
         self.assertFalse(path.isfile(self.dbname))
 
-        engine = taxtastic.ncbi.db_connect(self.dbname)
-        taxtastic.ncbi.db_load(engine, ncbi_data, maxrows=self.maxrows)
+        engine = taxtastic.ncbi.db_connect(dbname=self.dbname)
+        taxtastic.ncbi.db_load(engine, ncbi_data)
         with engine.begin() as conn:
             result = conn.execute('select 1 AS i from names')
-            self.assertEqual(self.maxrows, len(list(result)))
+            self.assertEqual(self.names_rows_count, len(list(result)))
 
         # test clobber argument
-        engine = taxtastic.ncbi.db_connect(self.dbname, clobber=True)
-        taxtastic.ncbi.db_load(engine, ncbi_data, maxrows=self.maxrows)
+        engine = taxtastic.ncbi.db_connect(dbname=self.dbname, clobber=True)
+        taxtastic.ncbi.db_load(engine, ncbi_data)
         with engine.begin() as conn:
             result = conn.execute('select 1 AS i from names')
-            self.assertEqual(self.maxrows, len(list(result)))
+            self.assertEqual(self.names_rows_count, len(list(result)))
 
-            # shouldn't be able to load data a second time, so number
-            # of rows should not change
-            taxtastic.ncbi.db_load(
-                engine, archive=ncbi_data,
-                maxrows=self.maxrows)
-            result = conn.execute('select 1 AS i from names')
-            self.assertEqual(self.maxrows, len(list(result)))
+            # shouldn't be able to load data a second time
+            with self.assertRaises(sqlalchemy.exc.IntegrityError):
+                taxtastic.ncbi.db_load(engine, archive=ncbi_data)
 
 
 class TestReadNames(TestBase):

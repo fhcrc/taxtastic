@@ -20,15 +20,16 @@ import sqlalchemy
 from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
 
-from . import ncbi
-
 log = logging.getLogger(__name__)
+
+
+class TaxonIntegrityError(StandardError):
+    pass
 
 
 class Taxonomy(object):
 
-    def __init__(self, engine, ranks=ncbi.RANKS,
-                 NO_RANK='no_rank', undef_prefix='below'):
+    def __init__(self, engine, NO_RANK='no_rank', undef_prefix='below'):
         """
         The Taxonomy class defines an object providing an interface to
         the taxonomy database.
@@ -65,9 +66,8 @@ class Taxonomy(object):
         self.names = self.meta.tables['names']
         self.source = self.meta.tables['source']
         self.merged = self.meta.tables['merged']
-
-        self.ranks = ranks
-        self.rankset = set(self.ranks)
+        ranks = select([self.meta.tables['ranks'].c.rank]).execute().fetchall()
+        self.ranks = [r[0] for r in ranks]
 
         # keys: tax_id
         # vals: lineage represented as a list of tuples: (rank, tax_id)
@@ -84,7 +84,6 @@ class Taxonomy(object):
         """
         inserts rank into self.ranks.
         """
-
         if rank not in self.rankset:
             self.ranks.insert(self.ranks.index(parent_rank) + 1, rank)
         self.rankset = set(self.ranks)
@@ -110,7 +109,6 @@ class Taxonomy(object):
         """
         Returns primary taxonomic name associated with tax_id
         """
-
         s = select([self.names.c.tax_name],
                    and_(self.names.c.tax_id == tax_id,
                         self.names.c.is_primary == 1))
@@ -127,7 +125,6 @@ class Taxonomy(object):
         """
         Return tax_id and primary tax_name corresponding to tax_name.
         """
-
         names = self.names
 
         s1 = select([names.c.tax_id, names.c.is_primary],
@@ -160,7 +157,6 @@ class Taxonomy(object):
         new_tax_id    TEXT REFERENCES nodes(tax_id)
         );
         """
-
         s = select([self.merged.c.new_tax_id],
                    self.merged.c.old_tax_id == old_tax_id)
         res = s.execute()
@@ -234,10 +230,10 @@ class Taxonomy(object):
     def is_below(self, lower, upper):
         return lower in self.ranks_below(upper)
 
-    def ranks_below(self, rank):
+    def ranks_below(self, rank, depth=None):
         below = []
         try:
-            below = self.ranks[self.ranks.index(rank):]
+            below = self.ranks[self.ranks.index(rank):depth]
         except ValueError as err:
             log.error(err)
         return below
@@ -267,6 +263,16 @@ class Taxonomy(object):
             raise ValueError('"{}" not found in names.tax_id'.format(tax_id))
 
         return output
+
+    def ranksdict(self, tax_ids=[]):
+        """
+        return tax_id and rank in dictionary form. Can be limited with
+        optional tax_ids argument
+        """
+        s = select([self.nodes.c.tax_id, self.nodes.c.rank])
+        if tax_ids:
+            s = s.where(self.nodes.c.tax_id.in_(tax_ids))
+        return dict(s.execute().fetchall())
 
     def lineage(self, tax_id=None, tax_name=None):
         """
@@ -355,7 +361,6 @@ class Taxonomy(object):
         """
         Add a node to the taxonomy.
         """
-
         if not (source_id or source_name):
             raise ValueError(
                 'Taxonomy.add_node requires source_id or source_name')
@@ -374,12 +379,30 @@ class Taxonomy(object):
 
         if children:
             for child in children:
-                ret = self.nodes.update(self.nodes.c.tax_id == child, {
-                                        'parent_id': tax_id})
+                ret = self.nodes.update(
+                    self.nodes.c.tax_id == child, {'parent_id': tax_id})
                 ret.execute()
 
         lineage = self.lineage(tax_id)
 
+        log.debug(lineage)
+        return lineage
+
+    def update_node(self, tax_id, **values):
+        if all(k not in values for k in ['source_id', 'source_name']):
+            msg = 'Taxonomy.update_node requires source_id or source_name: '
+            raise ValueError(msg + str(values))
+        if 'source_id' not in values:
+            source_id, _ = self.add_source(name=values['source_name'])
+            values['source_id'] = source_id
+
+        # drop columns not in nodes table
+        values = dict(c for c in values.items() if c[0] in self.nodes.c)
+
+        self.nodes.update(
+            whereclause=self.nodes.c.tax_id == tax_id,
+            values=values).execute()
+        lineage = self.lineage(tax_id)
         log.debug(lineage)
         return lineage
 

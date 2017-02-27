@@ -4,3 +4,4 @@ ghp-import
 twine
 wheel
 tox
+psycopg2

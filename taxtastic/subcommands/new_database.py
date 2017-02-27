@@ -32,25 +32,19 @@ log = logging.getLogger(__name__)
 
 def build_parser(parser):
 
-    parser.add_argument(
-        '-d', '--database-file',
-        dest='database_file',
-        default='ncbi_taxonomy.db',
-        metavar='FILE',
-        help="""Name of the sqlite database file [%(default)s].""")
-
-    parser.add_argument(
+    download_parser = parser.add_argument_group(title='download options')
+    download_parser.add_argument(
         '-z', '--taxdump-file',
         metavar='ZIP',
-        help='Location of zipped taxdump file [%(default)s]')
+        help='Location of zipped taxdump file [taxdmp.zip]')
 
-    parser.add_argument(
+    download_parser.add_argument(
         '-u', '--taxdump-url',
         default=taxtastic.ncbi.DATA_URL,
         metavar='URL',
         help='Url to taxdump file [%(default)s]')
 
-    parser.add_argument(
+    download_parser.add_argument(
         '-p', '--download-dir',
         dest='download_dir',
         metavar='PATH',
@@ -64,11 +58,25 @@ def build_parser(parser):
         and/or re-create the database even if one or both already
         exists. [%(default)s]""")
 
+    db_parser = parser.add_argument_group(title='connection options')
+    db_parser.add_argument(
+        '-d', '--database',
+        dest='database_file',
+        default='ncbi_taxonomy.db',
+        help="""Name of the sqlite database file [%(default)s].""")
+    db_parser.add_argument(
+        '--url',
+        default='sqlite:///',
+        help='url to database [%(default)s]')
+    db_parser.add_argument(
+        '--schema',
+        help='database schema to use')
+
     parser.add_argument(
         '--preserve-inconsistent-taxonomies',
         action='store_true', default=False,
         help="""If a node has the same rank as its parent, do *not* its rank
-        set to no_rank. [%(default)s]""")
+                set to no_rank. [%(default)s]""")
 
 
 def action(args):
@@ -86,7 +94,11 @@ def action(args):
                 url=args.taxdump_url)
         msg = 'creating new database in {} using data in {}'
         log.warning(msg.format(dbname, zfile))
-        engine = taxtastic.ncbi.db_connect(dbname, clobber=True)
-        taxtastic.ncbi.db_load(engine, zfile)
+        engine = taxtastic.ncbi.db_connect(
+            url=args.url,
+            dbname=dbname,
+            schema=args.schema,
+            clobber=args.clobber)
+        taxtastic.ncbi.db_load(engine, zfile, schema=args.schema)
     else:
         log.warning('taxonomy database already exists in %s' % dbname)

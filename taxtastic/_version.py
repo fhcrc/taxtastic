@@ -204,6 +204,7 @@ def versions_from_parentdir(
         return None
     return {"version": dirname[len(parentdir_prefix):], "full": ""}
 
+
 tag_prefix = "v"
 parentdir_prefix = "taxtastic-"
 versionfile_source = "taxtastic/_version.py"
