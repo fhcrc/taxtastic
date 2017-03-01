@@ -140,7 +140,7 @@ UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
 UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
 
-def define_tables(Base):
+def define_schema(Base):
     class Node(Base):
         __tablename__ = 'nodes'
         tax_id = Column(String, primary_key=True, nullable=False)
@@ -157,8 +157,7 @@ def define_tables(Base):
     class Name(Base):
         __tablename__ = 'names'
         id = Column(Integer, primary_key=True)
-        tax_id = Column(String, ForeignKey(
-            'nodes.tax_id', ondelete='CASCADE'), index=True)
+        tax_id = Column(String, ForeignKey('nodes.tax_id', ondelete='CASCADE'))
         node = relationship('Node', back_populates='names')
         tax_name = Column(String, index=True)
         unique_name = Column(String)
@@ -172,7 +171,7 @@ def define_tables(Base):
         __tablename__ = 'merged'
         old_tax_id = Column(String, primary_key=True, index=True)
         new_tax_id = Column(String, ForeignKey(
-            'nodes.tax_id', ondelete='CASCADE'), index=True)
+            'nodes.tax_id', ondelete='CASCADE'))
         merged_node = relationship('Node', backref='merged_ids')
 
     class Rank(Base):
@@ -208,7 +207,7 @@ def db_connect(url='sqlite:///', dbname='ncbi_taxonomy.db',
     else:
         base = declarative_base()
 
-    define_tables(base)
+    define_schema(base)
 
     if clobber:
         logging.info('Clobbering database ' + dbname)
