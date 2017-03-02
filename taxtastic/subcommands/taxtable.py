@@ -56,14 +56,28 @@ log = logging.getLogger(__name__)
 
 def build_parser(parser):
     parser.add_argument(
-        'database_file',
-        metavar='SQLITE',
-        help='Name of the sqlite database file')
-
+        'url',
+        default='sqlite:///',
+        help=('include dialect and username and '
+              'password here if needed [%(default)s]'))
     parser.add_argument(
-        '--from-table',
-        metavar='CSV',
-        help=('taxtable to derive new taxtable from'))
+        'database',
+        default='taxonomy.db',
+        help='database name [%(default)s]')
+
+    db_parser = parser.add_argument_group(title='database options')
+    db_parser.add_argument(
+        '--schema',
+        help='usually for a postgres db')
+
+    table_parser = parser.add_argument_group(title='sub table options')
+    table_parser.add_argument(
+        '--database-table',
+        help='db taxtable to derive new taxtable from')
+    table_parser.add_argument(
+        '--csv-table',
+        help=('csv taxtable to derive new taxtable from'))
+
     parser.add_argument(
         '--full',
         action='store_true',
@@ -72,8 +86,7 @@ def build_parser(parser):
     input_group = parser.add_argument_group('input options')
 
     input_group.add_argument(
-        '-n', '--tax-names',
-        dest='taxnames',
+        '-n', '--taxnames',
         metavar='FILE',
         help="""A file identifing taxa in the form of taxonomic
         names. Names are matched against both primary names and
@@ -82,16 +95,16 @@ def build_parser(parser):
         --tax-ids""")
 
     input_group.add_argument(
-        '-t', '--tax-ids',
-        dest='taxids',
+        '-t', '--tax_ids',
         metavar='FILE-OR-LIST',
         help="""File containing a whitespace-delimited list of
         tax_ids (ie, separated by tabs, spaces, or newlines; lines
         beginning with "#" are ignored). This option can also be
-        passed a comma-delited list of taxids on the command line.""")
+        passed a comma-delited list of tax_ids on the command line.""")
 
     input_group.add_argument(
-        '-i', '--seq-info', type=argparse.FileType('r'),
+        '-i', '--seq-info',
+        type=argparse.FileType('r'),
         help="""Read tax_ids from sequence info file, minimally containing the
         field "tax_id" """)
 
@@ -114,23 +127,26 @@ def build_parser(parser):
 
 def action(args):
     engine = create_engine(
-        'sqlite:///%s' % args.database_file, echo=args.verbosity > 2)
+        args.url + args.database, echo=args.verbosity > 2)
 
-    # root first for this subcommand
-    ranks = pandas.read_sql_table('ranks', engine)['rank'].tolist()[::-1]
+    ranks = pandas.read_sql_table(
+        'ranks', engine,
+        schema=args.schema)
+    # reverse for 'root' first in list
+    ranks = ranks['rank'].tolist()[::-1]
 
     subset_ids = set()
 
     # check tax_ids subsets first before building taxtable
-    if any([args.taxids, args.taxnames, args.seq_info]):
+    if any([args.tax_ids, args.taxnames, args.seq_info]):
         tax = Taxonomy(engine)
-        if args.taxids:
-            if os.access(args.taxids, os.F_OK):
-                for line in getlines(args.taxids):
+        if args.tax_ids:
+            if os.access(args.tax_ids, os.F_OK):
+                for line in getlines(args.tax_ids):
                     subset_ids.update(set(re.split(r'[\s,;]+', line)))
             else:
                 subset_ids.update(
-                    [x.strip() for x in re.split(r'[\s,;]+', args.taxids)])
+                    [x.strip() for x in re.split(r'[\s,;]+', args.tax_ids)])
 
         if args.seq_info:
             with args.seq_info:
@@ -139,7 +155,7 @@ def action(args):
                     frozenset(i['tax_id'] for i in reader if i['tax_id']))
 
         if not(are_valid(subset_ids, tax)):
-            return "Some taxids were invalid.  Exiting."
+            return "Some tax_ids were invalid.  Exiting."
 
         if args.taxnames:
             for taxname in getlines(args.taxnames):
@@ -153,17 +169,31 @@ def action(args):
             return
 
     # construct taxtable either from previously built taxtable or tax database
-    if args.from_table:
-        log.info('using taxtable ' + args.from_table)
-        taxtable = pandas.read_csv(args.from_table, dtype=str)
+    if args.csv_table:
+        log.info('creating subtable')
+        taxtable = pandas.read_csv(args.csv_table, dtype=str)
         taxtable = taxtable.set_index('tax_id')
+    elif args.database_table:
+        log.info('creating subtable')
+        taxtable = pandas.read_sql_table(
+            args.database_table, engine,
+            schema=args.schema,
+            index_col='tax_id')
     else:
-        log.info('building taxtable from ' + args.database_file)
-        nodes = pandas.read_sql_table('nodes', engine, index_col='tax_id')
+        log.info('building taxtable')
+        nodes = pandas.read_sql_table(
+            'nodes', engine,
+            schema=args.schema,
+            index_col='tax_id')
         names = pandas.read_sql_table(
-            'names', engine, columns=['tax_id', 'tax_name', 'is_primary'])
+            'names', engine,
+            schema=args.schema,
+            columns=['tax_id', 'tax_name', 'is_primary'])
         names = names[names['is_primary']].set_index('tax_id')
-        nodes = pandas.read_sql_table('nodes', engine, index_col='tax_id')
+        nodes = pandas.read_sql_table(
+            'nodes', engine,
+            schema=args.schema,
+            index_col='tax_id')
         nodes = nodes.join(names['tax_name'])
         taxtable = build_taxtable(nodes, ranks)
 
@@ -231,7 +261,7 @@ def are_valid(tax_ids, tax):
     return valid
 
 
-def build_taxtable(df, ranks):
+def build_taxtable(nodes, ranks):
     '''
     Given list of tax_ids with parent_ids and an ordered list of ranks return
     a table of taxonomic lineages with ranks as columns
@@ -239,15 +269,15 @@ def build_taxtable(df, ranks):
     Iterate by rank starting with root and joining on parent_id to build
     lineages.
     '''
-    df_index_name = df.index.name
+    df_index_name = nodes.index.name
     rank_count = len(ranks)
 
-    df = df.join(df['rank'], on='parent_id', rsuffix='_parent').reset_index()
-    df['rank_parent'] = df['rank_parent'].astype('category', categories=ranks)
-    lineages = df[df['tax_id'] == '1'].iloc[[0]]
+    nodes = nodes.join(nodes['rank'], on='parent_id', rsuffix='_parent').reset_index()
+    nodes['rank_parent'] = nodes['rank_parent'].astype('category', categories=ranks)
+    lineages = nodes[nodes['tax_id'] == '1'].iloc[[0]]
     lineages.loc[:, 'root'] = lineages['tax_id']
-    df = df.drop(lineages.index)
-    tax_parent_groups = df.groupby(by='rank_parent', sort=True)
+    nodes = nodes.drop(lineages.index)
+    tax_parent_groups = nodes.groupby(by='rank_parent', sort=True)
     for i, (parent, pdf) in enumerate(tax_parent_groups):
         at_rank = []
         for child, df in pdf.groupby(by='rank'):
