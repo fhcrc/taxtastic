@@ -57,26 +57,14 @@ log = logging.getLogger(__name__)
 def build_parser(parser):
     parser.add_argument(
         'url',
-        default='sqlite:///',
-        help=('include dialect and username and '
+        default='sqlite:///taxonomy.db',
+        help=('For ranks table. Include dialect and username and '
               'password here if needed [%(default)s]'))
-    parser.add_argument(
-        'database',
-        default='taxonomy.db',
-        help='database name [%(default)s]')
 
     db_parser = parser.add_argument_group(title='database options')
     db_parser.add_argument(
         '--schema',
         help='usually for a postgres db')
-
-    table_parser = parser.add_argument_group(title='sub table options')
-    table_parser.add_argument(
-        '--database-table',
-        help='db taxtable to derive new taxtable from')
-    table_parser.add_argument(
-        '--csv-table',
-        help=('csv taxtable to derive new taxtable from'))
 
     parser.add_argument(
         '--full',
@@ -126,8 +114,7 @@ def build_parser(parser):
 
 
 def action(args):
-    engine = create_engine(
-        args.url + args.database, echo=args.verbosity > 2)
+    engine = create_engine(args.url, echo=args.verbosity > 3)
 
     ranks = pandas.read_sql_table(
         'ranks', engine,
@@ -139,7 +126,7 @@ def action(args):
 
     # check tax_ids subsets first before building taxtable
     if any([args.tax_ids, args.taxnames, args.seq_info]):
-        tax = Taxonomy(engine)
+        tax = Taxonomy(engine, schema=args.schema)
         if args.tax_ids:
             if os.access(args.tax_ids, os.F_OK):
                 for line in getlines(args.tax_ids):
@@ -169,14 +156,10 @@ def action(args):
             return
 
     # construct taxtable either from previously built taxtable or tax database
-    if args.csv_table:
-        log.info('creating subtable')
-        taxtable = pandas.read_csv(args.csv_table, dtype=str)
-        taxtable = taxtable.set_index('tax_id')
-    elif args.database_table:
-        log.info('creating subtable')
+    if engine.dialect.has_table(engine, 'taxonomy', schema=args.schema):
+        log.info('using existing database taxonomy table')
         taxtable = pandas.read_sql_table(
-            args.database_table, engine,
+            'taxonomy', engine,
             schema=args.schema,
             index_col='tax_id')
     else:
