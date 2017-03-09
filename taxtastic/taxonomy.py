@@ -29,7 +29,8 @@ class TaxonIntegrityError(StandardError):
 
 class Taxonomy(object):
 
-    def __init__(self, engine, NO_RANK='no_rank', undef_prefix='below'):
+    def __init__(self, engine, NO_RANK='no_rank',
+                 undef_prefix='below', schema=None):
         """
         The Taxonomy class defines an object providing an interface to
         the taxonomy database.
@@ -58,15 +59,17 @@ class Taxonomy(object):
         log.debug('using database ' + str(engine.url))
 
         self.engine = engine
-        self.meta = MetaData()
+        self.meta = MetaData(schema=schema)
         self.meta.bind = self.engine
         self.meta.reflect()
 
-        self.nodes = self.meta.tables['nodes']
-        self.names = self.meta.tables['names']
-        self.source = self.meta.tables['source']
-        self.merged = self.meta.tables['merged']
-        ranks = select([self.meta.tables['ranks'].c.rank]).execute().fetchall()
+        schema = schema + '.' if schema else ''
+
+        self.nodes = self.meta.tables[schema + 'nodes']
+        self.names = self.meta.tables[schema + 'names']
+        self.source = self.meta.tables[schema + 'source']
+        self.merged = self.meta.tables[schema + 'merged']
+        ranks = select([self.meta.tables[schema + 'ranks'].c.rank]).execute().fetchall()
         self.ranks = [r[0] for r in ranks]
 
         # keys: tax_id
