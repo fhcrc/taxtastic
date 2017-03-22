@@ -72,6 +72,9 @@ class Taxonomy(object):
         ranks = select([self.meta.tables[schema + 'ranks'].c.rank]).execute().fetchall()
         self.ranks = [r[0] for r in ranks]
 
+        if 'taxonomy' in self.meta.tables:
+            self.taxonomy = self.meta.tables[schema + 'taxonomy']
+
         # keys: tax_id
         # vals: lineage represented as a list of tuples: (rank, tax_id)
         self.cached = {}
@@ -360,7 +363,7 @@ class Taxonomy(object):
         return source_id, success
 
     def add_node(self, tax_id, parent_id, rank, tax_name,
-                 children=None, source_id=None, source_name=None, **kwargs):
+                 children=[], source_id=None, source_name=None):
         """
         Add a node to the taxonomy.
         """
@@ -380,15 +383,27 @@ class Taxonomy(object):
                                     tax_name=tax_name,
                                     is_primary=1)
 
-        if children:
-            for child in children:
-                ret = self.nodes.update(
-                    self.nodes.c.tax_id == child, {'parent_id': tax_id})
-                ret.execute()
+        for child in children:
+            ret = self.nodes.update(
+                whereclause=self.nodes.c.tax_id == child,
+                values={'parent_id': tax_id})
+            ret.execute()
 
         lineage = self.lineage(tax_id)
 
         log.debug(lineage)
+
+        if self.taxonomy is not None:
+            self.taxonomy.insert().execute(
+                tax_id=tax_id, parent_id=parent_id, rank=rank, **lineage)
+
+            for child in children:
+                c_rank = self.get_rank(child)
+                ret = self.taxonomy.update(
+                    whereclause=getattr(self.taxonomy.c, c_rank) == child,
+                    values={c_rank: tax_id})
+                ret.execute()
+
         return lineage
 
     def update_node(self, tax_id, **values):
