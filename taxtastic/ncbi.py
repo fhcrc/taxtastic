@@ -159,7 +159,7 @@ def define_schema(Base):
         id = Column(Integer, primary_key=True)
         tax_id = Column(String, ForeignKey('nodes.tax_id', ondelete='CASCADE'))
         node = relationship('Node', back_populates='names')
-        tax_name = Column(String, index=True)
+        tax_name = Column(String)
         unique_name = Column(String)
         name_class = Column(String)
         is_primary = Column(Boolean)
@@ -172,7 +172,6 @@ def define_schema(Base):
         old_tax_id = Column(String, primary_key=True, index=True)
         new_tax_id = Column(String, ForeignKey(
             'nodes.tax_id', ondelete='CASCADE'))
-        merged_node = relationship('Node', backref='merged_ids')
 
     class Rank(Base):
         __tablename__ = 'ranks'
