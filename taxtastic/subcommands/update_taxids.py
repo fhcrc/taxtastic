@@ -38,7 +38,8 @@ def build_parser(parser):
               'containing the fields `tax_id`. Rows with '
               'missing tax_ids are left unchanged.'))
     parser.add_argument(
-        'database_file', help="""Path to the taxonomy database""")
+        'db_url',
+        help='Path to the taxonomy database')
     parser.add_argument(
         '-o', '--out-file',
         default=sys.stdout,
@@ -63,6 +64,9 @@ def build_parser(parser):
         '--name-column',
         help=('column with taxon name(s) to help '
               'find tax_ids. ex: organism name'))
+    parser.add_argument(
+        '--schema',
+        help='database schema, mostly applies to Postgres dbs')
 
 
 def action(args):
@@ -77,10 +81,12 @@ def action(args):
             msg = '"No "' + args.name_column + '" column'
             raise ValueError(msg)
 
-    con = 'sqlite:///{0}'.format(args.database_file)
-    sqlalchemy.create_engine(con)
+    engine = sqlalchemy.create_engine(args.db_url, echo=args.verbosity > 3)
 
-    merged = pandas.read_sql_table('merged', con, index_col='old_tax_id')
+    merged = pandas.read_sql_table(
+        'merged', engine,
+        schema=args.schema,
+        index_col='old_tax_id')
     log.info('updating tax_ids')
     rows = rows.join(merged, on=args.taxid_column)
 
@@ -92,7 +98,9 @@ def action(args):
 
     log.info('loading names table')
     names = pandas.read_sql_table(
-        'names', con, columns=['tax_id', 'tax_name', 'is_primary'])
+        'names', engine,
+        schema=args.schema,
+        columns=['tax_id', 'tax_name', 'is_primary'])
 
     if args.name_column:
         """
@@ -126,7 +134,6 @@ def action(args):
                 quoting=csv.QUOTE_NONNUMERIC)
         elif not unknowns.empty:
             raise ValueError('Unknown or missing tax_ids present')
-
         rows = rows[~rows.index.isin(unknowns.index)]
 
     if args.taxid_classified:
@@ -141,9 +148,10 @@ def action(args):
             rows = rows.drop('taxid_classified', axis=1)
         else:
             columns.append('taxid_classified')
-        ranks = pandas.read_sql_table('ranks', con)
+        ranks = pandas.read_sql_table('ranks', engine, schema=args.schema)
         nodes = pandas.read_sql_table(
-            'nodes', con,
+            'nodes', engine,
+            schema=args.schema,
             columns=['tax_id', 'rank', 'is_valid'],
             index_col='tax_id')
         rows = species_is_classified(rows, nodes, ranks)
