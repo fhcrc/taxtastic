@@ -23,7 +23,6 @@ specify ``-p`` or ``--download-dir``.
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import logging
 import taxtastic
 
@@ -31,6 +30,11 @@ log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
+
+    parser.add_argument(
+        'url',
+        default='sqlite:///ncbi_taxonomy.db',
+        help='url to database [%(default)s]')
 
     download_parser = parser.add_argument_group(title='download options')
     download_parser.add_argument(
@@ -60,17 +64,8 @@ def build_parser(parser):
 
     db_parser = parser.add_argument_group(title='connection options')
     db_parser.add_argument(
-        '-d', '--database',
-        dest='database_file',
-        default='ncbi_taxonomy.db',
-        help="""Name of the sqlite database file [%(default)s].""")
-    db_parser.add_argument(
-        '--url',
-        default='sqlite:///',
-        help='url to database [%(default)s]')
-    db_parser.add_argument(
         '--schema',
-        help='database schema to use')
+        help='database schema to use if applicable')
 
     parser.add_argument(
         '--preserve-inconsistent-taxonomies',
@@ -80,25 +75,14 @@ def build_parser(parser):
 
 
 def action(args):
-    dbname = args.database_file
-
-    if not os.access(args.database_file, os.F_OK) or args.clobber:
-        if args.taxdump_file:
-            zfile = args.taxdump_file
-        else:
-            pth = os.path.split(dbname)[0]
-            zip_dest = args.download_dir or pth or '.'
-            zfile, _ = taxtastic.ncbi.fetch_data(
-                dest_dir=zip_dest,
-                clobber=args.clobber,
-                url=args.taxdump_url)
-        msg = 'creating new database in {} using data in {}'
-        log.warning(msg.format(dbname, zfile))
-        engine = taxtastic.ncbi.db_connect(
-            url=args.url,
-            dbname=dbname,
-            schema=args.schema,
-            clobber=args.clobber)
-        taxtastic.ncbi.db_load(engine, zfile, schema=args.schema)
+    if args.taxdump_file:
+        zfile = args.taxdump_file
     else:
-        log.warning('taxonomy database already exists in %s' % dbname)
+        zip_dest = args.download_dir or '.'
+        zfile, _ = taxtastic.ncbi.fetch_data(
+            dest_dir=zip_dest,
+            clobber=args.clobber,
+            url=args.taxdump_url)
+    engine = taxtastic.ncbi.db_connect(
+        url=args.url, schema=args.schema, clobber=args.clobber)
+    taxtastic.ncbi.db_load(engine, zfile, schema=args.schema)

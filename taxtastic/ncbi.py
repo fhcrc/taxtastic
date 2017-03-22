@@ -186,16 +186,15 @@ def define_schema(Base):
         nodes = relationship('Node')
 
 
-def db_connect(url='sqlite:///', dbname='ncbi_taxonomy.db',
-               schema=None, clobber=False):
+def db_connect(url='sqlite:///', schema=None, clobber=False):
     """
     Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
     True and return otherwise. Returns a sqlalchemy engine object.
     """
 
-    logging.debug('Connecting to database ' + url + dbname)
-    engine = sqlalchemy.create_engine(url + dbname)
+    logging.debug('Connecting to database ' + url)
+    engine = sqlalchemy.create_engine(url)
 
     if schema is not None:
         try:
@@ -209,9 +208,10 @@ def db_connect(url='sqlite:///', dbname='ncbi_taxonomy.db',
     define_schema(base)
 
     if clobber:
-        logging.info('Clobbering database ' + dbname)
+        logging.info('Clobbering database tables')
         base.metadata.drop_all(bind=engine)
 
+    logging.info('Creating database tables')
     base.metadata.create_all(bind=engine)
 
     return engine
@@ -452,10 +452,10 @@ def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
 
     if os.access(fout, os.F_OK) and not clobber:
         downloaded = False
-        logging.warning('%s exists; not downloading' % fout)
+        logging.info(fout + ' exists; not downloading')
     else:
         downloaded = True
-        logging.warning('downloading %(url)s to %(fout)s' % locals())
+        logging.info('downloading {} to {}'.format(url, fout))
         urllib.urlretrieve(url, fout)
 
     return (fout, downloaded)
