@@ -84,5 +84,8 @@ def action(args):
             clobber=args.clobber,
             url=args.taxdump_url)
     engine = taxtastic.ncbi.db_connect(
-        url=args.url, schema=args.schema, clobber=args.clobber)
+        args.url,
+        schema=args.schema,
+        clobber=args.clobber,
+        verbosity=args.verbosity)
     taxtastic.ncbi.db_load(engine, zfile, schema=args.schema)

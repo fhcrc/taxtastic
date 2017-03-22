@@ -186,7 +186,7 @@ def define_schema(Base):
         nodes = relationship('Node')
 
 
-def db_connect(url='sqlite:///', schema=None, clobber=False):
+def db_connect(url, schema=None, clobber=False, verbosity=0):
     """
     Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
@@ -194,7 +194,7 @@ def db_connect(url='sqlite:///', schema=None, clobber=False):
     """
 
     logging.debug('Connecting to database ' + url)
-    engine = sqlalchemy.create_engine(url)
+    engine = sqlalchemy.create_engine(url, echo=verbosity > 2)
 
     if schema is not None:
         try:
