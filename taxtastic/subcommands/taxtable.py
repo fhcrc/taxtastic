@@ -40,16 +40,14 @@ CSV output no matter how many times a particular taxon is mentioned.
 import argparse
 import csv
 import logging
+import os
 import pandas
-
 import re
+import sqlalchemy
+import sys
 
 from taxtastic.taxonomy import Taxonomy
 from taxtastic.utils import getlines
-
-from sqlalchemy import create_engine
-import os.path
-import sys
 
 log = logging.getLogger(__name__)
 
@@ -74,31 +72,31 @@ def build_parser(parser):
     input_group = parser.add_argument_group('input options')
 
     input_group.add_argument(
-        '-n', '--taxnames',
-        metavar='FILE',
-        help="""A file identifing taxa in the form of taxonomic
-        names. Names are matched against both primary names and
-        synonyms. Lines beginning with "#" are ignored. Taxa
-        identified here will be added to those specified using
-        --tax-ids""")
+        '--clade-ids',
+        help=('return top-down tax_id clades'))
 
     input_group.add_argument(
-        '-t', '--tax_ids',
+        '-n', '--taxnames',
+        metavar='FILE',
+        help=('A file identifing taxa in the form of taxonomic '
+              'names. Names are matched against both primary names and '
+              'synonyms. Lines beginning with "#" are ignored. Taxa '
+              'identified here will be added to those specified using '
+              '--tax-ids'))
+
+    input_group.add_argument(
+        '-t', '--tax-ids',
         metavar='FILE-OR-LIST',
-        help="""File containing a whitespace-delimited list of
-        tax_ids (ie, separated by tabs, spaces, or newlines; lines
-        beginning with "#" are ignored). This option can also be
-        passed a comma-delited list of tax_ids on the command line.""")
+        help=('File containing a whitespace-delimited list of '
+              'tax_ids (ie, separated by tabs, spaces, or newlines; lines '
+              'beginning with "#" are ignored). This option can also be '
+              'passed a comma-delited list of tax_ids on the command line.'))
 
     input_group.add_argument(
         '-i', '--seq-info',
         type=argparse.FileType('r'),
-        help="""Read tax_ids from sequence info file, minimally containing the
-        field "tax_id" """)
-
-    input_group.add_argument(
-        '--from-id',
-        help=('taxid to branch from'))
+        help=('Read tax_ids from sequence info file, minimally '
+              'containing the field "tax_id"'))
 
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
@@ -109,12 +107,12 @@ def build_parser(parser):
         type=argparse.FileType('w'),
         default=sys.stdout,
         metavar='FILE',
-        help="""Output file containing lineages for the specified taxa
-        in csv format; writes to stdout if unspecified""")
+        help=('Output file containing lineages for the specified taxa '
+              'in csv format; writes to stdout if unspecified'))
 
 
 def action(args):
-    engine = create_engine(args.url, echo=args.verbosity > 3)
+    engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
 
     ranks = pandas.read_sql_table(
         'ranks', engine,
@@ -173,29 +171,28 @@ def action(args):
             schema=args.schema,
             columns=['tax_id', 'tax_name', 'is_primary'])
         names = names[names['is_primary']].set_index('tax_id')
-        nodes = pandas.read_sql_table(
-            'nodes', engine,
-            schema=args.schema,
-            index_col='tax_id')
         nodes = nodes.join(names['tax_name'])
         taxtable = build_taxtable(nodes, ranks)
 
-    # subset taxtable lineage
-    if args.from_id:
-        from_taxon = taxtable.loc[args.from_id]
+    # subset taxtable clade lineages
+    if args.clade_ids:
+        clades = []
+        for i in args.clade_ids.split(','):
+            ancestor = taxtable.loc[i]
 
-        # select all rows where rank column == args.from_id
-        from_table = taxtable[taxtable[from_taxon['rank']] == args.from_id]
+            # select all rows where rank column == args.from_id
+            clade = taxtable[taxtable[ancestor['rank']] == i]
 
-        # build taxtable up to root from args.from_id
-        while from_taxon.name != '1':  # root
-            parent = taxtable.loc[from_taxon['parent_id']]
-            from_table = pandas.concat(
-                [pandas.DataFrame(parent).T, from_table])
-            from_taxon = parent
-        # reset lost index name after concatenating transposed series
-        from_table.index.name = 'tax_id'
-        taxtable = from_table
+            # build taxtable up to root from args.from_id
+            while ancestor.name != '1':  # root
+                parent = taxtable.loc[ancestor['parent_id']]
+                clade = pandas.concat(
+                    [pandas.DataFrame(parent).T, clade])
+                ancestor = parent
+            # reset lost index name after concatenating transposed series
+            clade.index.name = 'tax_id'
+            clades.append(clade)
+        taxtable = pandas.concat(clades)
 
     # subset taxtable by set of tax_ids
     if subset_ids:
