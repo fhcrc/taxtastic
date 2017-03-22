@@ -19,7 +19,6 @@ from taxtastic.taxonomy import Taxonomy, TaxonIntegrityError
 from taxtastic.utils import get_new_nodes
 
 import logging
-import pandas
 import sqlalchemy
 import sys
 
@@ -39,15 +38,12 @@ def build_parser(parser):
               'delimited list. Other columns are ignored.'))
 
     parser.add_argument(
-        'database_file',
-        metavar='sqlite',
-        help='Name of the database file')
+        'database_url',
+        help='url to database')
 
     parser.add_argument(
-        '--no-write-to-database-file',
-        dest='write_to_database_file',
-        action='store_false',
-        help=('do not results to database file'))
+        '--schema',
+        help='database schema usually for a Postgres database')
 
     parser.add_argument(
         '-S', '--source-name',
@@ -62,16 +58,14 @@ def build_parser(parser):
         action='store_true',
         help='Update any existing nodes')
 
-    table_parser = parser.add_argument_group('taxtable')
-    table_parser.add_argument(
-        '--from-table',
-        metavar='csv',
-        help=('a taxonomic table'))
-    table_parser.add_argument(
-        '--to-table',
-        metavar='csv',
+    parser.add_argument(
+        '--tax-table',
+        help='table name in database')
+
+    parser.add_argument(
+        '--out',
         default=sys.stdout,
-        help=('output taxonomic table.  requires --from-table'))
+        help='sql queries')
 
 
 def verify_rank_integrity(node, ranksdict, rank_order):
@@ -118,66 +112,34 @@ def verify_lineage_integrity(node, ranksdict, rank_order, tax):
 
 
 def action(args):
-    engine = sqlalchemy.create_engine(
-        'sqlite:///' + args.database_file, echo=args.verbosity > 2)
-    ranks = pandas.read_sql_table('ranks', engine)['rank'].tolist()
+    engine = sqlalchemy.create_engine(args.database_url, echo=args.verbosity > 2)
+    tax = Taxonomy(engine, schema=args.schema)
     nodes = list(get_new_nodes(args.new_nodes))
 
     # check if there are any new ranks and exit if needed
     node_ranks = set(n['rank'] for n in nodes)
     for r in node_ranks:
-        if r not in ranks:
+        if r not in tax.ranks:
             msg = 'adding new ranks to taxonomy is not yet supported'
             raise TaxonIntegrityError(msg)
 
-    tax = Taxonomy(engine, ranks)
     ranksdict = tax.ranksdict()
     ranksdict.update(dict([(n['tax_id'], n['rank']) for n in nodes]))
-    nodes = [verify_rank_integrity(n, ranksdict, ranks) for n in nodes]
-    nodes = [verify_lineage_integrity(n, ranksdict, ranks, tax) for n in nodes]
+    nodes = [verify_rank_integrity(n, ranksdict, tax.ranks) for n in nodes]
+    nodes = [verify_lineage_integrity(n, ranksdict, tax.ranks, tax) for n in nodes]
 
-    if args.write_to_database_file:
-        log.warn('adding new nodes')
-        for d in nodes:
-            if args.source_name:
-                d['source_name'] = args.source_name
-                try:
-                    tax.add_node(**d)
-                except sqlalchemy.exc.IntegrityError:
-                    if args.update:
-                        tax.update_node(**d)
-                    else:
-                        log.warn('node with tax_id %(tax_id)s already exists' % d)
+    log.info('adding new nodes')
+    for d in nodes:
+        if args.source_name:
+            d['source_name'] = args.source_name
+            try:
+                tax.add_node(**d)
+            except sqlalchemy.exc.IntegrityError:
+                if args.update:
+                    tax.update_node(**d)
                 else:
-                    log.info('added new node with tax_id %(tax_id)s' % d)
-
-    if args.from_table:
-        log.info('reading from_table ' + args.from_table)
-        table = pandas.read_csv(args.from_table, dtype=str).set_index('tax_id')
-        from_cols = table.columns  # preserve order of columns
-        nodes_df = pandas.DataFrame(nodes, dtype=str).set_index('tax_id')
-        lineage_cols = [c for c in table.columns if c in ranks]
-
-        log.info('appending new nodes to from_table ' + args.from_table)
-        while not nodes_df.empty:
-            new_rows = nodes_df.join(
-                table[lineage_cols], how='inner', on='parent_id')
-            for i, r in new_rows.iterrows():
-                new_rows.loc[i, r['rank']] = i
-            table = table.append(new_rows)
-            nodes_df = nodes_df.drop(new_rows.index)
-
-        log.info('updating new node children (of children)')
-        for n in nodes:
-            if 'children' in n:
-                rank = n['rank']
-                tax_id = n['tax_id']
-                for c in n['children']:
-                    c_rank = table.loc[c]['rank']
-                    table.loc[table[c_rank] == c, rank] = tax_id
-
-        table['rank'] = table['rank'].astype('category', categories=ranks)
-        table = table.sort_values(by='rank', ascending=False)
-        table.to_csv(args.to_table, columns=from_cols)
+                    log.warn('node with tax_id %(tax_id)s already exists' % d)
+            else:
+                log.info('added new node with tax_id %(tax_id)s' % d)
 
     engine.dispose()
