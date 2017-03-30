@@ -68,6 +68,10 @@ def build_parser(parser):
         '--full',
         action='store_true',
         help='Include rank columns not in final lineages.')
+    parser.add_argument(
+        '--from-scratch',
+        action='store_true',
+        help='Ignore any existing taxtables in database')
 
     input_group = parser.add_argument_group('input options')
 
@@ -154,7 +158,8 @@ def action(args):
             return
 
     # construct taxtable either from previously built taxtable or tax database
-    if engine.dialect.has_table(engine, 'taxonomy', schema=args.schema):
+    if (engine.dialect.has_table(engine, 'taxonomy', schema=args.schema) and
+            not args.from_scratch):
         log.info('using existing database taxonomy table')
         taxtable = pandas.read_sql_table(
             'taxonomy', engine,
@@ -193,6 +198,7 @@ def action(args):
             clade.index.name = 'tax_id'
             clades.append(clade)
         taxtable = pandas.concat(clades)
+        taxtable = taxtable[~taxtable.index.duplicated()]
 
     # subset taxtable by set of tax_ids
     if subset_ids:
@@ -250,7 +256,6 @@ def build_taxtable(nodes, ranks):
     lineages.
     '''
     df_index_name = nodes.index.name
-    rank_count = len(ranks)
 
     nodes = nodes.join(nodes['rank'], on='parent_id', rsuffix='_parent').reset_index()
     nodes['rank_parent'] = nodes['rank_parent'].astype('category', categories=ranks)
@@ -258,7 +263,9 @@ def build_taxtable(nodes, ranks):
     lineages.loc[:, 'root'] = lineages['tax_id']
     nodes = nodes.drop(lineages.index)
     tax_parent_groups = nodes.groupby(by='rank_parent', sort=True)
-    for i, (parent, pdf) in enumerate(tax_parent_groups):
+    # standard message width so everything prints nice
+    msg = 'Processing lineages: {:<' + str(max(map(len, ranks))) + '}\r'
+    for parent, pdf in tax_parent_groups:
         at_rank = []
         for child, df in pdf.groupby(by='rank'):
             df = df.copy()
@@ -277,7 +284,6 @@ def build_taxtable(nodes, ranks):
             lineages = lineages.append(at_rank)
 
         # status message
-        msg = '{} of {} rank lineages completed\r'.format(i, rank_count)
-        sys.stderr.write(msg)
+        sys.stderr.write(msg.format(parent))
 
     return lineages.drop('rank_parent', axis=1).set_index(df_index_name)
