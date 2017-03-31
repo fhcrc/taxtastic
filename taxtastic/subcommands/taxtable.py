@@ -177,6 +177,7 @@ def action(args):
             columns=['tax_id', 'tax_name', 'is_primary'])
         names = names[names['is_primary']].set_index('tax_id')
         nodes = nodes.join(names['tax_name'])
+        # TODO: assert len(nodes) same before and after names join
         taxtable = build_taxtable(nodes, ranks)
 
     # subset taxtable clade lineages
