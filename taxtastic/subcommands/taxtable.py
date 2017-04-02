@@ -69,7 +69,7 @@ def build_parser(parser):
         action='store_true',
         help='Include rank columns not in final lineages.')
     parser.add_argument(
-        '--from-scratch',
+        '--from-nodes',
         action='store_true',
         help='Ignore any existing taxtables in database')
 
@@ -159,7 +159,7 @@ def action(args):
 
     # construct taxtable either from previously built taxtable or tax database
     if (engine.dialect.has_table(engine, 'taxonomy', schema=args.schema) and
-            not args.from_scratch):
+            not args.from_nodes):
         log.info('using existing database taxonomy table')
         taxtable = pandas.read_sql_table(
             'taxonomy', engine,
