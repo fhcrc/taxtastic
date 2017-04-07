@@ -117,7 +117,7 @@ class Taxonomy(object):
         """
         s = select([self.names.c.tax_name],
                    and_(self.names.c.tax_id == tax_id,
-                        self.names.c.is_primary == 1))
+                        self.names.c.is_primary))
         res = s.execute()
         output = res.fetchone()
 
@@ -148,7 +148,7 @@ class Taxonomy(object):
         if not is_primary:
             s2 = select([names.c.tax_name],
                         and_(names.c.tax_id == tax_id,
-                             names.c.is_primary == 1))
+                             names.c.is_primary))
             tax_name = s2.execute().fetchone()[0]
 
         return tax_id, tax_name, bool(is_primary)
@@ -381,7 +381,7 @@ class Taxonomy(object):
 
         self.names.insert().execute(tax_id=tax_id,
                                     tax_name=tax_name,
-                                    is_primary=1)
+                                    is_primary=True)
 
         for child in children:
             ret = self.nodes.update(
