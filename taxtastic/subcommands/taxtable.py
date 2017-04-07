@@ -72,6 +72,10 @@ def build_parser(parser):
         '--from-nodes',
         action='store_true',
         help='Ignore any existing taxtables in database')
+    parser.add_argument(
+        '--valid-nodes',
+        action='store_true',
+        help='use only valid nodes')
 
     input_group = parser.add_argument_group('input options')
 
@@ -124,10 +128,11 @@ def action(args):
     # reverse for 'root' first in list
     ranks = ranks['rank'].tolist()[::-1]
 
+    nodes = None
     subset_ids = set()
 
     # check tax_ids subsets first before building taxtable
-    if any([args.tax_ids, args.taxnames, args.seq_info]):
+    if any([args.tax_ids, args.taxnames, args.seq_info, args.valid_nodes]):
         tax = Taxonomy(engine, schema=args.schema)
         if args.tax_ids:
             if os.access(args.tax_ids, os.F_OK):
@@ -143,8 +148,8 @@ def action(args):
                 subset_ids.update(
                     frozenset(i['tax_id'] for i in reader if i['tax_id']))
 
-        if not(are_valid(subset_ids, tax)):
-            return "Some tax_ids were invalid.  Exiting."
+        # this will raise an error if any tax_ids do not exist in database
+        all_known(subset_ids, tax)
 
         if args.taxnames:
             for taxname in getlines(args.taxnames):
@@ -152,6 +157,10 @@ def action(args):
                     tax_id, primary_name, is_primary = tax.primary_from_name(
                         name.strip())
                     subset_ids.add(tax_id)
+
+        if args.valid_nodes:
+            nodes = get_nodes(engine, args.schema)
+            subset_ids.update(set(nodes[nodes['is_valid']].index))
 
         if not subset_ids:
             log.error('no tax_ids to subset taxtable, exiting')
@@ -167,10 +176,8 @@ def action(args):
             index_col='tax_id')
     else:
         log.info('building taxtable')
-        nodes = pandas.read_sql_table(
-            'nodes', engine,
-            schema=args.schema,
-            index_col='tax_id')
+        if nodes is None:
+            nodes = get_nodes(engine, args.schema)
         names = pandas.read_sql_table(
             'names', engine,
             schema=args.schema,
@@ -215,8 +222,7 @@ def action(args):
 
     # sort columns
     taxtable = taxtable[
-        ['parent_id', 'rank', 'tax_name'] +
-        [r for r in ranks if r in taxtable.columns]]
+        ['rank', 'tax_name'] + [r for r in ranks if r in taxtable.columns]]
 
     # sort rows
     taxtable['rank'] = taxtable['rank'].astype('category', categories=ranks)
@@ -227,11 +233,11 @@ def action(args):
     engine.dispose()
 
 
-def are_valid(tax_ids, tax):
+def all_known(tax_ids, tax):
     '''
-    Check if ALL tax_ids are valid.  Return True/False
+    Check if ALL tax_ids are known.  Return True/False
     '''
-    valid = True
+    all_known = True
     for t in tax_ids:
         try:
             tax._node(t)
@@ -239,14 +245,15 @@ def are_valid(tax_ids, tax):
             # Check for merged
             m = tax._get_merged(t)
             if m and m != t:
-                msg = ("Taxid {0} has been replaced by {1}. "
+                msg = ("Taxid {} has been replaced by {}. "
                        "Please update your records").format(t, m)
-                print >> sys.stderr, msg
+                log.error(msg)
             else:
-                print >>sys.stderr, "Taxid %s not found in taxonomy." % t
-            valid = False
+                log.error('Taxid {} not found in taxonomy'.format(t))
+            all_known = False
 
-    return valid
+    if not all_known:
+        raise ValueError('Some tax_ids are unknown.  Exiting.')
 
 
 def build_taxtable(nodes, ranks):
@@ -289,3 +296,11 @@ def build_taxtable(nodes, ranks):
         sys.stderr.write(msg.format(parent))
 
     return lineages.drop('rank_parent', axis=1).set_index(df_index_name)
+
+
+def get_nodes(engine, schema):
+    nodes = pandas.read_sql_table(
+        'nodes', engine,
+        schema=schema,
+        index_col='tax_id')
+    return nodes
