@@ -175,7 +175,9 @@ def define_schema(Base):
 
     class Rank(Base):
         __tablename__ = 'ranks'
+        id = Column(Integer, unique=True, nullable=False)
         rank = Column(String, primary_key=True)
+        no_rank = Column(Boolean)
         nodes = relationship('Node')
 
     class Source(Base):
@@ -295,12 +297,15 @@ def db_load(engine, archive, schema=None):
         schema=schema,
         if_exists='append')
 
+    '''lowest ranks first (forma, species, etc)
+    highest ranks last (root, superkingdom, etc)'''
     logging.info('Inserting ranks')
-    # reverse list so lowest is first and gets the 0 index
-    pandas.Series(ranks, dtype=str, name='rank').to_sql(
+    ranks_df = pandas.DataFrame(data=ranks, columns=['rank'])
+    ranks_df['no_rank'] = ranks_df['rank'].apply(lambda x: 'below' in x)
+    ranks_df.index.name = 'id'
+    ranks_df.to_sql(
         'ranks', engine,
         schema=schema,
-        index=False,
         if_exists='append')
 
     logging.info("Inserting nodes")

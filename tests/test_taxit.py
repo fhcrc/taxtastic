@@ -12,7 +12,7 @@ log = logging
 
 TestScriptBase.executable = path.join(path.dirname(__file__), '..', 'taxit')
 TestScriptBase.outputdir = config.outputdir
-TestScriptBase.taxdb = config.ncbi_master_db
+TestScriptBase.taxdb = 'sqlite:///' + config.ncbi_master_db
 TestScriptBase.datadir = config.datadir
 
 

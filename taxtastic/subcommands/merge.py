@@ -21,7 +21,6 @@ import logging
 
 import re
 
-from taxtastic import ncbi
 from taxtastic.taxonomy import Taxonomy
 from taxtastic.utils import getlines
 
@@ -35,11 +34,12 @@ log = logging.getLogger(__name__)
 def build_parser(parser):
 
     parser.add_argument(
-        '-d', '--database-file',
-        dest='database_file',
-        metavar='FILE',
-        required=True,
-        help='Name of the sqlite database file')
+        'url',
+        default='sqlite:///ncbi_taxonomy.db',
+        help='url to database [%(default)s]')
+    parser.add_argument(
+        '--schema',
+        help='database schema to use if applicable')
 
     input_group = parser.add_argument_group(
         "Input options").add_mutually_exclusive_group()
@@ -62,8 +62,7 @@ def build_parser(parser):
         "Output options").add_mutually_exclusive_group()
 
     output_group.add_argument(
-        '-o', '--out-file',
-        dest='out_file',
+        '-o', '--out',
         type=argparse.FileType('w'),
         default=sys.stdout,
         metavar='FILE',
@@ -71,9 +70,8 @@ def build_parser(parser):
 
 
 def action(args):
-    engine = create_engine('sqlite:///%s' %
-                           args.database_file, echo=args.verbosity > 2)
-    tax = Taxonomy(engine, ncbi.RANKS)
+    engine = create_engine(args.url, echo=args.verbosity > 2)
+    tax = Taxonomy(engine, schema=args.schema)
 
     taxids = set()
 
@@ -91,7 +89,7 @@ def action(args):
             taxids.update(frozenset(i['tax_id']
                                     for i in reader if i['tax_id']))
 
-    writer = csv.writer(args.out_file)
+    writer = csv.writer(args.out)
 
     for t in taxids:
         try:

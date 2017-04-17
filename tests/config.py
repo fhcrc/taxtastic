@@ -6,9 +6,9 @@ import sys
 import logging
 import re
 import unittest
-import commands
 import shutil
 import tempfile
+import subprocess
 
 log = logging
 
@@ -136,6 +136,7 @@ class TestScriptBase(OutputRedirectMixin, TestBase):
     """
 
     executable = None
+    DEVNULL = open(os.devnull, 'w')
 
     def __getitem__(self, i):
         """
@@ -149,17 +150,16 @@ class TestScriptBase(OutputRedirectMixin, TestBase):
             cmd = self.executable
         input = (cmd + ' ' + args) % self
         log.info('--> ' + input)
-        status, output = commands.getstatusoutput(input)
-        log.info(output)
-        return status, output
+        # hide error results, send to DEVNULL
+        log.info(subprocess.check_output(input.split(), stderr=self.DEVNULL))
+        return True
 
-    def cmd_ok(self, cmd=None, args=None):
-        status, output = self.wrap_cmd(cmd, args)
-        self.assertTrue(status == 0)
+    def cmd_ok(self, args=None, cmd=None):
+        self.assertTrue(self.wrap_cmd(args, cmd))
 
-    def cmd_fails(self, cmd=None, args=None):
-        status, output = self.wrap_cmd(cmd, args)
-        self.assertFalse(status == 0)
+    def cmd_fails(self, args=None, cmd=None):
+        self.assertRaises(
+            subprocess.CalledProcessError, self.wrap_cmd, args, cmd)
 
 
 # Small NCBI taxonomy database

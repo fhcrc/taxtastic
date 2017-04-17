@@ -1,7 +1,3 @@
-"""Show taxonomic composition of a reference package.
-
-"""
-
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -16,6 +12,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Show taxonomic composition of a reference package."""
 
 import logging
 import csv
@@ -29,21 +26,33 @@ log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
-    parser.add_argument('refpkg', action='store', metavar='refpkg',
-                        help='the reference package to operate on', nargs='?')
-    parser.add_argument('-t', '--taxonomy', metavar='csv file',
-                        help='Path to taxtable '
-                        '(ignored if refpkg is provided, required otherwise)')
-    parser.add_argument('-i', '--seq_info', metavar='csv file',
-                        help='Path to seq_info '
-                        '(ignored if refpkg is provided, required otherwise)')
-    parser.add_argument('-r', '--rank', default='species', metavar='RANK',
-                        help='show composition at RANK [%(default)s]')
-    parser.add_argument('-o', '--outfile', default=sys.stdout,
-                        type=argparse.FileType('w'),
-                        help=('rank at which to show composition. Use '
-                              '--rank=tax_id to show original '
-                              'classifications [stdout]'))
+    parser.add_argument(
+        'refpkg',
+        action='store',
+        metavar='refpkg',
+        help='the reference package to operate on', nargs='?')
+    parser.add_argument(
+        '-t', '--taxonomy',
+        metavar='csv file',
+        help=('Path to taxtable '
+              '(ignored if refpkg is provided, required otherwise)'))
+    parser.add_argument(
+        '-i', '--seq_info',
+        metavar='csv file',
+        help=('Path to seq_info '
+              '(ignored if refpkg is provided, required otherwise)'))
+    parser.add_argument(
+        '-r', '--rank',
+        default='species',
+        metavar='RANK',
+        help='show composition at RANK [%(default)s]')
+    parser.add_argument(
+        '-o', '--out',
+        default=sys.stdout,
+        type=argparse.FileType('w'),
+        help=('rank at which to show composition. Use '
+              '--rank=tax_id to show original '
+              'classifications [stdout]'))
 
 
 def action(args):
@@ -73,6 +82,6 @@ def action(args):
             tax_name = taxdict[tax_id]['tax_name'] if tax_id else unclassified
             counts[(tax_name, tax_id)] += 1
 
-    writer = csv.writer(args.outfile)
+    writer = csv.writer(args.out)
     writer.writerow(['tax_name', 'tax_id', 'count'])
     writer.writerows(sorted((n, i, c) for (n, i), c in counts.items()))

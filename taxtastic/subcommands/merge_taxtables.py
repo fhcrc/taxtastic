@@ -35,7 +35,7 @@ def build_parser(parser):
         'infiles', nargs='+', type=argparse.FileType(),
         help="""One or more taxtables""")
     parser.add_argument(
-        '-o', '--outfile', type=argparse.FileType('w'), default=sys.stdout,
+        '-o', '--out', type=argparse.FileType('w'), default=sys.stdout,
         metavar='FILE', help="""csv file containing merged taxtables""")
 
 
@@ -47,7 +47,7 @@ def action(args):
     reader = csv.DictReader(first)
     fieldnames = reader.fieldnames[:]
     initial_names = set(fieldnames)
-    writer = csv.DictWriter(args.outfile, fieldnames=reader.fieldnames)
+    writer = csv.DictWriter(args.out, fieldnames=reader.fieldnames)
     writer.writeheader()
     empty_row = {f: None for f in reader.fieldnames}
 

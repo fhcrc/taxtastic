@@ -1,5 +1,3 @@
-"""Add new nodes to a database containing a taxonomy."""
-
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -14,6 +12,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Add new nodes to a database containing a taxonomy."""
 
 from taxtastic.taxonomy import Taxonomy, TaxonIntegrityError
 from taxtastic.utils import get_new_nodes
@@ -38,7 +37,7 @@ def build_parser(parser):
               'delimited list. Other columns are ignored.'))
 
     parser.add_argument(
-        'database_url',
+        'url',
         help='url to database')
 
     parser.add_argument(
@@ -112,7 +111,7 @@ def verify_lineage_integrity(node, ranksdict, rank_order, tax):
 
 
 def action(args):
-    engine = sqlalchemy.create_engine(args.database_url, echo=args.verbosity > 2)
+    engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
     tax = Taxonomy(engine, schema=args.schema)
     nodes = list(get_new_nodes(args.new_nodes))
 

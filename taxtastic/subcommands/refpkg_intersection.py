@@ -24,7 +24,7 @@ def build_parser(parser):
                         help='ranks to list in the output')
     parser.add_argument('--all-ranks', default=False, action='store_true',
                         help="don't filter by the lowest rank; list all intersections")
-    parser.add_argument('-o', '--outfile', type=argparse.FileType('w'), default=sys.stdout,
+    parser.add_argument('-o', '--out', type=argparse.FileType('w'), default=sys.stdout,
                         help='output file in csv format (default is stdout)')
 
 
@@ -63,7 +63,7 @@ def action(args):
         taxtable_db.insert_from_taxtable(lambda: reader._fieldnames, reader)
         cursor.execute('ATTACH DATABASE ? AS tt', (tmp_db.name,))
 
-        writer = csv.writer(args.outfile)
+        writer = csv.writer(args.out)
         writer.writerow(('tax_id', 'intersection_rank'))
         cursor.execute("""
             SELECT tax_id,
@@ -84,5 +84,5 @@ def action(args):
             cursor = filter_ranks(cursor)
         writer.writerows(cursor)
 
-    args.outfile.flush()
-    test_output(args.infile.name, args.outfile.name, ranks)
+    args.out.flush()
+    test_output(args.infile.name, args.out.name, ranks)

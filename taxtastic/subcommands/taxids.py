@@ -30,7 +30,6 @@ import sys
 from sqlalchemy import create_engine
 
 from taxtastic.taxonomy import Taxonomy
-from taxtastic import ncbi
 
 log = logging.getLogger(__name__)
 
@@ -69,10 +68,12 @@ def get_children(engine, parent_ids, rank='species'):
 def build_parser(parser):
 
     parser.add_argument(
-        '-d', '--database-file',
-        action='store', dest='dbfile', default='ncbi_taxonomy.db',
-        help='Filename of sqlite database [%(default)s].',
-        metavar='FILE', required=True)
+        'url',
+        default='sqlite:///ncbi_taxonomy.db',
+        help='url to database [%(default)s]')
+    parser.add_argument(
+        '--schema',
+        help='database schema to use if applicable')
 
     input_group = parser.add_argument_group(
         "Input options").add_mutually_exclusive_group()
@@ -91,8 +92,7 @@ def build_parser(parser):
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
     output_group.add_argument(
-        '-o', '--out-file', metavar='FILE', type=argparse.FileType('w'),
-        dest='outfile',
+        '-o', '--out', metavar='FILE', type=argparse.FileType('w'),
         help='output file', default=sys.stdout)
 
 
@@ -102,10 +102,8 @@ def action(args):
     taxnames_file = args.taxnames_file
     taxnames = args.taxnames
 
-    outfile = args.outfile
-
-    engine = create_engine('sqlite:///%s' % dbfile, echo=False)
-    tax = Taxonomy(engine, ncbi.RANKS)
+    engine = create_engine(args.url, echo=False)
+    tax = Taxonomy(engine, schema=args.schema)
 
     names = []
     if taxnames_file:
@@ -139,4 +137,4 @@ def action(args):
             taxa.update(dict((row['tax_id'], row) for row in rows))
 
     for d in sorted(taxa.values(), key=lambda x: x['tax_name']):
-        outfile.write('%(tax_id)s # %(tax_name)s\n' % d)
+        args.out.write('%(tax_id)s # %(tax_name)s\n' % d)

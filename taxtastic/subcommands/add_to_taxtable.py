@@ -35,7 +35,7 @@ def build_parser(parser):
         must have a parent_id already in the taxtable, or defined on
         an earlier row.""")
     parser.add_argument(
-        '-o', '--out-file', type=argparse.FileType('w'), default=sys.stdout,
+        '-o', '--out', type=argparse.FileType('w'), default=sys.stdout,
         help="""Destination for output taxtable [default: stdout]""")
 
 
@@ -83,6 +83,4 @@ def action(args):
                 node.rank, node.tax_id, node.name,
                 parent_node.rank, parent_node.tax_id, parent_node.name)
 
-    tax.write_taxtable(args.out_file)
-
-    return 0
+    tax.write_taxtable(args.out)

@@ -1,13 +1,3 @@
-"""Create a reference package
-
-Create a new refpkg at the location specified by the argument to
-``-P`` with locus name ``-l``.  All other fields are used to specify
-initial metadata and files to add to the refpkg.  If there is already
-a refpkg at ``refpkg``, this command will fail unless you specify
-``-c`` or ``--clobber``.
-
-"""
-
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -22,7 +12,13 @@ a refpkg at ``refpkg``, this command will fail unless you specify
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Create a reference package
 
+Create a new refpkg at the location specified by the argument to
+``-P`` with locus name ``-l``.  All other fields are used to specify
+initial metadata and files to add to the refpkg.  If there is already
+a refpkg at ``refpkg``, this command will fail unless you specify
+``-c`` or ``--clobber``."""
 import logging
 import shutil
 import os

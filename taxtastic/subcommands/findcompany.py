@@ -50,9 +50,9 @@ def build_parser(parser):
               'whether or not the output species would themselves be lonely.'))
     parser.add_argument("-i", "--input", type=argparse.FileType('r'),
                         default=None, help="Text file to read Tax IDs from, one per line")
-    parser.add_argument('-o', '--output',
-                        default=None,
-                        help='Output file for new taxids')
+    parser.add_argument(
+        '-o', '--out',
+        help='Output file for new taxids')
 
 
 def action(args):
@@ -74,8 +74,8 @@ def action(args):
     txt = ""
     for t in company:
         txt += "%s\n" % (t if t else "")
-    if args.output:
-        with open(args.output, 'w') as h:
+    if args.out:
+        with open(args.out, 'w') as h:
             print >>h, txt
     else:
         print txt

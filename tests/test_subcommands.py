@@ -268,28 +268,34 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
         with scratch_file() as out:
             with open(out, 'w') as h:
                 class _Args(object):
-                    database_file = config.ncbi_master_db
-                    taxids = 'horace,hilda'
+                    url = 'sqlite:///' + config.ncbi_master_db
+                    schema = None
+                    tax_ids = 'horace,hilda'
+                    valid_nodes = False
                     taxnames = None
                     seq_info = None
                     verbosity = 0
-                    out_file = h
+                    out = h
                     full = False
+                    clade_ids = None
                     from_table = None
                     from_id = None
-                self.assertNotEqual(taxtable.action(_Args()), 0)
+                self.assertRaises(ValueError, taxtable.action, _Args())
 
     def test_seqinfo(self):
         with tempfile.TemporaryFile() as tf, \
                 open(config.data_path('simple_seqinfo.csv')) as ifp:
             class _Args(object):
-                database_file = config.ncbi_master_db
-                taxids = None
+                url = 'sqlite:///' + config.ncbi_master_db
+                schema = None
+                valid_nodes = False
+                tax_ids = None
                 taxnames = None
                 seq_info = ifp
-                out_file = tf
+                out = tf
                 verbosity = 0
                 full = False
+                clade_ids = None
                 from_table = None
                 from_id = None
             self.assertIsNone(taxtable.action(_Args()))
@@ -307,7 +313,7 @@ class TestAddToTaxtable(OutputRedirectMixin, unittest.TestCase):
             class _Args(object):
                 extra_nodes_csv = extra_nodes_fp
                 taxtable = taxtable_fp
-                out_file = tf
+                out = tf
                 verbosity = 0
             self.assertFalse(add_to_taxtable.action(_Args()))
             # No output check at present

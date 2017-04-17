@@ -110,8 +110,7 @@ def build_parser(parser):
         "Output options").add_mutually_exclusive_group()
 
     output_group.add_argument(
-        '-o', '--out-file',
-        dest='out_file',
+        '-o', '--out',
         type=argparse.FileType('w'),
         default=sys.stdout,
         metavar='FILE',
@@ -229,7 +228,7 @@ def action(args):
     taxtable = taxtable.sort_values('rank')
 
     # write and close db
-    taxtable.to_csv(args.out_file)
+    taxtable.to_csv(args.out)
     engine.dispose()
 
 

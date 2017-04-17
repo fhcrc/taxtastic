@@ -46,7 +46,7 @@ def build_parser(parser):
                         metavar="taxtable_or_refpkg",
                         action="store",
                         help='A taxtable or a refpkg containing a taxtable')
-    parser.add_argument('-o', '--output',
+    parser.add_argument('-o', '--out',
                         type=argparse.FileType('w'),
                         default=sys.stdout,
                         help="""Write output to given file [default: stdout]""")
@@ -73,6 +73,6 @@ def action(args):
     if args.ranks:
         result = (n for n in result if n.rank in args.ranks)
 
-    writer = csv.writer(args.output)
+    writer = csv.writer(args.out)
     writer.writerow(['tax_name', 'tax_id', 'rank'])
     writer.writerows(sorted((n.tax_name, n.key, n.rank) for n in result))

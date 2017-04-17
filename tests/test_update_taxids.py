@@ -23,7 +23,7 @@ class TestUpdateTaxids(config.TestBase):
     thisdata_path = config.data_path('update_taxids', 'TestUpdateTaxids')
 
     seq_info = config.data_path(thisdata_path, 'seq_info.csv')
-    small_taxonomy_db = config.data_path('small_taxonomy.db')
+    small_taxonomy_db = 'sqlite:///' + config.data_path('small_taxonomy.db')
 
     def test01(self):
         """

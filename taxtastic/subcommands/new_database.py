@@ -1,13 +1,3 @@
-"""Download NCBI taxonomy and create a database
-
-Download the current version of the NCBI taxonomy and load it into
-``database_file`` as an SQLite3 database.  If ``database_file``
-already exists, it will fail and leave it untouched unless you specify
-``-x`` or ``--clobber``.  The NCBI taxonomy will be downloaded into
-the same directory as ``database_file`` will be created in unless you
-specify ``-p`` or ``--download-dir``.
-
-"""
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -22,7 +12,15 @@ specify ``-p`` or ``--download-dir``.
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Download NCBI taxonomy and create a database
 
+Download the current version of the NCBI taxonomy and load it into
+``database_file`` as an SQLite3 database.  If ``database_file``
+already exists, it will fail and leave it untouched unless you specify
+``-x`` or ``--clobber``.  The NCBI taxonomy will be downloaded into
+the same directory as ``database_file`` will be created in unless you
+specify ``-p`` or ``--download-dir``.
+"""
 import logging
 import taxtastic
 
@@ -35,6 +33,15 @@ def build_parser(parser):
         'url',
         default='sqlite:///ncbi_taxonomy.db',
         help='url to database [%(default)s]')
+    parser.add_argument(
+        '--schema',
+        help='database schema to use if applicable')
+    parser.add_argument(
+        '--append',
+        action='store_false',
+        dest='clobber',
+        help=('If database exists keep current data '
+              'and append new data. [False]'))
 
     download_parser = parser.add_argument_group(title='download options')
     download_parser.add_argument(
@@ -54,24 +61,6 @@ def build_parser(parser):
         metavar='PATH',
         help="""Name of the directory into which to download the zip
              archive. [default is the same directory as the database file]""")
-
-    parser.add_argument(
-        '-x', '--clobber', action='store_true',
-        dest='clobber', default=False,
-        help="""Download a new zip archive containing NCBI taxonomy
-        and/or re-create the database even if one or both already
-        exists. [%(default)s]""")
-
-    db_parser = parser.add_argument_group(title='connection options')
-    db_parser.add_argument(
-        '--schema',
-        help='database schema to use if applicable')
-
-    parser.add_argument(
-        '--preserve-inconsistent-taxonomies',
-        action='store_true', default=False,
-        help="""If a node has the same rank as its parent, do *not* its rank
-                set to no_rank. [%(default)s]""")
 
 
 def action(args):

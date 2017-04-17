@@ -27,7 +27,7 @@ dbname = config.ncbi_master_db
 class TestTaxonomyBase(TestBase):
 
     def setUp(self):
-        self.engine = create_engine('sqlite:///%s' % self.dbname, echo=echo)
+        self.engine = create_engine('sqlite:///' + self.dbname, echo=echo)
         self.tax = Taxonomy(self.engine, taxtastic.ncbi.RANKS)
 
     def tearDown(self):
@@ -92,6 +92,7 @@ class TestAddNode(TestTaxonomyBase):
             os.path.join(datadir, 'new_taxa.csv'))
         for d in rows:
             d['source_id'] = 2
+            d.pop('comments')  # not part of add_node constructor
             self.tax.add_node(**d)
 
         new_taxid = '1578_1'

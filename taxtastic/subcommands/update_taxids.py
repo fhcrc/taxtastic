@@ -38,10 +38,14 @@ def build_parser(parser):
               'containing the fields `tax_id`. Rows with '
               'missing tax_ids are left unchanged.'))
     parser.add_argument(
-        'db_url',
-        help='Path to the taxonomy database')
+        'url',
+        default='sqlite:///ncbi_taxonomy.db',
+        help='url to database [%(default)s]')
     parser.add_argument(
-        '-o', '--out-file',
+        '--schema',
+        help='database schema to use if applicable')
+    parser.add_argument(
+        '-o', '--out',
         default=sys.stdout,
         help='Output file to write updates [default: stdout]')
     parser.add_argument(
@@ -64,9 +68,6 @@ def build_parser(parser):
         '--name-column',
         help=('column with taxon name(s) to help '
               'find tax_ids. ex: organism name'))
-    parser.add_argument(
-        '--schema',
-        help='database schema, mostly applies to Postgres dbs')
 
 
 def action(args):
@@ -81,7 +82,7 @@ def action(args):
             msg = '"No "' + args.name_column + '" column'
             raise ValueError(msg)
 
-    engine = sqlalchemy.create_engine(args.db_url, echo=args.verbosity > 3)
+    engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
 
     merged = pandas.read_sql_table(
         'merged', engine,
@@ -158,7 +159,7 @@ def action(args):
 
     # output seq_info with new tax_ids
     rows.to_csv(
-        args.out_file,
+        args.out,
         index=False,
         columns=columns,
         quoting=csv.QUOTE_NONNUMERIC)

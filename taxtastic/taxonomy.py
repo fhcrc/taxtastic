@@ -74,6 +74,8 @@ class Taxonomy(object):
 
         if 'taxonomy' in self.meta.tables:
             self.taxonomy = self.meta.tables[schema + 'taxonomy']
+        else:
+            self.taxonomy = None
 
         # keys: tax_id
         # vals: lineage represented as a list of tuples: (rank, tax_id)
