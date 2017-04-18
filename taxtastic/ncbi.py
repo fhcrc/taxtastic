@@ -33,38 +33,38 @@ from sqlalchemy.ext.declarative import declarative_base
 
 DATA_URL = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
-
 RANKS = [
-    'root',
-    'superkingdom',
-    'kingdom',
-    'subkingdom',
-    'superphylum',
-    'phylum',
-    'subphylum',
-    'superclass',
-    'class',
-    'subclass',
-    'infraclass',
-    'superorder',
-    'order',
-    'suborder',
-    'infraorder',
-    'parvorder',
-    'superfamily',
-    'family',
-    'subfamily',
-    'tribe',
-    'subtribe',
-    'genus',
-    'subgenus',
-    'species_group',
-    'species_subgroup',
-    'species',
-    'subspecies',
+    'forma',
     'varietas',
-    'forma'
+    'subspecies',
+    'species',
+    'species_subgroup',
+    'species_group',
+    'subgenus',
+    'genus',
+    'subtribe',
+    'tribe',
+    'subfamily',
+    'family',
+    'superfamily',
+    'parvorder',
+    'infraorder',
+    'suborder',
+    'order',
+    'superorder',
+    'infraclass',
+    'subclass',
+    'class',
+    'superclass',
+    'subphylum',
+    'phylum',
+    'superphylum',
+    'subkingdom',
+    'kingdom',
+    'superkingdom',
+    'root'
 ]
+
 
 # Components of a regex to apply to all names. Names matching this regex are
 # marked as invalid.
@@ -149,7 +149,7 @@ def define_schema(Base):
         embl_code = Column(String)
         division_id = Column(String)
         source_id = Column(Integer, ForeignKey('source.id'))
-        is_valid = Column(Boolean, server_default='true')
+        is_valid = Column(Boolean, default=True)
         names = relationship('Name')
         ranks = relationship('Rank', back_populates='nodes')
         sources = relationship('Source', back_populates='nodes')
@@ -175,8 +175,8 @@ def define_schema(Base):
 
     class Rank(Base):
         __tablename__ = 'ranks'
-        id = Column(Integer, unique=True, nullable=False)
         rank = Column(String, primary_key=True)
+        height = Column(Integer, unique=True, nullable=False)
         no_rank = Column(Boolean)
         nodes = relationship('Node')
 
@@ -258,26 +258,16 @@ def db_load(engine, archive, schema=None):
     logging.info('Expanding `no_rank` taxons')
     nodes, ranks = adjust_node_ranks(nodes, RANKS[:])
 
+    # set node ranks as a sortable categories, forma < ... < root
+    nodes['rank'] = nodes['rank'].astype('category', categories=ranks, ordered=True)
+    nodes['rank_parent'] = nodes['rank_parent'].astype(
+        'category', categories=ranks, ordered=True)
+
     logging.info('Confirming tax tree rank integrity')
     assert_integrity(nodes, ranks)
 
-    subtree_msg = 'Marking {} species subtree nodes is_valid={}'
-
-    valid_subtrees = ((nodes['rank'] == 'species') & nodes['is_valid'])
-    valid_subtrees = get_subtrees(nodes, valid_subtrees)
-    logging.info(subtree_msg.format(valid_subtrees.sum(), True))
-    nodes.loc[valid_subtrees, 'is_valid'] = True
-
-    # mark false
-    invalid_subtrees = ((nodes['rank'] == 'species') & ~nodes['is_valid'])
-    invalid_subtrees = get_subtrees(nodes, invalid_subtrees)
-    logging.info(subtree_msg.format(invalid_subtrees.sum(), False))
-    nodes.loc[invalid_subtrees, 'is_valid'] = False
-
-    # unclassfied bacteria, tax_id 2323
-    unclassified_bacteria = get_subtrees(nodes, nodes.index == '2323')
-    logging.info(subtree_msg.format(unclassified_bacteria.sum(), False))
-    nodes.loc[unclassified_bacteria, 'is_valid'] = False
+    logging.info('Marking species subtree validity')
+    nodes = mark_valid_subtrees(nodes)
 
     # merged
     rows = read_archive(archive, 'merged.dmp')
@@ -302,7 +292,7 @@ def db_load(engine, archive, schema=None):
     logging.info('Inserting ranks')
     ranks_df = pandas.DataFrame(data=ranks, columns=['rank'])
     ranks_df['no_rank'] = ranks_df['rank'].apply(lambda x: 'below' in x)
-    ranks_df.index.name = 'id'
+    ranks_df.index.name = 'height'
     ranks_df.to_sql(
         'ranks', engine,
         schema=schema,
@@ -329,52 +319,27 @@ def db_load(engine, archive, schema=None):
         index=False)
 
 
-def get_subtrees(nodes, to_mark):
+def adjust_node_ranks(df, ranks):
     '''
-    to_mark - Boolean Series of nodes for selection
-
-    Continuously grab children using parent_id and OR results on nodes table
-    to identify subtrees
+    replace no_ranks with below_ of parent rank
     '''
-    mark_children = to_mark
-    while mark_children.any():
-        mark_children = nodes['parent_id'].isin(nodes[mark_children].index)
-        to_mark |= mark_children
-    return to_mark
+    ranks = ranks[::-1]  # start at root, work down
+    for i, rank in enumerate(ranks):
+        no_rank = ((df['rank_parent'] == rank) &
+                   (df['rank'] == 'no_rank'))
+        if no_rank.any():
+            below_rank = 'below_' + rank
+            iat_rank = df[no_rank].index
+            df.at[iat_rank, 'rank'] = below_rank
+            # update `rank_parent` columns
+            below_children = df['parent_id'].isin(iat_rank)
+            df.loc[below_children, 'rank_parent'] = below_rank
+            ranks.insert(i + 1, below_rank)
 
-
-def mark_is_valid(nodes, names):
-    """
-    After applying a ``regex`` to primary names associated with tax_ids,
-    marking those that match as invalid.
-    """
-    nodes = nodes.drop('is_valid', axis=1)
-    nodes = nodes.merge(
-        names[names['is_primary']][['is_classified', 'tax_id']],
-        right_on='tax_id',
-        left_index=True,
-        how='left')
-    nodes = nodes.rename(columns={'is_classified': 'is_valid'})
-    return nodes.set_index('tax_id')
-
-
-def assert_integrity(nodes, ranks):
-    nodes['rank'] = nodes['rank'].astype('category', categories=ranks, ordered=True)
-    nodes['rank_parent'] = nodes['rank_parent'].astype(
-        'category', categories=ranks, ordered=True)
-    bad_nodes = nodes[nodes['rank_parent'] < nodes['rank']]
-    if not bad_nodes.empty:
-        logging.error(bad_nodes)
-        raise IntegrityError('some node ranks above parent ranks')
-
-
-def _isame_ancestor_rank(df):
-    '''
-    return boolean series whether row has same rank as parent
-    '''
-    return ((df['rank'] != 'root') &
-            (df['rank_parent'] != 'no_rank') &
-            (df['rank_parent'] == df['rank']))
+    # remove non-existent ranks
+    node_ranks = set(df['rank'].tolist())
+    ranks = [r for r in ranks if r in node_ranks]
+    return df, ranks[::-1]  # return ranks to input order
 
 
 def adjust_same_ranks(df):
@@ -392,28 +357,11 @@ def adjust_same_ranks(df):
     return df
 
 
-def adjust_node_ranks(df, ranks):
-    '''
-    replace no_ranks with below_ of parent rank
-    '''
-    for i, rank in enumerate(ranks):
-        no_rank = ((df['rank_parent'] == rank) &
-                   (df['rank'] == 'no_rank'))
-        if no_rank.any():
-            below_rank = 'below_' + rank
-            iat_rank = df[no_rank].index
-            df.at[iat_rank, 'rank'] = below_rank
-            # update `rank_parent` columns
-            below_children = df['parent_id'].isin(iat_rank)
-            df.loc[below_children, 'rank_parent'] = below_rank
-            ranks.insert(i + 1, below_rank)
-
-    # remove non-existent ranks
-    node_ranks = set(df['rank'].tolist())
-    ranks = [r for r in ranks if r in node_ranks]
-    ranks = ranks[::-1]  # reverse order so smallest rank is first
-
-    return df, ranks
+def assert_integrity(nodes, ranks):
+    bad_nodes = nodes[nodes['rank_parent'] < nodes['rank']]
+    if not bad_nodes.empty:
+        logging.error(bad_nodes)
+        raise IntegrityError('some node ranks above parent ranks')
 
 
 def assert_primaries(names):
@@ -466,6 +414,66 @@ def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
     return (fout, downloaded)
 
 
+def get_subtrees(nodes, to_mark):
+    '''
+    to_mark - Boolean Series of nodes for selection
+
+    Continuously grab children using parent_id and OR results on nodes table
+    to identify subtrees
+    '''
+    mark_children = to_mark
+    while mark_children.any():
+        mark_children = nodes['parent_id'].isin(nodes[mark_children].index)
+        to_mark |= mark_children
+    return to_mark
+
+
+def mark_is_valid(nodes, names):
+    """
+    After applying a ``regex`` to primary names associated with tax_ids,
+    marking those that match as invalid.
+    """
+    nodes = nodes.drop('is_valid', axis=1)
+    nodes = nodes.merge(
+        names[names['is_primary']][['is_classified', 'tax_id']],
+        right_on='tax_id',
+        left_index=True,
+        how='left')
+    nodes = nodes.rename(columns={'is_classified': 'is_valid'})
+    return nodes.set_index('tax_id')
+
+
+def mark_valid_subtrees(nodes):
+    subtree_msg = '{} species subtree nodes is_valid={}'
+
+    valid_subtrees = ((nodes['rank'] == 'species') & nodes['is_valid'])
+    valid_subtrees = get_subtrees(nodes, valid_subtrees)
+    nodes.loc[valid_subtrees, 'is_valid'] = True
+    logging.info(subtree_msg.format(valid_subtrees.sum(), True))
+
+    # mark false
+    invalid_subtrees = ((nodes['rank'] == 'species') & ~nodes['is_valid'])
+    invalid_subtrees = get_subtrees(nodes, invalid_subtrees)
+    nodes.loc[invalid_subtrees, 'is_valid'] = False
+    logging.info(subtree_msg.format(invalid_subtrees.sum(), False))
+
+    # unclassfied bacteria, tax_id 2323
+    unclassified_bacteria = get_subtrees(nodes, nodes.index == '2323')
+    logging.info(subtree_msg.format(unclassified_bacteria.sum(), False))
+    nodes.loc[unclassified_bacteria, 'is_valid'] = False
+
+    return nodes
+
+
+def _isame_ancestor_rank(df):
+    '''
+    return boolean series whether row has same rank as parent
+    '''
+    return ((df['rank'] != 'root') &
+            (df['rank_parent'] != 'no_rank') &
+            (df['rank_parent'] == df['rank']))
+
+
 def read_archive(archive, fname):
     """
     Return an iterator of rows from a zip archive.
@@ -482,34 +490,6 @@ def read_archive(archive, fname):
 def read_dmp(fname):
     for line in open(fname, 'rU'):
         yield line.rstrip('\t|\n').split('\t|\t')
-
-
-def read_nodes(rows, ncbi_source_id):
-    """
-    Return an iterator of rows ready to insert into table "nodes".
-
-    * rows - iterator of lists (eg, output from read_archive or read_dmp)
-    * root_name - string identifying the root node (replaces NCBI's default).
-    """
-
-    keys = 'tax_id parent_id rank embl_code division_id'.split()
-    idx = dict((k, i) for i, k in enumerate(keys))
-    rank = idx['rank']
-
-    # assume the first row is the root
-    row = rows.next()
-    row[rank] = 'root'
-    rows = itertools.chain([row], rows)
-
-    colnames = keys + ['source_id'] + ['is_valid']
-    for r in rows:
-        row = dict(zip(colnames, r))
-        assert len(row) == len(colnames)
-
-        # replace whitespace in "rank" with underscore
-        row['rank'] = '_'.join(row['rank'].split())
-        row['is_valid'] = True  # default is_valid
-        yield row
 
 
 def read_names(rows, unclassified_regex=None):
@@ -564,4 +544,32 @@ def read_names(rows, unclassified_regex=None):
     colnames = keys + ['is_primary', 'is_classified']
     for r in rows:
         row = dict(zip(colnames, r + [_is_primary(r), _is_classified(r)]))
+        yield row
+
+
+def read_nodes(rows, ncbi_source_id):
+    """
+    Return an iterator of rows ready to insert into table "nodes".
+
+    * rows - iterator of lists (eg, output from read_archive or read_dmp)
+    * root_name - string identifying the root node (replaces NCBI's default).
+    """
+
+    keys = 'tax_id parent_id rank embl_code division_id'.split()
+    idx = dict((k, i) for i, k in enumerate(keys))
+    rank = idx['rank']
+
+    # assume the first row is the root
+    row = rows.next()
+    row[rank] = 'root'
+    rows = itertools.chain([row], rows)
+
+    colnames = keys + ['source_id'] + ['is_valid']
+    for r in rows:
+        row = dict(zip(colnames, r))
+        assert len(row) == len(colnames)
+
+        # replace whitespace in "rank" with underscore
+        row['rank'] = '_'.join(row['rank'].split())
+        row['is_valid'] = True  # default is_valid
         yield row

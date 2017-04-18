@@ -64,18 +64,19 @@ def build_parser(parser):
         '--schema',
         help='usually for a postgres db')
 
-    parser.add_argument(
-        '--full',
-        action='store_true',
-        help='Include rank columns not in final lineages.')
-    parser.add_argument(
-        '--from-nodes',
+    node_parser = parser.add_argument_group(title='node options')
+    node_parser.add_argument(
+        '--from-scratch',
         action='store_true',
         help='Ignore any existing taxtables in database')
-    parser.add_argument(
-        '--valid-nodes',
+    node_parser.add_argument(
+        '--valid',
         action='store_true',
-        help='use only valid nodes')
+        help='include only valid nodes')
+    node_parser.add_argument(
+        '--ranked',
+        action='store_true',
+        help='include only ranked nodes (drop no_rank nodes)')
 
     input_group = parser.add_argument_group('input options')
 
@@ -121,17 +122,18 @@ def build_parser(parser):
 def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
 
-    ranks = pandas.read_sql_table(
+    ranks_df = pandas.read_sql_table(
         'ranks', engine,
         schema=args.schema)
-    # reverse for 'root' first in list
-    ranks = ranks['rank'].tolist()[::-1]
+    # most operations in this script require ordering from 'root' down
+    ranks_df = ranks_df.sort_values(by='height', ascending=False)
+    ranks = ranks_df['rank'].tolist()
 
     nodes = None
     subset_ids = set()
 
     # check tax_ids subsets first before building taxtable
-    if any([args.tax_ids, args.taxnames, args.seq_info, args.valid_nodes]):
+    if any([args.tax_ids, args.taxnames, args.seq_info, args.valid]):
         tax = Taxonomy(engine, schema=args.schema)
         if args.tax_ids:
             if os.access(args.tax_ids, os.F_OK):
@@ -157,7 +159,7 @@ def action(args):
                         name.strip())
                     subset_ids.add(tax_id)
 
-        if args.valid_nodes:
+        if args.valid:
             nodes = get_nodes(engine, args.schema)
             subset_ids.update(set(nodes[nodes['is_valid']].index))
 
@@ -167,7 +169,7 @@ def action(args):
 
     # construct taxtable either from previously built taxtable or tax database
     if (engine.dialect.has_table(engine, 'taxonomy', schema=args.schema) and
-            not args.from_nodes):
+            not args.from_scratch):
         log.info('using existing database taxonomy table')
         taxtable = pandas.read_sql_table(
             'taxonomy', engine,
@@ -216,10 +218,15 @@ def action(args):
                 subset_ids.update(keepers[col].dropna().values)
         taxtable = taxtable.loc[subset_ids]
 
-    if not args.full:
-        taxtable = taxtable.dropna(axis=1, how='all')
+    # drop no rank nodes
+    if args.ranked:
+        ranks = ranks_df[~ranks_df['no_rank']]['rank'].tolist()
+        taxtable = taxtable[taxtable['rank'].isin(ranks)]
 
-    # sort columns
+    # clean up empty rank columns
+    taxtable = taxtable.dropna(axis=1, how='all')
+
+    # sort final column output
     taxtable = taxtable[
         ['rank', 'tax_name'] + [r for r in ranks if r in taxtable.columns]]
 

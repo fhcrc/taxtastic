@@ -12,6 +12,10 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""
+The Taxonomy class defines an object providing an interface to
+the taxonomy database.
+"""
 import csv
 import itertools
 import logging
@@ -23,34 +27,34 @@ from sqlalchemy.sql import select
 log = logging.getLogger(__name__)
 
 
-class TaxonIntegrityError(StandardError):
+class TaxonIntegrityError(Exception):
+    '''
+    Raised when something in the Taxonomy is not structured correctly
+    '''
     pass
 
 
 class Taxonomy(object):
 
     def __init__(self, engine, NO_RANK='no_rank',
-                 undef_prefix='below', schema=None):
+                 undef_prefix='below_', schema=None):
         """
         The Taxonomy class defines an object providing an interface to
         the taxonomy database.
 
         * engine - sqlalchemy engine instance providing a connection to a
           database defining the taxonomy
-        * ranks - list of rank names, root first
         * NO_RANK - label identifying a taxon without
           a specific rank in the taxonomy.
         * undef_prefix - string prepended to name of parent
           rank to create new labels for undefined ranks.
+        * schema - database schema, usually required when using a Postgres db
 
         Example:
         >>> from sqlalchemy import create_engine
         >>> from taxtastic.taxonomy import Taxonomy
-        >>> engine = create_engine('sqlite:///' + dbname, echo=False)
+        >>> engine = create_engine(url)
         >>> tax = Taxonomy(engine)
-
-        TODO: should ranks be defined in a table in the database?
-        TODO: assertions to check for database components
 
         see http://www.sqlalchemy.org/docs/reference/sqlalchemy/inspector.html
         http://www.sqlalchemy.org/docs/metadata.html#metadata-reflection
@@ -63,17 +67,17 @@ class Taxonomy(object):
         self.meta.bind = self.engine
         self.meta.reflect()
 
-        schema = schema + '.' if schema else ''
+        schema_prefix = schema + '.' if schema else ''
 
-        self.nodes = self.meta.tables[schema + 'nodes']
-        self.names = self.meta.tables[schema + 'names']
-        self.source = self.meta.tables[schema + 'source']
-        self.merged = self.meta.tables[schema + 'merged']
-        ranks = select([self.meta.tables[schema + 'ranks'].c.rank]).execute().fetchall()
+        self.nodes = self.meta.tables[schema_prefix + 'nodes']
+        self.names = self.meta.tables[schema_prefix + 'names']
+        self.source = self.meta.tables[schema_prefix + 'source']
+        self.merged = self.meta.tables[schema_prefix + 'merged']
+        ranks = select([self.meta.tables[schema_prefix + 'ranks'].c.rank]).execute().fetchall()
         self.ranks = [r[0] for r in ranks]
 
         if 'taxonomy' in self.meta.tables:
-            self.taxonomy = self.meta.tables[schema + 'taxonomy']
+            self.taxonomy = self.meta.tables[schema_prefix + 'taxonomy']
         else:
             self.taxonomy = None
 
@@ -196,8 +200,6 @@ class Taxonomy(object):
         # Note: indent is referenced through locals() below
         indent = '.' * _level
 
-        prefix = self.undef_prefix + '_'
-
         lineage = self.cached.get(tax_id)
 
         if lineage:
@@ -219,7 +221,7 @@ class Taxonomy(object):
                 _rank, _tax_id = node
 
                 if _rank == self.NO_RANK:
-                    _rank = prefix + _parent_rank
+                    _rank = self.undef_prefix + _parent_rank
                     self._add_rank(_rank, _parent_rank)
 
                     lineage[i] = (_rank, _tax_id)
