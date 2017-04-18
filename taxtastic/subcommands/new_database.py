@@ -32,6 +32,7 @@ def build_parser(parser):
     parser.add_argument(
         'url',
         default='sqlite:///ncbi_taxonomy.db',
+        nargs='?',
         help='url to database [%(default)s]')
     parser.add_argument(
         '--schema',
