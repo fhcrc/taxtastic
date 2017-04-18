@@ -271,15 +271,12 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                     url = 'sqlite:///' + config.ncbi_master_db
                     schema = None
                     tax_ids = 'horace,hilda'
-                    valid_nodes = False
+                    valid = False
                     taxnames = None
                     seq_info = None
                     verbosity = 0
                     out = h
-                    full = False
                     clade_ids = None
-                    from_table = None
-                    from_id = None
                 self.assertRaises(ValueError, taxtable.action, _Args())
 
     def test_seqinfo(self):
@@ -288,16 +285,14 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
             class _Args(object):
                 url = 'sqlite:///' + config.ncbi_master_db
                 schema = None
-                valid_nodes = False
+                valid = False
+                ranked = False
                 tax_ids = None
                 taxnames = None
                 seq_info = ifp
                 out = tf
                 verbosity = 0
-                full = False
                 clade_ids = None
-                from_table = None
-                from_id = None
             self.assertIsNone(taxtable.action(_Args()))
             # No output check at present
             self.assertTrue(tf.tell() > 0)
