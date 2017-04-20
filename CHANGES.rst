@@ -2,10 +2,14 @@
  change log for taxtastic
 ==========================
 
-0.5.7-dev
+0.6.0
 =========
  * ``taxit update_taxids --taxid-column`` allows updating of any tax_id column [GH-84]
  * ``taxit update_taxids --ignore-unknowns`` allows unknown tax_ids to remain in final output [GH-84]
+ * ``taxit new_database`` adds ncbi as the only entry in the source table [GH-91]
+ * ``taxit new_database`` adds a ranks table with all ranks appearing in the nodes table [GH-86]
+ * Any flavor of database can used with Taxtastic.  But only sqlite and Postgres have been tested.
+ * Numerous new features and performance improvements.
 
 0.5.7
 =====
