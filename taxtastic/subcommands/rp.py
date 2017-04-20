@@ -1,18 +1,3 @@
-"""Resolve path; get the path to a file in the reference package.
-
-See online documentation for ``taxit create`` for a list of
-permissible values for ``KEY``
-
-For example, write the absolute path to the file containing the
-phylogenetic tree in ``my.refpkg`` to stdout::
-
-  taxit rp my.refpkg tree
-
-Examine the contents of the seq_info file::
-
-  less $(taxit rp my.refpkg seq_info)
-
-"""
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -27,7 +12,20 @@ Examine the contents of the seq_info file::
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Resolve path; get the path to a file in the reference package
 
+See online documentation for ``taxit create`` for a list of
+permissible values for ``KEY``
+
+For example, write the absolute path to the file containing the
+phylogenetic tree in ``my.refpkg`` to stdout::
+
+  taxit rp my.refpkg tree
+
+Examine the contents of the seq_info file::
+
+  less $(taxit rp my.refpkg seq_info)
+"""
 import logging
 import sys
 

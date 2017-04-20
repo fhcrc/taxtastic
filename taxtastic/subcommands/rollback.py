@@ -1,12 +1,3 @@
-"""Undo an operation performed on a refpkg.
-
-Rollback ``N`` operations on ``refpkg`` (default to 1 operation if
-``-n`` is omitted).  This is equivalent to calling the ``rollback()``
-method of ``taxtastic.refpkg.Refpkg``.  If there are not at least
-``N`` operations that can be rolled back, an error is returned and no
-changes are made to the refpkg.
-
-"""
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -21,7 +12,14 @@ changes are made to the refpkg.
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Undo an operation performed on a refpkg
 
+Rollback ``N`` operations on ``refpkg`` (default to 1 operation if
+``-n`` is omitted).  This is equivalent to calling the ``rollback()``
+method of ``taxtastic.refpkg.Refpkg``.  If there are not at least
+``N`` operations that can be rolled back, an error is returned and no
+changes are made to the refpkg.
+"""
 import logging
 import sys
 

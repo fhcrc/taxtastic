@@ -12,8 +12,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-"""Add new nodes to a database containing a taxonomy."""
-
+"""Add new nodes to a database"""
 from taxtastic.taxonomy import Taxonomy, TaxonIntegrityError
 from taxtastic.utils import get_new_nodes
 
@@ -27,6 +26,10 @@ log = logging.getLogger(__name__)
 def build_parser(parser):
 
     parser.add_argument(
+        'url',
+        help='url to database')
+
+    parser.add_argument(
         'new_nodes',
         metavar='csv',
         help=('A csv file defining nodes to add to the taxonomy. '
@@ -35,10 +38,6 @@ def build_parser(parser):
               '"source_id" and "children". The "children" field should '
               'specify one or more existing taxids in a semicolon-'
               'delimited list. Other columns are ignored.'))
-
-    parser.add_argument(
-        'url',
-        help='url to database')
 
     parser.add_argument(
         '--schema',

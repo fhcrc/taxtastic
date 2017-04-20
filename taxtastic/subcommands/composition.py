@@ -12,7 +12,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-"""Show taxonomic composition of a reference package."""
+"""Show taxonomic composition of a reference package"""
 
 import logging
 import csv

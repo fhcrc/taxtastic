@@ -1,16 +1,3 @@
-"""Restore a change to a refpkg immediately after being reverted.
-
-Restore the last ``N`` rolled back operations on ``refpkg``, or the
-last operation if ``-n`` is omitted.  If there are not at least ``N``
-operations that can be rolled forward on this refpkg, then an error is
-returned and no changes are made to the refpkg.
-
-Note that operations can only be rolled forward immediately after
-being rolled back.  If any operation besides a rollback occurs, all
-roll forward information is removed.
-
-"""
-
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -25,7 +12,17 @@ roll forward information is removed.
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Restore a change to a refpkg immediately after being reverted
 
+Restore the last ``N`` rolled back operations on ``refpkg``, or the
+last operation if ``-n`` is omitted.  If there are not at least ``N``
+operations that can be rolled forward on this refpkg, then an error is
+returned and no changes are made to the refpkg.
+
+Note that operations can only be rolled forward immediately after
+being rolled back.  If any operation besides a rollback occurs, all
+roll forward information is removed.
+"""
 import logging
 
 from taxtastic import refpkg

@@ -1,5 +1,3 @@
-"""Identify merged taxids and provide replacements."""
-
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -14,7 +12,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-
+"""Identify merged taxids and provide replacements"""
 import argparse
 import csv
 import logging

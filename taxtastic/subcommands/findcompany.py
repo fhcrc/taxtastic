@@ -1,12 +1,3 @@
-"""Find company for lonely nodes.
-
-A command meant to follow ``lonelynodes``. Given a list of tax_ids
-produced by ``taxit lonelynodes``, produces another list of species
-tax_ids that can be added to the taxtable that would render those
-tax_ids no longer lonely.
-
-"""
-
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -21,7 +12,13 @@ tax_ids no longer lonely.
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Find company for lonely nodes
 
+A command meant to follow ``lonelynodes``. Given a list of tax_ids
+produced by ``taxit lonelynodes``, produces another list of species
+tax_ids that can be added to the taxtable that would render those
+tax_ids no longer lonely.
+"""
 import argparse
 import logging
 

@@ -12,7 +12,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-"""Validate a reference package.
+"""Validate a reference package
 
 Checks whether ``REFPKG`` is a valid input for ``pplacer``, that is,
 does it have a FASTA file of the reference sequences; a Stockholm file

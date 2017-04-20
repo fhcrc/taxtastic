@@ -1,12 +1,3 @@
-"""Extracts tax ids of all lonely nodes in a taxtable.
-
-Find nodes in ``target`` (which can be a CSV file extracted by ``taxit
-taxtable`` or a RefPkg containing such a file) which are lonely; that
-is, whose parents have only one child. Print them, one per line, to
-``stdout`` or to the file specified by the ``-o`` option.
-
-"""
-
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -21,7 +12,13 @@ is, whose parents have only one child. Print them, one per line, to
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Extracts tax ids of all lonely nodes in a taxtable
 
+Find nodes in ``target`` (which can be a CSV file extracted by ``taxit
+taxtable`` or a RefPkg containing such a file) which are lonely; that
+is, whose parents have only one child. Print them, one per line, to
+``stdout`` or to the file specified by the ``-o`` option.
+"""
 import argparse
 import logging
 import os
