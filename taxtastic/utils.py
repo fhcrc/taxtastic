@@ -18,6 +18,7 @@ import os
 import re
 import subprocess
 import sys
+import urlparse
 
 log = logging
 
@@ -230,3 +231,36 @@ def has_rppr(rppr_name='rppr'):
             # rppr returns non-zero exit status with no arguments
             pass
     return True
+
+
+def add_database_args(parser):
+    '''
+    Add a standard set of database arguments for argparse
+    '''
+    parser.add_argument(
+        'url',
+        default='sqlite:///ncbi_taxonomy.db',
+        nargs='?',
+        type=sqlite_default(),
+        help=('Database string URI or filename.  If no database scheme '
+              'specified \"sqlite:///\" will be prepended. [%(default)s]'))
+    db_parser = parser.add_argument_group(title='database options')
+    db_parser.add_argument(
+        '--schema',
+        help=('Name of SQL schema in database to query '
+              '(if database flavor supports this).'))
+
+    return parser
+
+
+def sqlite_default(default='sqlite///'):
+    '''
+    Prepend default scheme if none is specified. This helps provides backwards
+    compatibility with old versions of taxtastic where sqlite was the automatic
+    default database.
+    '''
+    def parse_url(url):
+        if urlparse.urlparse(url).scheme == '':
+            url = default + url
+        return url
+    return parse_url

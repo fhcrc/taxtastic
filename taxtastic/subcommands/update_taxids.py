@@ -25,11 +25,14 @@ import logging
 import pandas
 import sqlalchemy
 import sys
+import taxtastic
 
 log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
+    parser = taxtastic.utils.add_database_args(parser)
+
     parser.add_argument(
         'infile',
         nargs='?',
@@ -37,13 +40,6 @@ def build_parser(parser):
         help=('Input CSV file to process, minimally '
               'containing the fields `tax_id`. Rows with '
               'missing tax_ids are left unchanged.'))
-    parser.add_argument(
-        'url',
-        default='sqlite:///ncbi_taxonomy.db',
-        help='url to database [%(default)s]')
-    parser.add_argument(
-        '--schema',
-        help='database schema to use if applicable')
     parser.add_argument(
         '-o', '--out',
         default=sys.stdout,

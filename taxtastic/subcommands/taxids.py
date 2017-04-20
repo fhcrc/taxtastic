@@ -25,6 +25,7 @@ list (the ``-n`` of ``--name`` options).
 
 import logging
 import argparse
+import taxtastic
 import sys
 
 from sqlalchemy import create_engine
@@ -66,14 +67,7 @@ def get_children(engine, parent_ids, rank='species'):
 
 
 def build_parser(parser):
-
-    parser.add_argument(
-        'url',
-        default='sqlite:///ncbi_taxonomy.db',
-        help='url to database [%(default)s]')
-    parser.add_argument(
-        '--schema',
-        help='database schema to use if applicable')
+    parser = taxtastic.utils.add_database_args(parser)
 
     input_group = parser.add_argument_group(
         "Input options").add_mutually_exclusive_group()

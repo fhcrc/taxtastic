@@ -47,22 +47,13 @@ import sqlalchemy
 import sys
 
 from taxtastic.taxonomy import Taxonomy
-from taxtastic.utils import getlines
+from taxtastic.utils import getlines, add_database_args
 
 log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
-    parser.add_argument(
-        'url',
-        default='sqlite:///taxonomy.db',
-        help=('For ranks table. Include dialect and username and '
-              'password here if needed [%(default)s]'))
-
-    db_parser = parser.add_argument_group(title='database options')
-    db_parser.add_argument(
-        '--schema',
-        help='usually for a postgres db')
+    parser = add_database_args(parser)
 
     node_parser = parser.add_argument_group(title='node options')
     node_parser.add_argument(

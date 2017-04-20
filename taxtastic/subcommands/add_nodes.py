@@ -14,7 +14,7 @@
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 """Add new nodes to a database"""
 from taxtastic.taxonomy import Taxonomy, TaxonIntegrityError
-from taxtastic.utils import get_new_nodes
+from taxtastic.utils import get_new_nodes, add_database_args
 
 import logging
 import sqlalchemy
@@ -24,10 +24,7 @@ log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
-
-    parser.add_argument(
-        'url',
-        help='url to database')
+    parser = add_database_args(parser)
 
     parser.add_argument(
         'new_nodes',
@@ -38,10 +35,6 @@ def build_parser(parser):
               '"source_id" and "children". The "children" field should '
               'specify one or more existing taxids in a semicolon-'
               'delimited list. Other columns are ignored.'))
-
-    parser.add_argument(
-        '--schema',
-        help='database schema usually for a Postgres database')
 
     parser.add_argument(
         '-S', '--source-name',

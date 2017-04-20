@@ -20,7 +20,7 @@ import logging
 import re
 
 from taxtastic.taxonomy import Taxonomy
-from taxtastic.utils import getlines
+from taxtastic.utils import getlines, add_database_args
 
 from sqlalchemy import create_engine
 import os.path
@@ -30,14 +30,7 @@ log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
-
-    parser.add_argument(
-        'url',
-        default='sqlite:///ncbi_taxonomy.db',
-        help='url to database [%(default)s]')
-    parser.add_argument(
-        '--schema',
-        help='database schema to use if applicable')
+    parser = add_database_args(parser)
 
     input_group = parser.add_argument_group(
         "Input options").add_mutually_exclusive_group()

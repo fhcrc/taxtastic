@@ -28,15 +28,8 @@ log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
+    parser = taxtastic.utils.add_database_args(parser)
 
-    parser.add_argument(
-        'url',
-        default='sqlite:///ncbi_taxonomy.db',
-        nargs='?',
-        help='url to database [%(default)s]')
-    parser.add_argument(
-        '--schema',
-        help='database schema to use if applicable')
     parser.add_argument(
         '--append',
         action='store_false',
