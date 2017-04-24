@@ -31,8 +31,6 @@ log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
-    parser = taxtastic.utils.add_database_args(parser)
-
     parser.add_argument(
         'infile',
         nargs='?',
@@ -40,6 +38,9 @@ def build_parser(parser):
         help=('Input CSV file to process, minimally '
               'containing the fields `tax_id`. Rows with '
               'missing tax_ids are left unchanged.'))
+
+    parser = taxtastic.utils.add_database_args(parser)
+
     parser.add_argument(
         '-o', '--out',
         default=sys.stdout,

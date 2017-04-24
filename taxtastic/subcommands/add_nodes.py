@@ -24,7 +24,6 @@ log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
-    parser = add_database_args(parser)
 
     parser.add_argument(
         'new_nodes',
@@ -35,6 +34,8 @@ def build_parser(parser):
               '"source_id" and "children". The "children" field should '
               'specify one or more existing taxids in a semicolon-'
               'delimited list. Other columns are ignored.'))
+
+    parser = add_database_args(parser)
 
     parser.add_argument(
         '-S', '--source-name',

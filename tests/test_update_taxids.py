@@ -29,7 +29,7 @@ class TestUpdateTaxids(config.TestBase):
         """
         Minimal inputs
         """
-        args = [self.small_taxonomy_db, self.seq_info]
+        args = [self.seq_info, self.small_taxonomy_db]
         log.info(self.log_info + ' '.join(map(str, args)))
         # ValueError: Unknown or missing tax_ids present
         self.assertRaises(ValueError, self.main, args)
@@ -43,7 +43,7 @@ class TestUpdateTaxids(config.TestBase):
         ref = os.path.join(thisdata_path, this_test, 'update.csv')
         outdir = self.mkoutdir()
         out = os.path.join(outdir, 'update.csv')
-        args = ['--ignore-unknowns', '--out', out, self.small_taxonomy_db, self.seq_info]
+        args = ['--ignore-unknowns', '--out', out, self.seq_info, self.small_taxonomy_db]
         log.info(self.log_info + ' '.join(map(str, args)))
         self.main(args)
         self.assertTrue(filecmp.cmp(out, ref))
@@ -63,8 +63,8 @@ class TestUpdateTaxids(config.TestBase):
         args = [
             '--unknowns', out_unknowns,
             '--out', out_info,
-            self.small_taxonomy_db,
-            self.seq_info]
+            self.seq_info,
+            self.small_taxonomy_db]
         log.info(self.log_info + ' '.join(map(str, args)))
         self.main(args)
         self.assertTrue(filecmp.cmp(out_info, ref_info))
@@ -84,8 +84,8 @@ class TestUpdateTaxids(config.TestBase):
             '--ignore-unknowns',
             '--name-column', 'tax_name',
             '--out', out_info,
-            self.small_taxonomy_db,
-            self.seq_info]
+            self.seq_info,
+            self.small_taxonomy_db]
         log.info(self.log_info + ' '.join(map(str, args)))
         self.main(args)
         self.assertTrue(filecmp.cmp(out_info, ref_info))
