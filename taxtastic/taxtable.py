@@ -287,8 +287,8 @@ class TaxNode(object):
         path_root = headers.index('root')
         root.ranks = headers[path_root:]
         for row in rows:
-            rank, tax_id, name = [row[i]
-                                  for i in ('rank', 'tax_id', 'tax_name')]
+            rank, tax_id, name = [
+                row[i] for i in ('rank', 'tax_id', 'tax_name')]
             path = filter(None, row.values()[path_root:])
             parent = root.path(path[:-1])
             parent.add_child(cls(rank, tax_id, name=name))
