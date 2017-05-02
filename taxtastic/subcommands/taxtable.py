@@ -57,10 +57,6 @@ def build_parser(parser):
 
     node_parser = parser.add_argument_group(title='node options')
     node_parser.add_argument(
-        '--from-scratch',
-        action='store_true',
-        help='Ignore any existing taxtables in database')
-    node_parser.add_argument(
         '--valid',
         action='store_true',
         help='include only valid nodes')
@@ -124,7 +120,7 @@ def action(args):
     subset_ids = set()
 
     # check tax_ids subsets first before building taxtable
-    if any([args.tax_ids, args.taxnames, args.seq_info, args.valid]):
+    if any([args.tax_ids, args.taxnames, args.seq_info]):
         tax = Taxonomy(engine, schema=args.schema)
         if args.tax_ids:
             if os.access(args.tax_ids, os.F_OK):
@@ -150,35 +146,24 @@ def action(args):
                         name.strip())
                     subset_ids.add(tax_id)
 
-        if args.valid:
-            nodes = get_nodes(engine, args.schema)
-            subset_ids.update(set(nodes[nodes['is_valid']].index))
-
         if not subset_ids:
             log.error('no tax_ids to subset taxtable, exiting')
             return
 
-    # construct taxtable either from previously built taxtable or tax database
-    if (engine.dialect.has_table(engine, 'taxonomy', schema=args.schema) and
-            not args.from_scratch):
-        log.info('using existing database taxonomy table')
-        taxtable = pandas.read_sql_table(
-            'taxonomy', engine,
-            schema=args.schema,
-            index_col='tax_id')
-    else:
-        log.info('building taxtable')
-        if nodes is None:
-            nodes = get_nodes(engine, args.schema)
-        names = pandas.read_sql_table(
-            'names', engine,
-            schema=args.schema,
-            columns=['tax_id', 'tax_name', 'is_primary'])
-        names = names[names['is_primary']].set_index('tax_id')
-        len_nodes = len(nodes)
-        nodes = nodes.join(names['tax_name'])
-        assert len_nodes == len(nodes)
-        taxtable = build_taxtable(nodes, ranks)
+    log.info('building taxtable')
+    nodes = pandas.read_sql_table(
+        'nodes', engine,
+        schema=args.schema,
+        index_col='tax_id')
+    names = pandas.read_sql_table(
+        'names', engine,
+        schema=args.schema,
+        columns=['tax_id', 'tax_name', 'is_primary'])
+    names = names[names['is_primary']].set_index('tax_id')
+    len_nodes = len(nodes)
+    nodes = nodes.join(names['tax_name'])
+    assert len_nodes == len(nodes)
+    taxtable = build_taxtable(nodes, ranks)
 
     # subset taxtable clade lineages
     if args.clade_ids:
@@ -213,6 +198,9 @@ def action(args):
     if args.ranked:
         ranks = ranks_df[~ranks_df['no_rank']]['rank'].tolist()
         taxtable = taxtable[taxtable['rank'].isin(ranks)]
+
+    if args.valid:
+        taxtable = taxtable[taxtable['is_valid']]
 
     # clean up empty rank columns
     taxtable = taxtable.dropna(axis=1, how='all')
@@ -293,11 +281,3 @@ def build_taxtable(nodes, ranks):
         sys.stderr.write(msg.format(parent))
 
     return lineages.drop('rank_parent', axis=1).set_index(df_index_name)
-
-
-def get_nodes(engine, schema):
-    nodes = pandas.read_sql_table(
-        'nodes', engine,
-        schema=schema,
-        index_col='tax_id')
-    return nodes
