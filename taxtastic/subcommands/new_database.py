@@ -22,6 +22,8 @@ the same directory as ``database_file`` will be created in unless you
 specify ``-p`` or ``--download-dir``.
 """
 import logging
+import sqlalchemy
+import sys
 import taxtastic
 
 log = logging.getLogger(__name__)
@@ -56,6 +58,8 @@ def build_parser(parser):
         help="""Name of the directory into which to download the zip
              archive. [default is the same directory as the database file]""")
 
+    parser.add_argument('--out', default=sys.stdout, help='table sql')
+
 
 def action(args):
     if args.taxdump_file:
@@ -66,9 +70,17 @@ def action(args):
             dest_dir=zip_dest,
             clobber=args.clobber,
             url=args.taxdump_url)
-    engine = taxtastic.ncbi.db_connect(
-        args.url,
-        schema=args.schema,
-        clobber=args.clobber,
-        verbosity=args.verbosity)
+    engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
+    base = taxtastic.ncbi.db_connect(
+        engine, schema=args.schema, clobber=args.clobber)
     taxtastic.ncbi.db_load(engine, zfile, schema=args.schema)
+    print_sql(args.out, engine.name, base.metadata)
+
+
+def print_sql(out, engine_name, metadata):
+    def dump(sql, *multiparams, **params):
+        out.write(str(sql.compile(dialect=dump.dialect)).strip() + ';\n')
+    engine = sqlalchemy.create_engine(
+        engine_name + '://', strategy='mock', executor=dump)
+    dump.dialect = engine.dialect
+    metadata.create_all(bind=engine)

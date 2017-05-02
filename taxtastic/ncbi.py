@@ -189,24 +189,20 @@ def define_schema(Base):
         nodes = relationship('Node')
 
 
-def db_connect(url, schema=None, clobber=False, verbosity=0):
+def db_connect(engine, schema=None, clobber=False):
     """
     Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
     True and return otherwise. Returns a sqlalchemy engine object.
     """
-
-    logging.debug('Connecting to database ' + url)
-    engine = sqlalchemy.create_engine(url, echo=verbosity > 2)
-
-    if schema is not None:
+    if schema is None:
+        base = declarative_base()
+    else:
         try:
             engine.execute(sqlalchemy.schema.CreateSchema(schema))
         except sqlalchemy.exc.ProgrammingError as err:
             logging.warn(err)
         base = declarative_base(metadata=MetaData(schema=schema))
-    else:
-        base = declarative_base()
 
     define_schema(base)
 
@@ -217,7 +213,7 @@ def db_connect(url, schema=None, clobber=False, verbosity=0):
     logging.info('Creating database tables')
     base.metadata.create_all(bind=engine)
 
-    return engine
+    return base
 
 
 def db_load(engine, archive, schema=None):

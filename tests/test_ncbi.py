@@ -24,7 +24,8 @@ ncbi_data = config.ncbi_data
 class TestDbconnect(TestBase):
 
     def test01(self):
-        engine = taxtastic.ncbi.db_connect(url='sqlite:///' + ncbi_master_db)
+        engine = sqlalchemy.create_engine('sqlite:///' + ncbi_master_db)
+        taxtastic.ncbi.db_connect(engine)
         with engine.begin() as con:
             result = con.execute(
                 'select name from sqlite_master where type = "table"')
@@ -44,15 +45,16 @@ class TestLoadData(TestBase):
     def test01(self):
         # we should be starting from scratch
         self.assertFalse(path.isfile(self.url))
+        engine = sqlalchemy.create_engine(self.url)
 
-        engine = taxtastic.ncbi.db_connect(url=self.url)
+        taxtastic.ncbi.db_connect(engine)
         taxtastic.ncbi.db_load(engine, ncbi_data)
         with engine.begin() as conn:
             result = conn.execute('select 1 AS i from names')
             self.assertEqual(self.names_rows_count, len(list(result)))
 
         # test clobber argument
-        engine = taxtastic.ncbi.db_connect(url=self.url, clobber=True)
+        taxtastic.ncbi.db_connect(engine, clobber=True)
         taxtastic.ncbi.db_load(engine, ncbi_data)
         with engine.begin() as conn:
             result = conn.execute('select 1 AS i from names')
