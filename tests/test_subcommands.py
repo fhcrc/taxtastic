@@ -293,6 +293,7 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                 out = tf
                 verbosity = 0
                 clade_ids = None
+                taxtable = None
             self.assertIsNone(taxtable.action(_Args()))
             # No output check at present
             self.assertTrue(tf.tell() > 0)

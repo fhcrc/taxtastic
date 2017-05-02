@@ -68,6 +68,11 @@ def build_parser(parser):
     input_group = parser.add_argument_group('input options')
 
     input_group.add_argument(
+        '--taxtable',
+        metavar='CSV',
+        help='build from a previous built taxtable')
+
+    input_group.add_argument(
         '--clade-ids',
         help=('return top-down tax_id clades'))
 
@@ -150,20 +155,22 @@ def action(args):
             log.error('no tax_ids to subset taxtable, exiting')
             return
 
-    log.info('building taxtable')
-    nodes = pandas.read_sql_table(
-        'nodes', engine,
-        schema=args.schema,
-        index_col='tax_id')
-    names = pandas.read_sql_table(
-        'names', engine,
-        schema=args.schema,
-        columns=['tax_id', 'tax_name', 'is_primary'])
-    names = names[names['is_primary']].set_index('tax_id')
-    len_nodes = len(nodes)
-    nodes = nodes.join(names['tax_name'])
-    assert len_nodes == len(nodes)
-    taxtable = build_taxtable(nodes, ranks)
+    if args.taxtable:
+        taxtable = pandas.read_csv(args.taxtable, dtype=str)
+        taxtable = taxtable.set_index('tax_id')
+        nodes = None
+    else:
+        log.info('building taxtable')
+        nodes = get_nodes(engine, schema=args.schema)
+        names = pandas.read_sql_table(
+            'names', engine,
+            schema=args.schema,
+            columns=['tax_id', 'tax_name', 'is_primary'])
+        names = names[names['is_primary']].set_index('tax_id')
+        len_nodes = len(nodes)
+        nodes = nodes.join(names['tax_name'])
+        assert len_nodes == len(nodes)
+        taxtable = build_taxtable(nodes, ranks)
 
     # subset taxtable clade lineages
     if args.clade_ids:
@@ -200,6 +207,14 @@ def action(args):
         taxtable = taxtable[taxtable['rank'].isin(ranks)]
 
     if args.valid:
+        if nodes is None:
+            nodes = get_nodes(engine, schema=args.schema)
+            taxtable = taxtable.join(nodes['is_valid'])
+        invalid = taxtable[~taxtable['is_valid']]
+        # remove all invalids from the rank columns
+        for r, g in invalid.groupby(by='rank'):
+            taxtable.loc[taxtable[r].isin(g.index), r] = None
+        # remove invalid rows
         taxtable = taxtable[taxtable['is_valid']]
 
     # clean up empty rank columns
@@ -281,3 +296,9 @@ def build_taxtable(nodes, ranks):
         sys.stderr.write(msg.format(parent))
 
     return lineages.drop('rank_parent', axis=1).set_index(df_index_name)
+
+
+def get_nodes(engine, schema=None):
+    nodes = pandas.read_sql_table(
+        'nodes', engine, schema=schema, index_col='tax_id')
+    return nodes
