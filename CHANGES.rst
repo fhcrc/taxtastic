@@ -2,7 +2,19 @@
  change log for taxtastic
 ==========================
 
+0.6.3
+=====
+  * root is now a valid node
+
 0.6.2
+=====
+  * bug fixes
+
+0.6.1
+=====
+  * bug fixes
+
+0.6.0
 =========
  * ``taxit update_taxids --taxid-column`` allows updating of any tax_id column [GH-84]
  * ``taxit update_taxids --ignore-unknowns`` allows unknown tax_ids to remain in final output [GH-84]
