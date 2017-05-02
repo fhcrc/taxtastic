@@ -21,6 +21,7 @@ already exists, it will fail and leave it untouched unless you specify
 the same directory as ``database_file`` will be created in unless you
 specify ``-p`` or ``--download-dir``.
 """
+import argparse
 import logging
 import sqlalchemy
 import sys
@@ -58,7 +59,11 @@ def build_parser(parser):
         help="""Name of the directory into which to download the zip
              archive. [default is the same directory as the database file]""")
 
-    parser.add_argument('--out', default=sys.stdout, help='table sql')
+    parser.add_argument(
+        '--out',
+        type=argparse.FileType('w'),
+        default=sys.stdout,
+        help='table sql')
 
 
 def action(args):
