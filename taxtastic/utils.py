@@ -253,7 +253,7 @@ def add_database_args(parser):
     return parser
 
 
-def sqlite_default(default='sqlite///'):
+def sqlite_default(default='sqlite:///'):
     '''
     Prepend default scheme if none is specified. This helps provides backwards
     compatibility with old versions of taxtastic where sqlite was the automatic
