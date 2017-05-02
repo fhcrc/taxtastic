@@ -33,6 +33,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 DATA_URL = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
+# For rank order: https://en.wikipedia.org/wiki/Taxonomic_rank
 RANKS = [
     'forma',
     'varietas',
@@ -52,6 +53,7 @@ RANKS = [
     'suborder',
     'order',
     'superorder',
+    'cohort',
     'infraclass',
     'subclass',
     'class',
