@@ -136,6 +136,7 @@ def action(args):
                     [x.strip() for x in re.split(r'[\s,;]+', args.tax_ids)])
 
         if args.seq_info:
+            log.info('reading tax_ids ' + args.seq_info.name)
             with args.seq_info:
                 reader = csv.DictReader(args.seq_info)
                 subset_ids.update(
@@ -155,13 +156,17 @@ def action(args):
             log.error('no tax_ids to subset taxtable, exiting')
             return
 
+    log.info('loading nodes table from database')
+    nodes = pandas.read_sql_table(
+        'nodes', engine, schema=args.schema, index_col='tax_id')
+
     if args.taxtable:
+        log.info('using existing taxtable ' + args.taxtable)
         taxtable = pandas.read_csv(args.taxtable, dtype=str)
         taxtable = taxtable.set_index('tax_id')
-        nodes = None
+        taxtable = taxtable.join(nodes[['parent_id', 'is_valid']])
     else:
         log.info('building taxtable')
-        nodes = get_nodes(engine, schema=args.schema)
         names = pandas.read_sql_table(
             'names', engine,
             schema=args.schema,
@@ -174,6 +179,7 @@ def action(args):
 
     # subset taxtable clade lineages
     if args.clade_ids:
+        dtypes = taxtable.dtypes
         clades = []
         for i in args.clade_ids.split(','):
             ancestor = taxtable.loc[i]
@@ -188,10 +194,14 @@ def action(args):
                     [pandas.DataFrame(parent).T, clade])
                 ancestor = parent
             # reset lost index name after concatenating transposed series
-            clade.index.name = 'tax_id'
             clades.append(clade)
         taxtable = pandas.concat(clades)
         taxtable = taxtable[~taxtable.index.duplicated()]
+
+        # set index.name and dtypes back after concating transposed series
+        taxtable.index.name = 'tax_id'
+        for d, t in dtypes.iteritems():
+            taxtable[d] = taxtable[d].astype(t)
 
     # subset taxtable by set of tax_ids
     if subset_ids:
@@ -207,9 +217,6 @@ def action(args):
         taxtable = taxtable[taxtable['rank'].isin(ranks)]
 
     if args.valid:
-        if nodes is None:
-            nodes = get_nodes(engine, schema=args.schema)
-            taxtable = taxtable.join(nodes['is_valid'])
         invalid = taxtable[~taxtable['is_valid']]
         # remove all invalids from the rank columns
         for r, g in invalid.groupby(by='rank'):
@@ -296,9 +303,3 @@ def build_taxtable(nodes, ranks):
         sys.stderr.write(msg.format(parent))
 
     return lineages.drop('rank_parent', axis=1).set_index(df_index_name)
-
-
-def get_nodes(engine, schema=None):
-    nodes = pandas.read_sql_table(
-        'nodes', engine, schema=schema, index_col='tax_id')
-    return nodes
