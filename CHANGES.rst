@@ -2,6 +2,12 @@
  change log for taxtastic
 ==========================
 
+0.6.4
+=====
+  * rank cohort has been added as an official rank
+  * ``taxit taxtable --taxtable`` has been added back to work from a pre-built taxtable.  This switch used
+    to be called ``--from-table``
+
 0.6.3
 =====
   * root is now a valid node
