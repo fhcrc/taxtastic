@@ -165,8 +165,10 @@ def define_schema(Base):
         tax_name = Column(String)
         unique_name = Column(String)
         name_class = Column(String)
+        source_id = Column(Integer, ForeignKey('source.id'))
         is_primary = Column(Boolean)
         is_classified = Column(Boolean)
+        sources = relationship('Source', back_populates='names')
 
     Index('ix_names_tax_id_is_primary', Name.tax_id, Name.is_primary)
 
@@ -189,6 +191,7 @@ def define_schema(Base):
         name = Column(String, unique=True)
         description = Column(String)
         nodes = relationship('Node')
+        names = relationship('Name')
 
 
 def db_connect(engine, schema=None, clobber=False):
@@ -235,6 +238,7 @@ def db_load(engine, archive, schema=None):
         rows=read_archive(archive, 'names.dmp'),
         unclassified_regex=UNCLASSIFIED_REGEX)
     names = pandas.DataFrame(rows)
+    names['source_id'] = 1
 
     assert_primaries(names)  # this should always exist
 
