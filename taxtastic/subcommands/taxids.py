@@ -1,13 +1,3 @@
-"""Convert a list of taxonomic names into a list of tax_ids
-
-``ncbi_taxonomy.db`` must be a database created by ``taxit
-new_database``, containing a taxonomy. The names to convert can be
-specified in a text file with one name per line (the ``-f`` or
-``--name-file`` options) or on the command line as a comma delimited
-list (the ``-n`` of ``--name`` options).
-
-"""
-
 # This file is part of taxtastic.
 #
 #    taxtastic is free software: you can redistribute it and/or modify
@@ -22,20 +12,25 @@ list (the ``-n`` of ``--name`` options).
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+"""Convert a list of taxonomic names into a recursive list of species
+leve tax_ids.
 
+``The names to convert can be specified in a text file with one name
+per line (the ``-f`` or ``--name-file`` options) or on the command
+line as a comma delimited list (the ``-n`` of ``--name`` options).
+"""
 import logging
 import argparse
 import taxtastic
+import sqlalchemy
 import sys
-
-from sqlalchemy import create_engine
 
 from taxtastic.taxonomy import Taxonomy
 
 log = logging.getLogger(__name__)
 
 
-def get_children(engine, parent_ids, rank='species'):
+def get_children(engine, parent_ids, rank='species', schema=None):
     """
     Recursively fetch children of tax_ids in `parent_ids` until the
     rank of `rank`
@@ -44,20 +39,21 @@ def get_children(engine, parent_ids, rank='species'):
     if not parent_ids:
         return []
 
-    cmd = """
-    select tax_id, tax_name, rank from nodes join names using (tax_id)
-    where parent_id = "%s"
-    and is_primary = 1
-    """
+    nodes = schema + '.nodes' if schema else 'nodes'
+    names = schema + '.names' if schema else 'names'
+
+    cmd = ('select tax_id, tax_name, rank '
+           'from {} join {} using (tax_id) '
+           'where parent_id = :tax_id and is_primary').format(nodes, names)
 
     species = []
     for parent_id in parent_ids:
-        result = engine.execute(cmd % parent_id)
+        result = engine.execute(sqlalchemy.sql.text(cmd), tax_id=parent_id)
         keys = result.keys()
         rows = [dict(zip(keys, row)) for row in result.fetchall()]
-        species.extend([r for r in rows
-                        if r['rank'] == rank and 'sp.' not in r['tax_name']])
-
+        for r in rows:
+            if r['rank'] == rank and 'sp.' not in r['tax_name']:
+                species.append(r)
         others = [r for r in rows if r['rank'] not in (rank, 'no_rank')]
         if others:
             _, s = get_children(engine, [r['tax_id'] for r in others])
@@ -92,11 +88,10 @@ def build_parser(parser):
 
 def action(args):
 
-    dbfile = args.dbfile
     taxnames_file = args.taxnames_file
     taxnames = args.taxnames
 
-    engine = create_engine(args.url, echo=False)
+    engine = sqlalchemy.create_engine(args.url, echo=False)
     tax = Taxonomy(engine, schema=args.schema)
 
     names = []
@@ -115,7 +110,8 @@ def action(args):
         try:
             tax_id, tax_name, is_primary = tax.primary_from_name(name)
         except ValueError:
-            note = 'not found'
+            log.warning(name + ' not found')
+            continue
         else:
             parent, rank = tax._node(tax_id)
             note = '' if is_primary else 'not primary'
@@ -127,7 +123,7 @@ def action(args):
         if rank == 'species':
             taxa[tax_id] = dict(tax_id=tax_id, tax_name=tax_name, rank=rank)
         else:
-            keys, rows = get_children(engine, [tax_id])
+            keys, rows = get_children(engine, [tax_id], schema=args.schema)
             taxa.update(dict((row['tax_id'], row) for row in rows))
 
     for d in sorted(taxa.values(), key=lambda x: x['tax_name']):
