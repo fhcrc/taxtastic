@@ -68,7 +68,11 @@ def build_parser(parser):
 
 
 def action(args):
-    rows = pandas.read_csv(args.infile, dtype='str')
+    try:
+        rows = pandas.read_csv(args.infile, dtype='str')
+    except pandas.io.common.EmptyDataError as e:
+        log.error(e)
+        return
     columns = rows.columns.tolist()  # preserve column order
 
     if args.taxid_column not in columns:
