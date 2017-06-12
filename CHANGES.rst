@@ -2,9 +2,9 @@
  change log for taxtastic
 ==========================
 
-0.6.5 
-=====
-  * Records containing the word "group" in taxonomic name are no longer flagged as unclassified/invalid (#93)
+0.6.4-dev 
+=========
+  * Records containing the word "group" in taxonomic name are no longer flagged as unclassified/invalid [GH-93]
   
 0.6.4
 =====
