@@ -174,19 +174,16 @@ class TestWriteTable(TaxTableSetup):
         self.file = open(self.fname, 'w')
 
     def tearDown(self):
-        self.tax.write_table(taxa=None, csvfile=self.file)
         self.file.close()
         self.assertTrue(path.isfile(self.fname))
 
     def test02(self):
         tax_id = '1280'  # staph aureus
-        self.tax.lineage(tax_id)
+        self.tax.write_table(taxa=[tax_id], csvfile=self.file)
 
     def test03(self):
         tax_id = '1378'  # Gemella; lineage has two successive no_rank taxa
-        self.tax.lineage(tax_id)
+        self.tax.write_table(taxa=[tax_id], csvfile=self.file)
 
     def test04(self):
-        tax_id = '1378'  # Gemella; lineage has two successive no_rank taxa
-        for tax_id in ['1378', '1280', '131110']:
-            self.tax.lineage(tax_id)
+        self.tax.write_table(taxa=['1378', '1280', '131110'], csvfile=self.file)

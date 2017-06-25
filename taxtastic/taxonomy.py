@@ -17,7 +17,6 @@ The Taxonomy class defines an object providing an interface to
 the taxonomy database.
 """
 import csv
-import itertools
 import logging
 
 import sqlalchemy
@@ -73,7 +72,8 @@ class Taxonomy(object):
         self.names = self.meta.tables[schema_prefix + 'names']
         self.source = self.meta.tables[schema_prefix + 'source']
         self.merged = self.meta.tables[schema_prefix + 'merged']
-        ranks = select([self.meta.tables[schema_prefix + 'ranks'].c.rank]).execute().fetchall()
+        ranks = select(
+            [self.meta.tables[schema_prefix + 'ranks'].c.rank]).execute().fetchall()
         self.ranks = [r[0] for r in ranks]
 
         if 'taxonomy' in self.meta.tables:
@@ -81,16 +81,19 @@ class Taxonomy(object):
         else:
             self.taxonomy = None
 
-        # keys: tax_id
-        # vals: lineage represented as a list of tuples: (rank, tax_id)
-        self.cached = {}
-
-        # keys: tax_id
-        # vals: lineage represented as a dict of {rank:tax_id}
-        # self.taxa = {}
-
         self.NO_RANK = NO_RANK
         self.undef_prefix = undef_prefix
+
+        self.cached = {}
+
+        # TODO: can probably remove this check at some point;
+        # historically the root node had tax_id == parent_id ==
+        # '1', but with a recursive CTE, parent_id must be None for
+        # the recursive expression to terminate.
+        # with self.engine.connect() as con:
+        #     result = con.execute("select parent_id from nodes where rank = 'root'")
+        #     if result.fetchone()[0] is not None:
+        #         raise TaxonIntegrityError('the root node must have parent_id = None')
 
     def _add_rank(self, rank, parent_rank):
         """
@@ -185,6 +188,41 @@ class Taxonomy(object):
             output = old_tax_id
 
         return output
+
+    def _get_lineage2(self, tax_id, merge_obsolete=True):
+        """Return a list of [(rank, tax_id)] describing the lineage of
+        tax_id. If ``merge_obsolete`` is True and ``tax_id`` has been
+        replaced, use the corresponding value in table merged.
+
+        """
+
+        # Be sure we aren't working with an obsolete tax_id
+        if merge_obsolete:
+            tax_id = self._get_merged(tax_id)
+
+        # Note: joining with ranks seems like a no-op, but for some
+        # reason it results in a faster query using sqlite, as well as
+        # an ordering from leaf --> root. Might be a better idea to
+        # sort explicitly if this is the expected behavior, but it
+        # seems like for the most part, the lineage is converted to a
+        # dict and the order is irrelevant.
+        cmd = """
+        WITH RECURSIVE a AS (
+         SELECT tax_id, parent_id, rank
+          FROM nodes
+          WHERE tax_id = {}
+        UNION ALL
+         SELECT p.tax_id, p.parent_id, p.rank
+          FROM a JOIN nodes p ON a.parent_id = p.tax_id
+        )
+        SELECT a.rank, a.tax_id FROM a
+        JOIN ranks using(rank)
+        """.format('%s' if self.engine.name == 'postgresql' else '?')
+
+        # reorder so that root is first
+        with self.engine.connect() as con:
+            result = con.execute(cmd, (tax_id,))
+            return result.fetchall()[::-1]
 
     def _get_lineage(self, tax_id, _level=0, merge_obsolete=True):
         """
@@ -295,48 +333,50 @@ class Taxonomy(object):
 
         if tax_name:
             tax_id, primary_name, is_primary = self.primary_from_name(tax_name)
+        else:
+            primary_name = None
 
-        ldict = dict(self._get_lineage(tax_id))
+        # assumes stable ordering of lineage from root --> leaf
+        lintups = self._get_lineage(tax_id)
+        ldict = dict(lintups)
 
         ldict['tax_id'] = tax_id
-        ldict['parent_id'], _ = self._node(tax_id)
-        ldict['rank'] = self.cached[tax_id][-1][0]
-        ldict['tax_name'] = self.primary_from_id(tax_id)
+        try:
+            # parent is second to last element, except for root
+            __, ldict['parent_id'] = lintups[-2]
+        except IndexError:
+            ldict['parent_id'] = None
+
+        ldict['rank'], __ = lintups[-1]  # this taxon is last element in lineage
+        ldict['tax_name'] = primary_name or self.primary_from_id(tax_id)
 
         return ldict
 
-    def write_table(self, taxa=None, csvfile=None, full=False):
-        """
-        Represent the currently defined taxonomic lineages as a rectangular
-        array with columns named "tax_id","rank","tax_name", followed
-        by a column for each rank proceeding from the root to the more
-        specific ranks.
+    def write_table(self, taxa, csvfile=None, full=False):
+        """Represent taxonomic lineages for taxa as a rectangular array
+        with columns named "tax_id", "parent_id", "rank", "tax_name",
+        followed by a column for each rank proceeding from the root to
+        the more specific ranks.
 
-         * taxa - list of taxids to include in the output; if none are
-           provided, use self.cached.keys()
-           (ie, those taxa loaded into the cache).
+         * taxa - list of taxids to include in the output
          * csvfile - an open file-like object
            (see "csvfile" argument to csv.writer)
          * full - if True (the default), includes a column
                   for each rank in self.ranks; otherwise, omits ranks (columns)
                   the are undefined for all taxa.
+
         """
 
-        if not taxa:
-            taxa = self.cached.keys()
-            lin = self.cached.values()
-        else:
-            lin = [self._get_lineage(tax_id) for tax_id in taxa]
+        lineages = [self.lineage(tax_id) for tax_id in taxa]
 
         # which ranks are actually represented?
         if full:
             ranks = self.ranks
         else:
-            represented = set(itertools.chain.from_iterable(
-                [[node[0] for node in lineage] for lineage in lin]))
+            # a set containing ranks represented in all lineages
+            represented = reduce(
+                set.union, [set(lineage.keys()) for lineage in lineages])
             ranks = [r for r in self.ranks if r in represented]
-
-        lineages = [self.lineage(tax_id) for tax_id in taxa]
 
         fields = ['tax_id', 'parent_id', 'rank', 'tax_name'] + ranks
         writer = csv.DictWriter(csvfile, fieldnames=fields,
