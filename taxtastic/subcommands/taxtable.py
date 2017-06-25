@@ -59,11 +59,11 @@ def build_parser(parser):
     node_parser.add_argument(
         '--valid',
         action='store_true',
-        help='include only valid nodes')
+        help='Include only valid nodes.')
     node_parser.add_argument(
         '--ranked',
-        action='store_true',
-        help='include only ranked nodes (drop no_rank nodes)')
+        choices=['columns', 'rows'],
+        help='Include only ranked columns or ranked rows and columns.')
 
     input_group = parser.add_argument_group('input options')
 
@@ -211,28 +211,36 @@ def action(args):
                 subset_ids.update(keepers[col].dropna().values)
         taxtable = taxtable.loc[subset_ids]
 
-    # drop no rank nodes
+    # drop no_rank rows and/or columns
     if args.ranked:
-        ranks = ranks_df[~ranks_df['no_rank']]['rank'].tolist()
-        taxtable = taxtable[taxtable['rank'].isin(ranks)]
+        rank_cols = ranks_df[~ranks_df['no_rank']]['rank'].tolist()
+        if args.ranked == 'rows':
+            # drop rows not in ranked columns
+            taxtable = taxtable[taxtable['rank'].isin(rank_cols)]
+    else:
+        # keep all columns
+        rank_cols = ranks_df['rank'].tolist()
 
+    # drop invalid nodes throughout taxtable
     if args.valid:
-        invalid = taxtable[~taxtable['is_valid']]
         # remove all invalids from the rank columns
+        invalid = taxtable[~taxtable['is_valid']]
         for r, g in invalid.groupby(by='rank'):
-            taxtable.loc[taxtable[r].isin(g.index), r] = None
-        # remove invalid rows
+            if r in rank_cols:
+                taxtable.loc[taxtable[r].isin(g.index), r] = None
+            # else don't bother with columns that will be dropped
         taxtable = taxtable[taxtable['is_valid']]
 
     # clean up empty rank columns
     taxtable = taxtable.dropna(axis=1, how='all')
 
-    # sort final column output
+    # select and sort final column output
     taxtable = taxtable[
-        ['rank', 'tax_name'] + [r for r in ranks if r in taxtable.columns]]
+        ['rank', 'tax_name'] + [r for r in rank_cols if r in taxtable.columns]]
 
     # sort rows
-    taxtable['rank'] = taxtable['rank'].astype('category', categories=ranks)
+    taxtable['rank'] = taxtable['rank'].astype(
+        'category', categories=ranks_df['rank'].tolist())
     taxtable = taxtable.sort_values('rank')
 
     # write and close db
