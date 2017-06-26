@@ -47,16 +47,12 @@ class TestGetLineagePrivate(TaxTableSetup):
     def test02(self):
         tax_id = '1280'  # staph aureus
 
-        self.assertFalse(tax_id in self.tax.cached)
         lineage = self.tax._get_lineage(tax_id)
-        self.assertTrue(tax_id in self.tax.cached)
         self.assertTrue(lineage[0][0] == 'root')
         self.assertTrue(lineage[-1][0] == 'species')
 
     def test03(self):
         tax_id = '30630'  # deprecated; Microtus levis Taxonomy ID: 537919
-
-        self.assertFalse(tax_id in self.tax.cached)
         self.assertRaises(ValueError, self.tax._get_lineage, tax_id,
                           merge_obsolete=False)
 
@@ -111,10 +107,7 @@ class TestGetLineagePublic(TaxTableSetup):
 
     def test02(self):
         tax_id = '1280'  # staph aureus
-
-        self.assertFalse(tax_id in self.tax.cached)
         lineage = self.tax.lineage(tax_id)
-        self.assertTrue(tax_id in self.tax.cached)
         self.assertTrue(lineage['rank'] == 'species')
 
         keys = set(lineage.keys())
