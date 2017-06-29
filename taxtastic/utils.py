@@ -12,6 +12,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+import ConfigParser
 import csv
 import logging
 import os
@@ -239,7 +240,7 @@ def add_database_args(parser):
     '''
     parser.add_argument(
         'url',
-        default='sqlite:///ncbi_taxonomy.db',
+        default='url.conf',
         nargs='?',
         type=sqlite_default(),
         help=('Database string URI or filename.  If no database scheme '
@@ -260,7 +261,12 @@ def sqlite_default(default='sqlite:///'):
     default database.
     '''
     def parse_url(url):
-        if urlparse.urlparse(url).scheme == '':
+        if os.path.exists(url):
+            conf = ConfigParser.SafeConfigParser(allow_no_value=True)
+            conf.optionxform = str  # options are case-sensitive
+            conf.read(url)
+            url = conf.get('sqlalchemy', 'url')
+        elif urlparse.urlparse(url).scheme == '':
             url = default + url
         return url
     return parse_url
