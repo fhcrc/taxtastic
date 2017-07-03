@@ -19,7 +19,6 @@ import os
 import re
 import subprocess
 import sys
-import urlparse
 
 log = logging
 
@@ -240,8 +239,8 @@ def add_database_args(parser):
     '''
     parser.add_argument(
         'url',
-        default='url.conf',
         nargs='?',
+        default='sqlite:///ncbi_taxonomy.db',
         type=sqlite_default(),
         help=('Database string URI or filename.  If no database scheme '
               'specified \"sqlite:///\" will be prepended. [%(default)s]'))
@@ -254,7 +253,7 @@ def add_database_args(parser):
     return parser
 
 
-def sqlite_default(default='sqlite:///'):
+def sqlite_default():
     '''
     Prepend default scheme if none is specified. This helps provides backwards
     compatibility with old versions of taxtastic where sqlite was the automatic
@@ -262,11 +261,12 @@ def sqlite_default(default='sqlite:///'):
     '''
     def parse_url(url):
         if os.path.exists(url):
-            conf = ConfigParser.SafeConfigParser(allow_no_value=True)
-            conf.optionxform = str  # options are case-sensitive
-            conf.read(url)
-            url = conf.get('sqlalchemy', 'url')
-        elif urlparse.urlparse(url).scheme == '':
-            url = default + url
+            if url.endswith('.db') or url.endswith('.sqlite'):
+                url = 'sqlite:///' + url
+            else:
+                conf = ConfigParser.SafeConfigParser(allow_no_value=True)
+                conf.optionxform = str  # options are case-sensitive
+                conf.read(url)
+                url = conf.get('sqlalchemy', 'url')
         return url
     return parse_url
