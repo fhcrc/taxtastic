@@ -233,10 +233,14 @@ def action(args):
 
     # clean up empty rank columns
     taxtable = taxtable.dropna(axis=1, how='all')
+    rank_cols = [r for r in rank_cols if r in taxtable.columns]
 
-    # select and sort final column output
-    taxtable = taxtable[
-        ['rank', 'tax_name'] + [r for r in rank_cols if r in taxtable.columns]]
+    # select and sort column output
+    if args.ranked or args.valid:
+        taxtable = taxtable[['rank', 'tax_name'] + rank_cols]
+    else:
+        # include parent_id column for pplacer when returning all rows
+        taxtable = taxtable[['rank', 'tax_name', 'parent_id'] + rank_cols]
 
     # sort rows
     taxtable['rank'] = taxtable['rank'].astype(
