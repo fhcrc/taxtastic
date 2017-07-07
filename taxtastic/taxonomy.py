@@ -73,8 +73,10 @@ class Taxonomy(object):
         self.names = self.meta.tables[schema_prefix + 'names']
         self.source = self.meta.tables[schema_prefix + 'source']
         self.merged = self.meta.tables[schema_prefix + 'merged']
-        ranks = select([self.meta.tables[schema_prefix + 'ranks'].c.rank]).execute().fetchall()
-        self.ranks = [r[0] for r in ranks]
+        ranks_table = self.meta.tables[schema_prefix + 'ranks']
+        ranks = select([ranks_table.c.rank, ranks_table.c.height]).execute().fetchall()
+        ranks = sorted(ranks, key=lambda x: int(x[1]))  # sort by height
+        self.ranks = [r[0] for r in ranks]  # just the ordered ranks
 
         if 'taxonomy' in self.meta.tables:
             self.taxonomy = self.meta.tables[schema_prefix + 'taxonomy']
@@ -274,16 +276,6 @@ class Taxonomy(object):
 
         return output
 
-    def ranksdict(self, tax_ids=[]):
-        """
-        return tax_id and rank in dictionary form. Can be limited with
-        optional tax_ids argument
-        """
-        s = select([self.nodes.c.tax_id, self.nodes.c.rank])
-        if tax_ids:
-            s = s.where(self.nodes.c.tax_id.in_(tax_ids))
-        return dict(s.execute().fetchall())
-
     def lineage(self, tax_id=None, tax_name=None):
         """
         Public method for returning a lineage; includes tax_name and rank
@@ -366,14 +358,40 @@ class Taxonomy(object):
 
         return source_id, success
 
+    def verify_rank_integrity(self, tax_id, rank, parent_id, children):
+        '''
+        confirm that for each node the parent ranks and children ranks are coherent
+        '''
+        def _lower(n1, n2):
+            return self.ranks.index(n1) < self.ranks.index(n2)
+
+        if not _lower(rank, self.rank(parent_id)):
+            msg = 'New node {} has same or higher rank than parent node {}'
+            msg = msg.format(tax_id, 'parent_id')
+            raise TaxonIntegrityError(msg)
+
+        for child in children:
+            if not _lower(self.rank(child), rank):
+                msg = 'Child node {} has same or lower rank as new node {}'
+                msg = msg.format(tax_id, child)
+                raise TaxonIntegrityError(msg)
+        return True
+
     def add_node(self, tax_id, parent_id, rank, tax_name,
                  children=[], source_id=None, source_name=None):
         """
         Add a node to the taxonomy.
         """
+
+        if rank not in self.ranks:
+            msg = 'adding new ranks to taxonomy is not yet supported'
+            raise TaxonIntegrityError(msg)
+
         if not (source_id or source_name):
             raise ValueError(
                 'Taxonomy.add_node requires source_id or source_name')
+
+        self.verify_rank_integrity(tax_id, rank, parent_id, children)
 
         if not source_id:
             source_id, source_is_new = self.add_source(name=source_name)

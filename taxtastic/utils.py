@@ -12,13 +12,13 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+import ConfigParser
 import csv
 import logging
 import os
 import re
 import subprocess
 import sys
-import urlparse
 
 log = logging
 
@@ -239,8 +239,8 @@ def add_database_args(parser):
     '''
     parser.add_argument(
         'url',
-        default='sqlite:///ncbi_taxonomy.db',
         nargs='?',
+        default='sqlite:///ncbi_taxonomy.db',
         type=sqlite_default(),
         help=('Database string URI or filename.  If no database scheme '
               'specified \"sqlite:///\" will be prepended. [%(default)s]'))
@@ -253,14 +253,20 @@ def add_database_args(parser):
     return parser
 
 
-def sqlite_default(default='sqlite:///'):
+def sqlite_default():
     '''
     Prepend default scheme if none is specified. This helps provides backwards
     compatibility with old versions of taxtastic where sqlite was the automatic
     default database.
     '''
     def parse_url(url):
-        if urlparse.urlparse(url).scheme == '':
-            url = default + url
+        if url.endswith('.db') or url.endswith('.sqlite'):
+            if not url.startswith('sqlite:///'):
+                url = 'sqlite:///' + url
+        else:
+            conf = ConfigParser.SafeConfigParser(allow_no_value=True)
+            conf.optionxform = str  # options are case-sensitive
+            conf.read(url)
+            url = conf.get('sqlalchemy', 'url')
         return url
     return parse_url

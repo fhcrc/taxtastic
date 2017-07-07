@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 """Add new nodes to a database"""
-from taxtastic.taxonomy import Taxonomy, TaxonIntegrityError
+from taxtastic.taxonomy import Taxonomy
 from taxtastic.utils import get_new_nodes, add_database_args
 
 import logging
@@ -60,65 +60,10 @@ def build_parser(parser):
         help='sql queries')
 
 
-def verify_rank_integrity(node, ranksdict, rank_order):
-    '''
-    confirm that for each node the parent ranks and children ranks are coherent
-    '''
-    def _lower(n1, n2):
-        return rank_order.index(n1) < rank_order.index(n2)
-
-    rank = node['rank']
-    if not _lower(rank, ranksdict[node['parent_id']]):
-        msg = 'New node {} has same or higher rank than parent node {}'
-        msg = msg.format(node['tax_id'], node['parent_id'])
-        raise TaxonIntegrityError(msg)
-    if 'children' in node:
-        for child in node['children']:
-            if not _lower(ranksdict[child], rank):
-                msg = 'Child node {} has same or lower rank as new node {}'
-                msg = msg.format(node['tax_id'], child)
-                raise TaxonIntegrityError(msg)
-
-    return node
-
-
-def verify_lineage_integrity(node, ranksdict, rank_order, tax):
-    rank = node['rank']
-
-    if 'children' in node:
-        def _le(r1, r2):
-            return rank_order.index(r1) <= rank_order.index(r2)
-
-        for c in node['children']:
-            try:
-                parent_parent_id = tax.parent_id(tax.parent_id(c))
-            except ValueError:
-                continue
-            parent_parent_rank = ranksdict[parent_parent_id]
-            if _le(parent_parent_rank, rank):
-                msg = 'New node {} splits lineage of existing child node {}'
-                msg = msg.format(node['tax_id'], c)
-                raise TaxonIntegrityError(msg)
-
-    return node
-
-
 def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
     tax = Taxonomy(engine, schema=args.schema)
     nodes = list(get_new_nodes(args.new_nodes))
-
-    # check if there are any new ranks and exit if needed
-    node_ranks = set(n['rank'] for n in nodes)
-    for r in node_ranks:
-        if r not in tax.ranks:
-            msg = 'adding new ranks to taxonomy is not yet supported'
-            raise TaxonIntegrityError(msg)
-
-    ranksdict = tax.ranksdict()
-    ranksdict.update(dict([(n['tax_id'], n['rank']) for n in nodes]))
-    nodes = [verify_rank_integrity(n, ranksdict, tax.ranks) for n in nodes]
-    nodes = [verify_lineage_integrity(n, ranksdict, tax.ranks, tax) for n in nodes]
 
     log.info('adding new nodes')
     for d in nodes:
