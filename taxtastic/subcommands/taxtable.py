@@ -164,7 +164,7 @@ def action(args):
         log.info('using existing taxtable ' + args.taxtable)
         taxtable = pandas.read_csv(args.taxtable, dtype=str)
         taxtable = taxtable.set_index('tax_id')
-        taxtable = taxtable.join(nodes[['parent_id', 'is_valid']])
+        taxtable = taxtable.join(nodes[['parent_id', 'is_valid']], lsuffix='old_')
     else:
         log.info('building taxtable')
         names = pandas.read_sql_table(
@@ -235,12 +235,8 @@ def action(args):
     taxtable = taxtable.dropna(axis=1, how='all')
     rank_cols = [r for r in rank_cols if r in taxtable.columns]
 
-    # select and sort column output
-    if args.ranked or args.valid:
-        taxtable = taxtable[['rank', 'tax_name'] + rank_cols]
-    else:
-        # include parent_id column for pplacer when returning all rows
-        taxtable = taxtable[['rank', 'tax_name', 'parent_id'] + rank_cols]
+    # include parent_id column for pplacer when returning all rows
+    taxtable = taxtable[['rank', 'tax_name', 'parent_id'] + rank_cols]
 
     # sort rows
     taxtable['rank'] = taxtable['rank'].astype(
