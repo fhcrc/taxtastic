@@ -64,7 +64,8 @@ RANKS = [
     'subkingdom',
     'kingdom',
     'superkingdom',
-    'root'
+    'root',
+    'no_rank',
 ]
 
 
@@ -221,7 +222,7 @@ def db_connect(engine, schema=None, clobber=False):
     return base
 
 
-def db_load(engine, archive, schema=None):
+def db_load(engine, archive, schema=None, expand_ranks=True):
     """
     Load data from zip archive into database identified by con. Data
     is not loaded if target tables already contain data.
@@ -231,6 +232,13 @@ def db_load(engine, archive, schema=None):
     source = pandas.DataFrame(
         data={'name': 'ncbi', 'description': DATA_URL}, index=[1])
     source.index.name = 'id'
+
+    # nodes
+    logging.info("Reading nodes from archive")
+    rows = read_nodes(
+        rows=read_archive(archive, 'nodes.dmp'),
+        ncbi_source_id=1)
+    nodes = pandas.DataFrame(rows).set_index('tax_id')
 
     # names
     logging.info("Reading names from archive")
@@ -242,13 +250,6 @@ def db_load(engine, archive, schema=None):
 
     assert_primaries(names)  # this should always exist
 
-    # nodes
-    logging.info("Reading nodes from archive")
-    rows = read_nodes(
-        rows=read_archive(archive, 'nodes.dmp'),
-        ncbi_source_id=1)
-    nodes = pandas.DataFrame(rows).set_index('tax_id')
-
     logging.info("Marking nodes validity based on primary name")
     nodes = mark_is_valid(nodes, names)
 
@@ -258,16 +259,20 @@ def db_load(engine, archive, schema=None):
     logging.info('Adjusting taxons with same rank as parent')
     nodes = adjust_same_ranks(nodes)
 
-    logging.info('Expanding `no_rank` taxons')
-    nodes, ranks = adjust_node_ranks(nodes, RANKS[:])
+    if expand_ranks:
+        logging.info('Expanding `no_rank` taxons')
+        nodes, ranks = adjust_node_ranks(nodes, RANKS[:])
+    else:
+        ranks = RANKS
 
     # set node ranks as a sortable categories, forma < ... < root
     nodes['rank'] = nodes['rank'].astype('category', categories=ranks, ordered=True)
     nodes['rank_parent'] = nodes['rank_parent'].astype(
         'category', categories=ranks, ordered=True)
 
-    logging.info('Confirming tax tree rank integrity')
-    assert_integrity(nodes, ranks)
+    # TODO: what sort of checks do we need when we don't expand ranks?
+    # logging.info('Confirming tax tree rank integrity')
+    # assert_integrity(nodes, ranks)
 
     logging.info('Marking species subtree validity')
     nodes = mark_valid_subtrees(nodes)
@@ -508,6 +513,9 @@ def read_names(rows, unclassified_regex=None):
     * unclassified_regex - a compiled re matching "unclassified" names
     """
 
+    # TODO: can we read this table in as a pandas dataframe and apply
+    # the regex after it has been read?
+
     keys = ['tax_id', 'tax_name', 'unique_name', 'name_class']
     idx = dict((k, i) for i, k in enumerate(keys))
     tax_name, unique_name, name_class = \
@@ -561,10 +569,13 @@ def read_nodes(rows, ncbi_source_id):
     keys = 'tax_id parent_id rank embl_code division_id'.split()
     idx = dict((k, i) for i, k in enumerate(keys))
     rank = idx['rank']
+    parent_id = idx['parent_id']
 
     # assume the first row is the root
     row = rows.next()
     row[rank] = 'root'
+    # required for termination of recursive CTE for calculating lineages:
+    row[parent_id] = None
     rows = itertools.chain([row], rows)
 
     colnames = keys + ['source_id'] + ['is_valid']

@@ -227,6 +227,45 @@ class Taxonomy(object):
         except sqlalchemy.exc.ResourceClosedError:
             raise ValueError('tax id "{}" not found'.format(tax_id))
 
+    def _get_lineage_table(self, tax_id, merge_obsolete=True):
+        """Return a list of [(rank, tax_id, tax_name)] describing the lineage
+        of tax_id. If ``merge_obsolete`` is True and ``tax_id`` has
+        been replaced, use the corresponding value in table merged.
+
+        """
+
+        try:
+            # Be sure we aren't working with an obsolete tax_id
+            if merge_obsolete:
+                tax_id = self._get_merged(tax_id)
+
+            # Note: joining with ranks seems like a no-op, but for some
+            # reason it results in a faster query using sqlite, as well as
+            # an ordering from leaf --> root. Might be a better idea to
+            # sort explicitly if this is the expected behavior, but it
+            # seems like for the most part, the lineage is converted to a
+            # dict and the order is irrelevant.
+            cmd = """
+            WITH RECURSIVE a AS (
+             SELECT tax_id, parent_id, rank
+              FROM nodes
+              WHERE tax_id = {}
+            UNION ALL
+             SELECT p.tax_id, p.parent_id, p.rank
+              FROM a JOIN nodes p ON a.parent_id = p.tax_id
+            )
+            SELECT a.rank, a.tax_id, tax_name FROM a
+            JOIN ranks using(rank)
+            JOIN names using(tax_id)
+            """.format('%s' if self.engine.name == 'postgresql' else '?')
+
+            # reorder so that root is first
+            with self.engine.connect() as con:
+                result = con.execute(cmd, (tax_id,))
+                return result.fetchall()[::-1]
+        except sqlalchemy.exc.ResourceClosedError:
+            raise ValueError('tax id "{}" not found'.format(tax_id))
+
     def _get_lineage_old(self, tax_id, _level=0, merge_obsolete=True):
         """
         Returns cached lineage from self.cached or recursively builds

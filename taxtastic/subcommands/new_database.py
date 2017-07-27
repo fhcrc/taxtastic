@@ -35,10 +35,14 @@ def build_parser(parser):
 
     parser.add_argument(
         '--append',
-        action='store_false',
+        action='store_false', default=True,
         dest='clobber',
         help=('If database exists keep current data '
               'and append new data. [False]'))
+
+    parser.add_argument(
+        '--no-expand-ranks', action='store_false', dest='expand_ranks', default=True,
+        help='Do not modify no_rank taxa')
 
     download_parser = parser.add_argument_group(title='download options')
     download_parser.add_argument(
@@ -78,7 +82,7 @@ def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
     base = taxtastic.ncbi.db_connect(
         engine, schema=args.schema, clobber=args.clobber)
-    taxtastic.ncbi.db_load(engine, zfile, schema=args.schema)
+    taxtastic.ncbi.db_load(engine, zfile, schema=args.schema, expand_ranks=args.expand_ranks)
     print_sql(args.out, engine.name, base.metadata)
 
 
