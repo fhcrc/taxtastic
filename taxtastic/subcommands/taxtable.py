@@ -236,7 +236,7 @@ def action(args):
     rank_cols = [r for r in rank_cols if r in taxtable.columns]
 
     # include parent_id column for pplacer when returning all rows
-    taxtable = taxtable[['rank', 'tax_name', 'parent_id'] + rank_cols]
+    taxtable = taxtable[['parent_id', 'rank', 'tax_name'] + rank_cols]
 
     # sort rows
     taxtable['rank'] = taxtable['rank'].astype(
