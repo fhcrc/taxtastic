@@ -2,10 +2,15 @@
  change log for taxtastic
 ==========================
 
-0.6.4-dev 
-=========
-  * Records containing the word "group" in taxonomic name are no longer flagged as unclassified/invalid [GH-93]
-  
+0.7.0
+=====
+  * All commands can read from a specified .conf or .ini configuration file
+  * ``taxit --ranked`` now takes one of two arguments ``{rows, columns}``
+  * Records containing the word "group" in taxonomic name are no
+    longer flagged as unclassified/invalid [GH-93]
+  * fix missing parent_id column in taxtable
+  * include docker build
+
 0.6.4
 =====
   * rank cohort has been added as an official rank
