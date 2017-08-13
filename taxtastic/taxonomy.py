@@ -236,11 +236,13 @@ class Taxonomy(object):
                 cmd = 'CREATE TEMPORARY TABLE "{}" (old_tax_id text)'.format(temptab)
                 con.execute(cmd)
 
+                log.info('inserting tax_ids into temporary table')
                 # TODO: couldn't find an equivalent of "executemany" - does one exist?
                 cmd = 'INSERT INTO "{}" VALUES (?)'.format(temptab)
                 for tax_id in tax_ids:
                     con.execute(cmd, tax_id)
 
+                log.info('executing recursive CTE')
                 cmd = Template("""
                 WITH RECURSIVE a AS (
                  SELECT tax_id as tid, 1 AS ord, tax_id, parent_id, rank
@@ -270,6 +272,7 @@ class Taxonomy(object):
                 rows = result.fetchall()
 
                 con.execute('DROP TABLE "{}"'.format(temptab))
+                log.info('returning lineages')
                 return rows
 
         except sqlalchemy.exc.ResourceClosedError:
