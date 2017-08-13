@@ -16,7 +16,7 @@
 The Taxonomy class defines an object providing an interface to
 the taxonomy database.
 """
-import csv
+
 import logging
 import random
 import string
@@ -88,8 +88,6 @@ class Taxonomy(object):
 
         self.NO_RANK = NO_RANK
         self.undef_prefix = undef_prefix
-
-        # self.cached = {}
 
         # TODO: can probably remove this check at some point;
         # historically the root node had tax_id == parent_id ==
@@ -238,7 +236,9 @@ class Taxonomy(object):
 
                 log.info('inserting tax_ids into temporary table')
                 # TODO: couldn't find an equivalent of "executemany" - does one exist?
-                cmd = 'INSERT INTO "{}" VALUES (?)'.format(temptab)
+                cmd = 'INSERT INTO "{temptab}" VALUES ({x})'.format(
+                    temptab=temptab,
+                    x='%s' if self.engine.name == 'postgresql' else '?')
                 for tax_id in tax_ids:
                     con.execute(cmd, tax_id)
 
