@@ -18,6 +18,10 @@ the taxonomy database.
 """
 import csv
 import logging
+import random
+import string
+
+from jinja2 import Template
 
 import sqlalchemy
 from sqlalchemy import MetaData, and_, or_
@@ -163,32 +167,21 @@ class Taxonomy(object):
 
         return tax_id, tax_name, bool(is_primary)
 
-    def _get_merged(self, old_tax_id):
-        """Returns tax_id into which `old_tax_id` has been merged.
+    def _get_merged(self, tax_id):
+        """Returns tax_id into which `tax_id` has been merged or `tax_id` of
+        not obsolete.
 
-        If *old_tax_id* is not obsolete, returns it directly.
-
-        CREATE TABLE merged(
-        old_tax_id    TEXT,
-        new_tax_id    TEXT REFERENCES nodes(tax_id)
-        );
         """
-        s = select([self.merged.c.new_tax_id],
-                   self.merged.c.old_tax_id == old_tax_id)
-        res = s.execute()
-        output = res.fetchall() or None
 
-        if output is not None:
-            if len(output) > 1:
-                msg = ('There is more than one value '
-                       'for merged.old_tax_id = "{}"').format(old_tax_id)
-                raise ValueError(msg)
-            else:
-                output = output[0][0]
-        else:
-            output = old_tax_id
+        cmd = """
+        SELECT COALESCE(
+        (SELECT new_tax_id FROM merged
+         WHERE old_tax_id = {x}), {x})
+        """.format(x='%s' if self.engine.name == 'postgresql' else '?')
 
-        return output
+        with self.engine.connect() as con:
+            result = con.execute(cmd, (tax_id, tax_id))
+            return result.fetchone()[0]
 
     def _get_lineage(self, tax_id, merge_obsolete=True):
         """Return a list of [(rank, tax_id)] describing the lineage of
@@ -228,7 +221,7 @@ class Taxonomy(object):
         except sqlalchemy.exc.ResourceClosedError:
             raise ValueError('tax id "{}" not found'.format(tax_id))
 
-    def _get_lineage_table(self, tax_id, merge_obsolete=True):
+    def _get_lineage_table(self, tax_ids, merge_obsolete=True):
         """Return a list of [(rank, tax_id, tax_name)] describing the lineage
         of tax_id. If ``merge_obsolete`` is True and ``tax_id`` has
         been replaced, use the corresponding value in table merged.
@@ -236,87 +229,51 @@ class Taxonomy(object):
         """
 
         try:
-            # Be sure we aren't working with an obsolete tax_id
-            if merge_obsolete:
-                tax_id = self._get_merged(tax_id)
-
-            # Note: joining with ranks seems like a no-op, but for some
-            # reason it results in a faster query using sqlite, as well as
-            # an ordering from leaf --> root. Might be a better idea to
-            # sort explicitly if this is the expected behavior, but it
-            # seems like for the most part, the lineage is converted to a
-            # dict and the order is irrelevant.
-            cmd = """
-            WITH RECURSIVE a AS (
-             SELECT tax_id, parent_id, rank
-              FROM nodes
-              WHERE tax_id = {}
-            UNION ALL
-             SELECT p.tax_id, p.parent_id, p.rank
-              FROM a JOIN nodes p ON a.parent_id = p.tax_id
-            )
-            SELECT a.rank, a.tax_id, tax_name FROM a
-            JOIN ranks using(rank)
-            JOIN names using(tax_id)
-            """.format('%s' if self.engine.name == 'postgresql' else '?')
-
-            # reorder so that root is first
             with self.engine.connect() as con:
-                result = con.execute(cmd, (tax_id,))
-                return result.fetchall()[::-1]
+                # insert tax_ids into a temporary table
+                temptab = ''.join([random.choice(string.ascii_letters)
+                                   for n in xrange(12)])
+                cmd = 'CREATE TEMPORARY TABLE "{}" (old_tax_id text)'.format(temptab)
+                con.execute(cmd)
+
+                # TODO: couldn't find an equivalent of "executemany" - does one exist?
+                cmd = 'INSERT INTO "{}" VALUES (?)'.format(temptab)
+                for tax_id in tax_ids:
+                    con.execute(cmd, tax_id)
+
+                cmd = Template("""
+                WITH RECURSIVE a AS (
+                 SELECT tax_id as tid, 1 AS ord, tax_id, parent_id, rank
+                  FROM nodes
+                  WHERE tax_id in (
+                  {% if merge_obsolete %}
+                  SELECT COALESCE(m.new_tax_id, "{{ temptab }}".old_tax_id)
+                    FROM "{{ temptab }}" LEFT JOIN merged m USING(old_tax_id)
+                  {% else %}
+                  SELECT * from "{{ temptab }}"
+                  {% endif %}
+                  )
+                UNION ALL
+                 SELECT a.tid, a.ord + 1, p.tax_id, p.parent_id, p.rank
+                  FROM a JOIN nodes p ON a.parent_id = p.tax_id
+                )
+                SELECT a.tid, a.ord, a.tax_id, a.parent_id, a.rank, tax_name FROM a
+                JOIN names using(tax_id)
+                WHERE names.is_primary
+                ORDER BY tid, ord desc
+                """).render(
+                    temptab=temptab,
+                    merge_obsolete=merge_obsolete,
+                )
+
+                result = con.execute(cmd)
+                rows = result.fetchall()
+
+                con.execute('DROP TABLE "{}"'.format(temptab))
+                return rows
+
         except sqlalchemy.exc.ResourceClosedError:
             raise ValueError('tax id "{}" not found'.format(tax_id))
-
-    def _get_lineage_old(self, tax_id, _level=0, merge_obsolete=True):
-        """
-        Returns cached lineage from self.cached or recursively builds
-        lineage of tax_id until the root node is reached.
-
-        SIDE EFFECT: Updates self.ranks with unknown or 'no_rank' designations
-        """
-        # Be sure we aren't working with an obsolete tax_id
-        if merge_obsolete:
-            tax_id = self._get_merged(tax_id)
-
-        # Note: indent is referenced through locals() below
-        indent = '.' * _level
-
-        lineage = self.cached.get(tax_id)
-
-        if lineage:
-            log.debug('{} tax_id "{}" is cached'.format(indent, tax_id))
-        else:
-            msg = '{} reconstructing lineage of tax_id "{}"'
-            msg = msg.format(indent, tax_id)
-            log.debug(msg)
-            parent_id, rank = self._node(tax_id)
-            lineage = [(rank, tax_id)]
-
-            # recursively add parent_ids until we reach the root
-            if parent_id != tax_id:
-                lineage = self._get_lineage(parent_id, _level + 1) + lineage
-
-            # now that we've reached the root, rename any undefined ranks
-            _parent_rank = None
-            for i, node in enumerate(lineage):
-                _rank, _tax_id = node
-
-                if _rank == self.NO_RANK:
-                    _rank = self.undef_prefix + _parent_rank
-                    self._add_rank(_rank, _parent_rank)
-
-                    lineage[i] = (_rank, _tax_id)
-                    self.cached[_tax_id] = lineage
-                    msg = ('renamed undefined rank to {} in '
-                           'element {} of lineage of {}')
-                    msg = msg.format(_rank, i, tax_id)
-                    log.debug(msg)
-
-                _parent_rank = _rank
-
-            self.cached[tax_id] = lineage
-
-        return lineage
 
     def is_below(self, lower, upper):
         return lower in self.ranks_below(upper)
@@ -384,44 +341,6 @@ class Taxonomy(object):
         ldict['tax_name'] = primary_name or self.primary_from_id(tax_id)
 
         return ldict
-
-    def write_table(self, taxa, csvfile=None, full=False):
-        """Represent taxonomic lineages for taxa as a rectangular array
-        with columns named "tax_id", "parent_id", "rank", "tax_name",
-        followed by a column for each rank proceeding from the root to
-        the more specific ranks.
-
-         * taxa - list of taxids to include in the output
-         * csvfile - an open file-like object
-           (see "csvfile" argument to csv.writer)
-         * full - if True (the default), includes a column
-                  for each rank in self.ranks; otherwise, omits ranks (columns)
-                  the are undefined for all taxa.
-
-        """
-
-        lineages = [self.lineage(tax_id) for tax_id in taxa]
-
-        # which ranks are actually represented?
-        if full:
-            ranks = self.ranks
-        else:
-            # a set containing ranks represented in all lineages
-            represented = reduce(
-                set.union, [set(lineage.keys()) for lineage in lineages])
-            ranks = [r for r in self.ranks if r in represented]
-
-        fields = ['tax_id', 'parent_id', 'rank', 'tax_name'] + ranks
-        writer = csv.DictWriter(csvfile, fieldnames=fields,
-                                extrasaction='ignore',
-                                quoting=csv.QUOTE_NONNUMERIC)
-
-        # header row
-        writer.writeheader()
-
-        for lin in sorted(lineages, key=lambda x: (
-                ranks.index(x['rank']), x['tax_name'])):
-            writer.writerow(lin)
 
     def add_source(self, name, description=None):
         """

@@ -82,7 +82,8 @@ def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
     base = taxtastic.ncbi.db_connect(
         engine, schema=args.schema, clobber=args.clobber)
-    taxtastic.ncbi.db_load(engine, zfile, schema=args.schema, expand_ranks=args.expand_ranks)
+    taxtastic.ncbi.db_load(engine, zfile, schema=args.schema,
+                           expand_ranks=args.expand_ranks)
     print_sql(args.out, engine.name, base.metadata)
 
 
