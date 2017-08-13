@@ -222,7 +222,7 @@ def db_connect(engine, schema=None, clobber=False):
     return base
 
 
-def db_load(engine, archive, schema=None, expand_ranks=True):
+def db_load(engine, archive, schema=None, ranks=RANKS):
     """
     Load data from zip archive into database identified by con. Data
     is not loaded if target tables already contain data.
@@ -259,17 +259,12 @@ def db_load(engine, archive, schema=None, expand_ranks=True):
     logging.info('Adjusting taxons with same rank as parent')
     nodes = adjust_same_ranks(nodes)
 
-    if expand_ranks:
-        logging.info('Expanding `no_rank` taxons')
-        nodes, ranks = adjust_node_ranks(nodes, RANKS[:])
-    else:
-        ranks = RANKS
-
     # set node ranks as a sortable categories, forma < ... < root
     nodes['rank'] = nodes['rank'].astype('category', categories=ranks, ordered=True)
     nodes['rank_parent'] = nodes['rank_parent'].astype(
         'category', categories=ranks, ordered=True)
 
+    # TODO: remove all code associated with expanding ranks.
     # TODO: what sort of checks do we need when we don't expand ranks?
     # logging.info('Confirming tax tree rank integrity')
     # assert_integrity(nodes, ranks)
