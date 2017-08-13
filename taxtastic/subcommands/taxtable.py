@@ -138,14 +138,13 @@ def build_parser(parser):
     input_group.add_argument(
         '-f', '--tax-id-file', metavar='FILE', type=argparse.FileType('r'),
         help=('File containing a whitespace-delimited list of '
-              'tax_ids (ie, separated by tabs, spaces, or newlines; lines '
-              'beginning with "#" are ignored).'))
+              'tax_ids (ie, separated by tabs, spaces, or newlines.'))
 
     input_group.add_argument(
         '-i', '--seq-info',
         type=argparse.FileType('r'),
         help=('Read tax_ids from sequence info file, minimally '
-              'containing the field "tax_id"'))
+              'containing a columnm named "tax_id"'))
 
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
@@ -160,14 +159,13 @@ def build_parser(parser):
 
 
 def action(args):
+    log.info('reading tax_ids')
     if args.tax_ids:
-        tax_ids = args.tax_ids
+        tax_ids = set(args.tax_ids)
     elif args.tax_id_file:
-        tax_ids = reduce(
-            list.__add__,
-            [line.split() for line in args.tax_id_file if not line.startswith('#')])
+        tax_ids = set(args.tax_id_file.read().split())
     elif args.seq_info:
-        tax_ids = [row['tax_id'] for row in csv.DictReader(args.seq_info)]
+        tax_ids = {row['tax_id'] for row in csv.DictReader(args.seq_info)}
     else:
         sys.exit('Error: no tax_ids were specified')
 
@@ -175,6 +173,7 @@ def action(args):
     tax = Taxonomy(engine)
 
     rows = tax._get_lineage_table(tax_ids)
+    log.info('grouping lineages')
     all_ranks = set()
     taxtable = {}
     for tax_id, grp in groupby(rows, lambda row: row[0]):
@@ -186,8 +185,10 @@ def action(args):
     fieldnames = ['tax_id', 'parent_id', 'tax_name', 'rank'] + sorted_ranks
 
     output = taxtable.values()
-    # output = sorted(output, key=getitems(*sorted_ranks))
+    log.info('sorting lineages')
+    output = sorted(output, key=getitems(*sorted_ranks))
 
+    log.info('writing taxtable')
     writer = csv.DictWriter(
         args.outfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
     writer.writeheader()
