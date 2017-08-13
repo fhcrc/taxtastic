@@ -148,7 +148,13 @@ def define_schema(Base):
     class Node(Base):
         __tablename__ = 'nodes'
         tax_id = Column(String, primary_key=True, nullable=False)
-        parent_id = Column(String, ForeignKey('nodes.tax_id'))
+
+        # TODO: temporarily remove foreign key constratint on parent
+        # TODO: (creates order depencence during insertion); may need to
+        # TODO: add constraint after table has been populated.
+
+        # parent_id = Column(String, ForeignKey('nodes.tax_id'))
+        parent_id = Column(String, index=True)
         rank = Column(String, ForeignKey('ranks.rank'))
         embl_code = Column(String)
         division_id = Column(String)
@@ -296,6 +302,9 @@ def db_load(engine, archive, schema=None, ranks=RANKS):
     ranks_df = pandas.DataFrame(data=ranks, columns=['rank'])
     ranks_df['no_rank'] = ranks_df['rank'].apply(lambda x: 'below' in x)
     ranks_df.index.name = 'height'
+
+    # TODO: df.to_sql is extremely slow (see https://github.com/pandas-dev/pandas/issues/8953); consider dumping df to a temporary csv and importing from there.
+
     ranks_df.to_sql(
         'ranks', engine,
         schema=schema,
@@ -509,7 +518,7 @@ def read_names(rows, unclassified_regex=None):
     """
 
     # TODO: can we read this table in as a pandas dataframe and apply
-    # the regex after it has been read?
+    # TODO: the regex after it has been read?
 
     keys = ['tax_id', 'tax_name', 'unique_name', 'name_class']
     idx = dict((k, i) for i, k in enumerate(keys))
