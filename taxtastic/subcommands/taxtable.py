@@ -63,13 +63,15 @@ def replace_no_rank(ranks):
             return ranks
 
 
-def as_taxtable_rows(rows):
+def as_taxtable_rows(rows, seen=None):
+    seen = seen or {}
+
     __, __, tids, pids, ranks, names = [list(tup) for tup in zip(*rows)]
     ranks = replace_no_rank(ranks)
     ranks_out = ranks[:]
 
     tax_rows = []
-    while tids:
+    while tids and tids[-1] not in seen:
         d = dict(zip(ranks, tids))
         d['tax_id'] = tids.pop(-1)
         d['parent_id'] = pids.pop(-1)
@@ -177,7 +179,7 @@ def action(args):
     all_ranks = set()
     taxtable = {}
     for tax_id, grp in groupby(rows, lambda row: row[0]):
-        ranks, tax_rows = as_taxtable_rows(grp)
+        ranks, tax_rows = as_taxtable_rows(grp, seen=taxtable)
         taxtable.update(dict(tax_rows))
         all_ranks |= set(ranks)
 
