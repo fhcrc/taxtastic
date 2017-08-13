@@ -245,6 +245,8 @@ def add_database_args(parser):
         help=('Database string URI or filename.  If no database scheme '
               'specified \"sqlite:///\" will be prepended. [%(default)s]'))
     db_parser = parser.add_argument_group(title='database options')
+
+    # TODO: better description of what --schema does
     db_parser.add_argument(
         '--schema',
         help=('Name of SQL schema in database to query '
@@ -260,13 +262,15 @@ def sqlite_default():
     default database.
     '''
     def parse_url(url):
+        # TODO: need separate option for a config file
         if url.endswith('.db') or url.endswith('.sqlite'):
             if not url.startswith('sqlite:///'):
                 url = 'sqlite:///' + url
-        else:
+        elif url.endswith('.cfg') or url.endswith('.conf'):
             conf = ConfigParser.SafeConfigParser(allow_no_value=True)
             conf.optionxform = str  # options are case-sensitive
             conf.read(url)
             url = conf.get('sqlalchemy', 'url')
+
         return url
     return parse_url
