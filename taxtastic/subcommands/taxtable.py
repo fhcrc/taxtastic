@@ -15,33 +15,16 @@
 """Create a tabular representation of taxonomic lineages
 
 Write a CSV file containing the minimal subset of the taxonomy in
-``database_file`` which encompasses all the taxa specified in
-``taxa_names.txt`` and ``tax_ids`` and all nodes connecting them to
-the root of the taxonomy.  By default the CSV is written to
-``stdout``, unless redirectored with ``-o`` or ``--out-file``.
+``database_file`` representing all of the lineages specified by the
+provided tax_ids. Duplicate tax_ids are ignored.
 
-``taxa_names.txt`` should be a text file specifying names of taxa.
-Python style comments are ignored as are empty lines.  Names may be
-separated by commas, semicolons, and arbitrary amounts of whitespace
-on both sides of those separators, but the whitespace within them must
-be exact (e.g., ``Lactobacillus crispatus`` must have exactly one space
-between the two words to match the entry in the taxonomy).
+By default the CSV is written to ``stdout``, unless a file is
+specified with ``-o/--outfile``.
 
-``tax_ids`` is either a comma or semicolon delimited list of tax_ids
-(e.g., ``4522,2213;44;221``) or the name of a text file containing
-tax_ids.  The text file also allows Python style comments, and any
-non-comment text separated by and combination of spaces, commas, and
-semicolons is considered a tax_id.
-
-tax_ids and taxa names can overlap, nor does anything have to be
-unique within either file.  The nodes will only be written once in the
-CSV output no matter how many times a particular taxon is mentioned.
 """
 import argparse
 import csv
 import logging
-import os
-import pandas
 import re
 import sqlalchemy
 import sys
@@ -64,6 +47,9 @@ def replace_no_rank(ranks):
 
 
 def as_taxtable_rows(rows, seen=None):
+
+    # allows termination when we've seen a tax_id before - shaves just
+    # a few seconds off the total time.
     seen = seen or {}
 
     __, __, tids, pids, ranks, names = [list(tup) for tup in zip(*rows)]
@@ -103,7 +89,10 @@ def getitems(*items):
 def build_parser(parser):
     parser = add_database_args(parser)
 
-    node_parser = parser.add_argument_group(title='node options')
+
+    # TODO: do we need the commented-out options?
+    # node_parser = parser.add_argument_group(title='node options')
+
     # node_parser.add_argument(
     #     '--valid',
     #     action='store_true',
@@ -123,15 +112,6 @@ def build_parser(parser):
     # input_group.add_argument(
     #     '--clade-ids',
     #     help=('return top-down tax_id clades'))
-
-    # input_group.add_argument(
-    #     '-n', '--taxnames',
-    #     metavar='FILE',
-    #     help=('A file identifing taxa in the form of taxonomic '
-    #           'names. Names are matched against both primary names and '
-    #           'synonyms. Lines beginning with "#" are ignored. Taxa '
-    #           'identified here will be added to those specified using '
-    #           '--tax-ids'))
 
     input_group.add_argument(
         '-t', '--tax-ids', nargs='+',
