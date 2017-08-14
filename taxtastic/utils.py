@@ -19,6 +19,8 @@ import os
 import re
 import subprocess
 import sys
+import string
+import random
 
 log = logging
 
@@ -274,3 +276,7 @@ def sqlite_default():
 
         return url
     return parse_url
+
+
+def random_name(length):
+    ''.join([random.choice(string.ascii_letters) for n in xrange(length)])

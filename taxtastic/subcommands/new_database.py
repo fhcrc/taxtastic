@@ -80,7 +80,9 @@ def action(args):
     base = taxtastic.ncbi.db_connect(
         engine, schema=args.schema, clobber=args.clobber)
 
-    taxtastic.ncbi.db_load(engine, zfile, schema=args.schema)
+    taxtastic.ncbi.db_load(engine, archive=zfile)
+    taxtastic.ncbi.set_names_is_classified(engine)
+    taxtastic.ncbi.set_nodes_is_valid(engine)
 
     # print_sql(args.out, engine.name, base.metadata)
 

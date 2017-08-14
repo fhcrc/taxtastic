@@ -22,16 +22,17 @@ import os
 import re
 import urllib
 import zipfile
-import random
-import string
 from operator import itemgetter
+
+from jinja2 import Template
 
 import sqlalchemy
 from sqlalchemy import (Column, Integer, String, Boolean,
                         ForeignKey, Index, MetaData)
 from sqlalchemy.orm import relationship
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
+
+from taxtastic.utils import random_name
 
 
 log = logging.getLogger(__name__)
@@ -321,7 +322,8 @@ def load_sqlite(conn, table, rows, colnames=None, limit=None):
     conn.commit()
 
 
-def set_classified(conn, unclassified_regex):
+def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX):
+    conn = engine.raw_connection()
     cur = conn.cursor()
 
     cmd = """
@@ -332,42 +334,74 @@ def set_classified(conn, unclassified_regex):
     and rank = 'species'
     """
 
-    print cmd
     cur.execute(cmd)
 
+    log.info('retrieving species names')
     primary_species_names = cur.fetchall()
+    log.info('found {} species names'.format(len(primary_species_names)))
 
-    print 'checking names'
-    unclassified_taxids = [(tax_id,) for tax_id, tax_name in primary_species_names
-                           if unclassified_regex.search(tax_name)]
-    print len(unclassified_taxids)
+    log.info('checking species names')
+    classified_taxids = [(tax_id,) for tax_id, tax_name in primary_species_names
+                         if not unclassified_regex.search(tax_name)]
+    log.info('{count} names are classified ({pct}%)'.format(
+        count=len(classified_taxids),
+        pct=round((100.0 * len(classified_taxids)) / len(primary_species_names), 1))
+    )
 
     # insert tax_ids into a temporary table
-    temptab = ''.join([random.choice(string.ascii_letters) for n in xrange(12)])
-    cmd = 'CREATE TEMPORARY TABLE "{}" (old_tax_id text)'.format(temptab)
+    temptab = random_name(12)
+    cmd = 'CREATE TEMPORARY TABLE "{}" (tax_id text)'.format(temptab)
     cur.execute(cmd)
 
-    print('inserting tax_ids into temporary table')
+    log.info('inserting tax_ids into temporary table')
+    cmd = 'INSERT INTO "{tab}" VALUES (?)'.format(tab=temptab)
+    cur.executemany(cmd, classified_taxids)
 
-    # TODO: couldn't find an equivalent of "executemany" - does one exist?
+    log.info('creating an index on the temporary table')
+    cmd = 'CREATE INDEX ix_{tab}_tax_id on {tab}(tax_id)'.format(tab=temptab)
+    cur.execute(cmd)
 
-    cmd = 'INSERT INTO "{temptab}" VALUES (?)'.format(temptab=temptab)
-    cur.executemany(cmd, unclassified_taxids)
+    log.info('updating names.is_classified')
 
-    cmd = """
+    cmd = Template("""
     update names
-    set is_classified = 0
-    where tax_id in
-    (select * from "{}")
-    """.format(temptab)
-    print cmd
+    set is_classified = 1
+    where is_primary
+    and tax_id in (select tax_id from "{{ temptab }}")
+    """).render(temptab=temptab)
 
     cur.execute(cmd)
-
     conn.commit()
 
 
-def db_load(engine, archive, schema=None, ranks=RANKS):
+def set_nodes_is_valid(engine, unclassified_regex=UNCLASSIFIED_REGEX):
+    conn = engine.raw_connection()
+    cur = conn.cursor()
+
+    log.info('marking invalid nodes')
+    cmd = """
+    WITH RECURSIVE descendants AS (
+     SELECT tax_id, parent_id, rank
+     FROM nodes
+     WHERE rank = 'species'
+     AND tax_id not in (SELECT tax_id FROM names WHERE is_classified)
+     UNION
+     SELECT
+     n.tax_id,
+     n.parent_id,
+     n.rank
+     FROM nodes n
+     INNER JOIN descendants d ON d.tax_id = n.parent_id
+    )
+    UPDATE nodes SET is_valid = 0
+    WHERE tax_id in (SELECT tax_id from descendants)
+    """
+
+    cur.execute(cmd)
+    conn.commit()
+
+
+def db_load(engine, archive, ranks=RANKS):
     """Load data from zip archive into database identified by con.
 
     """
@@ -411,6 +445,8 @@ def db_load(engine, archive, schema=None, ranks=RANKS):
     logging.info('loading merged')
     merged_rows = read_merged(read_archive(archive, 'merged.dmp'))
     db_loader(conn, 'merged', rows=merged_rows)
+
+    conn.commit()
 
 
 def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
@@ -464,4 +500,3 @@ def read_archive(archive, fname):
 def read_dmp(fname):
     for line in open(fname, 'rU'):
         yield line.rstrip('\t|\n').split('\t|\t')
-

@@ -18,14 +18,14 @@ the taxonomy database.
 """
 
 import logging
-import random
-import string
 
 from jinja2 import Template
 
 import sqlalchemy
 from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
+
+from taxtastic.utils import random_name
 
 log = logging.getLogger(__name__)
 
@@ -229,15 +229,14 @@ class Taxonomy(object):
         try:
             with self.engine.connect() as con:
                 # insert tax_ids into a temporary table
-                temptab = ''.join([random.choice(string.ascii_letters)
-                                   for n in xrange(12)])
-                cmd = 'CREATE TEMPORARY TABLE "{}" (old_tax_id text)'.format(temptab)
+                temptab = random_name(12)
+                cmd = 'CREATE TEMPORARY TABLE "{tab}" (old_tax_id text)'.format(tab=temptab)
                 con.execute(cmd)
 
                 log.info('inserting tax_ids into temporary table')
                 # TODO: couldn't find an equivalent of "executemany" - does one exist?
-                cmd = 'INSERT INTO "{temptab}" VALUES ({x})'.format(
-                    temptab=temptab,
+                cmd = 'INSERT INTO "{tab}" VALUES ({x})'.format(
+                    tab=temptab,
                     x='%s' if self.engine.name == 'postgresql' else '?')
                 for tax_id in tax_ids:
                     con.execute(cmd, tax_id)
