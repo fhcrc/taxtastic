@@ -19,10 +19,12 @@ Methods and variables specific to the NCBI taxonomy.
 import itertools
 import logging
 import os
-import pandas
 import re
 import urllib
 import zipfile
+import random
+import string
+from operator import itemgetter
 
 import sqlalchemy
 from sqlalchemy import (Column, Integer, String, Boolean,
@@ -30,6 +32,10 @@ from sqlalchemy import (Column, Integer, String, Boolean,
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
+
+
+log = logging.getLogger(__name__)
+
 
 DATA_URL = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
@@ -228,167 +234,183 @@ def db_connect(engine, schema=None, clobber=False):
     return base
 
 
+def read_merged(rows):
+
+    yield ('old_tax_id', 'new_tax_id')
+    for row in rows:
+        yield tuple(row)
+
+
+def read_nodes(rows, source_id=1):
+    """
+    Return an iterator of rows ready to insert into table "nodes".
+
+    * rows - iterator of lists (eg, output from read_archive or read_dmp)
+    """
+
+    ncbi_keys = ['tax_id', 'parent_id', 'rank', 'embl_code', 'division_id']
+    extra_keys = ['source_id', 'is_valid']
+    is_valid = 1
+
+    ncbi_cols = len(ncbi_keys)
+
+    rank = ncbi_keys.index('rank')
+    parent_id = ncbi_keys.index('parent_id')
+
+    # assumes the first row is the root
+    row = next(rows)
+    row[rank] = 'root'
+    # parent must be None for termination of recursive CTE for
+    # calculating lineages
+    row[parent_id] = None
+    rows = itertools.chain([row], rows)
+
+    yield ncbi_keys + extra_keys
+
+    for row in rows:
+        # replace whitespace in "rank" with underscore
+        row[rank] = '_'.join(row[rank].split())
+        # provide default values for source_id and is_valid
+        yield row[:ncbi_cols] + [source_id, is_valid]
+
+
+def read_names(rows, source_id=1):
+    """Return an iterator of rows ready to insert into table
+    "names". Adds columns "is_primary" (identifying the primary name
+    for each tax_id with a vaule of 1) and "is_classified" (always None).
+
+    * rows - iterator of lists (eg, output from read_archive or read_dmp)
+    * unclassified_regex - a compiled re matching "unclassified" names
+
+    """
+
+    ncbi_keys = ['tax_id', 'tax_name', 'unique_name', 'name_class']
+    extra_keys = ['source_id', 'is_primary', 'is_classified']
+
+    # is_classified applies to species only; we will set this value
+    # later
+    is_classified = None
+
+    name_class = ncbi_keys.index('name_class')
+    tax_id = ncbi_keys.index('tax_id')
+
+    yield ncbi_keys + extra_keys
+
+    for tid, grp in itertools.groupby(rows, itemgetter(tax_id)):
+        # confirm that each tax_id has exactly one scientific name
+        num_primary = 0
+        for r in grp:
+            is_primary = int(r[name_class] == 'scientific name')
+            num_primary += is_primary
+            yield (r + [source_id, is_primary, is_classified])
+
+        assert num_primary == 1
+
+
+def load_sqlite(conn, table, rows, colnames=None, limit=None):
+    cur = conn.cursor()
+
+    colnames = colnames or next(rows)
+
+    cmd = 'insert into {table} ({colnames}) values ({fstr})'.format(
+        table=table,
+        colnames=', '.join(colnames),
+        fstr=', '.join(['?'] * len(colnames)))
+
+    cur.executemany(cmd, itertools.islice(rows, limit))
+    conn.commit()
+
+
+def set_classified(conn, unclassified_regex):
+    cur = conn.cursor()
+
+    cmd = """
+    select tax_id, tax_name
+    from names
+    join nodes using(tax_id)
+    where is_primary
+    and rank = 'species'
+    """
+
+    print cmd
+    cur.execute(cmd)
+
+    primary_species_names = cur.fetchall()
+
+    print 'checking names'
+    unclassified_taxids = [(tax_id,) for tax_id, tax_name in primary_species_names
+                           if unclassified_regex.search(tax_name)]
+    print len(unclassified_taxids)
+
+    # insert tax_ids into a temporary table
+    temptab = ''.join([random.choice(string.ascii_letters) for n in xrange(12)])
+    cmd = 'CREATE TEMPORARY TABLE "{}" (old_tax_id text)'.format(temptab)
+    cur.execute(cmd)
+
+    print('inserting tax_ids into temporary table')
+
+    # TODO: couldn't find an equivalent of "executemany" - does one exist?
+
+    cmd = 'INSERT INTO "{temptab}" VALUES (?)'.format(temptab=temptab)
+    cur.executemany(cmd, unclassified_taxids)
+
+    cmd = """
+    update names
+    set is_classified = 0
+    where tax_id in
+    (select * from "{}")
+    """.format(temptab)
+    print cmd
+
+    cur.execute(cmd)
+
+    conn.commit()
+
+
 def db_load(engine, archive, schema=None, ranks=RANKS):
+    """Load data from zip archive into database identified by con.
+
     """
-    Load data from zip archive into database identified by con. Data
-    is not loaded if target tables already contain data.
-    """
+
+    conn = engine.raw_connection()
+    db_engine = engine.driver  # 'pysqlite' or '?'
+
+    if db_engine == 'pysqlite':
+        db_loader = load_sqlite
+    else:
+        raise NotImplementedError('database driver {} is not supported'.format(db_engine))
 
     # source
-    source = pandas.DataFrame(
-        data={'name': 'ncbi', 'description': DATA_URL}, index=[1])
-    source.index.name = 'id'
+    db_loader(
+        conn, 'source',
+        rows=[('ncbi', DATA_URL)],
+        colnames=['name', 'description'],
+    )
+
+    source_id = conn.cursor().execute(
+        "select id from source where name = 'ncbi'").fetchone()[0]
+
+    # ranks
+    log.info('loading ranks')
+    # TODO: remove ranks.no_rank
+    ranks_rows = [('rank', 'height', 'no_rank')]
+    ranks_rows += [(rank, i, 0) for i, rank in enumerate(RANKS)]
+    db_loader(conn, 'ranks', rows=iter(ranks_rows))
 
     # nodes
-    logging.info("Reading nodes from archive")
-    rows = read_nodes(
-        rows=read_archive(archive, 'nodes.dmp'),
-        ncbi_source_id=1)
-    nodes = pandas.DataFrame(rows).set_index('tax_id')
+    logging.info('loading nodes')
+    nodes_rows = read_nodes(read_archive(archive, 'nodes.dmp'), source_id=source_id)
+    db_loader(conn, 'nodes', rows=nodes_rows)
 
     # names
-    logging.info("Reading names from archive")
-    rows = read_names(
-        rows=read_archive(archive, 'names.dmp'),
-        unclassified_regex=UNCLASSIFIED_REGEX)
-    names = pandas.DataFrame(rows)
-    names['source_id'] = 1
-
-    assert_primaries(names)  # this should always exist
-
-    logging.info("Marking nodes validity based on primary name")
-    nodes = mark_is_valid(nodes, names)
-
-    # add parent rank column for rank adjustments
-    nodes = nodes.join(nodes['rank'], on='parent_id', rsuffix='_parent')
-
-    logging.info('Adjusting taxons with same rank as parent')
-    nodes = adjust_same_ranks(nodes)
-
-    # set node ranks as a sortable categories, forma < ... < root
-    nodes['rank'] = nodes['rank'].astype('category', categories=ranks, ordered=True)
-    nodes['rank_parent'] = nodes['rank_parent'].astype(
-        'category', categories=ranks, ordered=True)
-
-    # TODO: remove all code associated with expanding ranks.
-    # TODO: what sort of checks do we need when we don't expand ranks?
-    # logging.info('Confirming tax tree rank integrity')
-    # assert_integrity(nodes, ranks)
-
-    logging.info('Marking species subtree validity')
-    nodes = mark_valid_subtrees(nodes)
+    logging.info('loading names')
+    names_rows = read_names(read_archive(archive, 'names.dmp'), source_id=source_id)
+    db_loader(conn, 'names', rows=names_rows)
 
     # merged
-    rows = read_archive(archive, 'merged.dmp')
-    rows = (dict(zip(['old_tax_id', 'new_tax_id'], row)) for row in rows)
-    merged = pandas.DataFrame(rows)
-
-    # ## prepare nodes
-    nodes = nodes.drop('rank_parent', axis=1)
-    # source_id = 1
-    nodes['source_id'] = 1
-    # to avoid parent_id foreign key constrant Integrity errors
-    nodes = nodes.sort_values('rank', ascending=False)
-
-    logging.info('Inserting source')
-    source.to_sql(
-        'source', engine,
-        schema=schema,
-        if_exists='append')
-
-    '''lowest ranks first (forma, species, etc)
-    highest ranks last (root, superkingdom, etc)'''
-    logging.info('Inserting ranks')
-    ranks_df = pandas.DataFrame(data=ranks, columns=['rank'])
-    ranks_df['no_rank'] = ranks_df['rank'].apply(lambda x: 'below' in x)
-    ranks_df.index.name = 'height'
-
-    # TODO: df.to_sql is extremely slow (see https://github.com/pandas-dev/pandas/issues/8953); consider dumping df to a temporary csv and importing from there.
-
-    ranks_df.to_sql(
-        'ranks', engine,
-        schema=schema,
-        if_exists='append')
-
-    logging.info("Inserting nodes")
-    nodes.to_sql(
-        'nodes', engine,
-        schema=schema,
-        if_exists='append')
-
-    logging.info("Inserting names")
-    names.to_sql(
-        'names', engine,
-        schema=schema,
-        if_exists='append',
-        index=False)
-
-    logging.info("Inserting merged")
-    merged.to_sql(
-        'merged', engine,
-        schema=schema,
-        if_exists='append',
-        index=False)
-
-
-def adjust_node_ranks(df, ranks):
-    '''
-    replace no_ranks with below_ of parent rank
-    '''
-    ranks = ranks[::-1]  # start at root, work down
-    for i, rank in enumerate(ranks):
-        no_rank = ((df['rank_parent'] == rank) &
-                   (df['rank'] == 'no_rank'))
-        if no_rank.any():
-            below_rank = 'below_' + rank
-            iat_rank = df[no_rank].index
-            df.at[iat_rank, 'rank'] = below_rank
-            # update `rank_parent` columns
-            below_children = df['parent_id'].isin(iat_rank)
-            df.loc[below_children, 'rank_parent'] = below_rank
-            ranks.insert(i + 1, below_rank)
-
-    # remove non-existent ranks
-    node_ranks = set(df['rank'].tolist())
-    ranks = [r for r in ranks if r in node_ranks]
-    return df, ranks[::-1]  # return ranks to input order
-
-
-def adjust_same_ranks(df):
-    '''
-    reset bump parent_id to parent of parent for rows where rank is the same
-    as the parent rank
-    '''
-    same_rank = _isame_ancestor_rank(df)
-    while _isame_ancestor_rank(df).any():
-        parents = df[same_rank].join(df, on='parent_id', rsuffix='_new')
-        df.loc[same_rank, 'parent_id'] = parents['parent_id_new']
-        df.loc[same_rank, 'rank_parent'] = parents['rank_parent_new']
-        same_rank = _isame_ancestor_rank(df)
-
-    return df
-
-
-def assert_integrity(nodes, ranks):
-    bad_nodes = nodes[nodes['rank_parent'] < nodes['rank']]
-    if not bad_nodes.empty:
-        logging.error(bad_nodes)
-        raise IntegrityError('some node ranks above parent ranks')
-
-
-def assert_primaries(names):
-    '''
-    Search tax_id groups for missing primary names,
-    if exist raise IntegrityException
-    '''
-    err = False
-    for i, df in names.groupby(by='tax_id'):
-        if not df['is_primary'].any():
-            err = True
-            logging.error('tax_id {} missing primary name'.format(i))
-
-    if err:
-        raise IntegrityError('taxon groups missing primary name')
+    logging.info('loading merged')
+    merged_rows = read_merged(read_archive(archive, 'merged.dmp'))
+    db_loader(conn, 'merged', rows=merged_rows)
 
 
 def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
@@ -426,66 +448,6 @@ def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
     return (fout, downloaded)
 
 
-def get_subtrees(nodes, to_mark):
-    '''
-    to_mark - Boolean Series of nodes for selection
-
-    Continuously grab children using parent_id and OR results on nodes table
-    to identify subtrees
-    '''
-    mark_children = to_mark
-    while mark_children.any():
-        mark_children = nodes['parent_id'].isin(nodes[mark_children].index)
-        to_mark |= mark_children
-    return to_mark
-
-
-def mark_is_valid(nodes, names):
-    """
-    After applying a ``regex`` to primary names associated with tax_ids,
-    marking those that match as invalid.
-    """
-    nodes = nodes.drop('is_valid', axis=1)
-    nodes = nodes.merge(
-        names[names['is_primary']][['is_classified', 'tax_id']],
-        right_on='tax_id',
-        left_index=True,
-        how='left')
-    nodes = nodes.rename(columns={'is_classified': 'is_valid'})
-    return nodes.set_index('tax_id')
-
-
-def mark_valid_subtrees(nodes):
-    subtree_msg = '{} species subtree nodes is_valid={}'
-
-    valid_subtrees = ((nodes['rank'] == 'species') & nodes['is_valid'])
-    valid_subtrees = get_subtrees(nodes, valid_subtrees)
-    nodes.loc[valid_subtrees, 'is_valid'] = True
-    logging.info(subtree_msg.format(valid_subtrees.sum(), True))
-
-    # mark false
-    invalid_subtrees = ((nodes['rank'] == 'species') & ~nodes['is_valid'])
-    invalid_subtrees = get_subtrees(nodes, invalid_subtrees)
-    nodes.loc[invalid_subtrees, 'is_valid'] = False
-    logging.info(subtree_msg.format(invalid_subtrees.sum(), False))
-
-    # unclassfied bacteria, tax_id 2323
-    unclassified_bacteria = get_subtrees(nodes, nodes.index == '2323')
-    logging.info(subtree_msg.format(unclassified_bacteria.sum(), False))
-    nodes.loc[unclassified_bacteria, 'is_valid'] = False
-
-    return nodes
-
-
-def _isame_ancestor_rank(df):
-    '''
-    return boolean series whether row has same rank as parent
-    '''
-    return ((df['rank'] != 'root') &
-            (df['rank_parent'] != 'no_rank') &
-            (df['rank_parent'] == df['rank']))
-
-
 def read_archive(archive, fname):
     """
     Return an iterator of rows from a zip archive.
@@ -503,91 +465,3 @@ def read_dmp(fname):
     for line in open(fname, 'rU'):
         yield line.rstrip('\t|\n').split('\t|\t')
 
-
-def read_names(rows, unclassified_regex=None):
-    """
-    Return an iterator of rows ready to insert into table
-    "names". Adds columns "is_primary" and "is_classified". If
-    `unclassified_regex` is not None, defines 'is_classified' as 1 if
-    the regex fails to match "tax_name" or 0 otherwise; if
-    `unclassified_regex` is None, 'is_classified' is given a value of
-    None.
-
-    * rows - iterator of lists (eg, output from read_archive or read_dmp)
-    * unclassified_regex - a compiled re matching "unclassified" names
-    """
-
-    # TODO: can we read this table in as a pandas dataframe and apply
-    # TODO: the regex after it has been read?
-
-    keys = ['tax_id', 'tax_name', 'unique_name', 'name_class']
-    idx = dict((k, i) for i, k in enumerate(keys))
-    tax_name, unique_name, name_class = \
-        [idx[k] for k in ['tax_name', 'unique_name', 'name_class']]
-
-    def _is_primary(row):
-        """
-        Defines a name as "primary," meaning that other names associated
-        with the this tax_id should be considered synonyms.
-        """
-
-        if row[name_class] != 'scientific name':
-            is_primary = False
-        elif not row[unique_name]:
-            is_primary = True
-        elif row[tax_name] == row[unique_name].split('<')[0].strip():
-            is_primary = True
-        else:
-            is_primary = False
-
-        return is_primary
-
-    if unclassified_regex:
-        def _is_classified(row):
-            """
-            Return 1 if tax_name element of `row` matches
-            unclassified_regex, 0 otherwise. Search no more than the
-            first two whitespace-delimited words.
-            """
-            tn = row[tax_name]
-            return not unclassified_regex.search(tn)
-    else:
-        def _is_classified(row):
-            return None
-
-    # appends additional field is_primary
-    colnames = keys + ['is_primary', 'is_classified']
-    for r in rows:
-        row = dict(zip(colnames, r + [_is_primary(r), _is_classified(r)]))
-        yield row
-
-
-def read_nodes(rows, ncbi_source_id):
-    """
-    Return an iterator of rows ready to insert into table "nodes".
-
-    * rows - iterator of lists (eg, output from read_archive or read_dmp)
-    * root_name - string identifying the root node (replaces NCBI's default).
-    """
-
-    keys = 'tax_id parent_id rank embl_code division_id'.split()
-    idx = dict((k, i) for i, k in enumerate(keys))
-    rank = idx['rank']
-    parent_id = idx['parent_id']
-
-    # assume the first row is the root
-    row = rows.next()
-    row[rank] = 'root'
-    # required for termination of recursive CTE for calculating lineages:
-    row[parent_id] = None
-    rows = itertools.chain([row], rows)
-
-    colnames = keys + ['source_id'] + ['is_valid']
-    for r in rows:
-        row = dict(zip(colnames, r))
-        assert len(row) == len(colnames)
-
-        # replace whitespace in "rank" with underscore
-        row['rank'] = '_'.join(row['rank'].split())
-        row['is_valid'] = True  # default is_valid
-        yield row

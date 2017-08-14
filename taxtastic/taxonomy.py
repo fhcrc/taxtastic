@@ -404,6 +404,7 @@ class Taxonomy(object):
                                     rank=rank,
                                     source_id=source_id)
 
+        # TODO: why primary by default?
         self.names.insert().execute(tax_id=tax_id,
                                     tax_name=tax_name,
                                     is_primary=True)

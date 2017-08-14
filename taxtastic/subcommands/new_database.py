@@ -34,7 +34,7 @@ def build_parser(parser):
     parser = taxtastic.utils.add_database_args(parser)
 
     parser.add_argument(
-        '--append',
+        '--no-clobber',
         action='store_false', default=True,
         dest='clobber',
         help=('If database exists keep current data '
@@ -79,8 +79,10 @@ def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
     base = taxtastic.ncbi.db_connect(
         engine, schema=args.schema, clobber=args.clobber)
+
     taxtastic.ncbi.db_load(engine, zfile, schema=args.schema)
-    print_sql(args.out, engine.name, base.metadata)
+
+    # print_sql(args.out, engine.name, base.metadata)
 
 
 def print_sql(out, engine_name, metadata):
@@ -88,5 +90,6 @@ def print_sql(out, engine_name, metadata):
         out.write(str(sql.compile(dialect=dump.dialect)).strip() + ';\n')
     engine = sqlalchemy.create_engine(
         engine_name + '://', strategy='mock', executor=dump)
+
     dump.dialect = engine.dialect
     metadata.create_all(bind=engine)
