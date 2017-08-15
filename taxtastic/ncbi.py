@@ -251,7 +251,7 @@ def read_nodes(rows, source_id=1):
 
     ncbi_keys = ['tax_id', 'parent_id', 'rank', 'embl_code', 'division_id']
     extra_keys = ['source_id', 'is_valid']
-    is_valid = 1
+    is_valid = True
 
     ncbi_cols = len(ncbi_keys)
 
@@ -301,22 +301,24 @@ def read_names(rows, source_id=1):
         # confirm that each tax_id has exactly one scientific name
         num_primary = 0
         for r in grp:
-            is_primary = int(r[name_class] == 'scientific name')
+            is_primary = r[name_class] == 'scientific name'
             num_primary += is_primary
             yield (r + [source_id, is_primary, is_classified])
 
         assert num_primary == 1
 
 
-def load_sqlite(conn, table, rows, colnames=None, limit=None):
-    cur = conn.cursor()
+def load_table(engine, table, rows, colnames=None, limit=None):
 
+    conn = engine.raw_connection()
+    cur = conn.cursor()
     colnames = colnames or next(rows)
 
+    placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
     cmd = 'insert into {table} ({colnames}) values ({fstr})'.format(
         table=table,
         colnames=', '.join(colnames),
-        fstr=', '.join(['?'] * len(colnames)))
+        fstr=', '.join([placeholder] * len(colnames)))
 
     cur.executemany(cmd, itertools.islice(rows, limit))
     conn.commit()
@@ -407,44 +409,39 @@ def db_load(engine, archive, ranks=RANKS):
     """
 
     conn = engine.raw_connection()
-    db_engine = engine.driver  # 'pysqlite' or '?'
-
-    if db_engine == 'pysqlite':
-        db_loader = load_sqlite
-    else:
-        raise NotImplementedError('database driver {} is not supported'.format(db_engine))
 
     # source
-    db_loader(
-        conn, 'source',
+    load_table(
+        engine, 'source',
         rows=[('ncbi', DATA_URL)],
         colnames=['name', 'description'],
     )
 
-    source_id = conn.cursor().execute(
-        "select id from source where name = 'ncbi'").fetchone()[0]
+    cur = conn.cursor()
+    cur.execute("select id from source where name = 'ncbi'")
+    source_id = cur.fetchone()[0]
 
     # ranks
     log.info('loading ranks')
     # TODO: remove ranks.no_rank
     ranks_rows = [('rank', 'height', 'no_rank')]
-    ranks_rows += [(rank, i, 0) for i, rank in enumerate(RANKS)]
-    db_loader(conn, 'ranks', rows=iter(ranks_rows))
+    ranks_rows += [(rank, i, True) for i, rank in enumerate(RANKS)]
+    load_table(engine, 'ranks', rows=iter(ranks_rows))
 
     # nodes
     logging.info('loading nodes')
     nodes_rows = read_nodes(read_archive(archive, 'nodes.dmp'), source_id=source_id)
-    db_loader(conn, 'nodes', rows=nodes_rows)
+    load_table(engine, 'nodes', rows=nodes_rows)
 
     # names
     logging.info('loading names')
     names_rows = read_names(read_archive(archive, 'names.dmp'), source_id=source_id)
-    db_loader(conn, 'names', rows=names_rows)
+    load_table(engine, 'names', rows=names_rows)
 
     # merged
     logging.info('loading merged')
     merged_rows = read_merged(read_archive(archive, 'merged.dmp'))
-    db_loader(conn, 'merged', rows=merged_rows)
+    load_table(engine, 'merged', rows=merged_rows)
 
     conn.commit()
 
