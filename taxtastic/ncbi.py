@@ -197,7 +197,6 @@ def define_schema(Base):
         __tablename__ = 'ranks'
         rank = Column(String, primary_key=True)
         height = Column(Integer, unique=True, nullable=False)
-        no_rank = Column(Boolean)
         nodes = relationship('Node')
 
     class Source(Base):
@@ -430,9 +429,8 @@ def db_load(engine, archive, ranks=RANKS):
 
     # ranks
     log.info('loading ranks')
-    # TODO: remove ranks.no_rank
-    ranks_rows = [('rank', 'height', 'no_rank')]
-    ranks_rows += [(rank, i, True) for i, rank in enumerate(RANKS)]
+    ranks_rows = [('rank', 'height')]
+    ranks_rows += [(rank, i) for i, rank in enumerate(RANKS)]
     load_table(engine, 'ranks', rows=iter(ranks_rows))
 
     # nodes
