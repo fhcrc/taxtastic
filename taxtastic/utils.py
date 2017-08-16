@@ -279,4 +279,4 @@ def sqlite_default():
 
 
 def random_name(length):
-    ''.join([random.choice(string.ascii_letters) for n in xrange(length)])
+    return ''.join([random.choice(string.ascii_letters) for n in xrange(length)])
