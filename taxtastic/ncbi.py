@@ -28,7 +28,7 @@ from jinja2 import Template
 
 import sqlalchemy
 from sqlalchemy import (Column, Integer, String, Boolean,
-                        ForeignKey, Index, MetaData)
+                        ForeignKey, Index, MetaData, PrimaryKeyConstraint)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -173,7 +173,7 @@ def define_schema(Base):
 
     class Name(Base):
         __tablename__ = 'names'
-        id = Column(Integer, primary_key=True)
+        # id = Column(Integer, primary_key=True)
         tax_id = Column(String, ForeignKey('nodes.tax_id', ondelete='CASCADE'))
         node = relationship('Node', back_populates='names')
         tax_name = Column(String)
@@ -183,6 +183,7 @@ def define_schema(Base):
         is_primary = Column(Boolean)
         is_classified = Column(Boolean)
         sources = relationship('Source', back_populates='names')
+        __table_args__ = (PrimaryKeyConstraint('tax_id', 'tax_name', 'name_class'), {},)
 
     Index('ix_names_tax_id_is_primary', Name.tax_id, Name.is_primary)
 
@@ -315,10 +316,10 @@ def load_table(engine, table, rows, colnames=None, limit=None):
     colnames = colnames or next(rows)
 
     placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
-    cmd = 'insert into {table} ({colnames}) values ({fstr})'.format(
+    cmd = 'insert into {table} ({colnames}) values ({placeholders})'.format(
         table=table,
         colnames=', '.join(colnames),
-        fstr=', '.join([placeholder] * len(colnames)))
+        placeholders=', '.join([placeholder] * len(colnames)))
 
     cur.executemany(cmd, itertools.islice(rows, limit))
     conn.commit()
@@ -327,13 +328,14 @@ def load_table(engine, table, rows, colnames=None, limit=None):
 def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX):
     conn = engine.raw_connection()
     cur = conn.cursor()
+    placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
 
     cmd = """
-    select tax_id, tax_name
-    from names
-    join nodes using(tax_id)
-    where is_primary
-    and rank = 'species'
+    SELECT tax_id, tax_name
+    FROM names
+    JOIN nodes USING(tax_id)
+    WHERE is_primary
+    AND rank = 'species'
     """
 
     cur.execute(cmd)
@@ -352,27 +354,32 @@ def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX):
 
     # insert tax_ids into a temporary table
     temptab = random_name(12)
-    cmd = 'CREATE TEMPORARY TABLE "{}" (tax_id text)'.format(temptab)
+    cmd = 'CREATE TEMPORARY TABLE "{tab}" (tax_id text)'.format(tab=temptab)
+    log.info(cmd)
     cur.execute(cmd)
 
     log.info('inserting tax_ids into temporary table')
-    cmd = 'INSERT INTO "{tab}" VALUES (?)'.format(tab=temptab)
+    cmd = 'INSERT INTO "{tab}" VALUES ({placeholder})'.format(
+        tab=temptab, placeholder=placeholder)
+    log.info(cmd)
     cur.executemany(cmd, classified_taxids)
 
     log.info('creating an index on the temporary table')
     cmd = 'CREATE INDEX ix_{tab}_tax_id on {tab}(tax_id)'.format(tab=temptab)
+    log.info(cmd)
     cur.execute(cmd)
 
     log.info('updating names.is_classified')
 
     cmd = Template("""
-    update names
-    set is_classified = 1
-    where is_primary
-    and tax_id in (select tax_id from "{{ temptab }}")
-    """).render(temptab=temptab)
+    UPDATE names SET
+    is_classified = {{ placeholder }}
+    WHERE is_primary
+    AND tax_id IN (SELECT tax_id FROM "{{ tab }}")
+    """).render(tab=temptab, placeholder=placeholder)
 
-    cur.execute(cmd)
+    log.info(cmd)
+    cur.execute(cmd, (True,))
     conn.commit()
 
 
