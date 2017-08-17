@@ -2,12 +2,17 @@
  change log for taxtastic
 ==========================
 
-0.8.0
-=====
+0.8.0 (in progress)
+===================
 
 * major speedups (> 30x) for ``new_database`` and ``taxtable``
-* names.is_classified is set to true (1) only for scientific names at rank species
-* nodes.is_valid is true (1) for all ranks above species
+* names.is_classified is set to true only for scientific names at rank species
+* nodes.is_valid is true for all ranks above species
+* remove names.id and ranks.is_below from schema
+* ``taxtable`` renames "no rank" intermediate ranks by appending "_"
+  to parent rank name (instead of prepending "below_" to parent rank)
+* intermediate ranks are renamed on the fly when creating the taxtable
+  rather than on database creation.
 
 0.7.0
 =====
