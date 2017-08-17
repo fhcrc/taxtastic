@@ -52,7 +52,7 @@ def as_taxtable_rows(rows, seen=None):
     # a few seconds off the total time.
     seen = seen or {}
 
-    __, __, tids, pids, ranks, names = [list(tup) for tup in zip(*rows)]
+    __, tids, pids, ranks, names = [list(tup) for tup in zip(*rows)]
     ranks = replace_no_rank(ranks)
     ranks_out = ranks[:]
 
@@ -141,8 +141,6 @@ def build_parser(parser):
 
 
 def action(args):
-    print args
-
     log.info('reading tax_ids')
     if args.tax_ids:
         tax_ids = set(args.tax_ids)

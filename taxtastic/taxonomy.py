@@ -259,7 +259,7 @@ class Taxonomy(object):
                  SELECT a.tid, a.ord + 1, p.tax_id, p.parent_id, p.rank
                   FROM a JOIN nodes p ON a.parent_id = p.tax_id
                 )
-                SELECT a.tid, a.ord, a.tax_id, a.parent_id, a.rank, tax_name FROM a
+                SELECT a.tid, a.tax_id, a.parent_id, a.rank, tax_name FROM a
                 JOIN names using(tax_id)
                 WHERE names.is_primary
                 ORDER BY tid, ord desc
