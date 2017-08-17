@@ -99,18 +99,18 @@ class TestTaxTable(TestScriptBase):
 
     def test02(self):
         """Specify a single tax_id"""
-        self.cmd_ok('taxtable %(taxdb)s -o %(outfile)s -t 180164')
+        self.cmd_ok('taxtable %(taxdb)s -o %(outfile)s -t 1280')
         self.assertTrue(path.isfile(self.outfile))
 
     def test03(self):
         """Specify more than one tax_id"""
-        self.cmd_ok('taxtable %(taxdb)s -o %(outfile)s -t 180164,166486')
+        self.cmd_ok('taxtable %(taxdb)s -o %(outfile)s -t 1280 1281')
         self.assertTrue(path.isfile(self.outfile))
 
     def test04(self):
         """taxids using an input file"""
         self.cmd_ok(
-            'taxtable %(taxdb)s -o %(outfile)s -t %(datadir)s/taxids1.txt')
+            'taxtable %(taxdb)s -o %(outfile)s -f %(datadir)s/taxids1.txt')
         self.assertTrue(path.isfile(self.outfile))
 
 

@@ -141,6 +141,8 @@ def build_parser(parser):
 
 
 def action(args):
+    print args
+
     log.info('reading tax_ids')
     if args.tax_ids:
         tax_ids = set(args.tax_ids)

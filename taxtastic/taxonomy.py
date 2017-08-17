@@ -230,7 +230,8 @@ class Taxonomy(object):
             with self.engine.connect() as con:
                 # insert tax_ids into a temporary table
                 temptab = random_name(12)
-                cmd = 'CREATE TEMPORARY TABLE "{tab}" (old_tax_id text)'.format(tab=temptab)
+                cmd = 'CREATE TEMPORARY TABLE "{tab}" (old_tax_id text)'.format(
+                    tab=temptab)
                 con.execute(cmd)
 
                 log.info('inserting tax_ids into temporary table')
@@ -380,7 +381,8 @@ class Taxonomy(object):
         return True
 
     def add_node(self, tax_id, parent_id, rank, tax_name,
-                 children=[], source_id=None, source_name=None):
+                 children=[], source_id=None, source_name=None,
+                 name_class='custom'):
         """
         Add a node to the taxonomy.
         """
@@ -403,10 +405,10 @@ class Taxonomy(object):
                                     rank=rank,
                                     source_id=source_id)
 
-        # TODO: why primary by default?
         self.names.insert().execute(tax_id=tax_id,
                                     tax_name=tax_name,
-                                    is_primary=True)
+                                    is_primary=True,
+                                    name_class=name_class)
 
         for child in children:
             ret = self.nodes.update(

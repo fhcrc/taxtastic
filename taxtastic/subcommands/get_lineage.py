@@ -19,7 +19,6 @@ import argparse
 import csv
 import logging
 import sys
-from itertools import islice
 
 import sqlalchemy
 
@@ -31,8 +30,7 @@ log = logging.getLogger(__name__)
 
 def build_parser(parser):
     parser = add_database_args(parser)
-    # parser.add_argument('tax_id')
-    parser.add_argument('tax_ids', type=argparse.FileType())
+    parser.add_argument('tax_ids', nargs='+')
     parser.add_argument(
         '-o', '--outfile',
         type=argparse.FileType('w'),
@@ -45,10 +43,8 @@ def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
     tax = Taxonomy(engine, schema=args.schema)
 
-    for tax_id in islice(args.tax_ids, 5):
-        print tax._get_lineage_table(tax_id.strip())
-
-    # print tax._get_lineage(args.tax_id)
-    # print tax.lineage(args.tax_id)
+    writer = csv.writer(args.outfile)
+    for row in tax._get_lineage_table(args.tax_ids):
+        writer.writerow(row)
 
     engine.dispose()

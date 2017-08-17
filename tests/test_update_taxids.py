@@ -38,12 +38,16 @@ class TestUpdateTaxids(config.TestBase):
         """
         --ignore-unknowns
         """
+
+        raise Warning('is this option actually used anywhere?')
+
         this_test = sys._getframe().f_code.co_name
         thisdata_path = self.thisdata_path
         ref = os.path.join(thisdata_path, this_test, 'update.csv')
         outdir = self.mkoutdir()
         out = os.path.join(outdir, 'update.csv')
-        args = ['--ignore-unknowns', '--out', out, self.seq_info, self.small_taxonomy_db]
+        args = ['--ignore-unknowns', '--out', out, self.seq_info,
+                self.small_taxonomy_db]
         log.info(self.log_info + ' '.join(map(str, args)))
         self.main(args)
         self.assertTrue(filecmp.cmp(out, ref))
@@ -52,6 +56,8 @@ class TestUpdateTaxids(config.TestBase):
         """
         --unknowns unknowns.csv
         """
+
+        raise Warning('is this option actually used anywhere?')
 
         this_test = sys._getframe().f_code.co_name
         thisdata_path = self.thisdata_path
@@ -74,6 +80,8 @@ class TestUpdateTaxids(config.TestBase):
         """
         --ignore-unknowns --name-columns tax_name
         """
+
+        raise Warning('is this option actually used anywhere?')
 
         this_test = sys._getframe().f_code.co_name
         thisdata_path = self.thisdata_path

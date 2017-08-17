@@ -11,7 +11,7 @@ import config
 from config import TestBase
 
 import taxtastic
-from taxtastic.taxonomy import Taxonomy
+from taxtastic.taxonomy import Taxonomy, TaxonIntegrityError
 import taxtastic.ncbi
 import taxtastic.utils
 
@@ -50,28 +50,26 @@ class TestAddNode(TestTaxonomyBase):
 
     def test01(self):
         self.tax.add_node(
-            tax_id='1578_1',
-            parent_id='1578',
-            rank='species_group',
-            tax_name='Lactobacillus helveticis/crispatus',
+            tax_id='1280_1',
+            parent_id='1280',
+            rank='subspecies',
+            tax_name='foo',
             source_id=2
         )
 
-        lineage = self.tax.lineage('1578_1')
-        self.assertTrue(lineage['tax_id'] == '1578_1')
-        self.assertTrue(lineage['tax_name'] ==
-                        'Lactobacillus helveticis/crispatus')
+        lineage = self.tax.lineage('1280_1')
+        self.assertEqual(lineage['tax_id'], '1280_1')
+        self.assertEqual(lineage['tax_name'], 'foo')
 
     def test02(self):
 
-        new_taxid = '1578_1'
-        new_taxname = 'Lactobacillus helveticis/crispatus'
-        children = ['47770',  # crispatus
-                    '1587']  # helveticus
+        new_taxid = '1279_1'
+        new_taxname = 'between genus and species'
+        children = ['1280', '1281']
 
         self.tax.add_node(
             tax_id=new_taxid,
-            parent_id='1578',
+            parent_id='1279',
             rank='species_group',
             tax_name=new_taxname,
             children=children,
@@ -95,10 +93,9 @@ class TestAddNode(TestTaxonomyBase):
             d.pop('comments')  # not part of add_node constructor
             self.tax.add_node(**d)
 
-        new_taxid = '1578_1'
-        new_taxname = 'Lactobacillus helveticis/crispatus'
-        children = ['47770',  # crispatus
-                    '1587']  # helveticus
+        new_taxid = '1279_1'
+        new_taxname = 'between genus and species'
+        children = ['1280', '1281']
         lineage = self.tax.lineage(new_taxid)
 
         self.assertTrue(lineage['tax_id'] == new_taxid)
@@ -107,6 +104,21 @@ class TestAddNode(TestTaxonomyBase):
         for taxid in children:
             lineage = self.tax.lineage(taxid)
             self.assertTrue(lineage['parent_id'] == new_taxid)
+
+    def test04(self):
+
+        new_taxid = '1279_1'
+        new_taxname = 'between genus and species'
+        children = ['1280', '1281']
+
+        self.assertRaises(TaxonIntegrityError,
+                          self.tax.add_node,
+                          tax_id=new_taxid,
+                          parent_id='1279',
+                          rank='genus',
+                          tax_name=new_taxname,
+                          children=children,
+                          source_id=2)
 
 
 def test__node():

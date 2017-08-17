@@ -289,8 +289,9 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                 ranked = False
                 tax_ids = None
                 taxnames = None
+                tax_id_file = None
                 seq_info = ifp
-                out = tf
+                outfile = tf
                 verbosity = 0
                 clade_ids = None
                 taxtable = None

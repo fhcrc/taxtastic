@@ -138,12 +138,8 @@ class TestGetLineagePublic(TaxTableSetup):
         tax_name = 'Gemella'
         self.tax.lineage(tax_name=tax_name)
 
-        self.tax.lineage(tax_id)
-        # self.assertTrue(lineage['rank'] == 'genus')
-
-    def test07(self):
-        tax_id = '537919'
-        self.tax.lineage(tax_id=tax_id)
+        lineage = self.tax.lineage(tax_id)
+        self.assertEqual(lineage['rank'], 'genus')
 
 
 class TestMethods(TaxTableSetup):
@@ -155,28 +151,3 @@ class TestMethods(TaxTableSetup):
     def test02(self):
         self.assertRaises(ValueError, self.tax.primary_from_id, 'buh')
 
-
-class TestWriteTable(TaxTableSetup):
-    """
-    test tax.write_table - note that this method produces output.
-    """
-
-    def setUp(self):
-        super(TestWriteTable, self).setUp()
-        self.fname = path.join(self.mkoutdir(), 'taxtab') + '.csv'
-        self.file = open(self.fname, 'w')
-
-    def tearDown(self):
-        self.file.close()
-        self.assertTrue(path.isfile(self.fname))
-
-    def test02(self):
-        tax_id = '1280'  # staph aureus
-        self.tax.write_table(taxa=[tax_id], csvfile=self.file)
-
-    def test03(self):
-        tax_id = '1378'  # Gemella; lineage has two successive no_rank taxa
-        self.tax.write_table(taxa=[tax_id], csvfile=self.file)
-
-    def test04(self):
-        self.tax.write_table(taxa=['1378', '1280', '131110'], csvfile=self.file)
