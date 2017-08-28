@@ -33,19 +33,19 @@ for development. Briefly (for those working on the main fork):
 Preparing a release
 ===================
 
-1. check out dev and make sure it is up to date with GitHub
-1. update CHANGES.rst (the topmost section header should indicate
-   the new version number)
-1. make a final commit to dev
-1. `git push origin dev`
-1. checkout master and merge dev
-1. tag the commit to reflect the new version number:
+#. check out dev and make sure it is up to date with GitHub
+#. update CHANGES.rst (the topmost section header should indicate the
+   new version number)
+#. make a final commit to dev
+#. `git push origin dev`
+#. checkout master and merge dev
+#. tag the commit to reflect the new version number:
    `git tag -a -m "some message" vX.Y.Z`
-1. update the docs (details below): `(cd docs && make html)`
-1. publish the updated docs: `ghp-import -p html`
-1. `git push origin master`
-1. `git push --tags`
-1. update PyPi (see below)
+#. update the docs (details below): `(cd docs && make html)`
+#. publish the updated docs: `ghp-import -p html`
+#. `git push origin master`
+#. `git push --tags`
+#. update PyPi (see below)
 
 PyPi
 ====
@@ -77,8 +77,7 @@ Note that the html directory needs to contain a file named `.nojekyll`
 to prevent GitHub from ignoring pages with leading underscores (like
 `_static`), so the Makefile adds one
 
-Thankfully, publishing to the GitHub page for the bioscons repository
-is easy using `ghp-import`::
+To publish the docs to the gh-pages branch::
 
   ghp-import -p html
 
