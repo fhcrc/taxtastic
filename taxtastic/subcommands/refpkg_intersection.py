@@ -1,6 +1,5 @@
 """Find the intersection of a taxtable and a refpkg's taxonomy."""
 
-import sqlite3
 import logging
 import sys
 import csv
@@ -8,6 +7,11 @@ import argparse
 import tempfile
 import itertools
 import operator
+
+try:
+    from pysqlite2 import dbapi2 as sqlite3
+except ImportError:
+    import sqlite3
 
 from taxtastic.refpkg import Refpkg
 from taxtastic.taxdb import Taxdb

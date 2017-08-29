@@ -1,3 +1,9 @@
+biopython
+decorator
+jinja2>=2.9
+pandas>=0.17.1
+sqlalchemy>=0.7
+
 # for development
 sphinx
 ghp-import

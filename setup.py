@@ -4,10 +4,23 @@ Upload to pypi:         python setup.py sdist upload
 """
 
 import versioneer
+from distutils.version import LooseVersion
 from setuptools import setup, find_packages, Command
 # To use a consistent encoding
 from codecs import open
 from os import path
+
+try:
+    from pysqlite2 import dbapi2 as sqlite3
+except ImportError:
+    import sqlite3
+
+min_sqlite3_version = '3.8.3'
+if LooseVersion(sqlite3.sqlite_version) < LooseVersion(min_sqlite3_version):
+    raise ImportError(('the sqlite3 library version for this python interpreter is '
+                       '{}, but a version >= {} is required; '
+                       'see https://github.com/fhcrc/taxtastic#installing').format(
+                           sqlite3.sqlite_version, min_sqlite3_version))
 
 versioneer.versionfile_source = 'taxtastic/_version.py'
 versioneer.versionfile_build = 'taxtastic/_version.py'

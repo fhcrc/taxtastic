@@ -15,6 +15,51 @@ If you don't have pip, try::
 
 Either of these commands will install taxtastic along with required dependencies.
 
+sqlite3
+~~~~~~~
+
+Taxtastic uses recursive common table expressions to query the
+taxonomy database, which requires that the Python ``sqlite3`` module
+is built against sqlite3 library version of 3.8.3 or higher
+(http://www.sqlite.org/releaselog/3_8_3.html). You can check the
+version like this::
+
+  python -c 'import sqlite3; print sqlite3.sqlite_version'
+
+For older systems, it is possible to provide an up to date version by
+installing ``pysqlite`` as follows. The instructions below describe
+installation into a virtualenv::
+
+  virtualenv taxtastic-env
+  source taxtastic-env/bin/activate
+  wget https://pypi.python.org/packages/42/02/981b6703e3c83c5b25a829c6e77aad059f9481b0bbacb47e6e8ca12bd731/pysqlite-2.8.3.tar.gz
+  tar -xf pysqlite-2.8.3.tar.gz
+  cd pysqlite-2.8.3
+  cat > setup_patch <<EOF
+  146a147,149
+  >             ext.include_dirs.append(".")
+  >             build_ext.build_extension(self, ext)
+  >             return
+  EOF
+  patch setup.py setup_patch
+
+Now we must download the ``sqlite3`` source code amalgamation::
+
+  wget https://sqlite.org/2017/sqlite-amalgamation-3200100.zip
+  unzip sqlite-amalgamation-3200100.zip
+  mv sqlite-amalgamation-3200100/* .
+
+Compile ``pysqlite`` and install the package to the virtualenv::
+
+  rm -rf build && python setup.py build_static && python setup.py install
+
+Finally, test that pysqlite has been linked against the downloaded version of
+the ``sqlite3`` libraries::
+
+  python -c 'from pysqlite2 import dbapi2; print dbapi2.sqlite_version'
+
+At this point, taxtastic may be installed as described above.
+
 We love it, but what is it?
 ---------------------------
 
