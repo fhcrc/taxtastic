@@ -1,0 +1,7 @@
+Bootstrap:docker
+From:nghoffman/taxtastic:TAG
+
+%post
+    mkdir -p /fh
+    mkdir -p /app
+    mkdir -p /mnt
