@@ -77,8 +77,7 @@ def action(args):
             url=args.taxdump_url)
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
-    base = taxtastic.ncbi.db_connect(
-        engine, schema=args.schema, clobber=args.clobber)
+    taxtastic.ncbi.db_connect(engine, schema=args.schema, clobber=args.clobber)
 
     taxtastic.ncbi.db_load(engine, archive=zfile)
     taxtastic.ncbi.set_names_is_classified(engine)

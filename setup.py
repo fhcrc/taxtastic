@@ -10,19 +10,19 @@ from setuptools import setup, find_packages, Command
 from codecs import open
 from os import path
 
-# try:
-#     from pysqlite2 import dbapi2 as sqlite3
-#     print 'using pysqlite2, sqlite3 version {}'.format(sqlite3.sqlite_version)
-# except ImportError:
-#     import sqlite3
-#     print 'using sqlite3, sqlite3 version {}'.format(sqlite3.sqlite_version)
+try:
+    from pysqlite2 import dbapi2 as sqlite3
+    print 'using pysqlite2, sqlite3 version {}'.format(sqlite3.sqlite_version)
+except ImportError:
+    import sqlite3
+    print 'using sqlite3, sqlite3 version {}'.format(sqlite3.sqlite_version)
 
-# min_sqlite3_version = '3.8.3'
-# if LooseVersion(sqlite3.sqlite_version) < LooseVersion(min_sqlite3_version):
-#     raise ImportError(('the sqlite3 library version for this python interpreter is '
-#                        '{}, but a version >= {} is required; '
-#                        'see https://github.com/fhcrc/taxtastic#installing').format(
-#                            sqlite3.sqlite_version, min_sqlite3_version))
+min_sqlite3_version = '3.8.3'
+if LooseVersion(sqlite3.sqlite_version) < LooseVersion(min_sqlite3_version):
+    raise ImportError(('the sqlite3 library version for this python interpreter is '
+                       '{}, but a version >= {} is required; '
+                       'see https://github.com/fhcrc/taxtastic#installing').format(
+                           sqlite3.sqlite_version, min_sqlite3_version))
 
 versioneer.versionfile_source = 'taxtastic/_version.py'
 versioneer.versionfile_build = 'taxtastic/_version.py'
