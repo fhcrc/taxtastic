@@ -22,7 +22,7 @@ echo $sqlite_ok
 
 if [[ $sqlite_ok ]]; then
     echo "sqlite library version is > $sqlite_min_version - exiting"
-    # exit 0
+    exit 0
 fi
 
 rm -rf pysqlite-$pysqlite_version
@@ -43,8 +43,6 @@ patch setup.py setup_patch
 wget --quiet https://sqlite.org/2017/sqlite-amalgamation-3200100.zip
 unzip sqlite-amalgamation-3200100.zip
 mv sqlite-amalgamation-3200100/* .
-
-exit
 
 rm -rf build && python setup.py build_static && python setup.py install
 
