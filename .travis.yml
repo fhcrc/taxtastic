@@ -21,8 +21,8 @@ env:
 
 before_install:
   - pip install -U pip
+  - pip install check-manifest readme_renderer flake8 docutils
   - dev/install_pysqlite.sh
-  - pip wheel check-manifest readme_renderer flake8
 
 install:
   - pip install -U -e .
