@@ -211,10 +211,15 @@ class Taxonomy(object):
         JOIN ranks using(rank)
         """.format('%s' if self.engine.name == 'postgresql' else '?')
 
-        # reorder so that root is first
-        with self.engine.connect() as con:
-            result = con.execute(cmd, (tax_id,))
-            lineage = result.fetchall()[::-1]
+        # with some versions of sqlite3, an error is raised when no
+        # rows are returned; with others, an empty list is returned.
+        try:
+            with self.engine.connect() as con:
+                result = con.execute(cmd, (tax_id,))
+                # reorder so that root is first
+                lineage = result.fetchall()[::-1]
+        except sqlalchemy.exc.ResourceClosedError:
+            lineage = []
 
         if not lineage:
             raise ValueError('tax id "{}" not found'.format(tax_id))
