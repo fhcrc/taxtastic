@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 sqlite_min_version=3.8.3
 pysqlite_version=2.8.3
 
