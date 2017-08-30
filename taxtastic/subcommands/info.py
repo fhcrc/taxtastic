@@ -21,7 +21,7 @@ import csv
 from collections import defaultdict
 import sys
 
-from Bio import SeqIO
+from fastalite import fastalite
 
 from taxtastic import refpkg
 
@@ -57,7 +57,8 @@ def tally_taxa(pkg):
 
 
 def print_lengths(pkg):
-    seqs = SeqIO.parse(pkg.file_abspath('aln_fasta'), 'fasta')
+    with pkg.open_resource('aln_fasta') as f:
+        seqs = fastalite(f)
     writer = csv.writer(sys.stdout)
     writer.writerow(["seqname", "length"])
     for seq in seqs:

@@ -25,8 +25,6 @@ import os
 import time
 import warnings
 
-# import Bio.Phylo
-# import Bio.SeqIO
 import contextlib
 import copy
 import csv
@@ -38,11 +36,11 @@ import subprocess
 import tempfile
 import zipfile
 
+import dendropy
 from decorator import decorator
 from fastalite import fastalite
 
 from taxtastic import utils, taxdb
-
 
 FORMAT_VERSION = '1.1'
 
@@ -666,7 +664,7 @@ class Refpkg(object):
             lens = [len(l) for l in lines]
             if not(all([l == lens[0] and l > 1 for l in lens])):
                 return "seq_info is not valid CSV."
-            csv_names = {line[0] for line in lines}
+            csv_names = {line[0] for line in lines[1:]}
 
         with self.open_resource('aln_sto') as f:
             try:
@@ -675,12 +673,12 @@ class Refpkg(object):
                 return 'aln_sto file is not valid Stockholm.'
 
         try:
-           tree = dendropy.Tree.get(
-               path=self.resource_path('tree'),
-               schema='newick',
-               case_sensitive_taxon_labels=True,
-               preserve_underscores=True)
-           tree_names = set(tree.taxon_namespace.labels())
+            tree = dendropy.Tree.get(
+                path=self.resource_path('tree'),
+                schema='newick',
+                case_sensitive_taxon_labels=True,
+                preserve_underscores=True)
+            tree_names = set(tree.taxon_namespace.labels())
         except:
             return 'tree file is not valid Newick.'
 
@@ -709,7 +707,7 @@ class Refpkg(object):
         with self.open_resource('phylo_model') as f:
             try:
                 json.load(f)
-            except ValueError as v:
+            except ValueError:
                 return "phylo_model is not valid JSON."
 
         return False

@@ -96,8 +96,9 @@ params = {'name': 'taxtastic',
           'package_data': {
               'taxtastic': [path.join('data', f) for f in ['sha']]},
           'install_requires': [
-              # 'biopython',
               'decorator',
+              'fastalite>=0.3',
+              'DendroPy>=4.3.0',
               'jinja2>=2.9',
               # 'pandas>=0.17.1',
               'sqlalchemy>=0.7',
