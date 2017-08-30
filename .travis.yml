@@ -7,6 +7,7 @@ cache:
   # https://github.com/travis-ci/travis-ci/issues/3239
   directories:
     - $HOME/.cache/pip
+    - $TRAVIS_BUILD_DIR/.tox
 
 env:
   global:
@@ -19,15 +20,13 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 
 before_install:
-  - dev/install_pysqlite.sh
+  # - dev/install_pysqlite.sh
 # for tox
   - pip wheel check-manifest readme_renderer flake8 tox
 
 install:
   - pip install .
-  - pip install tox
 
 # script: tox
 script:
-  - ./testall
   - tox

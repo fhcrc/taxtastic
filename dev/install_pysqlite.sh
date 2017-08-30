@@ -1,11 +1,36 @@
-#!/bin/bash -v
+#!/bin/bash
 
-wget -nc https://pypi.python.org/packages/42/02/981b6703e3c83c5b25a829c6e77aad059f9481b0bbacb47e6e8ca12bd731/pysqlite-2.8.3.tar.gz
+sqlite_min_version=3.8.3
+pysqlite_version=2.8.3
 
-rm -rf pysqlite-2.8.3
-tar -xf pysqlite-2.8.3.tar.gz
-cd pysqlite-2.8.3
+sqlite_ok=$(python <<EOF
+from distutils.version import LooseVersion as v
+try:
+    from pysqlite2 import dbapi2 as sqlite3
+    module='pysqlite2'
+except ImportError:
+    import sqlite3
+    module='sqlite3'
 
+if v(sqlite3.sqlite_version) > v("$sqlite_min_version"):
+    print '{}-{}'.format(module, sqlite3.sqlite_version)
+
+EOF
+)
+
+echo $sqlite_ok
+
+if [[ $sqlite_ok ]]; then
+    echo "sqlite library version is > $sqlite_min_version - exiting"
+    # exit 0
+fi
+
+rm -rf pysqlite-$pysqlite_version
+pip download pysqlite==$pysqlite_version
+tar -xf pysqlite-$pysqlite_version.tar.gz
+cd pysqlite-$pysqlite_version
+
+# see https://github.com/ghaering/pysqlite/issues/95
 cat > setup_patch <<EOF
 146a147,149
 >             ext.include_dirs.append(".")
@@ -15,9 +40,11 @@ EOF
 
 patch setup.py setup_patch
 
-wget -nc https://sqlite.org/2017/sqlite-amalgamation-3200100.zip
+wget --quiet https://sqlite.org/2017/sqlite-amalgamation-3200100.zip
 unzip sqlite-amalgamation-3200100.zip
 mv sqlite-amalgamation-3200100/* .
+
+exit
 
 rm -rf build && python setup.py build_static && python setup.py install
 
