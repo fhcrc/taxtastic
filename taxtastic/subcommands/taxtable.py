@@ -89,7 +89,6 @@ def getitems(*items):
 def build_parser(parser):
     parser = add_database_args(parser)
 
-
     # TODO: do we need the commented-out options?
     # node_parser = parser.add_argument_group(title='node options')
 

@@ -270,12 +270,12 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                 class _Args(object):
                     url = 'sqlite:///' + config.ncbi_master_db
                     schema = None
-                    tax_ids = 'horace,hilda'
+                    tax_ids = ['horace', '1280']
                     valid = False
                     taxnames = None
                     seq_info = None
                     verbosity = 0
-                    out = h
+                    outfile = h
                     clade_ids = None
                 self.assertRaises(ValueError, taxtable.action, _Args())
 

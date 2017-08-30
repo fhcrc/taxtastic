@@ -188,36 +188,38 @@ class Taxonomy(object):
 
         """
 
-        try:
-            # Be sure we aren't working with an obsolete tax_id
-            if merge_obsolete:
-                tax_id = self._get_merged(tax_id)
+        # Be sure we aren't working with an obsolete tax_id
+        if merge_obsolete:
+            tax_id = self._get_merged(tax_id)
 
-            # Note: joining with ranks seems like a no-op, but for some
-            # reason it results in a faster query using sqlite, as well as
-            # an ordering from leaf --> root. Might be a better idea to
-            # sort explicitly if this is the expected behavior, but it
-            # seems like for the most part, the lineage is converted to a
-            # dict and the order is irrelevant.
-            cmd = """
-            WITH RECURSIVE a AS (
-             SELECT tax_id, parent_id, rank
-              FROM nodes
-              WHERE tax_id = {}
-            UNION ALL
-             SELECT p.tax_id, p.parent_id, p.rank
-              FROM a JOIN nodes p ON a.parent_id = p.tax_id
-            )
-            SELECT a.rank, a.tax_id FROM a
-            JOIN ranks using(rank)
-            """.format('%s' if self.engine.name == 'postgresql' else '?')
+        # Note: joining with ranks seems like a no-op, but for some
+        # reason it results in a faster query using sqlite, as well as
+        # an ordering from leaf --> root. Might be a better idea to
+        # sort explicitly if this is the expected behavior, but it
+        # seems like for the most part, the lineage is converted to a
+        # dict and the order is irrelevant.
+        cmd = """
+        WITH RECURSIVE a AS (
+         SELECT tax_id, parent_id, rank
+          FROM nodes
+          WHERE tax_id = {}
+        UNION ALL
+         SELECT p.tax_id, p.parent_id, p.rank
+          FROM a JOIN nodes p ON a.parent_id = p.tax_id
+        )
+        SELECT a.rank, a.tax_id FROM a
+        JOIN ranks using(rank)
+        """.format('%s' if self.engine.name == 'postgresql' else '?')
 
-            # reorder so that root is first
-            with self.engine.connect() as con:
-                result = con.execute(cmd, (tax_id,))
-                return result.fetchall()[::-1]
-        except sqlalchemy.exc.ResourceClosedError:
+        # reorder so that root is first
+        with self.engine.connect() as con:
+            result = con.execute(cmd, (tax_id,))
+            lineage = result.fetchall()[::-1]
+
+        if not lineage:
             raise ValueError('tax id "{}" not found'.format(tax_id))
+
+        return lineage
 
     def _get_lineage_table(self, tax_ids, merge_obsolete=True):
         """Return a list of [(rank, tax_id, tax_name)] describing the lineage
@@ -273,6 +275,16 @@ class Taxonomy(object):
 
                 con.execute('DROP TABLE "{}"'.format(temptab))
                 log.info('returning lineages')
+                if not rows:
+                    raise ValueError('no tax_ids were found')
+                else:
+                    returned = {row[0] for row in rows}
+                    if len(returned) < len(tax_ids):
+                        msg = ('{} tax_ids were provided '
+                               'but only {} were returned').format(
+                                   len(tax_ids), len(returned))
+                        raise ValueError(msg)
+
                 return rows
 
         except sqlalchemy.exc.ResourceClosedError:

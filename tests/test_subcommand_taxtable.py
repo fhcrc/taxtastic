@@ -53,8 +53,12 @@ class TestGetLineagePrivate(TaxTableSetup):
 
     def test03(self):
         tax_id = '30630'  # deprecated; Microtus levis Taxonomy ID: 537919
-        self.assertRaises(ValueError, self.tax._get_lineage, tax_id,
-                          merge_obsolete=False)
+        self.assertRaises(
+            ValueError, self.tax._get_lineage, tax_id, merge_obsolete=False)
+
+    def test04(self):
+        tax_id = 'foo'
+        self.assertRaises(ValueError, self.tax._get_lineage, tax_id)
 
 
 class TestGetMerged(TaxTableSetup):
