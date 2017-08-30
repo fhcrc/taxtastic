@@ -19,6 +19,7 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 
 before_install:
+  - pip install -U pip
   - dev/install_pysqlite.sh
   - pip wheel check-manifest readme_renderer flake8 tox
 
