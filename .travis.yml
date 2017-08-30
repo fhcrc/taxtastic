@@ -24,8 +24,8 @@ before_install:
 # for tox
   - pip wheel check-manifest readme_renderer flake8 tox
 
-install:
-  - pip install .
+# install:
+#   - pip install .
 
 # script: tox
 script:
