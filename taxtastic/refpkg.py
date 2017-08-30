@@ -25,8 +25,8 @@ import os
 import time
 import warnings
 
-import Bio.Phylo
-import Bio.SeqIO
+# import Bio.Phylo
+# import Bio.SeqIO
 import contextlib
 import copy
 import csv
@@ -39,6 +39,7 @@ import tempfile
 import zipfile
 
 from decorator import decorator
+from fastalite import fastalite
 
 from taxtastic import utils, taxdb
 
@@ -647,11 +648,12 @@ class Refpkg(object):
         # the same sequences.
 
         with self.open_resource('aln_fasta') as f:
-            try:
-                Bio.SeqIO.read(f, 'fasta')
-            except ValueError as v:
-                if v[0] == 'No records found in handle':
-                    return 'aln_fasta file is not valid FASTA.'
+            firstline = f.readline()
+            if firstline.startswith('>'):
+                f.seek(0)
+            else:
+                return 'aln_fasta file is not valid FASTA.'
+            fasta_names = {seq.id for seq in fastalite(f)}
 
         with self.open_resource('seq_info') as f:
             lines = list(csv.reader(f))
@@ -664,30 +666,24 @@ class Refpkg(object):
             lens = [len(l) for l in lines]
             if not(all([l == lens[0] and l > 1 for l in lens])):
                 return "seq_info is not valid CSV."
+            csv_names = {line[0] for line in lines}
 
         with self.open_resource('aln_sto') as f:
             try:
-                Bio.SeqIO.read(f, 'stockholm')
-            except ValueError as v:
-                if v[0] == 'No records found in handle':
-                    return 'aln_sto file is not valid Stockholm.'
+                sto_names = set(utils.parse_stockholm(f))
+            except ValueError:
+                return 'aln_sto file is not valid Stockholm.'
 
-        with self.open_resource('tree') as f:
-            try:
-                Bio.Phylo.read(f, 'newick')
-            except:
-                return 'tree file is not valid Newick.'
+        try:
+           tree = dendropy.Tree.get(
+               path=self.resource_path('tree'),
+               schema='newick',
+               case_sensitive_taxon_labels=True,
+               preserve_underscores=True)
+           tree_names = set(tree.taxon_namespace.labels())
+        except:
+            return 'tree file is not valid Newick.'
 
-        with self.open_resource('aln_fasta') as f:
-            fasta_names = set([s.id for s in Bio.SeqIO.parse(f, 'fasta')])
-        with self.open_resource('seq_info') as f:
-            csv_names = set([s[0] for s in csv.reader(f)][
-                            1:])  # Remove header with [1:]
-        with self.open_resource('tree') as f:
-            tree_names = set([n.name for n in
-                              Bio.Phylo.read(f, 'newick').get_terminals()])
-        with self.open_resource('aln_sto') as f:
-            sto_names = set([s.id for s in Bio.SeqIO.parse(f, 'stockholm')])
         d = fasta_names.symmetric_difference(sto_names)
         if len(d) != 0:
             return "Names in aln_fasta did not match aln_sto.  Mismatches: " + \

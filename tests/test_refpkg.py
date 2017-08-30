@@ -12,6 +12,24 @@ from . import config
 HAS_RPPR = utils.has_rppr()
 
 
+class TestReadStockholm(unittest.TestCase):
+    def setUp(self):
+        self.fname = os.path.join(config.data_path('lactobacillus2-0.2.refpkg'),
+                                  'lactobacillus2.sto')
+
+    def test01(self):
+        with open(self.fname, 'rU') as fobj:
+            names = utils.parse_stockholm(fobj)
+        self.assertEqual(len(names), 46)
+        self.assertEqual(names[0], '123f3-34')
+        self.assertEqual(names[-1], 'S000727873')
+
+    def test02(self):
+        with open(self.fname, 'rU') as fobj:
+            lines = [line for line in fobj][:-1]
+            self.assertRaises(ValueError, utils.parse_stockholm, lines)
+
+
 class TestRefpkg(unittest.TestCase):
     maxDiff = None
 

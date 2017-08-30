@@ -21,6 +21,7 @@ import subprocess
 import sys
 import string
 import random
+from collections import OrderedDict
 
 log = logging
 
@@ -217,6 +218,32 @@ def parse_phyml(fobj, frequency_type=None):
     return result
 
 
+def parse_stockholm(fobj):
+    """Return a list of names from an Stockholm-format sequence alignment
+    file. ``fobj`` is an open file or another object representing a
+    sequence of lines.
+
+    """
+
+    names = OrderedDict()
+
+    found_eof = False
+    for line in fobj:
+        line = line.strip()
+        if line == '//':
+            found_eof = True
+        elif line.startswith('#') or not line.strip():
+            continue
+        else:
+            name, __ = line.split(None, 1)
+            names[name] = None
+
+    if not found_eof:
+        raise ValueError('Invalid Stockholm format: no file terminator')
+
+    return names.keys()
+
+
 def has_rppr(rppr_name='rppr'):
     """
     Check for rppr binary in path
@@ -280,3 +307,4 @@ def sqlite_default():
 
 def random_name(length):
     return ''.join([random.choice(string.ascii_letters) for n in xrange(length)])
+
