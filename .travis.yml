@@ -22,10 +22,13 @@ env:
 before_install:
   - pip install -U pip
   - dev/install_pysqlite.sh
-  - pip wheel check-manifest readme_renderer flake8 tox
+  - pip wheel check-manifest readme_renderer flake8
 
 install:
   - pip install -U -e .
 
 script:
   - ./testall
+  - check-manifest --ignore "tox.ini,test*,devtools*,docs*"
+  - python setup.py check --metadata --restructuredtext --strict
+  - flake8 taxtastic
