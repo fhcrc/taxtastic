@@ -12,8 +12,10 @@ from os import path
 
 try:
     from pysqlite2 import dbapi2 as sqlite3
+    print 'using pysqlite2, sqlite3 version {}'.format(sqlite3.sqlite_version)
 except ImportError:
     import sqlite3
+    print 'using sqlite3, sqlite3 version {}'.format(sqlite3.sqlite_version)
 
 min_sqlite3_version = '3.8.3'
 if LooseVersion(sqlite3.sqlite_version) < LooseVersion(min_sqlite3_version):
