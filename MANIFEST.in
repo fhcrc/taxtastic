@@ -1,3 +1,6 @@
+exclude docker docker/*
+exclude singularity singularity/*
+exclude README.txt readme.txt
 include *.in
 include *.rst
 include *.txt
