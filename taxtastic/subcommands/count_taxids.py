@@ -4,7 +4,12 @@ Can narrow tax_id count by seq_info if provided.
 
 Returns taxonomy with columns ['tax_id', 'tax_name', 'rank', 'count']
 """
-import pandas
+
+try:
+    import pandas
+except ImportError:
+    pass
+
 import sys
 
 

@@ -22,10 +22,14 @@ TODO: refactor to simplify the action function.
 
 import csv
 import logging
-import pandas
 import sqlalchemy
 import sys
 import taxtastic
+
+try:
+    import pandas
+except ImportError:
+    pass
 
 log = logging.getLogger(__name__)
 
