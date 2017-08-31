@@ -24,6 +24,7 @@ from jinja2 import Template
 import sqlalchemy
 from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
+from sqlalchemy.exc import IntegrityError
 
 from taxtastic.utils import random_name
 
@@ -97,6 +98,8 @@ class Taxonomy(object):
             result = con.execute("select parent_id from nodes where rank = 'root'")
             if result.fetchone()[0] is not None:
                 raise TaxonIntegrityError('the root node must have parent_id = None')
+
+        self.placeholder = '%s' if self.engine.name == 'postgresql' else '?'
 
     def _add_rank(self, rank, parent_rank):
         """
@@ -175,7 +178,7 @@ class Taxonomy(object):
         SELECT COALESCE(
         (SELECT new_tax_id FROM merged
          WHERE old_tax_id = {x}), {x})
-        """.format(x='%s' if self.engine.name == 'postgresql' else '?')
+        """.format(x=self.placeholder)
 
         with self.engine.connect() as con:
             result = con.execute(cmd, (tax_id, tax_id))
@@ -209,7 +212,7 @@ class Taxonomy(object):
         )
         SELECT a.rank, a.tax_id FROM a
         JOIN ranks using(rank)
-        """.format('%s' if self.engine.name == 'postgresql' else '?')
+        """.format(self.placeholder)
 
         # with some versions of sqlite3, an error is raised when no
         # rows are returned; with others, an empty list is returned.
@@ -244,8 +247,7 @@ class Taxonomy(object):
                 log.info('inserting tax_ids into temporary table')
                 # TODO: couldn't find an equivalent of "executemany" - does one exist?
                 cmd = 'INSERT INTO "{tab}" VALUES ({x})'.format(
-                    tab=temptab,
-                    x='%s' if self.engine.name == 'postgresql' else '?')
+                    tab=temptab, x=self.placeholder)
                 for tax_id in tax_ids:
                     con.execute(cmd, tax_id)
 
@@ -399,7 +401,7 @@ class Taxonomy(object):
 
     def add_node(self, tax_id, parent_id, rank, tax_name,
                  children=[], source_id=None, source_name=None,
-                 name_class='custom'):
+                 name_class='synonym'):
         """
         Add a node to the taxonomy.
         """
@@ -467,6 +469,24 @@ class Taxonomy(object):
         lineage = self.lineage(tax_id)
         log.debug(lineage)
         return lineage
+
+    def add_name(self, tax_id, tax_name, source_id, name_class='synonym',
+                 is_primary=False, is_classified=None):
+
+        assert isinstance(is_primary, bool)
+        assert is_classified is None or isinstance(is_classified, bool)
+
+        if is_primary:
+            self.names.update(
+                whereclause=self.names.c.tax_id == tax_id,
+                values={'is_primary': False}).execute()
+
+        self.names.insert().execute(tax_id=tax_id,
+                                    tax_name=tax_name,
+                                    source_id=source_id,
+                                    is_primary=is_primary,
+                                    name_class=name_class,
+                                    is_classified=is_classified)
 
     def sibling_of(self, tax_id):
         """Return None or a tax_id of a sibling of *tax_id*.

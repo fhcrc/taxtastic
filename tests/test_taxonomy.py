@@ -121,6 +121,56 @@ class TestAddNode(TestTaxonomyBase):
                           source_id=2)
 
 
+class TestAddName(TestTaxonomyBase):
+    """
+    test tax.add_node
+    """
+
+    def count_names(self, tax_id):
+        with self.tax.engine.connect() as con:
+            result = con.execute(
+                'select count(*) from names where tax_id = ?', (tax_id,))
+            return result.fetchone()[0]
+
+    def count_primary_names(self, tax_id):
+        with self.tax.engine.connect() as con:
+            result = con.execute(
+                'select count(*) from names where tax_id = ? and is_primary', (tax_id,))
+            return result.fetchone()[0]
+
+    def setUp(self):
+        self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
+        log.info(self.dbname)
+        shutil.copyfile(dbname, self.dbname)
+        super(TestAddName, self).setUp()
+
+    def test01(self):
+        names_before = self.count_names('1280')
+        self.tax.add_name(tax_id='1280', tax_name='SA', source_id=1)
+        self.assertEqual(names_before + 1, self.count_names('1280'))
+
+    def test02(self):
+        # number of primary names should remain 1
+        names_before = self.count_names('1280')
+        self.assertEqual(self.count_primary_names('1280'), 1)
+        self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True, source_id=1)
+        self.tax.add_name(tax_id='1280', tax_name='SA2', is_primary=True, source_id=1)
+        self.assertEqual(names_before + 2, self.count_names('1280'))
+        self.assertEqual(self.count_primary_names('1280'), 1)
+
+    def test03(self):
+        # undefined source_id fails
+        self.tax.add_name(tax_id='1280', tax_name='SA', source_id=3)
+
+    def test04(self):
+        # insertion of duplicate row fails
+        self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True, source_id=1)
+        try:
+            self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True, source_id=1)
+        except:
+            pass
+
+
 def test__node():
     engine = create_engine(
         'sqlite:///../testfiles/small_taxonomy.db', echo=False)
