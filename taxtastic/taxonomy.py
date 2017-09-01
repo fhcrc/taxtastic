@@ -342,8 +342,8 @@ class Taxonomy(object):
         return output
 
     def lineage(self, tax_id=None, tax_name=None):
-        """
-        Public method for returning a lineage; includes tax_name and rank
+        """Public method for returning a lineage; includes tax_name and rank
+
         """
 
         if not bool(tax_id) ^ bool(tax_name):
@@ -372,9 +372,9 @@ class Taxonomy(object):
         return ldict
 
     def add_source(self, name, description=None):
-        """
-        Attempts to add a row to table "source". Returns (source_id,
-        True) if the insert succeeded, (source_id, False) otherwise.
+        """Attempts to add a row to table "source". Returns (source_id, True)
+        if the insert succeeded, (source_id, False) otherwise.
+
         """
 
         try:
@@ -388,9 +388,10 @@ class Taxonomy(object):
         return source_id, success
 
     def verify_rank_integrity(self, tax_id, rank, parent_id, children):
-        '''
-        confirm that for each node the parent ranks and children ranks are coherent
-        '''
+        """Confirm that for each node the parent ranks and children ranks are
+        coherent
+
+        """
         def _lower(n1, n2):
             return self.ranks.index(n1) < self.ranks.index(n2)
 
@@ -409,8 +410,8 @@ class Taxonomy(object):
     def add_node(self, tax_id, parent_id, rank, tax_name,
                  children=[], source_id=None, source_name=None,
                  name_class='synonym'):
-        """
-        Add a node to the taxonomy.
+        """Add a node to the taxonomy.
+
         """
 
         if rank not in self.ranks:
