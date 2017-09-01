@@ -209,8 +209,12 @@ class TestRollback(OutputRedirectMixin, unittest.TestCase):
             self.assertNotEqual(r.contents['rollforward'], None)
 
 
-class TestRollforward(OutputRedirectMixin, unittest.TestCase):
+class TestRollforward(TestBase):
     maxDiff = None
+
+    def setUp(self):
+        self.suppress_stderr()
+        self.suppress_stdout()
 
     def test_rollforward(self):
         with config.tempdir() as scratch:

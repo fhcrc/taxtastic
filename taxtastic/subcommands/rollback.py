@@ -51,8 +51,8 @@ def action(args):
     q = r.contents
     for i in xrange(args.n):
         if q['rollback'] is None:
-            print >>sys.stderr, 'Cannot rollback %d changes; refpkg only records %d changes.' % (
-                args.n, i)
+            log.error('Cannot rollback {} changes; '
+                      'refpkg only records {} changes.'.format(args.n, i))
             return 1
         else:
             q = q['rollback']
