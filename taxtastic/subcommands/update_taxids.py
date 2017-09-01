@@ -116,7 +116,6 @@ def action(args):
             elif drop:
                 continue
             elif error:
-                log.error('Error: tax_id {} is unknown'.format(tax_id))
-                sys.exit(1)
+                sys.exit('Error: tax_id {} is unknown'.format(tax_id))
 
         writer.writerow(row)

@@ -117,6 +117,20 @@ class TestBase(unittest.TestCase):
         mkdir(outdir, clobber)
         return outdir
 
+    def suppress_stdout(self):
+        self.old_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+    def suppress_stderr(self):
+        self.old_stderr = sys.stderr
+        sys.stderr = StringIO()
+
+    def tearDown(self):
+        if hasattr(self, 'old_stdout'):
+            sys.stdout = self.old_stdout
+        if hasattr(self, 'old_stderr'):
+            sys.stdout = self.old_stderr
+
 
 class TestScriptBase(OutputRedirectMixin, TestBase):
 

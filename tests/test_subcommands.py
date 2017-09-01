@@ -7,6 +7,7 @@ import os
 import os.path
 import argparse
 import csv
+import sys
 
 from taxtastic import refpkg
 from taxtastic.subcommands import (
@@ -353,6 +354,9 @@ class TestMergeTaxtables(TestBase):
 class TestUpdateTaxids(TestBase):
 
     def setUp(self):
+        self.suppress_stdout()
+        self.suppress_stderr()
+
         self.outdir = self.mkoutdir()
         self.infile = os.path.join(self.outdir, 'infile.csv')
         self.outfile = os.path.join(self.outdir, 'outfile.csv')
