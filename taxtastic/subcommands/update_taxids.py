@@ -37,7 +37,7 @@ def build_parser(parser):
     parser.add_argument(
         'infile', type=Opener('rU'),
         help=('Input CSV file to process, minimally containing the field `tax_id`. '
-              'Rows with missing tax_ids are left unchanged. Use "-" for stdin.'))
+              'Use "-" for stdin.'))
     parser = taxtastic.utils.add_database_args(parser)
     parser.add_argument(
         '-o', '--outfile', default=sys.stdout, type=Opener('w'),
@@ -53,12 +53,15 @@ def build_parser(parser):
         '-a', '--unknown-action', choices=['drop', 'ignore', 'error'], default='error',
         help=('action to perform for tax_ids with no replacement '
               'in merged table [%(default)s]'))
-    parser.add_argument(
-        '--use-names', action='store_true', default=False,
-        help='Use tax_name to assign replacement for unknown tax_ids'),
-    parser.add_argument(
-        '--name-column', default='tax_name',
-        help=('column to use for name lookup if --use-name is specified [%(default)s]'))
+
+    # not implemented for now
+    # parser.add_argument(
+    #     '--use-names', action='store_true', default=False,
+    #     help='Use tax_name to assign replacement for unknown tax_ids'),
+    # parser.add_argument(
+    #     '--name-column', default='tax_name',
+    #     help=('column to use for name lookup if --use-name '
+    #           'is specified [%(default)s]'))
 
 
 def action(args):
@@ -72,14 +75,16 @@ def action(args):
     if taxid_column not in fieldnames:
         raise ValueError("No column " + args.taxid_column)
 
-    if args.use_names and args.name_column not in fieldnames:
-        raise ValueError("No column " + args.name_column)
+    # TODO: remove unless --use-names is implemented
+    # if args.use_names and args.name_column not in fieldnames:
+    #     raise ValueError("No column " + args.name_column)
 
-    writer = csv.DictWriter(args.outfile, fieldnames=fieldnames)
+    writer = csv.DictWriter(args.outfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
     writer.writeheader()
 
     if args.unknowns:
-        unknowns = csv.DictWriter(args.unknowns, fieldnames=fieldnames)
+        unknowns = csv.DictWriter(
+            args.unknowns, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
         unknowns.writeheader()
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
@@ -99,14 +104,14 @@ def action(args):
         tax_id = row[taxid_column]
 
         if tax_id in all_tax_ids:
-            pass
+            pass  # write row without modification
         elif tax_id in mergedict:
             row[taxid_column] = mergedict[tax_id]
         else:  # tax_id is unknown
             if args.unknowns:
                 unknowns.writerow(row)
 
-            if ignore or not tax_id:
+            if ignore:
                 pass
             elif drop:
                 continue

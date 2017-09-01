@@ -25,39 +25,40 @@ class TestUpdateTaxids(config.TestBase):
     seq_info = config.data_path(thisdata_path, 'seq_info.csv')
     small_taxonomy_db = 'sqlite:///' + config.data_path('small_taxonomy.db')
 
+    print config.data_path('small_taxonomy.db')
+
     def test01(self):
         """
-        Minimal inputs
+        Exit on error
         """
         args = [self.seq_info, self.small_taxonomy_db]
         log.info(self.log_info + ' '.join(map(str, args)))
-        # ValueError: Unknown or missing tax_ids present
-        self.assertRaises(ValueError, self.main, args)
+        self.assertRaises(SystemExit, self.main, args)
 
     def test02(self):
         """
-        --ignore-unknowns
+        ignore unknowns
         """
-
-        raise Warning('is this option actually used anywhere?')
 
         this_test = sys._getframe().f_code.co_name
         thisdata_path = self.thisdata_path
         ref = os.path.join(thisdata_path, this_test, 'update.csv')
         outdir = self.mkoutdir()
         out = os.path.join(outdir, 'update.csv')
-        args = ['--ignore-unknowns', '--out', out, self.seq_info,
-                self.small_taxonomy_db]
+
+        args = ['--unknown-action', 'ignore',
+                '--outfile', out,
+                self.seq_info, self.small_taxonomy_db]
         log.info(self.log_info + ' '.join(map(str, args)))
         self.main(args)
-        self.assertTrue(filecmp.cmp(out, ref))
+
+        print 'diff -w {} {}'.format(ref, out)
+        self.assertTrue(filecmp.cmp(ref, out))
 
     def test03(self):
         """
-        --unknowns unknowns.csv
+        write unknowns to a file
         """
-
-        raise Warning('is this option actually used anywhere?')
 
         this_test = sys._getframe().f_code.co_name
         thisdata_path = self.thisdata_path
@@ -67,33 +68,37 @@ class TestUpdateTaxids(config.TestBase):
         out_info = os.path.join(outdir, 'update.csv')
         out_unknowns = os.path.join(outdir, 'unknowns.csv')
         args = [
+            '--unknown-action', 'ignore',
             '--unknowns', out_unknowns,
-            '--out', out_info,
+            '--outfile', out_info,
             self.seq_info,
             self.small_taxonomy_db]
         log.info(self.log_info + ' '.join(map(str, args)))
         self.main(args)
-        self.assertTrue(filecmp.cmp(out_info, ref_info))
-        self.assertTrue(filecmp.cmp(out_unknowns, ref_unknowns))
 
-    def test04(self):
-        """
-        --ignore-unknowns --name-columns tax_name
-        """
+        print 'diff -w {} {}'.format(ref_unknowns, out_unknowns)
+        self.assertTrue(filecmp.cmp(ref_unknowns, out_unknowns))
 
-        raise Warning('is this option actually used anywhere?')
+        print 'diff -w {} {}'.format(ref_info, out_info)
+        self.assertTrue(filecmp.cmp(ref_info, out_info))
 
-        this_test = sys._getframe().f_code.co_name
-        thisdata_path = self.thisdata_path
-        ref_info = os.path.join(thisdata_path, this_test, 'update.csv')
-        outdir = self.mkoutdir()
-        out_info = os.path.join(outdir, 'update.csv')
-        args = [
-            '--ignore-unknowns',
-            '--name-column', 'tax_name',
-            '--out', out_info,
-            self.seq_info,
-            self.small_taxonomy_db]
-        log.info(self.log_info + ' '.join(map(str, args)))
-        self.main(args)
-        self.assertTrue(filecmp.cmp(out_info, ref_info))
+    # did not implement feature to check names for now
+    # def test04(self):
+    #     """
+    #     ignore unknowns, search with tax name
+    #     """
+
+    #     this_test = sys._getframe().f_code.co_name
+    #     thisdata_path = self.thisdata_path
+    #     ref_info = os.path.join(thisdata_path, this_test, 'update.csv')
+    #     outdir = self.mkoutdir()
+    #     out_info = os.path.join(outdir, 'update.csv')
+    #     args = [
+    #         '--unknown-action', 'ignore',
+    #         '--name-column', 'tax_name',
+    #         '--outfile', out_info,
+    #         self.seq_info,
+    #         self.small_taxonomy_db]
+    #     log.info(self.log_info + ' '.join(map(str, args)))
+    #     self.main(args)
+    #     self.assertTrue(filecmp.cmp(ref_info, out_info))

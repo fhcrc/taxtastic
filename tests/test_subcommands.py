@@ -6,11 +6,14 @@ import copy
 import os
 import os.path
 import argparse
+import csv
 
 from taxtastic import refpkg
 from taxtastic.subcommands import (
     update, create, strip, rollback, rollforward,
     taxtable, check, add_to_taxtable, merge_taxtables)
+from taxtastic.scripts.taxit import main
+
 
 import config
 from config import OutputRedirectMixin, data_path, TestBase
@@ -345,3 +348,87 @@ class TestMergeTaxtables(TestBase):
     def test03(self):
         args = self.parser.parse_args([self.t2, self.t1, '-o', self.outfile])
         self.assertRaises(SystemExit, merge_taxtables.action, args)
+
+
+class TestUpdateTaxids(TestBase):
+
+    def setUp(self):
+        self.outdir = self.mkoutdir()
+        self.infile = os.path.join(self.outdir, 'infile.csv')
+        self.outfile = os.path.join(self.outdir, 'outfile.csv')
+        self.unknowns = os.path.join(self.outdir, 'unknowns.csv')
+        self.db = config.data_path('small_taxonomy.db')
+
+        self.input = [
+            ('tax_id', 'tax_name', 'comment'),
+            ('1280', '', 'ok'),
+            ('1291', 'Staphylococcus staphylolyticus', 'merged with 1287'),
+            ('', 'who knows?', 'blank'),
+            ('foo', 'unknown', 'completely unknown'),
+        ]
+
+        with open(self.infile, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerows(self.input)
+
+    def get_rows(self, fname):
+        with open(fname) as f:
+            reader = csv.reader(f)
+            return [tuple(row) for row in reader]
+
+    def test01(self):
+        self.assertRaises(SystemExit, main, ['update_taxids', '-h'])
+
+    def test02(self):
+        # test the test harness itself
+        self.assertEquals(self.input, self.get_rows(self.infile))
+
+    def test03(self):
+        args = ['update_taxids', self.infile, self.db]
+        self.assertRaises(SystemExit, main, args)
+
+    def test04(self):
+        args = ['update_taxids', self.infile, self.db,
+                '-o', self.outfile,
+                '--unknown-action', 'ignore']
+        main(args)
+
+        expected = [
+            ('tax_id', 'tax_name', 'comment'),
+            ('1280', '', 'ok'),
+            ('1287', 'Staphylococcus staphylolyticus', 'merged with 1287'),
+            ('', 'who knows?', 'blank'),
+            ('foo', 'unknown', 'completely unknown'),
+        ]
+
+        self.assertEquals(expected, self.get_rows(self.outfile))
+
+    def test05(self):
+        args = ['update_taxids', self.infile, self.db,
+                '-o', self.outfile,
+                '--unknown-action', 'drop']
+        main(args)
+
+        expected = [
+            ('tax_id', 'tax_name', 'comment'),
+            ('1280', '', 'ok'),
+            ('1287', 'Staphylococcus staphylolyticus', 'merged with 1287'),
+        ]
+
+        self.assertEquals(expected, self.get_rows(self.outfile))
+
+    def test06(self):
+        args = ['update_taxids', self.infile, self.db,
+                '-o', self.outfile,
+                '--unknown-action', 'ignore',
+                '--unknowns', self.unknowns]
+        main(args)
+
+        unknowns = [
+            ('tax_id', 'tax_name', 'comment'),
+            ('', 'who knows?', 'blank'),
+            ('foo', 'unknown', 'completely unknown'),
+        ]
+
+        self.assertEquals(unknowns, self.get_rows(self.unknowns))
+
