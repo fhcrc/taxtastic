@@ -135,13 +135,15 @@ class TestAddName(TestTaxonomyBase):
     def count_primary_names(self, tax_id):
         with self.tax.engine.connect() as con:
             result = con.execute(
-                'select count(*) from names where tax_id = ? and is_primary', (tax_id,))
+                'select count(*) from names where tax_id = ? and is_primary',
+                (tax_id,))
             return result.fetchone()[0]
 
     def primary_name(self, tax_id):
         with self.tax.engine.connect() as con:
             result = con.execute(
-                'select tax_name from names where tax_id = ? and is_primary', (tax_id,))
+                'select tax_name from names where tax_id = ? and is_primary',
+                (tax_id,))
             val = result.fetchone()
             return val[0] if val else None
 
