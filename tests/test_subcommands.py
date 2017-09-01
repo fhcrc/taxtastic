@@ -5,19 +5,17 @@ import shutil
 import copy
 import os
 import os.path
-import argparse
 import csv
-import sys
 
 from taxtastic import refpkg
 from taxtastic.subcommands import (
     update, create, strip, rollback, rollforward,
-    taxtable, check, add_to_taxtable, merge_taxtables)
+    taxtable, check, add_to_taxtable)
 from taxtastic.scripts.taxit import main
 
 
 import config
-from config import OutputRedirectMixin, data_path, TestBase
+from config import OutputRedirectMixin, TestBase
 
 
 class TestUpdate(OutputRedirectMixin, unittest.TestCase):
@@ -327,28 +325,6 @@ class TestCheck(OutputRedirectMixin, unittest.TestCase):
         class _Args(object):
             refpkg = config.data_path('lactobacillus2-0.2.refpkg')
         self.assertEqual(check.action(_Args()), 0)
-
-
-class TestMergeTaxtables(TestBase):
-
-    def setUp(self):
-        self.t1 = data_path('simple_taxtable.csv')
-        self.t2 = data_path('taxids1.taxtable')
-        self.parser = argparse.ArgumentParser()
-        merge_taxtables.build_parser(self.parser)
-        self.outfile = os.path.join(self.mkoutdir(), 'taxtable.csv')
-
-    def test01(self):
-        args = self.parser.parse_args([self.t1])
-        self.assertRaises(SystemExit, merge_taxtables.action, args)
-
-    def test02(self):
-        args = self.parser.parse_args([self.t1, self.t2, '-o', self.outfile])
-        merge_taxtables.action(args)
-
-    def test03(self):
-        args = self.parser.parse_args([self.t2, self.t1, '-o', self.outfile])
-        self.assertRaises(SystemExit, merge_taxtables.action, args)
 
 
 class TestUpdateTaxids(TestBase):
