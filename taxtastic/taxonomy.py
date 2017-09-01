@@ -25,6 +25,7 @@ import sqlalchemy
 from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.session import sessionmaker
 
 from taxtastic.utils import random_name
 
@@ -40,8 +41,8 @@ class TaxonIntegrityError(Exception):
 
 class Taxonomy(object):
 
-    def __init__(self, engine, NO_RANK='no_rank',
-                 undef_prefix='below_', schema=None):
+    def __init__(self, engine, NO_RANK='no_rank', schema=None):
+
         """
         The Taxonomy class defines an object providing an interface to
         the taxonomy database.
@@ -50,8 +51,6 @@ class Taxonomy(object):
           database defining the taxonomy
         * NO_RANK - label identifying a taxon without
           a specific rank in the taxonomy.
-        * undef_prefix - string prepended to name of parent
-          rank to create new labels for undefined ranks.
         * schema - database schema, usually required when using a Postgres db
 
         Example:
@@ -82,13 +81,7 @@ class Taxonomy(object):
         ranks = sorted(ranks, key=lambda x: int(x[1]))  # sort by height
         self.ranks = [r[0] for r in ranks]  # just the ordered ranks
 
-        if 'taxonomy' in self.meta.tables:
-            self.taxonomy = self.meta.tables[schema_prefix + 'taxonomy']
-        else:
-            self.taxonomy = None
-
         self.NO_RANK = NO_RANK
-        self.undef_prefix = undef_prefix
 
         # TODO: can probably remove this check at some point;
         # historically the root node had tax_id == parent_id ==
@@ -101,13 +94,27 @@ class Taxonomy(object):
 
         self.placeholder = '%s' if self.engine.name == 'postgresql' else '?'
 
-    def _add_rank(self, rank, parent_rank):
+    def execute(self, statements, exc=IntegrityError, rasie_as=ValueError):
+        """Execute ``statements`` in a session, and perform a rollback on
+        error. ``exc`` is a single exception object or a tuple of
+        objects to be used in the except clause. The error message is
+        re-raised as the exception specified by ``raise_as``.
+
         """
-        inserts rank into self.ranks.
-        """
-        if rank not in self.rankset:
-            self.ranks.insert(self.ranks.index(parent_rank) + 1, rank)
-        self.rankset = set(self.ranks)
+
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        try:
+            for statement in statements:
+                session.execute(statement)
+        except exc, err:
+            session.rollback()
+            raise rasie_as(str(err))
+        else:
+            session.commit()
+        finally:
+            session.close()
 
     def _node(self, tax_id):
         """
@@ -419,37 +426,31 @@ class Taxonomy(object):
         if not source_id:
             source_id, source_is_new = self.add_source(name=source_name)
 
-        self.nodes.insert().execute(tax_id=tax_id,
-                                    parent_id=parent_id,
-                                    rank=rank,
-                                    source_id=source_id)
+        statements = []
 
-        self.names.insert().execute(tax_id=tax_id,
-                                    tax_name=tax_name,
-                                    is_primary=True,
-                                    name_class=name_class)
+        statements.append(
+            self.nodes.insert().values(
+                tax_id=tax_id,
+                parent_id=parent_id,
+                rank=rank,
+                source_id=source_id))
+
+        statements.append(
+            self.names.insert().values(
+                tax_id=tax_id,
+                tax_name=tax_name,
+                is_primary=True,
+                name_class=name_class))
 
         for child in children:
-            ret = self.nodes.update(
+            statements.append(self.nodes.update(
                 whereclause=self.nodes.c.tax_id == child,
-                values={'parent_id': tax_id})
-            ret.execute()
+                values={'parent_id': tax_id}))
+
+        self.execute(statements)
 
         lineage = self.lineage(tax_id)
-
         log.debug(lineage)
-
-        if self.taxonomy is not None:
-            self.taxonomy.insert().execute(
-                tax_id=tax_id, parent_id=parent_id, rank=rank, **lineage)
-
-            for child in children:
-                c_rank = self.get_rank(child)
-                ret = self.taxonomy.update(
-                    whereclause=getattr(self.taxonomy.c, c_rank) == child,
-                    values={c_rank: tax_id})
-                ret.execute()
-
         return lineage
 
     def update_node(self, tax_id, **values):
@@ -476,17 +477,22 @@ class Taxonomy(object):
         assert isinstance(is_primary, bool)
         assert is_classified is None or isinstance(is_classified, bool)
 
-        if is_primary:
-            self.names.update(
-                whereclause=self.names.c.tax_id == tax_id,
-                values={'is_primary': False}).execute()
+        statements = []
 
-        self.names.insert().execute(tax_id=tax_id,
-                                    tax_name=tax_name,
-                                    source_id=source_id,
-                                    is_primary=is_primary,
-                                    name_class=name_class,
-                                    is_classified=is_classified)
+        if is_primary:
+            statements.append(self.names.update(
+                whereclause=self.names.c.tax_id == tax_id,
+                values={'is_primary': False}))
+
+        statements.append(self.names.insert().values(
+            tax_id=tax_id,
+            tax_name=tax_name,
+            source_id=source_id,
+            is_primary=is_primary,
+            name_class=name_class,
+            is_classified=is_classified))
+
+        self.execute(statements)
 
     def sibling_of(self, tax_id):
         """Return None or a tax_id of a sibling of *tax_id*.
@@ -564,6 +570,7 @@ class Taxonomy(object):
             return r
 
     def children_of(self, tax_id, n):
+        # TODO: replace with recursive CTE
         if tax_id is None:
             return None
         parent_id, rank = self._node(tax_id)

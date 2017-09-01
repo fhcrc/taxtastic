@@ -36,7 +36,7 @@ class TestTaxonomyBase(TestBase):
 
 class TestAddNode(TestTaxonomyBase):
     """
-    test tax.add_node
+    test tax.add_name
     """
 
     def setUp(self):
@@ -138,18 +138,25 @@ class TestAddName(TestTaxonomyBase):
                 'select count(*) from names where tax_id = ? and is_primary', (tax_id,))
             return result.fetchone()[0]
 
+    def primary_name(self, tax_id):
+        with self.tax.engine.connect() as con:
+            result = con.execute(
+                'select tax_name from names where tax_id = ? and is_primary', (tax_id,))
+            val = result.fetchone()
+            return val[0] if val else None
+
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
         log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddName, self).setUp()
 
-    def test01(self):
+    def test_name01(self):
         names_before = self.count_names('1280')
         self.tax.add_name(tax_id='1280', tax_name='SA', source_id=1)
         self.assertEqual(names_before + 1, self.count_names('1280'))
 
-    def test02(self):
+    def test_name02(self):
         # number of primary names should remain 1
         names_before = self.count_names('1280')
         self.assertEqual(self.count_primary_names('1280'), 1)
@@ -158,17 +165,44 @@ class TestAddName(TestTaxonomyBase):
         self.assertEqual(names_before + 2, self.count_names('1280'))
         self.assertEqual(self.count_primary_names('1280'), 1)
 
-    def test03(self):
+    def test_name03(self):
         # undefined source_id fails
         self.tax.add_name(tax_id='1280', tax_name='SA', source_id=3)
 
-    def test04(self):
+    def test_name04(self):
         # insertion of duplicate row fails
         self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True, source_id=1)
-        try:
-            self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True, source_id=1)
-        except:
-            pass
+
+        self.assertRaises(
+            self.tax.add_name, tax_id='1280', tax_name='SA', is_primary=True, source_id=1)
+
+        self.assertEqual(self.primary_name('1280'), 'SA')
+
+
+class TestAddSource(TestTaxonomyBase):
+    def setUp(self):
+        self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
+        log.info(self.dbname)
+        shutil.copyfile(dbname, self.dbname)
+        super(TestAddSource, self).setUp()
+
+    def tearDown(self):
+        pass
+
+    def sources(self):
+        with self.tax.engine.connect() as con:
+            result = con.execute('select * from source')
+            return result.fetchall()
+
+    def test01(self):
+        self.tax.add_source('foo')
+        self.assertEquals(self.sources()[1], (2, u'foo', None))
+
+    def test02(self):
+        self.tax.add_source('ncbi')
+        self.assertEquals(
+            self.sources(),
+            [(1, u'ncbi', u'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip')])
 
 
 def test__node():
