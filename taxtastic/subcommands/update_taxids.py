@@ -46,29 +46,24 @@ def build_parser(parser):
     parser = taxtastic.utils.add_database_args(parser)
 
     parser.add_argument(
-        '-o', '--out',
-        default=sys.stdout,
-        help='Output file to write updates [default: stdout]')
+        '-o', '--out', default=sys.stdout,
+        help='Modified version of input file [default: stdout]')
     parser.add_argument(
-        '--taxid-column',
-        default='tax_id',
-        help='name of tax_id column to update [%(default)s]')
+        '--taxid-column', default='tax_id',
+        help='name of column containing tax_ids to be replaced [%(default)s]')
     parser.add_argument(
         '--unknowns',
-        help=('unchanged taxonomy output of records with unknown taxids'))
+        help=('output file containing rows with unknown tax_ids '
+              'with no replacements in merged table'))
     parser.add_argument(
-        '--ignore-unknowns',
-        action='store_true',
-        help='allow unknown tax_ids in final output')
+        '--unknown-action', choices=['drop', 'ignore', 'error'], default='error',
+        help='action to perform for tax_ids with no replacement in merged table [%(default)s]')
     parser.add_argument(
-        '--taxid-classified',
-        action='store_true',
-        help=('add column True/False column if '
-              'the tax_id is primary and valid'))
+        '--use-name', action='store_true', default=False,
+        help='Use tax_name to assign replacement for unknown tax_ids'),
     parser.add_argument(
-        '--name-column',
-        help=('column with taxon name(s) to help '
-              'find tax_ids. ex: organism name'))
+        '--name-column', default='tax_name',
+        help=('column to use for name lookup if --use-name is specified [%(default)s]'))
 
 
 def action(args):
