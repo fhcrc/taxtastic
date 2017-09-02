@@ -35,12 +35,11 @@ class TestTaxonomyBase(TestBase):
 
 
 class TestAddNode(TestTaxonomyBase):
-    """
-    test tax.add_name
-    """
 
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
+        print self.dbname
+
         log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddNode, self).setUp()
@@ -53,8 +52,8 @@ class TestAddNode(TestTaxonomyBase):
             tax_id='1280_1',
             parent_id='1280',
             rank='subspecies',
-            tax_name='foo',
-            source_id=2
+            names=[{'tax_name': 'foo'}],
+            source_id=1
         )
 
         lineage = self.tax.lineage('1280_1')
@@ -71,9 +70,9 @@ class TestAddNode(TestTaxonomyBase):
             tax_id=new_taxid,
             parent_id='1279',
             rank='species_group',
-            tax_name=new_taxname,
+            names=[{'tax_name': new_taxname}],
             children=children,
-            source_id=2
+            source_id=1
         )
 
         lineage = self.tax.lineage(new_taxid)
@@ -86,39 +85,59 @@ class TestAddNode(TestTaxonomyBase):
 
     def test03(self):
 
-        rows = taxtastic.utils.get_new_nodes(
-            os.path.join(datadir, 'new_taxa.csv'))
-        for d in rows:
-            d['source_id'] = 2
-            d.pop('comments')  # not part of add_node constructor
-            self.tax.add_node(**d)
-
         new_taxid = '1279_1'
         new_taxname = 'between genus and species'
         children = ['1280', '1281']
-        lineage = self.tax.lineage(new_taxid)
 
-        self.assertTrue(lineage['tax_id'] == new_taxid)
-        self.assertTrue(lineage['tax_name'] == new_taxname)
-
-        for taxid in children:
-            lineage = self.tax.lineage(taxid)
-            self.assertTrue(lineage['parent_id'] == new_taxid)
+        self.assertRaises(
+            TaxonIntegrityError,
+            self.tax.add_node,
+            tax_id=new_taxid,
+            parent_id='1279',
+            rank='genus',
+            names=[{'tax_name': new_taxname}],
+            children=children,
+            source_id=1)
 
     def test04(self):
+        self.assertRaises(
+            ValueError,
+            self.tax.add_node,
+            tax_id='1280',
+            parent_id='1279',
+            rank='species',
+            names=[{'tax_name': 'I already exist'}],
+            source_id=1
+        )
 
-        new_taxid = '1279_1'
-        new_taxname = 'between genus and species'
-        children = ['1280', '1281']
+    def test05(self):
+        self.tax.add_node(
+            tax_id='1280_1',
+            parent_id='1280',
+            rank='subspecies',
+            names=[
+                {'tax_name': 'foo', 'is_primary': True},
+                {'tax_name': 'bar'},
+            ],
+            source_id=1
+        )
 
-        self.assertRaises(TaxonIntegrityError,
-                          self.tax.add_node,
-                          tax_id=new_taxid,
-                          parent_id='1279',
-                          rank='genus',
-                          tax_name=new_taxname,
-                          children=children,
-                          source_id=2)
+        lineage = self.tax.lineage('1280_1')
+        self.assertEqual(lineage['tax_id'], '1280_1')
+        self.assertEqual(lineage['tax_name'], 'foo')
+
+    def test06(self):
+        self.assertRaises(
+            ValueError,
+            self.tax.add_node,
+            tax_id='1280_1',
+            parent_id='1280',
+            rank='subspecies',
+            names=[
+                {'tax_name': 'foo'},
+                {'tax_name': 'bar'},
+            ],
+            source_id=1)
 
 
 class TestAddName(TestTaxonomyBase):
@@ -176,9 +195,38 @@ class TestAddName(TestTaxonomyBase):
         self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True, source_id=1)
 
         self.assertRaises(
-            self.tax.add_name, tax_id='1280', tax_name='SA', is_primary=True, source_id=1)
+            self.tax.add_name, tax_id='1280', tax_name='SA',
+            is_primary=True, source_id=1)
 
         self.assertEqual(self.primary_name('1280'), 'SA')
+
+
+class TestGetSource(TestTaxonomyBase):
+    def setUp(self):
+        self.dbname = dbname
+        super(TestGetSource, self).setUp()
+
+    def test01(self):
+        self.assertRaises(ValueError, self.tax.get_source)
+
+    def test02(self):
+        self.assertRaises(ValueError, self.tax.get_source, 1, 'ncbi')
+
+    def test03(self):
+        result = self.tax.get_source(id=1)
+        self.assertDictEqual(result, {
+            'description': u'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip',
+            'id': 1, 'name': u'ncbi'})
+
+    def test04(self):
+        result = self.tax.get_source(name='ncbi')
+        self.assertDictEqual(result, {
+            'description': u'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip',
+            'id': 1, 'name': u'ncbi'})
+
+    def test05(self):
+        result = self.tax.get_source(id=2)
+        self.assertIsNone(result)
 
 
 class TestAddSource(TestTaxonomyBase):

@@ -378,14 +378,38 @@ class Taxonomy(object):
         """
 
         try:
-            result = self.source.insert().execute(name=name,
-                                                  description=description)
+            result = self.source.insert().execute(
+                name=name, description=description)
             source_id, success = result.inserted_primary_key[0], True
         except sqlalchemy.exc.IntegrityError:
             s = select([self.source.c.id], self.source.c.name == name)
             source_id, success = s.execute().fetchone()[0], False
 
         return source_id, success
+
+    def get_source(self, id=None, name=None):
+        """Returns a dict with keys ['id', 'name', 'description'] or None if
+        no match.
+
+        """
+
+        if not (bool(id) ^ bool(name)):
+            raise ValueError('exactly one of id or name is required')
+
+        if id:
+            try:
+                id = int(id)
+            except (ValueError, TypeError):
+                raise ValueError(
+                    'source_id must be an int or a string representing one')
+
+            sel = select([self.source], self.source.c.id == id).execute()
+        else:
+            sel = select([self.source], self.source.c.name == name).execute()
+
+        result = sel.fetchone()
+        if result:
+            return dict(zip(sel.keys(), result))
 
     def verify_rank_integrity(self, tax_id, rank, parent_id, children):
         """Confirm that for each node the parent ranks and children ranks are
@@ -394,6 +418,9 @@ class Taxonomy(object):
         """
         def _lower(n1, n2):
             return self.ranks.index(n1) < self.ranks.index(n2)
+
+        if rank not in self.ranks:
+            raise TaxonIntegrityError('rank "{}" is undefined'.format(rank))
 
         if not _lower(rank, self.rank(parent_id)):
             msg = 'New node {} has same or higher rank than parent node {}'
@@ -407,25 +434,39 @@ class Taxonomy(object):
                 raise TaxonIntegrityError(msg)
         return True
 
-    def add_node(self, tax_id, parent_id, rank, tax_name,
-                 children=[], source_id=None, source_name=None,
-                 name_class='synonym'):
+    def add_node(self, tax_id, parent_id, rank, names,
+                 children=None, source_id=None, source_name=None):
         """Add a node to the taxonomy.
+
+        ``names`` is a list of one or more dicts with the following keys:
+          - tax_name (string, required)
+          - name_class (string, default 'synonym')
+          - is_primary (bool, see below)
+          - is_classified (bool, default None)
+
+        'is_primary' is optional and defaults to True if only one name
+        is provided; otherwise is_primary must be True for exactly one
+        name (and is optional in others).
 
         """
 
-        if rank not in self.ranks:
-            msg = 'adding new ranks to taxonomy is not yet supported'
-            raise TaxonIntegrityError(msg)
-
-        if not (source_id or source_name):
-            raise ValueError(
-                'Taxonomy.add_node requires source_id or source_name')
-
+        children = children or []
         self.verify_rank_integrity(tax_id, rank, parent_id, children)
 
-        if not source_id:
-            source_id, source_is_new = self.add_source(name=source_name)
+        source = self.get_source(id=source_id, name=source_name)
+        if not source:
+            raise ValueError(
+                'there is no source with source_id {}, source_name {}'.format(
+                    source_id, source_name))
+        source_id = source['id']
+
+        if len(names) == 1:
+            names[0]['is_primary'] = True
+        else:
+            primary_names = [n['tax_name'] for n in names if n.get('is_primary')]
+            if len(primary_names) != 1:
+                raise ValueError(
+                    'is_primary must be True for exactly one name in `names`')
 
         statements = []
 
@@ -436,12 +477,18 @@ class Taxonomy(object):
                 rank=rank,
                 source_id=source_id))
 
-        statements.append(
-            self.names.insert().values(
-                tax_id=tax_id,
-                tax_name=tax_name,
-                is_primary=True,
-                name_class=name_class))
+        name_defaults = {
+            'tax_id': tax_id,
+            'name_class': 'synonym',
+            'is_primary': False,
+            'is_classified': None,
+            'source_id': source_id,
+        }
+
+        for namevals in names:
+            values = dict(name_defaults, **namevals)
+            statements.append(
+                self.names.insert().values(**values))
 
         for child in children:
             statements.append(self.nodes.update(
@@ -451,25 +498,7 @@ class Taxonomy(object):
         self.execute(statements)
 
         lineage = self.lineage(tax_id)
-        log.debug(lineage)
-        return lineage
-
-    def update_node(self, tax_id, **values):
-        if all(k not in values for k in ['source_id', 'source_name']):
-            msg = 'Taxonomy.update_node requires source_id or source_name: '
-            raise ValueError(msg + str(values))
-        if 'source_id' not in values:
-            source_id, _ = self.add_source(name=values['source_name'])
-            values['source_id'] = source_id
-
-        # drop columns not in nodes table
-        values = dict(c for c in values.items() if c[0] in self.nodes.c)
-
-        self.nodes.update(
-            whereclause=self.nodes.c.tax_id == tax_id,
-            values=values).execute()
-        lineage = self.lineage(tax_id)
-        log.debug(lineage)
+        log.info('added lineage {}'.format(lineage))
         return lineage
 
     def add_name(self, tax_id, tax_name, source_id, name_class='synonym',
