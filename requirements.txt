@@ -1,8 +1,9 @@
-decorator
+decorator>=4.1.2
 jinja2>=2.9
 sqlalchemy>=0.7
 fastalite>=0.3
 DendroPy>=4.3.0
+PyYAML>=3.12
 
 # for development
 sphinx

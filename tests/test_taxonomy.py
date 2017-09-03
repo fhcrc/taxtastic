@@ -53,7 +53,7 @@ class TestAddNode(TestTaxonomyBase):
             parent_id='1280',
             rank='subspecies',
             names=[{'tax_name': 'foo'}],
-            source_id=1
+            source_name='ncbi'
         )
 
         lineage = self.tax.lineage('1280_1')
@@ -72,7 +72,7 @@ class TestAddNode(TestTaxonomyBase):
             rank='species_group',
             names=[{'tax_name': new_taxname}],
             children=children,
-            source_id=1
+            source_name='ncbi'
         )
 
         lineage = self.tax.lineage(new_taxid)
@@ -97,7 +97,7 @@ class TestAddNode(TestTaxonomyBase):
             rank='genus',
             names=[{'tax_name': new_taxname}],
             children=children,
-            source_id=1)
+            source_name='ncbi')
 
     def test04(self):
         self.assertRaises(
@@ -107,7 +107,7 @@ class TestAddNode(TestTaxonomyBase):
             parent_id='1279',
             rank='species',
             names=[{'tax_name': 'I already exist'}],
-            source_id=1
+            source_name='ncbi'
         )
 
     def test05(self):
@@ -119,7 +119,7 @@ class TestAddNode(TestTaxonomyBase):
                 {'tax_name': 'foo', 'is_primary': True},
                 {'tax_name': 'bar'},
             ],
-            source_id=1
+            source_name='ncbi'
         )
 
         lineage = self.tax.lineage('1280_1')
@@ -137,7 +137,7 @@ class TestAddNode(TestTaxonomyBase):
                 {'tax_name': 'foo'},
                 {'tax_name': 'bar'},
             ],
-            source_id=1)
+            source_name='ncbi')
 
 
 class TestAddName(TestTaxonomyBase):
@@ -174,29 +174,28 @@ class TestAddName(TestTaxonomyBase):
 
     def test_name01(self):
         names_before = self.count_names('1280')
-        self.tax.add_name(tax_id='1280', tax_name='SA', source_id=1)
+        self.tax.add_name(tax_id='1280', tax_name='SA', source_name='ncbi')
         self.assertEqual(names_before + 1, self.count_names('1280'))
 
     def test_name02(self):
         # number of primary names should remain 1
         names_before = self.count_names('1280')
         self.assertEqual(self.count_primary_names('1280'), 1)
-        self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True, source_id=1)
-        self.tax.add_name(tax_id='1280', tax_name='SA2', is_primary=True, source_id=1)
+        self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True,
+                          source_name='ncbi')
+        self.tax.add_name(tax_id='1280', tax_name='SA2', is_primary=True,
+                          source_name='ncbi')
         self.assertEqual(names_before + 2, self.count_names('1280'))
         self.assertEqual(self.count_primary_names('1280'), 1)
 
     def test_name03(self):
-        # undefined source_id fails
-        self.tax.add_name(tax_id='1280', tax_name='SA', source_id=3)
-
-    def test_name04(self):
         # insertion of duplicate row fails
-        self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True, source_id=1)
+        self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True,
+                          source_name='ncbi')
 
         self.assertRaises(
             self.tax.add_name, tax_id='1280', tax_name='SA',
-            is_primary=True, source_id=1)
+            is_primary=True, source_name='ncbi')
 
         self.assertEqual(self.primary_name('1280'), 'SA')
 
@@ -213,20 +212,19 @@ class TestGetSource(TestTaxonomyBase):
         self.assertRaises(ValueError, self.tax.get_source, 1, 'ncbi')
 
     def test03(self):
-        result = self.tax.get_source(id=1)
+        result = self.tax.get_source(source_id=1)
         self.assertDictEqual(result, {
             'description': u'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip',
             'id': 1, 'name': u'ncbi'})
 
     def test04(self):
-        result = self.tax.get_source(name='ncbi')
+        result = self.tax.get_source(source_name='ncbi')
         self.assertDictEqual(result, {
             'description': u'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip',
             'id': 1, 'name': u'ncbi'})
 
     def test05(self):
-        result = self.tax.get_source(id=2)
-        self.assertIsNone(result)
+        self.assertRaises(ValueError, self.tax.get_source, source_id=2)
 
 
 class TestAddSource(TestTaxonomyBase):

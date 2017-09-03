@@ -15,7 +15,7 @@ from taxtastic.scripts.taxit import main
 
 
 import config
-from config import OutputRedirectMixin, TestBase
+from config import OutputRedirectMixin, TestBase, data_path
 
 
 class TestUpdate(OutputRedirectMixin, unittest.TestCase):
@@ -35,7 +35,7 @@ class TestUpdate(OutputRedirectMixin, unittest.TestCase):
         with config.tempdir() as scratch:
             pkg_path = os.path.join(scratch, 'test.refpkg')
             r = refpkg.Refpkg(pkg_path, create=True)
-            test_file = config.data_path('bv_refdata.csv')
+            test_file = data_path('bv_refdata.csv')
 
             self.args.refpkg = pkg_path
             self.args.changes = ['meep=' + test_file, 'hilda=' + test_file]
@@ -162,7 +162,7 @@ class TestStrip(OutputRedirectMixin, unittest.TestCase):
     def test_strip(self):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
-            shutil.copytree(config.data_path(
+            shutil.copytree(data_path(
                 'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             r.update_metadata('boris', 'hilda')
@@ -183,7 +183,7 @@ class TestRollback(OutputRedirectMixin, unittest.TestCase):
     def test_rollback(self):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
-            shutil.copytree(config.data_path(
+            shutil.copytree(data_path(
                 'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             original_contents = copy.deepcopy(r.contents)
@@ -219,7 +219,7 @@ class TestRollforward(TestBase):
     def test_rollforward(self):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
-            shutil.copytree(config.data_path(
+            shutil.copytree(data_path(
                 'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             original_contents = copy.deepcopy(r.contents)
@@ -287,7 +287,7 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
 
     def test_seqinfo(self):
         with tempfile.TemporaryFile() as tf, \
-                open(config.data_path('simple_seqinfo.csv')) as ifp:
+                open(data_path('simple_seqinfo.csv')) as ifp:
             class _Args(object):
                 url = 'sqlite:///' + config.ncbi_master_db
                 schema = None
@@ -311,8 +311,8 @@ class TestAddToTaxtable(OutputRedirectMixin, unittest.TestCase):
 
     def test_seqinfo(self):
         with tempfile.TemporaryFile() as tf, \
-                open(config.data_path('minimal_taxonomy.csv')) as taxtable_fp, \
-                open(config.data_path('minimal_add_taxonomy.csv')) as extra_nodes_fp:
+                open(data_path('minimal_taxonomy.csv')) as taxtable_fp, \
+                open(data_path('minimal_add_taxonomy.csv')) as extra_nodes_fp:
             class _Args(object):
                 extra_nodes_csv = extra_nodes_fp
                 taxtable = taxtable_fp
@@ -327,7 +327,7 @@ class TestCheck(OutputRedirectMixin, unittest.TestCase):
 
     def test_runs(self):
         class _Args(object):
-            refpkg = config.data_path('lactobacillus2-0.2.refpkg')
+            refpkg = data_path('lactobacillus2-0.2.refpkg')
         self.assertEqual(check.action(_Args()), 0)
 
 
@@ -341,7 +341,7 @@ class TestUpdateTaxids(TestBase):
         self.infile = os.path.join(self.outdir, 'infile.csv')
         self.outfile = os.path.join(self.outdir, 'outfile.csv')
         self.unknowns = os.path.join(self.outdir, 'unknowns.csv')
-        self.db = config.data_path('small_taxonomy.db')
+        self.db = data_path('small_taxonomy.db')
 
         self.input = [
             ('tax_id', 'tax_name', 'comment'),
@@ -416,3 +416,27 @@ class TestUpdateTaxids(TestBase):
 
         self.assertEquals(unknowns, self.get_rows(self.unknowns))
 
+
+class TestAddNode(TestBase):
+
+    def setUp(self):
+        # self.suppress_stdout()
+        # self.suppress_stderr()
+
+        self.outdir = self.mkoutdir()
+        self.dbname = os.path.join(self.outdir, 'taxonomy.db')
+        shutil.copyfile(data_path('small_taxonomy.db'), self.dbname)
+
+    def test_new_nodes01(self):
+        args = ['add_nodes', self.dbname, data_path('new_nodes_ok.yml')]
+        main(args)
+
+    def test_new_nodes02(self):
+        # fails without --source-name
+        args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml')]
+        self.assertRaises(ValueError, main, args)
+
+    def test_new_nodes03(self):
+        args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml'),
+                '--source-name', 'some_source']
+        main(args)

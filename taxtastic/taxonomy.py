@@ -371,45 +371,52 @@ class Taxonomy(object):
 
         return ldict
 
-    def add_source(self, name, description=None):
-        """Attempts to add a row to table "source". Returns (source_id, True)
-        if the insert succeeded, (source_id, False) otherwise.
+    def add_source(self, source_name, description=None):
+        """Adds a row to table "source" if "name" does not
+        exist. Returns (source_id, True) if a new row is created,
+        (source_id, False) otherwise.
 
         """
 
-        try:
-            result = self.source.insert().execute(
-                name=name, description=description)
-            source_id, success = result.inserted_primary_key[0], True
-        except sqlalchemy.exc.IntegrityError:
-            s = select([self.source.c.id], self.source.c.name == name)
-            source_id, success = s.execute().fetchone()[0], False
+        if not source_name:
+            raise ValueError('"source_name" may not be None or an empty string')
 
-        return source_id, success
+        sel = select([self.source.c.id], self.source.c.name == source_name).execute()
+        result = sel.fetchone()
+        if result:
+            return result[0], False
+        else:
+            ins = self.source.insert().execute(
+                name=source_name, description=description)
+            return ins.inserted_primary_key[0], True
 
-    def get_source(self, id=None, name=None):
+    def get_source(self, source_id=None, source_name=None):
         """Returns a dict with keys ['id', 'name', 'description'] or None if
         no match.
 
         """
 
-        if not (bool(id) ^ bool(name)):
-            raise ValueError('exactly one of id or name is required')
+        if not (bool(source_id) ^ bool(source_name)):
+            raise ValueError('exactly one of source_id or source_name is required')
 
-        if id:
+        if source_id:
             try:
-                id = int(id)
+                source_id = int(source_id)
             except (ValueError, TypeError):
                 raise ValueError(
                     'source_id must be an int or a string representing one')
 
-            sel = select([self.source], self.source.c.id == id).execute()
+            sel = select([self.source], self.source.c.id == source_id).execute()
         else:
-            sel = select([self.source], self.source.c.name == name).execute()
+            sel = select([self.source], self.source.c.name == source_name).execute()
 
         result = sel.fetchone()
-        if result:
-            return dict(zip(sel.keys(), result))
+        if not result:
+            raise ValueError(
+                'there is no source with id {} or name {}'.format(
+                    source_id, source_name))
+
+        return dict(zip(sel.keys(), result))
 
     def verify_rank_integrity(self, tax_id, rank, parent_id, children):
         """Confirm that for each node the parent ranks and children ranks are
@@ -422,9 +429,12 @@ class Taxonomy(object):
         if rank not in self.ranks:
             raise TaxonIntegrityError('rank "{}" is undefined'.format(rank))
 
-        if not _lower(rank, self.rank(parent_id)):
-            msg = 'New node {} has same or higher rank than parent node {}'
-            msg = msg.format(tax_id, 'parent_id')
+        parent_rank = self.rank(parent_id)
+        # undefined ranks can be placed anywhere in a lineage
+        if not _lower(rank, parent_rank) and rank != self.NO_RANK:
+            msg = ('New node "{}", rank "{}" has same or '
+                   'higher rank than parent node "{}", rank "{}"')
+            msg = msg.format(tax_id, rank, parent_id, parent_rank)
             raise TaxonIntegrityError(msg)
 
         for child in children:
@@ -434,8 +444,7 @@ class Taxonomy(object):
                 raise TaxonIntegrityError(msg)
         return True
 
-    def add_node(self, tax_id, parent_id, rank, names,
-                 children=None, source_id=None, source_name=None):
+    def add_node(self, tax_id, parent_id, rank, names, source_name, children=None):
         """Add a node to the taxonomy.
 
         ``names`` is a list of one or more dicts with the following keys:
@@ -453,12 +462,7 @@ class Taxonomy(object):
         children = children or []
         self.verify_rank_integrity(tax_id, rank, parent_id, children)
 
-        source = self.get_source(id=source_id, name=source_name)
-        if not source:
-            raise ValueError(
-                'there is no source with source_id {}, source_name {}'.format(
-                    source_id, source_name))
-        source_id = source['id']
+        source_id, added = self.add_source(source_name)
 
         if len(names) == 1:
             names[0]['is_primary'] = True
@@ -498,15 +502,16 @@ class Taxonomy(object):
         self.execute(statements)
 
         lineage = self.lineage(tax_id)
-        log.info('added lineage {}'.format(lineage))
+        log.debug('added lineage {}'.format(lineage))
         return lineage
 
-    def add_name(self, tax_id, tax_name, source_id, name_class='synonym',
-                 is_primary=False, is_classified=None):
+    def add_name(self, tax_id, tax_name, source_name,
+                 name_class='synonym', is_primary=False, is_classified=None):
 
         assert isinstance(is_primary, bool)
-        assert is_classified is None or isinstance(is_classified, bool)
+        assert is_classified in {None, True, False}
 
+        source_id, added = self.add_source(source_name)
         statements = []
 
         if is_primary:

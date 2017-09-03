@@ -98,11 +98,12 @@ params = {'name': 'taxtastic',
           'package_data': {
               'taxtastic': [path.join('data', f) for f in ['sha']]},
           'install_requires': [
-              'decorator',
+              'decorator>=4.1.2',
               'fastalite>=0.3',
               'DendroPy>=4.3.0',
               'jinja2>=2.9',
               'sqlalchemy>=0.7',
+              'PyYAML>=3.12'
           ]}
 
 setup(**params)

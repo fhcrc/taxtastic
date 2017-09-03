@@ -6,13 +6,23 @@
 ===================
 
 * major speedups (> 30x) for ``new_database`` and ``taxtable``
+* sql expressions for calculating lineages require sqlite 3.8.3+;
+  include script for installing pysqlite and to date sqlite3 library.
 * names.is_classified is set to true only for scientific names at rank species
 * nodes.is_valid is true for all ranks above species
 * remove names.id and ranks.is_below from schema
 * ``taxtable`` renames "no rank" intermediate ranks by appending "_"
-  to parent rank name (instead of prepending "below_" to parent rank)
+  to parent rank name (instead of prepending "below_")
 * intermediate ranks are renamed on the fly when creating the taxtable
   rather than on database creation.
+* add Taxonomy.get_source()
+* Taxonomy.add_node() no longer attempts to create a new source
+* Taxonomy.add_node() takes a list of dicts representing tax_names
+* adding nodes or names occur within a transaction
+* removed subcommands merge_taxtables, merge, count_taxids
+* remove numpy, pandas, BioPython as dependencies, add Dendropy
+* ``taxit add_nodes`` requires input in yaml format (replaces csv) and
+  can add names as well
 
 0.7.0
 =====
@@ -28,8 +38,8 @@
 =====
 
 * rank cohort has been added as an official rank
-* ``taxit taxtable --taxtable`` has been added back to work from a pre-built taxtable.  This switch used
-    to be called ``--from-table``
+* ``taxit taxtable --taxtable`` has been added back to work from a
+  pre-built taxtable.  This switch used to be called ``--from-table``
 
 0.6.3
 =====
