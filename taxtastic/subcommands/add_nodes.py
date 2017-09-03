@@ -12,60 +12,10 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-"""Add new nodes to a database
+"""Add nodes and names to a database
 
-The input file must specify new nodes (type: node) and names (type:
-name) in yaml format. The specification is as follows. Here's a
-minimal node:
-
----
-type: node
-tax_id: "1279_1"
-parent_id: "1279"
-rank: species_group
-names:
-  - tax_name: A new name
-source_name: ncbi
-
-Children are specified as follows:
-
----
-type: node
-tax_id: "1279_1"
-parent_id: "1279"
-rank: species_group
-names:
-  - tax_name: A new name
-source_name: ncbi
-children:
-  - "1280" # Staphylococcus aureus
-  - "1281" # Staphylococcus carnosus
-
-More than one name may be provided (one of which must be identified as
-the primary name):
-
----
-type: node
-tax_id: "1279_1"
-parent_id: "1279"
-rank: species_group
-names:
-  - tax_name: A new name
-    is_primary: true
-  - tax_name: Another name
-source_name: ncbi
-
-A name is specified similarly:
-
----
-type: name
-tax_id: bar
-source_name: someplace
-names:
-  - tax_name: a name for bar
-    is_primary: true
-  - tax_name: an additional name for bar
-
+The input file specifies new nodes (type: node) and names (type:
+name) in yaml format (see http://fhcrc.github.io/taxtastic/commands.html#add-nodes).
 """
 
 import sys
