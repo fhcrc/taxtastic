@@ -20,8 +20,8 @@ method of ``taxtastic.refpkg.Refpkg``.  If there are not at least
 ``N`` operations that can be rolled back, an error is returned and no
 changes are made to the refpkg.
 """
+
 import logging
-import sys
 
 from taxtastic import refpkg
 

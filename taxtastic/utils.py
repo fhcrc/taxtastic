@@ -18,7 +18,6 @@ import logging
 import os
 import re
 import subprocess
-import sys
 import string
 import random
 from collections import OrderedDict
