@@ -9,10 +9,11 @@ add_nodes
 
 .. literalinclude:: _helptext/add_nodes.txt
 
-Add additional nodes or names to the taxonomy in the specified
-database.  ``new_nodes`` should be a yaml format file.  It consists of
-one or more records, each of which specifies a new node or name. For a
-new node the following are *required*:
+Add nodes or names to the taxonomy in the specified database.
+``new_nodes`` should be a yaml format file containing one or more
+records, each of which specifies a new node or name.
+
+For a new **node** the following are required:
 
 ``type``
   The value must be "node"
@@ -71,11 +72,11 @@ child nodes::
     - "1280" # Staphylococcus aureus
     - "1281" # Staphylococcus carnosus
 
-A record specifying names to be added to existing nodes has the
+A record specifying **names** to be added to existing nodes has the
 following required fields:
 
 ``type``
-  The value must be "node"
+  The value must be "name"
 ``tax_id``
   The tax_id to add names to.
 ``names``
@@ -100,6 +101,22 @@ If there are multiple names::
     - tax_name: a new name for bar
       is_primary: true
     - tax_name: another name
+
+Multiple records are delimited by ``---`` and may contain any
+combination of names and nodes::
+
+  ---
+  type: node
+  tax_id: "newid"
+  parent_id: "1279"
+  rank: species_group
+  names:
+    - tax_name: between genus and species
+  ---
+  type: name
+  tax_id: bar
+  names:
+    - tax_name: a new name for bar
 
 Note that the nodes and names are added to the database in the order
 specified; be sure to add parent nodes before children.
