@@ -218,8 +218,8 @@ class Taxonomy(object):
           FROM a JOIN {nodes} p ON a.parent_id = p.tax_id
         )
         SELECT a.rank, a.tax_id FROM a
-        JOIN ranks using(rank)
-        """.format(self.placeholder, nodes=self.nodes)
+        JOIN {ranks} using(rank)
+        """.format(self.placeholder, nodes=self.nodes, ranks=self.ranks)
 
         # with some versions of sqlite3, an error is raised when no
         # rows are returned; with others, an empty list is returned.
