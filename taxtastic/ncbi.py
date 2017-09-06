@@ -324,18 +324,22 @@ def load_table(engine, table, rows, colnames=None, limit=None):
     conn.commit()
 
 
-def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX):
+def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX, schema=None):
     conn = engine.raw_connection()
     cur = conn.cursor()
     placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
+    schema_prefix = schema + '.' if schema else ''
+
 
     cmd = """
     SELECT tax_id, tax_name
-    FROM names
-    JOIN nodes USING(tax_id)
+    FROM {names}
+    JOIN {nodes} USING(tax_id)
     WHERE is_primary
     AND rank = 'species'
-    """
+    """.format(names=schema_prefix+'names',
+               nodes=schema_prefix+'nodes')
+
 
     cur.execute(cmd)
 
@@ -371,82 +375,86 @@ def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX):
     log.info('updating names.is_classified')
 
     cmd = Template("""
-    UPDATE names SET
+    UPDATE {names} SET
     is_classified = {{ placeholder }}
     WHERE is_primary
     AND tax_id IN (SELECT tax_id FROM "{{ tab }}")
-    """).render(tab=temptab, placeholder=placeholder)
+    """).render(tab=temptab, placeholder=placeholder, names=schema_prefix+'names')
 
     log.info(cmd)
     cur.execute(cmd, (True,))
     conn.commit()
 
 
-def set_nodes_is_valid(engine, unclassified_regex=UNCLASSIFIED_REGEX):
+def set_nodes_is_valid(engine, unclassified_regex=UNCLASSIFIED_REGEX, schema=None):
     conn = engine.raw_connection()
     cur = conn.cursor()
+    schema_prefix = schema + '.' if schema else ''
+
 
     log.info('marking invalid nodes')
     cmd = """
     WITH RECURSIVE descendants AS (
      SELECT tax_id, parent_id, rank
-     FROM nodes
+     FROM {nodes}
      WHERE rank = 'species'
-     AND tax_id not in (SELECT tax_id FROM names WHERE is_classified)
+     AND tax_id not in (SELECT tax_id FROM {names} WHERE is_classified)
      UNION
      SELECT
      n.tax_id,
      n.parent_id,
      n.rank
-     FROM nodes n
+     FROM {nodes} n
      INNER JOIN descendants d ON d.tax_id = n.parent_id
     )
     UPDATE nodes SET is_valid = 0
     WHERE tax_id in (SELECT tax_id from descendants)
-    """
+    """.format(names=schema_prefix+'names',
+               nodes=schema_prefix+'nodes')
 
     cur.execute(cmd)
     conn.commit()
 
 
-def db_load(engine, archive, ranks=RANKS):
+def db_load(engine, archive, ranks=RANKS, schema=None):
     """Load data from zip archive into database identified by con.
 
     """
 
     conn = engine.raw_connection()
+    schema_prefix = schema + '.' if schema else ''
 
     # source
     load_table(
-        engine, 'source',
+        engine, schema_prefix+'source',
         rows=[('ncbi', DATA_URL)],
         colnames=['name', 'description'],
     )
 
     cur = conn.cursor()
-    cur.execute("select id from source where name = 'ncbi'")
+    cur.execute("select id from {source} where name = 'ncbi'".format(source=schema_prefix+'source'))
     source_id = cur.fetchone()[0]
 
     # ranks
     log.info('loading ranks')
     ranks_rows = [('rank', 'height')]
     ranks_rows += [(rank, i) for i, rank in enumerate(RANKS)]
-    load_table(engine, 'ranks', rows=iter(ranks_rows))
+    load_table(engine, schema_prefix+'ranks', rows=iter(ranks_rows))
 
     # nodes
     logging.info('loading nodes')
     nodes_rows = read_nodes(read_archive(archive, 'nodes.dmp'), source_id=source_id)
-    load_table(engine, 'nodes', rows=nodes_rows)
+    load_table(engine, schema_prefix+'nodes', rows=nodes_rows)
 
     # names
     logging.info('loading names')
     names_rows = read_names(read_archive(archive, 'names.dmp'), source_id=source_id)
-    load_table(engine, 'names', rows=names_rows)
+    load_table(engine, schema_prefix+'names', rows=names_rows)
 
     # merged
     logging.info('loading merged')
     merged_rows = read_merged(read_archive(archive, 'merged.dmp'))
-    load_table(engine, 'merged', rows=merged_rows)
+    load_table(engine, schema_prefix+'merged', rows=merged_rows)
 
     conn.commit()
 

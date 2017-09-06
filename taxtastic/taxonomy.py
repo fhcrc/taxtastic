@@ -88,7 +88,7 @@ class Taxonomy(object):
         # '1', but with a recursive CTE, parent_id must be None for
         # the recursive expression to terminate.
         with self.engine.connect() as con:
-            result = con.execute("select parent_id from nodes where rank = 'root'")
+            result = con.execute("select parent_id from {nodes} where rank = 'root'".format(nodes=self.nodes))
             if result.fetchone()[0] is not None:
                 raise TaxonIntegrityError('the root node must have parent_id = None')
 
@@ -183,9 +183,9 @@ class Taxonomy(object):
 
         cmd = """
         SELECT COALESCE(
-        (SELECT new_tax_id FROM merged
+        (SELECT new_tax_id FROM {merged}
          WHERE old_tax_id = {x}), {x})
-        """.format(x=self.placeholder)
+        """.format(x=self.placeholder, merged=self.merged)
 
         with self.engine.connect() as con:
             result = con.execute(cmd, (tax_id, tax_id))
@@ -211,15 +211,15 @@ class Taxonomy(object):
         cmd = """
         WITH RECURSIVE a AS (
          SELECT tax_id, parent_id, rank
-          FROM nodes
+          FROM {nodes}
           WHERE tax_id = {}
         UNION ALL
          SELECT p.tax_id, p.parent_id, p.rank
-          FROM a JOIN nodes p ON a.parent_id = p.tax_id
+          FROM a JOIN {nodes} p ON a.parent_id = p.tax_id
         )
         SELECT a.rank, a.tax_id FROM a
         JOIN ranks using(rank)
-        """.format(self.placeholder)
+        """.format(self.placeholder, nodes=self.nodes)
 
         # with some versions of sqlite3, an error is raised when no
         # rows are returned; with others, an empty list is returned.
@@ -262,26 +262,29 @@ class Taxonomy(object):
                 cmd = Template("""
                 WITH RECURSIVE a AS (
                  SELECT tax_id as tid, 1 AS ord, tax_id, parent_id, rank
-                  FROM nodes
+                  FROM {{ nodes }}
                   WHERE tax_id in (
                   {% if merge_obsolete %}
                   SELECT COALESCE(m.new_tax_id, "{{ temptab }}".old_tax_id)
-                    FROM "{{ temptab }}" LEFT JOIN merged m USING(old_tax_id)
+                    FROM "{{ temptab }}" LEFT JOIN {{ merged }} m USING(old_tax_id)
                   {% else %}
                   SELECT * from "{{ temptab }}"
                   {% endif %}
                   )
                 UNION ALL
                  SELECT a.tid, a.ord + 1, p.tax_id, p.parent_id, p.rank
-                  FROM a JOIN nodes p ON a.parent_id = p.tax_id
+                  FROM a JOIN {{ nodes }} p ON a.parent_id = p.tax_id
                 )
                 SELECT a.tid, a.tax_id, a.parent_id, a.rank, tax_name FROM a
-                JOIN names using(tax_id)
+                JOIN {{ names }} using(tax_id)
                 WHERE names.is_primary
                 ORDER BY tid, ord desc
                 """).render(
                     temptab=temptab,
                     merge_obsolete=merge_obsolete,
+                    merged=self.merged,
+                    nodes=self.nodes,
+                    names=self.names,
                 )
 
                 result = con.execute(cmd)
