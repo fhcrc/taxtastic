@@ -72,7 +72,7 @@ class TestAddNode(TestTaxonomyBase):
             rank='species_group',
             names=[{'tax_name': new_taxname}],
             children=children,
-            source_name='ncbi'
+            source_name='foo'
         )
 
         lineage = self.tax.lineage(new_taxid)
