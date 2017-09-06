@@ -453,9 +453,6 @@ class TestExtractNodes(TestBase):
         self.outfile = os.path.join(self.outdir, 'extracted.yml')
         shutil.copyfile(data_path('small_taxonomy.db'), self.dbname)
 
-        print self.dbname
-        print self.outfile
-
     def test_new_nodes01(self):
         source_name = 'some_source'
 

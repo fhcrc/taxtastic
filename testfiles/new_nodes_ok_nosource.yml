@@ -38,3 +38,24 @@ tax_id: "1280"
 names:
   - tax_name: SA
   - tax_name: SA2
+---
+type: node
+tax_id: new_phylum
+parent_id: "2"
+rank: phylum
+names:
+  - tax_name: new phylum
+---
+type: node
+tax_id: new_class
+parent_id: new_phylum
+rank: class
+names:
+  - tax_name: new class
+---
+type: node
+tax_id: new_order
+parent_id: new_class
+rank: order
+names:
+  - tax_name: new order

@@ -68,6 +68,20 @@ def action(args):
         keys = result.keys()
         nodes = [clean_dict(keys, vals) for vals in result.fetchall()]
 
+        # get the complete lineage for each node, and provide an
+        # ordering for all nodes so that children may be placed after
+        # parents.
+        tax_ids = map(itemgetter('tax_id'), nodes)
+        lineages = tax._get_lineage_table(tax_ids)
+
+        ordering = {}
+        for i, lineage in enumerate(lineages):
+            tax_id = lineage[1]
+            if tax_id not in ordering:
+                ordering[tax_id] = i
+
+        nodes = sorted(nodes, key=lambda n: ordering[n['tax_id']])
+
         cmd = """
         select names.*, source.name as source_name
         from names
