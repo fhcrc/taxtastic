@@ -38,8 +38,6 @@ class TestAddNode(TestTaxonomyBase):
 
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
-        print self.dbname
-
         log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddNode, self).setUp()

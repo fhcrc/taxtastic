@@ -55,6 +55,8 @@ def action(args):
     tax = Taxonomy(engine, schema=args.schema)
 
     with engine.connect() as con:
+        # TODO: need to order nodes so that parents are always created first
+
         cmd = """
         select nodes.*, source.name as source_name
         from nodes
@@ -88,7 +90,17 @@ def action(args):
         yaml.safe_dump_all(nodes, args.outfile, default_flow_style=False,
                            explicit_start=True, indent=2)
 
-        names = [dict(name, type='name') for name in names
-                 if name['tax_id'] in namedict]
-        yaml.safe_dump_all(names, args.outfile, default_flow_style=False,
+        # prepare remaining names
+        remaining_names = []
+        for tax_id, names in namedict.items():
+            for name in names:
+                del name['tax_id']
+
+            remaining_names.append({
+                'tax_id': tax_id,
+                'type': 'name',
+                'names': names
+            })
+
+        yaml.safe_dump_all(remaining_names, args.outfile, default_flow_style=False,
                            explicit_start=True, indent=2)

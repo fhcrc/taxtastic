@@ -440,3 +440,31 @@ class TestAddNode(TestBase):
         args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml'),
                 '--source-name', 'some_source']
         main(args)
+
+
+class TestExtractNodes(TestBase):
+
+    def setUp(self):
+        # self.suppress_stdout()
+        # self.suppress_stderr()
+
+        self.outdir = self.mkoutdir()
+        self.dbname = os.path.join(self.outdir, 'taxonomy.db')
+        self.outfile = os.path.join(self.outdir, 'extracted.yml')
+        shutil.copyfile(data_path('small_taxonomy.db'), self.dbname)
+
+        print self.dbname
+        print self.outfile
+
+    def test_new_nodes01(self):
+        source_name = 'some_source'
+
+        # add some nodes and names
+        args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml'),
+                '--source-name', source_name]
+        main(args)
+        args = ['extract_nodes', self.dbname, source_name,
+                '-o', self.outfile]
+        main(args)
+
+

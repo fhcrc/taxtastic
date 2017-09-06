@@ -32,3 +32,9 @@ names:
   - tax_name: a new name for bar
     is_primary: true
   - tax_name: an additional name for bar
+---
+type: name
+tax_id: "1280"
+names:
+  - tax_name: SA
+  - tax_name: SA2
