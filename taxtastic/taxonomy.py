@@ -82,6 +82,7 @@ class Taxonomy(object):
         self.ranks = [r[0] for r in ranks]  # just the ordered ranks
 
         self.NO_RANK = NO_RANK
+        self.schema = schema
 
         # TODO: can probably remove this check at some point;
         # historically the root node had tax_id == parent_id ==
@@ -246,7 +247,9 @@ class Taxonomy(object):
         try:
             with self.engine.connect() as con:
                 # insert tax_ids into a temporary table
-                temptab = random_name(12)
+
+                temptab = self.schema + '.' + random_name(12) if self.schema else random_name(12)
+
                 cmd = 'CREATE TEMPORARY TABLE "{tab}" (old_tax_id text)'.format(
                     tab=temptab)
                 con.execute(cmd)
