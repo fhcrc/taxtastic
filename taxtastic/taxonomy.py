@@ -77,6 +77,7 @@ class Taxonomy(object):
         self.source = self.meta.tables[schema_prefix + 'source']
         self.merged = self.meta.tables[schema_prefix + 'merged']
         ranks_table = self.meta.tables[schema_prefix + 'ranks']
+        self.ranks_table = ranks_table
         ranks = select([ranks_table.c.rank, ranks_table.c.height]).execute().fetchall()
         ranks = sorted(ranks, key=lambda x: int(x[1]))  # sort by height
         self.ranks = [r[0] for r in ranks]  # just the ordered ranks
@@ -220,7 +221,7 @@ class Taxonomy(object):
         )
         SELECT a.rank, a.tax_id FROM a
         JOIN {ranks} using(rank)
-        """.format(self.placeholder, nodes=self.nodes, ranks=self.ranks)
+        """.format(self.placeholder, nodes=self.nodes, ranks=self.ranks_table)
 
         # with some versions of sqlite3, an error is raised when no
         # rows are returned; with others, an empty list is returned.

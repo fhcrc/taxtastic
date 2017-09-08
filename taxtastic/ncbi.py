@@ -324,7 +324,7 @@ def load_table(engine, table, rows, colnames=None, limit=None):
     conn.commit()
 
 
-def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX, schema=None):
+def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX, schema=''):
     conn = engine.raw_connection()
     cur = conn.cursor()
     placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
@@ -386,7 +386,7 @@ def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX, schem
     conn.commit()
 
 
-def set_nodes_is_valid(engine, unclassified_regex=UNCLASSIFIED_REGEX, schema=None):
+def set_nodes_is_valid(engine, unclassified_regex=UNCLASSIFIED_REGEX, schema=''):
     conn = engine.raw_connection()
     cur = conn.cursor()
     placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
@@ -418,7 +418,7 @@ def set_nodes_is_valid(engine, unclassified_regex=UNCLASSIFIED_REGEX, schema=Non
     conn.commit()
 
 
-def db_load(engine, archive, ranks=RANKS, schema=None):
+def db_load(engine, archive, ranks=RANKS, schema=''):
     """Load data from zip archive into database identified by con.
 
     """
