@@ -42,6 +42,22 @@ After the script completes, confirm that ``pysqlite2`` was installed::
 
 At this point, taxtastic may be installed as described above.
 
+A note on databases
+===================
+
+This project supports both sqlite3 and postgresql as database
+backends. For most applications, we recommend sqlite3: some operations
+(particularly initial database creation) are much faster using sqlite3
+due to the details of how postgresql enforces database constraints (we
+may try to optimize this in the future - in theory, postgresql can be
+made to be at least as fast). If you do want to use postgresql, note
+that some of the queries consume a lot of memory, and the default
+configuration tends to be memory constrained (and this *really* slows
+things down). On a reasonably new mac laptop, we found that the
+optimizations suggested here
+(http://big-elephants.com/2012-12/tuning-postgres-on-macos/) do the
+trick.
+
 
 We love it, but what is it?
 ===========================
