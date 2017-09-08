@@ -21,7 +21,7 @@ import logging
 import sqlalchemy
 from itertools import groupby
 from operator import itemgetter
-from collections import OrderedDict
+# from collections import OrderedDict
 
 import yaml
 from fastalite import Opener
@@ -53,7 +53,6 @@ def build_parser(parser):
 def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
     tax = Taxonomy(engine, schema=args.schema)
-
 
     with engine.connect() as con:
         # TODO: need to order nodes so that parents are always created first

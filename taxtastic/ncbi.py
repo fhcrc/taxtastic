@@ -335,12 +335,10 @@ def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX, schem
     JOIN {nodes} USING(tax_id)
     WHERE is_primary
     AND rank = 'species'
-    """.format(names=schema+'names',
-               nodes=schema+'nodes')
-
+    """.format(names=schema + 'names',
+               nodes=schema + 'nodes')
 
     cur.execute(cmd)
-
     log.info('retrieving species names')
     primary_species_names = cur.fetchall()
     log.info('found {} species names'.format(len(primary_species_names)))
@@ -355,7 +353,7 @@ def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX, schem
 
     # insert tax_ids into a temporary table
     tempname = random_name(12)
-    temptab = schema+tempname
+    temptab = schema + tempname
 
     cmd = 'CREATE TEMPORARY TABLE "{tab}" (tax_id text)'.format(tab=temptab)
     log.info(cmd)
@@ -379,7 +377,7 @@ def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX, schem
     is_classified = {{ placeholder }}
     WHERE is_primary
     AND tax_id IN (SELECT tax_id FROM "{{ tab }}")
-    """).render(tab=temptab, placeholder=placeholder, names=schema+'names')
+    """).render(tab=temptab, placeholder=placeholder, names=schema + 'names')
 
     log.info(cmd)
     cur.execute(cmd, (True,))
@@ -407,14 +405,14 @@ def set_nodes_is_valid(engine, unclassified_regex=UNCLASSIFIED_REGEX, schema='')
     )
     UPDATE {nodes} SET is_valid = {placeholder}
     WHERE tax_id in (SELECT tax_id from descendants)
-    """.format(names=schema+'names',
-               nodes=schema+'nodes',
+    """.format(names=schema + 'names',
+               nodes=schema + 'nodes',
                placeholder=placeholder)
 
     log.info(cmd)
     log.info('marking invalid nodes')
 
-    cur.execute(cmd,(False,))
+    cur.execute(cmd, (False, ))
     conn.commit()
 
 
@@ -427,35 +425,35 @@ def db_load(engine, archive, ranks=RANKS, schema=''):
 
     # source
     load_table(
-        engine, schema+'source',
+        engine, schema + 'source',
         rows=[('ncbi', DATA_URL)],
         colnames=['name', 'description'],
     )
 
     cur = conn.cursor()
-    cur.execute("select id from {source} where name = 'ncbi'".format(source=schema+'source'))
+    cur.execute("select id from {source} where name = 'ncbi'".format(source=schema + 'source'))
     source_id = cur.fetchone()[0]
 
     # ranks
     log.info('loading ranks')
     ranks_rows = [('rank', 'height')]
     ranks_rows += [(rank, i) for i, rank in enumerate(RANKS)]
-    load_table(engine, schema+'ranks', rows=iter(ranks_rows))
+    load_table(engine, schema + 'ranks', rows=iter(ranks_rows))
 
     # nodes
     logging.info('loading nodes')
     nodes_rows = read_nodes(read_archive(archive, 'nodes.dmp'), source_id=source_id)
-    load_table(engine, schema+'nodes', rows=nodes_rows)
+    load_table(engine, schema + 'nodes', rows=nodes_rows)
 
     # names
     logging.info('loading names')
     names_rows = read_names(read_archive(archive, 'names.dmp'), source_id=source_id)
-    load_table(engine, schema+'names', rows=names_rows)
+    load_table(engine, schema + 'names', rows=names_rows)
 
     # merged
     logging.info('loading merged')
     merged_rows = read_merged(read_archive(archive, 'merged.dmp'))
-    load_table(engine, schema+'merged', rows=merged_rows)
+    load_table(engine, schema + 'merged', rows=merged_rows)
 
     conn.commit()
 
