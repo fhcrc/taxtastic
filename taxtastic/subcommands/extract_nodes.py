@@ -74,7 +74,6 @@ def action(args):
         # parents.
         tax_ids = map(itemgetter('tax_id'), nodes)
         lineages = tax._get_lineage_table(tax_ids)
-        print(lineages)
         ordering = {}
         for i, lineage in enumerate(lineages):
             tax_id = lineage[1]
