@@ -21,7 +21,7 @@ import logging
 import sqlalchemy
 from itertools import groupby
 from operator import itemgetter
-from collections import OrderedDict
+# from collections import OrderedDict
 
 import yaml
 from fastalite import Opener
@@ -59,10 +59,10 @@ def action(args):
 
         cmd = """
         select nodes.*, source.name as source_name
-        from nodes
-        join source on nodes.source_id = source.id
+        from {nodes}
+        join {source} on nodes.source_id = source.id
         where source.name = {x}
-        """.format(x=tax.placeholder)
+        """.format(x=tax.placeholder, nodes=tax.nodes, source=tax.source)
 
         result = con.execute(cmd, (args.source_name,))
         keys = result.keys()
@@ -73,7 +73,6 @@ def action(args):
         # parents.
         tax_ids = map(itemgetter('tax_id'), nodes)
         lineages = tax._get_lineage_table(tax_ids)
-
         ordering = {}
         for i, lineage in enumerate(lineages):
             tax_id = lineage[1]
@@ -84,10 +83,10 @@ def action(args):
 
         cmd = """
         select names.*, source.name as source_name
-        from names
-        join source on names.source_id = source.id
+        from {names}
+        join {source} on names.source_id = source.id
         where source.name = {x}
-        """.format(x=tax.placeholder)
+        """.format(x=tax.placeholder, names=tax.names, source=tax.source)
 
         result = con.execute(cmd, (args.source_name,))
         keys = result.keys()
