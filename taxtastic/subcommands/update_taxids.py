@@ -88,15 +88,15 @@ def action(args):
         unknowns.writeheader()
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
-    tax = Taxonomy(engine, taxtastic.ncbi.RANKS)
+    tax = Taxonomy(engine, taxtastic.ncbi.RANKS, schema=args.schema)
 
     with tax.engine.connect() as con:
         log.info('reading table merged')
-        result = con.execute('select old_tax_id, new_tax_id from merged')
+        result = con.execute('select old_tax_id, new_tax_id from {merged}'.format(merged=tax.merged))
         mergedict = dict(result.fetchall())
 
-        log.info('reading tax_ids from table nodes')
-        result = con.execute('select tax_id from nodes')
+        log.info('reading tax_ids from table {nodes}'.format(nodes=tax.nodes))
+        result = con.execute('select tax_id from {nodes}'.format(nodes=tax.nodes))
         all_tax_ids = {x[0] for x in result.fetchall()}
 
     log.info('reading input file')

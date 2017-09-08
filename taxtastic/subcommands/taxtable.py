@@ -151,7 +151,7 @@ def action(args):
         sys.exit('Error: no tax_ids were specified')
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
-    tax = Taxonomy(engine)
+    tax = Taxonomy(engine, schema=args.schema)
 
     rows = tax._get_lineage_table(tax_ids)
     log.info('grouping lineages')
