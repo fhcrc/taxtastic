@@ -5,7 +5,6 @@ import os
 from os import path
 import logging
 import sqlalchemy
-from sqlalchemy.exc import IntegrityError
 
 import taxtastic
 import taxtastic.ncbi
