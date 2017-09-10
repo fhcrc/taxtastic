@@ -25,6 +25,7 @@ import argparse
 import logging
 import sqlalchemy
 import sys
+
 import taxtastic
 
 log = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ def build_parser(parser):
     download_parser = parser.add_argument_group(title='download options')
     download_parser.add_argument(
         '-z', '--taxdump-file',
-        metavar='ZIP',
+        metavar='FILE.zip',
         help='Location of zipped taxdump file [taxdmp.zip]')
 
     download_parser.add_argument(
@@ -78,13 +79,13 @@ def action(args):
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
 
+    # creates database schema
     taxtastic.ncbi.db_connect(engine, schema=args.schema, clobber=args.clobber)
 
-    schema_prefix = args.schema + '.' if args.schema else ''
-
-    taxtastic.ncbi.db_load(engine, archive=zfile, schema=schema_prefix)
-    taxtastic.ncbi.set_names_is_classified(engine, schema=schema_prefix)
-    taxtastic.ncbi.set_nodes_is_valid(engine, schema=schema_prefix)
+    ncbi_loader = taxtastic.ncbi.NCBILoader(engine, args.schema)
+    ncbi_loader.load_archive(zfile)
+    ncbi_loader.set_names_is_classified()
+    ncbi_loader.set_nodes_is_valid()
 
     # print_sql(args.out, engine.name, base.metadata)
 

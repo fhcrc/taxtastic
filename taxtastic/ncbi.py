@@ -24,8 +24,6 @@ import urllib
 import zipfile
 from operator import itemgetter
 
-from jinja2 import Template
-
 import sqlalchemy
 from sqlalchemy import (Column, Integer, String, Boolean,
                         ForeignKey, Index, MetaData, PrimaryKeyConstraint)
@@ -152,6 +150,7 @@ UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
 
 def define_schema(Base):
+
     class Node(Base):
         __tablename__ = 'nodes'
         tax_id = Column(String, primary_key=True, nullable=False)
@@ -183,7 +182,8 @@ def define_schema(Base):
         is_primary = Column(Boolean)
         is_classified = Column(Boolean)
         sources = relationship('Source', back_populates='names')
-        __table_args__ = (PrimaryKeyConstraint('tax_id', 'tax_name', 'name_class'), {},)
+        __table_args__ = (
+            PrimaryKeyConstraint('tax_id', 'tax_name', 'name_class'), {},)
 
     Index('ix_names_tax_id_is_primary', Name.tax_id, Name.is_primary)
 
@@ -209,11 +209,12 @@ def define_schema(Base):
 
 
 def db_connect(engine, schema=None, clobber=False):
-    """
-    Create a connection object to a database. Attempt to establish a
+    """Create a connection object to a database. Attempt to establish a
     schema. If there are existing tables, delete them if clobber is
     True and return otherwise. Returns a sqlalchemy engine object.
+
     """
+
     if schema is None:
         base = declarative_base()
     else:
@@ -308,154 +309,170 @@ def read_names(rows, source_id=1):
         assert num_primary == 1
 
 
-def load_table(engine, table, rows, colnames=None, limit=None):
+class NCBILoader(object):
+    def __init__(self, engine, schema=None, ranks=RANKS):
+        self.engine = engine
+        self.schema = schema
+        self.tables = {name: self.prepend_schema(name)
+                       for name in ['merged', 'names', 'nodes', 'ranks', 'source']}
+        self.ranks = ranks
+        self.placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
 
-    conn = engine.raw_connection()
-    cur = conn.cursor()
-    colnames = colnames or next(rows)
+    def prepend_schema(self, name):
+        """Prepend schema name to 'name' when a schema is specified
 
-    placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
-    cmd = 'insert into {table} ({colnames}) values ({placeholders})'.format(
-        table=table,
-        colnames=', '.join(colnames),
-        placeholders=', '.join([placeholder] * len(colnames)))
+        """
+        return '.'.join([self.schema, name]) if self.schema else name
 
-    cur.executemany(cmd, itertools.islice(rows, limit))
-    conn.commit()
+    def load_table(self, table, rows, colnames=None, limit=None):
+        """Load 'rows' into table 'table'. If 'colnames' is not provided, the
+        first element of 'rows' must provide column names.
 
+        """
 
-def set_names_is_classified(engine, unclassified_regex=UNCLASSIFIED_REGEX, schema=''):
-    conn = engine.raw_connection()
-    cur = conn.cursor()
-    placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
+        conn = self.engine.raw_connection()
+        cur = conn.cursor()
 
-    cmd = """
-    SELECT tax_id, tax_name
-    FROM {names}
-    JOIN {nodes} USING(tax_id)
-    WHERE is_primary
-    AND rank = 'species'
-    """.format(names=schema + 'names',
-               nodes=schema + 'nodes')
+        colnames = colnames or next(rows)
 
-    cur.execute(cmd)
-    log.info('retrieving species names')
-    primary_species_names = cur.fetchall()
-    log.info('found {} species names'.format(len(primary_species_names)))
+        cmd = 'INSERT INTO {table} ({colnames}) VALUES ({placeholders})'.format(
+            table=self.tables[table],
+            colnames=', '.join(colnames),
+            placeholders=', '.join([self.placeholder] * len(colnames)))
 
-    log.info('checking species names')
-    classified_taxids = [(tax_id,) for tax_id, tax_name in primary_species_names
-                         if not unclassified_regex.search(tax_name)]
-    log.info('{count} names are classified ({pct}%)'.format(
-        count=len(classified_taxids),
-        pct=round((100.0 * len(classified_taxids)) / len(primary_species_names), 1))
-    )
+        cur.executemany(cmd, itertools.islice(rows, limit))
+        conn.commit()
 
-    # insert tax_ids into a temporary table
-    tempname = random_name(12)
-    temptab = schema + tempname
+    def load_archive(self, archive):
+        """Load data from the zip archive of the NCBI taxonomy.
 
-    cmd = 'CREATE TEMPORARY TABLE "{tab}" (tax_id text)'.format(tab=temptab)
-    log.info(cmd)
-    cur.execute(cmd)
+        """
 
-    log.info('inserting tax_ids into temporary table')
-    cmd = 'INSERT INTO "{tab}" VALUES ({placeholder})'.format(
-        tab=temptab, placeholder=placeholder)
-    log.info(cmd)
-    cur.executemany(cmd, classified_taxids)
+        # source
+        self.load_table(
+            'source',
+            rows=[('ncbi', DATA_URL)],
+            colnames=['name', 'description'],
+        )
 
-    log.info('creating an index on the temporary table')
-    cmd = 'CREATE INDEX ix_{tempname}_tax_id on "{tab}"(tax_id)'.format(tempname=tempname, tab=temptab)
-    log.info(cmd)
-    cur.execute(cmd)
+        conn = self.engine.raw_connection()
+        cur = conn.cursor()
+        cmd = "select id from {source} where name = 'ncbi'".format(**self.tables)
+        cur.execute(cmd)
+        source_id = cur.fetchone()[0]
 
-    log.info('updating names.is_classified')
+        # ranks
+        log.info('loading ranks')
+        self.load_table(
+            'ranks',
+            rows=((rank, i) for i, rank in enumerate(RANKS)),
+            colnames=['rank', 'height'],
+        )
 
-    cmd = Template("""
-    UPDATE {{ names }} SET
-    is_classified = {{ placeholder }}
-    WHERE is_primary
-    AND tax_id IN (SELECT tax_id FROM "{{ tab }}")
-    """).render(tab=temptab, placeholder=placeholder, names=schema + 'names')
+        # nodes
+        logging.info('loading nodes')
+        nodes_rows = read_nodes(
+            read_archive(archive, 'nodes.dmp'), source_id=source_id)
+        self.load_table('nodes', rows=nodes_rows)
 
-    log.info(cmd)
-    cur.execute(cmd, (True,))
-    conn.commit()
+        # names
+        logging.info('loading names')
+        names_rows = read_names(
+            read_archive(archive, 'names.dmp'), source_id=source_id)
+        self.load_table('names', rows=names_rows)
 
+        # merged
+        logging.info('loading merged')
+        merged_rows = read_merged(read_archive(archive, 'merged.dmp'))
+        self.load_table('merged', rows=merged_rows)
 
-def set_nodes_is_valid(engine, unclassified_regex=UNCLASSIFIED_REGEX, schema=''):
-    conn = engine.raw_connection()
-    cur = conn.cursor()
-    placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
+    def set_names_is_classified(self, unclassified_regex=UNCLASSIFIED_REGEX):
+        conn = self.engine.raw_connection()
+        cur = conn.cursor()
 
-    cmd = """
-    WITH RECURSIVE descendants AS (
-     SELECT tax_id, parent_id, rank
-     FROM {nodes}
-     WHERE rank = 'species'
-     AND tax_id not in (SELECT tax_id FROM {names} WHERE is_classified)
-     UNION
-     SELECT
-     n.tax_id,
-     n.parent_id,
-     n.rank
-     FROM {nodes} n
-     INNER JOIN descendants d ON d.tax_id = n.parent_id
-    )
-    UPDATE {nodes} SET is_valid = {placeholder}
-    WHERE tax_id in (SELECT tax_id from descendants)
-    """.format(names=schema + 'names',
-               nodes=schema + 'nodes',
-               placeholder=placeholder)
+        log.info('retrieving species names')
 
-    log.info(cmd)
-    log.info('marking invalid nodes')
+        tempname = random_name(12)
+        tablenames = dict(self.tables, temptab=self.prepend_schema(tempname))
 
-    cur.execute(cmd, (False, ))
-    conn.commit()
+        cmd = """
+        SELECT tax_id, tax_name
+        FROM {names}
+        JOIN {nodes} USING(tax_id)
+        WHERE is_primary
+        AND rank = 'species'
+        """.format(**tablenames)
 
+        cur.execute(cmd)
+        species_names = cur.fetchall()
+        log.info('found {} species names'.format(len(species_names)))
 
-def db_load(engine, archive, ranks=RANKS, schema=''):
-    """Load data from zip archive into database identified by con.
+        log.info('checking species names')
+        classified_taxids = [(tax_id,) for tax_id, tax_name in species_names
+                             if not unclassified_regex.search(tax_name)]
 
-    """
+        log.info('{count} names are classified ({pct}%)'.format(
+            count=len(classified_taxids),
+            pct=round((100.0 * len(classified_taxids)) / len(species_names), 1))
+        )
 
-    conn = engine.raw_connection()
+        # insert tax_ids into a temporary table
+        cmd = 'CREATE TEMPORARY TABLE "{temptab}" (tax_id text)'.format(**tablenames)
+        log.info(cmd)
+        cur.execute(cmd)
 
-    # source
-    load_table(
-        engine, schema + 'source',
-        rows=[('ncbi', DATA_URL)],
-        colnames=['name', 'description'],
-    )
+        log.info('inserting tax_ids into temporary table')
+        cmd = 'INSERT INTO "{temptab}" VALUES ({placeholder})'.format(
+            placeholder=self.placeholder, **tablenames)
+        log.info(cmd)
+        cur.executemany(cmd, classified_taxids)
 
-    cur = conn.cursor()
-    cur.execute("select id from {source} where name = 'ncbi'".format(source=schema + 'source'))
-    source_id = cur.fetchone()[0]
+        log.info('creating an index on the temporary table')
+        cmd = 'CREATE INDEX ix_{tempname}_tax_id on "{temptab}"(tax_id)'.format(
+            tempname=tempname, **tablenames)
+        log.info(cmd)
+        cur.execute(cmd)
 
-    # ranks
-    log.info('loading ranks')
-    ranks_rows = [('rank', 'height')]
-    ranks_rows += [(rank, i) for i, rank in enumerate(RANKS)]
-    load_table(engine, schema + 'ranks', rows=iter(ranks_rows))
+        log.info('updating names.is_classified')
 
-    # nodes
-    logging.info('loading nodes')
-    nodes_rows = read_nodes(read_archive(archive, 'nodes.dmp'), source_id=source_id)
-    load_table(engine, schema + 'nodes', rows=nodes_rows)
+        cmd = """
+        UPDATE {names} SET
+        is_classified = {placeholder}
+        WHERE is_primary
+        AND tax_id IN (SELECT tax_id FROM "{temptab}")
+        """.format(placeholder=self.placeholder, **tablenames)
 
-    # names
-    logging.info('loading names')
-    names_rows = read_names(read_archive(archive, 'names.dmp'), source_id=source_id)
-    load_table(engine, schema + 'names', rows=names_rows)
+        log.info(cmd)
+        cur.execute(cmd, (True,))
+        conn.commit()
 
-    # merged
-    logging.info('loading merged')
-    merged_rows = read_merged(read_archive(archive, 'merged.dmp'))
-    load_table(engine, schema + 'merged', rows=merged_rows)
+    def set_nodes_is_valid(self):
+        conn = self.engine.raw_connection()
+        cur = conn.cursor()
 
-    conn.commit()
+        cmd = """
+        WITH RECURSIVE descendants AS (
+         SELECT tax_id, parent_id, rank
+         FROM {nodes}
+         WHERE rank = 'species'
+         AND tax_id not in (SELECT tax_id FROM {names} WHERE is_classified)
+         UNION
+         SELECT
+         n.tax_id,
+         n.parent_id,
+         n.rank
+         FROM {nodes} n
+         INNER JOIN descendants d ON d.tax_id = n.parent_id
+        )
+        UPDATE {nodes} SET is_valid = {placeholder}
+        WHERE tax_id in (SELECT tax_id from descendants)
+        """.format(placeholder=self.placeholder, **self.tables)
+
+        log.info('marking invalid nodes')
+        log.info(cmd)
+
+        cur.execute(cmd, (False, ))
+        conn.commit()
 
 
 def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):

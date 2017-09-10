@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 import taxtastic
 import taxtastic.ncbi
-from taxtastic.ncbi import read_names, read_archive, UNCLASSIFIED_REGEX
+from taxtastic.ncbi import read_names, read_archive
 
 from . import config
 from .config import TestBase
@@ -48,7 +48,6 @@ class TestLoadData(TestBase):
         engine = sqlalchemy.create_engine(self.url)
 
         taxtastic.ncbi.db_connect(engine)
-        taxtastic.ncbi.db_load(engine, ncbi_data)
         self.assertTrue(path.isfile(self.db_path))
 
 

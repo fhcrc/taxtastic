@@ -72,12 +72,17 @@ class Taxonomy(object):
 
         schema_prefix = schema + '.' if schema else ''
 
+        # TODO: table names should probably be provided in a dict as a
+        # single attribute self.tablenames. This will avoid name
+        # collisions (eg with self.ranks) and allow the idiom
+        # cmd = 'select * from {<table>}'.format(**self.tablenames)
         self.nodes = self.meta.tables[schema_prefix + 'nodes']
         self.names = self.meta.tables[schema_prefix + 'names']
         self.source = self.meta.tables[schema_prefix + 'source']
         self.merged = self.meta.tables[schema_prefix + 'merged']
         ranks_table = self.meta.tables[schema_prefix + 'ranks']
         self.ranks_table = ranks_table
+
         ranks = select([ranks_table.c.rank, ranks_table.c.height]).execute().fetchall()
         ranks = sorted(ranks, key=lambda x: int(x[1]))  # sort by height
         self.ranks = [r[0] for r in ranks]  # just the ordered ranks
@@ -90,7 +95,9 @@ class Taxonomy(object):
         # '1', but with a recursive CTE, parent_id must be None for
         # the recursive expression to terminate.
         with self.engine.connect() as con:
-            result = con.execute("select parent_id from {nodes} where rank = 'root'".format(nodes=self.nodes))
+            cmd = "select parent_id from {nodes} where rank = 'root'".format(
+                nodes=self.nodes)
+            result = con.execute(cmd)
             if result.fetchone()[0] is not None:
                 raise TaxonIntegrityError('the root node must have parent_id = None')
 
