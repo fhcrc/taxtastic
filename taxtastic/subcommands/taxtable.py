@@ -170,7 +170,7 @@ def action(args):
     # Now do a sanity check to be sure every row has a parent_id. If the parent node is empty (ie root) make it self-referential 
     # There are fancier ways to do this but a for loop will suffice. I'll use indices to replace in-situ and preserve memory
     for i in xrange(len(output)):
-        if output[i]['parent_id'] == None or output[i]['parent_id'] == "":
+        if output[i]['parent_id'] is None or output[i]['parent_id'] == "":
             output[i]['parent_id'] = output[i]['tax_id']
 
     log.info('writing taxtable')
