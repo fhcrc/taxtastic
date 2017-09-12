@@ -167,7 +167,7 @@ def action(args):
     output = taxtable.values()
     log.info('sorting lineages')
     output = sorted(output, key=getitems(*sorted_ranks))
-    # Now do a sanity check to be sure every row has a parent_id. If the parent node is empty (ie root) make it self-referential 
+    # Now do a sanity check to be sure every row has a parent_id. If the parent node is empty (ie root) make it self-referential
     # There are fancier ways to do this but a for loop will suffice. I'll use indices to replace in-situ and preserve memory
     for i in xrange(len(output)):
         if output[i]['parent_id'] is None or output[i]['parent_id'] == "":
