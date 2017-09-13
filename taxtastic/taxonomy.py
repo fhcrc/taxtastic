@@ -70,17 +70,17 @@ class Taxonomy(object):
         self.meta.bind = self.engine
         self.meta.reflect()
 
-        schema_prefix = schema + '.' if schema else ''
+        self.schema = schema
 
         # TODO: table names should probably be provided in a dict as a
         # single attribute self.tablenames. This will avoid name
         # collisions (eg with self.ranks) and allow the idiom
         # cmd = 'select * from {<table>}'.format(**self.tablenames)
-        self.nodes = self.meta.tables[schema_prefix + 'nodes']
-        self.names = self.meta.tables[schema_prefix + 'names']
-        self.source = self.meta.tables[schema_prefix + 'source']
-        self.merged = self.meta.tables[schema_prefix + 'merged']
-        ranks_table = self.meta.tables[schema_prefix + 'ranks']
+        self.nodes = self.meta.tables[self.prepend_schema('nodes')]
+        self.names = self.meta.tables[self.prepend_schema('names')]
+        self.source = self.meta.tables[self.prepend_schema('source')]
+        self.merged = self.meta.tables[self.prepend_schema('merged')]
+        ranks_table = self.meta.tables[self.prepend_schema('ranks')]
         self.ranks_table = ranks_table
 
         ranks = select([ranks_table.c.rank, ranks_table.c.height]).execute().fetchall()
@@ -88,7 +88,6 @@ class Taxonomy(object):
         self.ranks = [r[0] for r in ranks]  # just the ordered ranks
 
         self.NO_RANK = NO_RANK
-        self.schema = schema
 
         # TODO: can probably remove this check at some point;
         # historically the root node had tax_id == parent_id ==
@@ -245,6 +244,12 @@ class Taxonomy(object):
 
         return lineage
 
+    def prepend_schema(self, name):
+        """Prepend schema name to 'name' when a schema is specified
+
+        """
+        return '.'.join([self.schema, name]) if self.schema else name
+
     def _get_lineage_table(self, tax_ids, merge_obsolete=True):
         """Return a list of [(rank, tax_id, tax_name)] describing the lineage
         of tax_id. If ``merge_obsolete`` is True and ``tax_id`` has
@@ -256,7 +261,7 @@ class Taxonomy(object):
             with self.engine.connect() as con:
                 # insert tax_ids into a temporary table
 
-                temptab = self.schema + '.' + random_name(12) if self.schema else random_name(12)
+                temptab = self.prepend_schema(random_name(12))
 
                 cmd = 'CREATE TEMPORARY TABLE "{tab}" (old_tax_id text)'.format(
                     tab=temptab)
