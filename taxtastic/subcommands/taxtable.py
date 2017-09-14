@@ -162,8 +162,10 @@ def action(args):
         taxtable.update(dict(tax_rows))
         all_ranks |= set(ranks)
 
-    # guppy requires that tax_id == parent_id for the root node
-    taxtable['1']['parent_id'] = '1'
+    # guppy requires that tax_id == parent_id for the root node;
+    # identify the root node by calculating an arbitrary lineage.
+    root_id = tax.lineage(tax_id)['root']
+    taxtable[root_id]['parent_id'] = root_id
 
     sorted_ranks = sorted(all_ranks, key=order_ranks(tax.ranks[::-1]))
 
