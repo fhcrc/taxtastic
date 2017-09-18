@@ -397,6 +397,8 @@ class Taxonomy(object):
 
         """
 
+        # TODO: shoud be able to do this inside a transaction
+
         if not source_name:
             raise ValueError('"source_name" may not be None or an empty string')
 
@@ -411,7 +413,10 @@ class Taxonomy(object):
 
     def get_source(self, source_id=None, source_name=None):
         """Returns a dict with keys ['id', 'name', 'description'] or None if
-        no match.
+        no match. The ``id`` field is guaranteed to be an int that
+        exists in table source. Requires exactly one of ``source_id``
+        or ``source_name``. A new source corresponding to
+        ``source_name`` is created if necessary.
 
         """
 
@@ -466,33 +471,18 @@ class Taxonomy(object):
     def add_node(self, tax_id, parent_id, rank, names, source_name, children=None):
         """Add a node to the taxonomy.
 
-        ``names`` is a list of one or more dicts with the following keys:
-          - tax_name (string, required)
-          - name_class (string, default 'synonym')
-          - is_primary (bool, see below)
-          - is_classified (bool, default None)
-
-        'is_primary' is optional and defaults to True if only one name
-        is provided; otherwise is_primary must be True for exactly one
-        name (and is optional in others).
+        ``source_name`` is added to table "source" if necessary.
 
         """
 
         children = children or []
         self.verify_rank_integrity(tax_id, rank, parent_id, children)
 
-        source_id, added = self.add_source(source_name)
-
-        if len(names) == 1:
-            names[0]['is_primary'] = True
-        else:
-            primary_names = [n['tax_name'] for n in names if n.get('is_primary')]
-            if len(primary_names) != 1:
-                raise ValueError(
-                    'is_primary must be True for exactly one name in `names`')
+        source_id, __ = self.add_source(source_name)
 
         statements = []
 
+        # add node
         statements.append(
             self.nodes.insert().values(
                 tax_id=tax_id,
@@ -500,19 +490,27 @@ class Taxonomy(object):
                 rank=rank,
                 source_id=source_id))
 
-        name_defaults = {
-            'tax_id': tax_id,
-            'name_class': 'synonym',
-            'is_primary': False,
-            'is_classified': None,
-            'source_id': source_id,
-        }
+        # add names. Since this is a new node, at least one name must
+        # be provided; if only one is provided, it is the primary
+        # name. If more than one is primary, an error will be raised
+        # from add_names()
 
-        for namevals in names:
-            values = dict(name_defaults, **namevals)
-            statements.append(
-                self.names.insert().values(**values))
+        if len(names) == 1:
+            names[0]['is_primary'] = True
+        else:
+            primary_names = [n['tax_name'] for n in names if n.get('is_primary')]
+            if len(primary_names) != 1:
+                raise ValueError(
+                    '`is_primary` must be True for exactly one name in `names`')
 
+        for namedict in names:
+            namedict['source_id'] = source_id
+            if 'source_name' in namedict:
+                del namedict['source_name']
+
+        statements.extend(self.add_names(tax_id, names, execute=False))
+
+        # add children
         for child in children:
             statements.append(self.nodes.update(
                 whereclause=self.nodes.c.tax_id == child,
@@ -520,17 +518,57 @@ class Taxonomy(object):
 
         self.execute(statements)
 
-        lineage = self.lineage(tax_id)
-        log.debug('added lineage {}'.format(lineage))
-        return lineage
+        # lineage = self.lineage(tax_id)
+        # log.debug('added lineage {}'.format(lineage))
+        # return lineage
 
-    def add_name(self, tax_id, tax_name, source_name,
-                 name_class='synonym', is_primary=False, is_classified=None):
+    # def update_node(self, tax_id, parent_id, rank, names, source_name, children=None):
+
+    #     statements = []
+
+    #     statements.append(self.nodes.update(
+    #         whereclause=self.nodes.c.tax_id == tax_id,
+    #         values=dict(
+    #             parent_id=parent_id,
+    #             source_id=source_id,
+
+    #         )))
+
+    def add_name(self, tax_id, tax_name, source_name=None, source_id=None,
+                 name_class='synonym', is_primary=False, is_classified=None,
+                 execute=True):
+
+        """Add a record to the names table corresponding to
+        ``tax_id``. Arguments are as follows:
+
+        - tax_id (string, required)
+        - tax_name (string, required)
+
+        *one* of the following are required:
+
+        - source_id (int or string coercable to int)
+        - source_name (string)
+
+        ``source_id`` or ``source_name`` must identify an existing
+        record in table "source".
+
+        The following are optional:
+
+        - name_class (string, default 'synonym')
+        - is_primary (bool, see below)
+        - is_classified (bool or None, default None)
+
+        ``is_primary`` is optional and defaults to True if only one
+        name is provided; otherwise is_primary must be True for
+        exactly one name (and is optional in others).
+
+        """
 
         assert isinstance(is_primary, bool)
         assert is_classified in {None, True, False}
 
-        source_id, added = self.add_source(source_name)
+        source_id = self.get_source(source_id, source_name)['id']
+
         statements = []
 
         if is_primary:
@@ -546,12 +584,42 @@ class Taxonomy(object):
             name_class=name_class,
             is_classified=is_classified))
 
-        self.execute(statements)
+        if execute:
+            self.execute(statements)
+        else:
+            return statements
+
+    def add_names(self, tax_id, names, execute=True):
+        """Associate one or more names with ``tax_id``.
+
+        ``names`` is a list of one or more dicts, with keys
+        corresponding to the signature of ``self.add_name()``
+        (excluding ``execute``).
+
+        """
+
+        primary_names = [n['tax_name'] for n in names if n.get('is_primary')]
+        if len(primary_names) > 1:
+            raise ValueError(
+                '`is_primary` may be True for no more than one name in `names`')
+
+        statements = []
+
+        for namevals in names:
+            if 'tax_id' in namevals:
+                del namevals['tax_id']
+            statements.extend(
+                self.add_name(tax_id=tax_id, execute=False, **namevals))
+
+        if execute:
+            self.execute(statements)
+        else:
+            return statements
 
     def sibling_of(self, tax_id):
         """Return None or a tax_id of a sibling of *tax_id*.
 
-        If *tax_id* is None, then always returns None. Otherwise,
+        If ``tax_id`` is None, then always returns None. Otherwise,
         returns None if there is no sibling.
         """
         if tax_id is None:
