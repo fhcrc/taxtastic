@@ -23,15 +23,15 @@ try:
 except IndexError:
     logflag = ''
 
-logging.basicConfig(
-    file=sys.stdout,
-    format='%(levelname)s %(module)s %(lineno)s %(message)s'
-    if logflag.startswith('-v') else '%(message)s',
-    level={'-q': logging.ERROR,
-           '': logging.WARNING,
-           '-v': logging.INFO,
-           '-vv': logging.DEBUG}[logflag]
-)
+# logging.basicConfig(
+#     file=sys.stdout,
+#     format='%(levelname)s %(module)s %(lineno)s %(message)s'
+#     if logflag.startswith('-v') else '%(message)s',
+#     level={'-q': logging.ERROR,
+#            '': logging.WARNING,
+#            '-v': logging.INFO,
+#            '-vv': logging.DEBUG}[logflag]
+# )
 
 # module data
 datadir = path.abspath(path.join(path.dirname(__file__), '..', 'testfiles'))

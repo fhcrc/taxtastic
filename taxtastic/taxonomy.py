@@ -468,17 +468,25 @@ class Taxonomy(object):
                 raise TaxonIntegrityError(msg)
         return True
 
-    def add_node(self, tax_id, parent_id, rank, names, source_name, children=None):
+    def has_node(self, tax_id):
+        result = select([self.nodes], self.nodes.c.tax_id == tax_id).execute()
+        return bool(result.fetchone())
+
+    def add_node(self, tax_id, parent_id, rank, names, source_name, children=None,
+                 is_valid=True, execute=True, **ignored):
         """Add a node to the taxonomy.
 
         ``source_name`` is added to table "source" if necessary.
 
         """
 
+        if ignored:
+            log.info('some arguments were ignored: {} '.format(str(ignored)))
+
         children = children or []
         self.verify_rank_integrity(tax_id, rank, parent_id, children)
-
         source_id, __ = self.add_source(source_name)
+        assert isinstance(is_valid, bool)
 
         statements = []
 
@@ -494,7 +502,6 @@ class Taxonomy(object):
         # be provided; if only one is provided, it is the primary
         # name. If more than one is primary, an error will be raised
         # from add_names()
-
         if len(names) == 1:
             names[0]['is_primary'] = True
         else:
@@ -516,27 +523,57 @@ class Taxonomy(object):
                 whereclause=self.nodes.c.tax_id == child,
                 values={'parent_id': tax_id}))
 
-        self.execute(statements)
+        if execute:
+            self.execute(statements)
+        else:
+            return statements
 
-        # lineage = self.lineage(tax_id)
-        # log.debug('added lineage {}'.format(lineage))
-        # return lineage
+    def update_node(self, tax_id, parent_id, rank, source_name, names=None,
+                    children=None, is_valid=None, execute=True):
 
-    # def update_node(self, tax_id, parent_id, rank, names, source_name, children=None):
+        children = children or []
+        self.verify_rank_integrity(tax_id, rank, parent_id, children)
+        source_id, __ = self.add_source(source_name)
 
-    #     statements = []
+        statements = []
 
-    #     statements.append(self.nodes.update(
-    #         whereclause=self.nodes.c.tax_id == tax_id,
-    #         values=dict(
-    #             parent_id=parent_id,
-    #             source_id=source_id,
+        # update node
+        values = dict(
+            parent_id=parent_id,
+            source_id=source_id,
+            rank=rank,
+        )
+        if is_valid is not None:
+            assert isinstance(is_valid, bool)
+            values['is_valid'] = is_valid
 
-    #         )))
+        statements.append(self.nodes.update(
+            whereclause=self.nodes.c.tax_id == tax_id, values=values))
+
+        # add names if any are provided; names are assumed to be new;
+        # there is no checking for primary names.
+        if names:
+            for namedict in names:
+                namedict['source_id'] = source_id
+                if 'source_name' in namedict:
+                    del namedict['source_name']
+
+            statements.extend(self.add_names(tax_id, names, execute=False))
+
+        # add children
+        for child in children:
+            statements.append(self.nodes.update(
+                whereclause=self.nodes.c.tax_id == child,
+                values={'parent_id': tax_id}))
+
+        if execute:
+            self.execute(statements)
+        else:
+            return statements
 
     def add_name(self, tax_id, tax_name, source_name=None, source_id=None,
                  name_class='synonym', is_primary=False, is_classified=None,
-                 execute=True):
+                 execute=True, **ignored):
 
         """Add a record to the names table corresponding to
         ``tax_id``. Arguments are as follows:
@@ -566,6 +603,8 @@ class Taxonomy(object):
 
         assert isinstance(is_primary, bool)
         assert is_classified in {None, True, False}
+        if ignored:
+            log.info('some arguments were ignored: {} '.format(str(ignored)))
 
         source_id = self.get_source(source_id, source_name)['id']
 

@@ -98,6 +98,7 @@ class TestAddNode(TestTaxonomyBase):
             source_name='ncbi')
 
     def test04(self):
+        # existing node
         self.assertRaises(
             ValueError,
             self.tax.add_node,
@@ -125,6 +126,7 @@ class TestAddNode(TestTaxonomyBase):
         self.assertEqual(lineage['tax_name'], 'foo')
 
     def test06(self):
+        # multiple names, none primary
         self.assertRaises(
             ValueError,
             self.tax.add_node,
@@ -136,6 +138,26 @@ class TestAddNode(TestTaxonomyBase):
                 {'tax_name': 'bar'},
             ],
             source_name='ncbi')
+
+    def test07(self):
+        self.tax.add_node(
+            tax_id='1280_1',
+            parent_id='1280',
+            rank='subspecies',
+            names=[
+                {'tax_name': 'foo', 'is_primary': True},
+                {'tax_name': 'bar'},
+            ],
+            source_name='ncbi',
+            execute=False
+        )
+
+        self.assertRaises(ValueError, self.tax.lineage, '1280_1')
+
+    def test08(self):
+        # test has_node()
+        self.assertTrue(self.tax.has_node('1280'))
+        self.assertFalse(self.tax.has_node('foo'))
 
 
 class TestAddName(TestTaxonomyBase):

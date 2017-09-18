@@ -18,9 +18,9 @@ The input file specifies new nodes (type: node) and names (type:
 name) in yaml format (see http://fhcrc.github.io/taxtastic/commands.html#add-nodes).
 """
 
-import sys
 import logging
 import sqlalchemy
+import pprint
 
 import yaml
 from fastalite import Opener
@@ -51,30 +51,56 @@ def action(args):
     records = list(yaml.load_all(args.new_nodes))
 
     log.info('adding new nodes')
+    retval = None
     for rec in records:
         try:
             record_type = rec.pop('type')
             if record_type not in {'node', 'name'}:
                 raise ValueError
         except (KeyError, ValueError):
-            log.error(('error in record for tax_id {tax_id}: "type" is '
+            log.error(('Error in record for tax_id {tax_id}: "type" is '
                        'required and must be one of "node" or "name"').format(**rec))
-            sys.exit(1)
+            retval = 1
+            continue
 
-        if record_type == 'node':
-            rec['source_name'] = rec.get('source_name') or args.source_name
-            log.info(
-                'new *node* with tax_id "{tax_id}", rank "{rank}"'.format(**rec))
-            tax.add_node(**rec)
-        elif record_type == 'name':
-            for name in rec['names']:
-                name['tax_id'] = rec['tax_id']
-                # source_name may be provided at the record or name level
-                name['source_name'] = (name.get('source_name') or
-                                       rec.get('source_name') or
-                                       args.source_name)
-                log.info(
-                    'new *name* for tax_id "{tax_id}": "{tax_name}"'.format(**name))
-                tax.add_name(**name)
+        tax_id = rec['tax_id']
+        rec['source_name'] = rec.get('source_name') or args.source_name
+
+        try:
+            if record_type == 'node':
+                if not rec['source_name']:
+                    log.error('Error: record has no source_name:\n{}'.format(
+                        pprint.pformat(rec)))
+                    raise ValueError
+                if tax.has_node(tax_id):
+                    log.info('updating *node* "{tax_id}"'.format(**rec))
+                    tax.update_node(**rec)
+                else:
+                    log.info('new *node* "{tax_id}"'.format(**rec))
+                    tax.add_node(**rec)
+            elif record_type == 'name':
+                for name in rec['names']:
+                    name['tax_id'] = tax_id
+                    # source_name may be provided at the record or name level
+                    name['source_name'] = name.get('source_name') or rec['source_name']
+                    if not name['source_name']:
+                        log.error(
+                            'Error: record has no source_name:\n {}'.format(
+                                pprint.pformat(rec)))
+                        raise ValueError
+
+                    log.info('new *name* for "{tax_id}": "{tax_name}"'.format(**name))
+                    tax.add_name(**name)
+        except ValueError, err:
+            log.error(err)
+            retval = 1
+        except TypeError:
+            log.error('Error in record (check for missing fields):')
+            log.error(pprint.pformat(rec))
+            retval = 1
 
     engine.dispose()
+
+    if retval:
+        log.error('Error: some records were malformed')
+    return retval

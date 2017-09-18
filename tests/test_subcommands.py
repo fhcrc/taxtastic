@@ -420,33 +420,39 @@ class TestUpdateTaxids(TestBase):
 class TestAddNode(TestBase):
 
     def setUp(self):
-        # self.suppress_stdout()
-        # self.suppress_stderr()
+        self.suppress_stdout()
+        self.suppress_stderr()
 
         self.outdir = self.mkoutdir()
         self.dbname = os.path.join(self.outdir, 'taxonomy.db')
         shutil.copyfile(data_path('small_taxonomy.db'), self.dbname)
 
+    def assertZeroExitStatus(self, val):
+        self.assertFalse(bool(val))
+
+    def assertNonZeroExitStatus(self, val):
+        self.assertTrue(bool(val))
+
     def test_new_nodes01(self):
         args = ['add_nodes', self.dbname, data_path('new_nodes_ok.yml')]
-        main(args)
+        self.assertZeroExitStatus(main(args))
 
     def test_new_nodes02(self):
         # fails without --source-name
         args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml')]
-        self.assertRaises(ValueError, main, args)
+        self.assertNonZeroExitStatus(main(args))
 
     def test_new_nodes03(self):
         args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml'),
                 '--source-name', 'some_source']
-        main(args)
+        self.assertZeroExitStatus(main(args))
 
 
 class TestExtractNodes(TestBase):
 
     def setUp(self):
-        # self.suppress_stdout()
-        # self.suppress_stderr()
+        self.suppress_stdout()
+        self.suppress_stderr()
 
         self.outdir = self.mkoutdir()
         self.dbname = os.path.join(self.outdir, 'taxonomy.db')
