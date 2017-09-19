@@ -28,8 +28,8 @@ if [[ $sqlite_ok ]]; then
 fi
 
 rm -rf pysqlite-$pysqlite_version
-pip install -U pip
-pip download pysqlite==$pysqlite_version
+pip2 install -U pip
+pip2 download pysqlite==$pysqlite_version
 tar -xf pysqlite-$pysqlite_version.tar.gz
 cd pysqlite-$pysqlite_version
 
