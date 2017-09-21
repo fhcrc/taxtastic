@@ -25,11 +25,8 @@ if [[ -f $img ]]; then
     exit 1
 fi
 
-singularity create --size 2048 $img
+singularity create --size 1024 $img
 docker run --name $docker_name $docker_image /bin/true
 docker export $docker_name | sudo singularity import $img
 docker rm $docker_name
 sudo singularity exec --writable $img mkdir -p /fh /app /mnt
-
-
-

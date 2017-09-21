@@ -10,6 +10,8 @@ html
 /docs/_helptext/
 MANIFEST
 TODO
+docker/install_pplacer.sh
+docker/taxtastic.tar.gz
 
 # due to using tox and pytest
 .tox
