@@ -7,11 +7,14 @@ import os
 import os.path
 import csv
 
+import sqlalchemy
+
 from taxtastic import refpkg
 from taxtastic.subcommands import (
     update, create, strip, rollback, rollforward,
     taxtable, check, add_to_taxtable)
 from taxtastic.scripts.taxit import main
+from taxtastic.taxonomy import Taxonomy
 
 
 import config
@@ -446,6 +449,33 @@ class TestAddNode(TestBase):
         args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml'),
                 '--source-name', 'some_source']
         self.assertZeroExitStatus(main(args))
+
+    def test_new_nodes04(self):
+        args = ['add_nodes', self.dbname, data_path('staph_species_group.yml'),
+                '--source-name', 'foo']
+        self.assertZeroExitStatus(main(args))
+
+        tax = Taxonomy(sqlalchemy.create_engine('sqlite:///' + self.dbname))
+        with tax.engine.connect() as con:
+            result = con.execute('select * from nodes where parent_id = ?', ('stapha_sg',))
+            keys = result.keys()
+            nodes = [dict(zip(keys, row)) for row in result.fetchall()]
+
+        self.assertEqual(len(nodes), 5)
+        self.assertEquals([row['source_id'] for row in nodes], [2] * len(nodes))
+
+    def test_new_nodes05(self):
+        args = ['add_nodes', self.dbname, data_path('staph_species_group2.yml')]
+        self.assertZeroExitStatus(main(args))
+
+        tax = Taxonomy(sqlalchemy.create_engine('sqlite:///' + self.dbname))
+        with tax.engine.connect() as con:
+            result = con.execute('select * from nodes where parent_id = ?', ('stapha_sg',))
+            keys = result.keys()
+            nodes = [dict(zip(keys, row)) for row in result.fetchall()]
+
+        self.assertEqual(len(nodes), 5)
+        self.assertEquals([row['source_id'] for row in nodes], [2] * len(nodes))
 
 
 class TestExtractNodes(TestBase):

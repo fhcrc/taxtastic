@@ -517,32 +517,39 @@ class Taxonomy(object):
 
         statements.extend(self.add_names(tax_id, names, execute=False))
 
-        # add children
+        # add children and update source_id
         for child in children:
             statements.append(self.nodes.update(
                 whereclause=self.nodes.c.tax_id == child,
-                values={'parent_id': tax_id}))
+                values={'parent_id': tax_id, 'source_id': source_id}))
 
         if execute:
             self.execute(statements)
         else:
             return statements
 
-    def update_node(self, tax_id, parent_id, rank, source_name, names=None,
+    def update_node(self, tax_id, source_name, parent_id=None, rank=None, names=None,
                     children=None, is_valid=None, execute=True):
 
         children = children or []
-        self.verify_rank_integrity(tax_id, rank, parent_id, children)
         source_id, __ = self.add_source(source_name)
 
         statements = []
 
+        result = select([self.nodes], self.nodes.c.tax_id == tax_id).execute()
+        current = dict(zip(result.keys(), result.fetchone()))
+
         # update node
-        values = dict(
-            parent_id=parent_id,
-            source_id=source_id,
-            rank=rank,
-        )
+        values = dict(source_id=source_id)
+        if parent_id is None:
+            parent_id = current['parent_id']
+        else:
+            values['parent_id'] = parent_id
+
+        if rank is not None:
+            self.verify_rank_integrity(tax_id, rank, parent_id, children)
+            values['rank'] = rank
+
         if is_valid is not None:
             assert isinstance(is_valid, bool)
             values['is_valid'] = is_valid
