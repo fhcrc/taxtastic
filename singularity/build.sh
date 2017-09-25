@@ -23,7 +23,7 @@ singfile=$(mktemp Singularity-XXXXXX)
 sed s"/TAG/$tag/" < Singularity > $singfile
 
 if [[ ! -f $img ]]; then
-    singularity create --size 2048 $img
+    singularity create --size 1500 $img
     sudo singularity bootstrap $img $singfile
 fi
 
