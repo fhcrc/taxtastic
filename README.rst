@@ -9,59 +9,6 @@ profiles, and associated taxonomic information.
 .. image:: https://travis-ci.org/fhcrc/taxtastic.svg?branch=master
     :target: https://travis-ci.org/fhcrc/taxtastic
 
-Installing
-==========
-
-``taxtastic`` requires Python 2.7.  The simplest method of installing
-is using `pip <http://pip-installer.org>`_::
-
-    pip2 install taxtastic
-
-We strongly recommend installation into a virtualenv.
-
-
-sqlite3
--------
-
-Taxtastic uses recursive common table expressions to query the
-taxonomy database, which requires that the Python ``sqlite3`` module
-is built against sqlite3 library version of 3.8.3 or higher
-(http://www.sqlite.org/releaselog/3_8_3.html). You can check the
-version like this::
-
-  python -c 'import sqlite3; print sqlite3.sqlite_version'
-
-``python setup.py`` will exit with an error if the sqlite3 library
-dependency is not met. On older systems, it is possible to replace the
-builtin ``sqlite3`` module by installing ``pysqlite2`` with updated
-sqlite3 libraries using a provided script (assuming an active
-virtualenv)::
-
-  dev/install_pysqlite.sh
-
-After the script completes, confirm that ``pysqlite2`` was installed::
-
-  python -c 'from pysqlite2 import dbapi2; print dbapi2.sqlite_version'
-
-At this point, taxtastic may be installed as described above.
-
-A note on databases
-===================
-
-This project supports both sqlite3 and postgresql as database
-backends. For most applications, we recommend sqlite3: some operations
-(particularly initial database creation) are much faster using sqlite3
-due to the details of how postgresql enforces database constraints (we
-may try to optimize this in the future - in theory, postgresql can be
-made to be at least as fast). If you do want to use postgresql, note
-that some of the queries consume a lot of memory, and the default
-configuration tends to be memory constrained (and this *really* slows
-things down). On a reasonably new mac laptop, we found that the
-optimizations suggested here
-(http://big-elephants.com/2012-12/tuning-postgres-on-macos/) do the
-trick.
-
-
 We love it, but what is it?
 ===========================
 
@@ -116,6 +63,59 @@ A script named ``taxit`` provides a command line interface::
 			  verbose, -vv more so)
     -q, --quiet           Suppress output
 
+
 .. Targets ..
 .. _quickstart: http://fhcrc.github.com/taxtastic/quickstart.html
 .. _full documentation: http://fhcrc.github.com/taxtastic/index.html
+
+
+Installing
+==========
+
+``taxtastic`` requires Python 2.7.  The simplest method of installing
+is using `pip <http://pip-installer.org>`_::
+
+    pip2 install taxtastic
+
+We strongly recommend installation into a virtualenv.
+
+sqlite3
+-------
+
+Taxtastic uses recursive common table expressions to query the
+taxonomy database, which requires that the Python ``sqlite3`` module
+is built against sqlite3 library version of 3.8.3 or higher
+(http://www.sqlite.org/releaselog/3_8_3.html). You can check the
+version like this::
+
+  python -c 'import sqlite3; print sqlite3.sqlite_version'
+
+``python setup.py`` will exit with an error if the sqlite3 library
+dependency is not met. On older systems, it is possible to replace the
+builtin ``sqlite3`` module by installing ``pysqlite2`` with updated
+sqlite3 libraries using a provided script (assuming an active
+virtualenv)::
+
+  dev/install_pysqlite.sh
+
+After the script completes, confirm that ``pysqlite2`` was installed::
+
+  python -c 'from pysqlite2 import dbapi2; print dbapi2.sqlite_version'
+
+At this point, taxtastic may be installed as described above.
+
+A note on databases
+===================
+
+This project supports both sqlite3 and postgresql as database
+backends. For most applications, we recommend sqlite3: some operations
+(particularly initial database creation) are much faster using sqlite3
+due to the details of how postgresql enforces database constraints (we
+may try to optimize this in the future - in theory, postgresql can be
+made to be at least as fast). If you do want to use postgresql, note
+that some of the queries consume a lot of memory, and the default
+configuration tends to be memory constrained (and this *really* slows
+things down). On a reasonably new mac laptop, we found that the
+optimizations suggested here
+(http://big-elephants.com/2012-12/tuning-postgres-on-macos/) do the
+trick.
