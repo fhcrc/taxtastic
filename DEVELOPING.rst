@@ -57,6 +57,7 @@ If you have not done so create a ~/.pypirc file::
 Proceed to build and upload::
 
   python setup.py clean
+  rm -r dist
   python setup.py sdist bdist_wheel
   twine upload dist/*
 
