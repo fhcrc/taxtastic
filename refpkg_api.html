@@ -1,33 +1,32 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>The Python Refpkg API &mdash; taxtastic 0.5.4 documentation</title>
-    
+    <title>The Python Refpkg API &#8212; taxtastic 0.8.0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.4',
+        VERSION:     '0.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="taxtastic 0.5.4 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Detailed taxit documentation" href="commands.html" />
     <link rel="prev" title="Creating and manipulating refpkgs" href="refpkg.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -40,7 +39,7 @@
         <li class="right" >
           <a href="refpkg.html" title="Creating and manipulating refpkgs"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.5.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -52,9 +51,9 @@
   <div class="section" id="the-python-refpkg-api">
 <h1>The Python Refpkg API<a class="headerlink" href="#the-python-refpkg-api" title="Permalink to this headline">¶</a></h1>
 <p>Taxtastic provides a Python API for creating and manipulating refpkgs wihtout having to recourse to the command line.  It is entirely based around the <code class="docutils literal"><span class="pre">Refpkg</span></code> class in <code class="docutils literal"><span class="pre">taxtastic.refpkg</span></code>.  Thus all scripts dealing with refpkgs will include code that looks something like:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="kn">import</span> <span class="n">Refpkg</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="k">import</span> <span class="n">Refpkg</span>
 
-<span class="n">r</span> <span class="o">=</span> <span class="n">Refpkg</span><span class="p">(</span><span class="s">&#39;/path/to/refpkg&#39;</span><span class="p">)</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">Refpkg</span><span class="p">(</span><span class="s1">&#39;/path/to/refpkg&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The constructor takes no other arguments.  If the refpkg at <code class="docutils literal"><span class="pre">/path/to/refpkg</span></code> already exists, <code class="docutils literal"><span class="pre">r</span></code> is attached to it.  If <code class="docutils literal"><span class="pre">/path/to/refpkg</span></code> does not exist, a new, empty refpkg is created.  If there is already something at <code class="docutils literal"><span class="pre">/path/to/refpkg</span></code>, but it is not a refpkg, <code class="docutils literal"><span class="pre">Refpkg</span></code> throws a <code class="docutils literal"><span class="pre">ValueError</span></code>.</p>
@@ -76,12 +75,12 @@
 </dd></dl>
 
 <p>For example:</p>
-<div class="highlight-python"><div class="highlight"><pre>r = Refpkg(&#39;/path/to/new/refpkg&#39;)
-r.metadata_keys()
- --&gt; [&#39;create_date&#39;, &#39;format_version&#39;]
-r.update_file(&#39;file_key&#39;, &#39;/path/to/some/file&#39;)
-r.file_keys()
- --&gt; [&#39;file_key&#39;]
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">r</span> <span class="o">=</span> <span class="n">Refpkg</span><span class="p">(</span><span class="s1">&#39;/path/to/new/refpkg&#39;</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">metadata_keys</span><span class="p">()</span>
+ <span class="o">--&gt;</span> <span class="p">[</span><span class="s1">&#39;create_date&#39;</span><span class="p">,</span> <span class="s1">&#39;format_version&#39;</span><span class="p">]</span>
+<span class="n">r</span><span class="o">.</span><span class="n">update_file</span><span class="p">(</span><span class="s1">&#39;file_key&#39;</span><span class="p">,</span> <span class="s1">&#39;/path/to/some/file&#39;</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">file_keys</span><span class="p">()</span>
+ <span class="o">--&gt;</span> <span class="p">[</span><span class="s1">&#39;file_key&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>Call the <code class="docutils literal"><span class="pre">metadata</span></code> method to retrieve the value of a particular metadata field.</p>
@@ -92,8 +91,8 @@ r.file_keys()
 </dd></dl>
 
 <p>For instance, on the same refpkg as above:</p>
-<div class="highlight-python"><div class="highlight"><pre>r.metadata(&#39;format_version&#39;)
- --&gt; &#39;1.1&#39;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">r</span><span class="o">.</span><span class="n">metadata</span><span class="p">(</span><span class="s1">&#39;format_version&#39;</span><span class="p">)</span>
+ <span class="o">--&gt;</span> <span class="s1">&#39;1.1&#39;</span>
 </pre></div>
 </div>
 <p>There are several methods for working with the resources in a reference package.</p>
@@ -201,7 +200,7 @@ to oldest.</p>
 <dd><p>Restore a reverted modification to the refpkg.</p>
 </dd></dl>
 
-<p>After performing a lot of operations on a refpkg, there will often be a long undo history, and files no longer referred to in the refpkg&#8217;s current state.  To remove everything not relevant to the refpkg&#8217;s current state other than the log, call the <code class="docutils literal"><span class="pre">strip</span></code> method.</p>
+<p>After performing a lot of operations on a refpkg, there will often be a long undo history, and files no longer referred to in the refpkg’s current state.  To remove everything not relevant to the refpkg’s current state other than the log, call the <code class="docutils literal"><span class="pre">strip</span></code> method.</p>
 <dl class="method">
 <dt id="taxtastic.refpkg.Refpkg.strip">
 <code class="descclassname">Refpkg.</code><code class="descname">strip</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/taxtastic/refpkg.html#Refpkg.strip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#taxtastic.refpkg.Refpkg.strip" title="Permalink to this definition">¶</a></dt>
@@ -229,14 +228,14 @@ in the log.</p>
 </dd></dl>
 
 <p>For example,</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="kn">import</span> <span class="n">Refpkg</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="k">import</span> <span class="n">Refpkg</span>
 
-<span class="n">r</span> <span class="o">=</span> <span class="n">Refpkg</span><span class="p">(</span><span class="s">&#39;/path/to/refpkg&#39;</span><span class="p">)</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">Refpkg</span><span class="p">(</span><span class="s1">&#39;/path/to/refpkg&#39;</span><span class="p">)</span>
 
 <span class="n">r</span><span class="o">.</span><span class="n">start_transaction</span><span class="p">()</span>
-<span class="n">r</span><span class="o">.</span><span class="n">update_metadata</span><span class="p">(</span><span class="s">&#39;author&#39;</span><span class="p">,</span> <span class="s">&#39;Boris the mad baboon&#39;</span><span class="p">)</span>
-<span class="n">r</span><span class="o">.</span><span class="n">update_file</span><span class="p">(</span><span class="s">&#39;boris_signature&#39;</span><span class="p">,</span> <span class="s">&#39;/path/to/some/file&#39;</span><span class="p">)</span>
-<span class="n">r</span><span class="o">.</span><span class="n">commit_transaction</span><span class="p">(</span><span class="s">&quot;Left Boris&#39;s mark!&quot;</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">update_metadata</span><span class="p">(</span><span class="s1">&#39;author&#39;</span><span class="p">,</span> <span class="s1">&#39;Boris the mad baboon&#39;</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">update_file</span><span class="p">(</span><span class="s1">&#39;boris_signature&#39;</span><span class="p">,</span> <span class="s1">&#39;/path/to/some/file&#39;</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">commit_transaction</span><span class="p">(</span><span class="s2">&quot;Left Boris&#39;s mark!&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>would result in a single operation that could be rolled back as one, and leaves the log entry <code class="docutils literal"><span class="pre">&quot;Left</span> <span class="pre">Boris's</span> <span class="pre">mark!&quot;</span></code>.</p>
@@ -267,7 +266,7 @@ under the key <code class="docutils literal"><span class="pre">phylo_model</span
 that format.</p>
 <p>This function takes a log generated by RAxML or FastTree, parses it,
 and inserts an appropriate JSON file into the refpkg. The first
-parameter must be &#8216;RAxML&#8217;, &#8216;PhyML&#8217; or &#8216;FastTree&#8217;, depending on which
+parameter must be ‘RAxML’, ‘PhyML’ or ‘FastTree’, depending on which
 program generated the log. It may also be None to attempt to guess
 which program generated the log.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -275,9 +274,9 @@ which program generated the log.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>stats_type</strong> &#8211; Statistics file type. One of &#8216;RAxML&#8217;, &#8216;FastTree&#8217;, &#8216;PhyML&#8217;</li>
-<li><strong>stats_file</strong> &#8211; path to statistics/log file</li>
-<li><strong>frequency_type</strong> &#8211; For <code class="docutils literal"><span class="pre">stats_type</span> <span class="pre">==</span> <span class="pre">'PhyML'</span></code>, amino acid
+<li><strong>stats_type</strong> – Statistics file type. One of ‘RAxML’, ‘FastTree’, ‘PhyML’</li>
+<li><strong>stats_file</strong> – path to statistics/log file</li>
+<li><strong>frequency_type</strong> – For <code class="docutils literal"><span class="pre">stats_type</span> <span class="pre">==</span> <span class="pre">'PhyML'</span></code>, amino acid
 alignments only: was the alignment inferred with <code class="docutils literal"><span class="pre">model</span></code> or
 <code class="docutils literal"><span class="pre">empirical</span></code> frequencies?</li>
 </ul>
@@ -317,21 +316,18 @@ alignments only: was the alignment inferred with <code class="docutils literal">
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/refpkg_api.txt"
+      <li><a href="_sources/refpkg_api.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -350,12 +346,12 @@ alignments only: was the alignment inferred with <code class="docutils literal">
         <li class="right" >
           <a href="refpkg.html" title="Creating and manipulating refpkgs"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.5.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2011-2015, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+        &#169; Copyright 2011-2017, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
     </div>
   </body>
 </html>

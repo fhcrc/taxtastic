@@ -1,33 +1,32 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Quickstart &mdash; taxtastic 0.5.4 documentation</title>
-    
+    <title>Quickstart &#8212; taxtastic 0.8.0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.4',
+        VERSION:     '0.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="taxtastic 0.5.4 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Manipulating the NCBI taxonomy" href="taxonomy.html" />
     <link rel="prev" title="Installation" href="installation.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -40,7 +39,7 @@
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.5.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -60,10 +59,10 @@
 <li><code class="docutils literal"><span class="pre">tree_stats.txt</span></code>: The log file from FastTree or the statistics file from RAxML/phyml.</li>
 </ul>
 <p>Build a reference package <code class="docutils literal"><span class="pre">my.refpkg</span></code> for a locus <code class="docutils literal"><span class="pre">locus_name</span></code> (e.g. <code class="docutils literal"><span class="pre">16s_rRNA</span></code>) in a single command as follows:</p>
-<div class="highlight-python"><div class="highlight"><pre>taxit create -l 16s_rRNA -P my.refpkg \
-    --aln-fasta seqs.fasta \
-    --tree-stats tree_stats.txt \
-    --tree-file tree.nwk
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">taxit</span> <span class="n">create</span> <span class="o">-</span><span class="n">l</span> <span class="mi">16</span><span class="n">s_rRNA</span> <span class="o">-</span><span class="n">P</span> <span class="n">my</span><span class="o">.</span><span class="n">refpkg</span> \
+    <span class="o">--</span><span class="n">aln</span><span class="o">-</span><span class="n">fasta</span> <span class="n">seqs</span><span class="o">.</span><span class="n">fasta</span> \
+    <span class="o">--</span><span class="n">tree</span><span class="o">-</span><span class="n">stats</span> <span class="n">tree_stats</span><span class="o">.</span><span class="n">txt</span> \
+    <span class="o">--</span><span class="n">tree</span><span class="o">-</span><span class="n">file</span> <span class="n">tree</span><span class="o">.</span><span class="n">nwk</span>
 </pre></div>
 </div>
 </div>
@@ -75,34 +74,34 @@ Say in addition to the above files you also have:</p>
 <li><p class="first"><code class="docutils literal"><span class="pre">tax_ids.txt</span></code>: A list of all the tax_ids that the sequences in your refpkg use, one per line in a text file.  Blank lines and Python style comments in this file will be ignored, and repeated entries are only considered once.</p>
 </li>
 <li><p class="first"><code class="docutils literal"><span class="pre">seq_info.csv</span></code>: A CSV file describing each of the aligned sequences.  It begins with one line giving the field names:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="s">&quot;seqname&quot;</span><span class="p">,</span><span class="s">&quot;accession&quot;</span><span class="p">,</span><span class="s">&quot;tax_id&quot;</span><span class="p">,</span><span class="s">&quot;species_name&quot;</span><span class="p">,</span><span class="s">&quot;is_type&quot;</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="s2">&quot;seqname&quot;</span><span class="p">,</span><span class="s2">&quot;accession&quot;</span><span class="p">,</span><span class="s2">&quot;tax_id&quot;</span><span class="p">,</span><span class="s2">&quot;species_name&quot;</span><span class="p">,</span><span class="s2">&quot;is_type&quot;</span>
 </pre></div>
 </div>
-<p>This is followed by one line for each sequence in your multiple alignment. Only <code class="docutils literal"><span class="pre">seqname</span></code> and <code class="docutils literal"><span class="pre">tax_id</span></code> are required. <code class="docutils literal"><span class="pre">seqname</span></code> should match the ID of the sequence in the FASTA file and must be unique. <code class="docutils literal"><span class="pre">accession</span></code> provides an additional identifier for the sequence, which can (but need not) be the same as <code class="docutils literal"><span class="pre">seqname</span></code>.  In our work, <code class="docutils literal"><span class="pre">seqname</span></code> is often an RDP accession number and <code class="docutils literal"><span class="pre">accession</span></code> is the NCBI accession number corresponding to that RDP entry (note that an NCBI accession number may not uniquely identify a sequence, as in tha case of a genomic sequence with multiple 16S rRNA gene loci).``tax_id`` is the entry in the taxonomy this sequence is mapped to, and <code class="docutils literal"><span class="pre">species_name</span></code> is the name associated with that entry. <code class="docutils literal"><span class="pre">is_type</span></code> indicates whether this sequence is from a type strain or not (should be <code class="docutils literal"><span class="pre">TRUE</span></code> or <code class="docutils literal"><span class="pre">FALSE</span></code>).  If you aren&#8217;t dealing with typestrains, just set it to <code class="docutils literal"><span class="pre">FALSE</span></code> for all your sequences.</p>
+<p>This is followed by one line for each sequence in your multiple alignment. Only <code class="docutils literal"><span class="pre">seqname</span></code> and <code class="docutils literal"><span class="pre">tax_id</span></code> are required. <code class="docutils literal"><span class="pre">seqname</span></code> should match the ID of the sequence in the FASTA file and must be unique. <code class="docutils literal"><span class="pre">accession</span></code> provides an additional identifier for the sequence, which can (but need not) be the same as <code class="docutils literal"><span class="pre">seqname</span></code>.  In our work, <code class="docutils literal"><span class="pre">seqname</span></code> is often an RDP accession number and <code class="docutils literal"><span class="pre">accession</span></code> is the NCBI accession number corresponding to that RDP entry (note that an NCBI accession number may not uniquely identify a sequence, as in tha case of a genomic sequence with multiple 16S rRNA gene loci).``tax_id`` is the entry in the taxonomy this sequence is mapped to, and <code class="docutils literal"><span class="pre">species_name</span></code> is the name associated with that entry. <code class="docutils literal"><span class="pre">is_type</span></code> indicates whether this sequence is from a type strain or not (should be <code class="docutils literal"><span class="pre">TRUE</span></code> or <code class="docutils literal"><span class="pre">FALSE</span></code>).  If you aren’t dealing with typestrains, just set it to <code class="docutils literal"><span class="pre">FALSE</span></code> for all your sequences.</p>
 </li>
 </ul>
 <p>Now there are a few additional steps to construct a taxonomically-annotated refpkg.</p>
 <p>First we have to represent the tax_ids as a taxonomy.  You will need a copy of the NCBI taxonomy in a format taxtastic understands in order to extract the minimal taxonomy containing the tax_ids in <code class="docutils literal"><span class="pre">tax_ids.txt</span></code>.  Run:</p>
-<div class="highlight-python"><div class="highlight"><pre>taxit new_database -d taxonomy.db
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">taxit</span> <span class="n">new_database</span> <span class="o">-</span><span class="n">d</span> <span class="n">taxonomy</span><span class="o">.</span><span class="n">db</span>
 </pre></div>
 </div>
 <p>This will download zipped files containing the NCBI taxonomy into the current directory and load the data into an sqlite databse named <code class="docutils literal"><span class="pre">taxonomy.db</span></code>.  This takes a while!  Plan to go get a cup of coffee.  Then run:</p>
-<div class="highlight-python"><div class="highlight"><pre>taxit taxtable -d taxonomy.db -t tax_ids.txt -o taxa.csv
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">taxit</span> <span class="n">taxtable</span> <span class="o">-</span><span class="n">d</span> <span class="n">taxonomy</span><span class="o">.</span><span class="n">db</span> <span class="o">-</span><span class="n">t</span> <span class="n">tax_ids</span><span class="o">.</span><span class="n">txt</span> <span class="o">-</span><span class="n">o</span> <span class="n">taxa</span><span class="o">.</span><span class="n">csv</span>
 </pre></div>
 </div>
 <p>The output, <code class="docutils literal"><span class="pre">taxa.csv</span></code>, is a CSV file containing the minimum subtaxonomy of <code class="docutils literal"><span class="pre">taxonomy.db</span></code> which contains all the entries in <code class="docutils literal"><span class="pre">tax_ids.txt</span></code>.</p>
 <p>Now we are ready to build the refpkg:</p>
-<div class="highlight-python"><div class="highlight"><pre>taxit create -l locus_name -P my.refpkg \
-    --taxonomy taxa.csv \
-    --aln-fasta seqs.fasta \
-    --seq-info seq_info.csv \
-    --tree-stats tree_stats.txt \
-    --tree-file tree.nwk
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">taxit</span> <span class="n">create</span> <span class="o">-</span><span class="n">l</span> <span class="n">locus_name</span> <span class="o">-</span><span class="n">P</span> <span class="n">my</span><span class="o">.</span><span class="n">refpkg</span> \
+    <span class="o">--</span><span class="n">taxonomy</span> <span class="n">taxa</span><span class="o">.</span><span class="n">csv</span> \
+    <span class="o">--</span><span class="n">aln</span><span class="o">-</span><span class="n">fasta</span> <span class="n">seqs</span><span class="o">.</span><span class="n">fasta</span> \
+    <span class="o">--</span><span class="n">seq</span><span class="o">-</span><span class="n">info</span> <span class="n">seq_info</span><span class="o">.</span><span class="n">csv</span> \
+    <span class="o">--</span><span class="n">tree</span><span class="o">-</span><span class="n">stats</span> <span class="n">tree_stats</span><span class="o">.</span><span class="n">txt</span> \
+    <span class="o">--</span><span class="n">tree</span><span class="o">-</span><span class="n">file</span> <span class="n">tree</span><span class="o">.</span><span class="n">nwk</span>
 </pre></div>
 </div>
 <p>You may also want to add some metadata fields using the options <code class="docutils literal"><span class="pre">--author</span></code>, <code class="docutils literal"><span class="pre">--description</span></code>, and <code class="docutils literal"><span class="pre">--package-version</span></code>, but these are optional. In addition, you may package in profile information and a Stockholm alignment:</p>
-<div class="highlight-python"><div class="highlight"><pre>--aln-sto seqs.sto \
---profile align_profile
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">aln</span><span class="o">-</span><span class="n">sto</span> <span class="n">seqs</span><span class="o">.</span><span class="n">sto</span> \
+<span class="o">--</span><span class="n">profile</span> <span class="n">align_profile</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">align_profile</span></code> is a profile that can be used to align query sequences using HMMER3 or Infernal, and <code class="docutils literal"><span class="pre">seqs.sto</span></code> is the reference alignment in Stockholm format. This is handy if you plan to use <code class="docutils literal"><span class="pre">cmalign</span></code> (in the Infernal suite of tools) or <code class="docutils literal"><span class="pre">hmmalign</span></code> (in the HMMER3 suite of tools) to perform your alignments.</p>
@@ -133,21 +132,18 @@ Say in addition to the above files you also have:</p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/quickstart.txt"
+      <li><a href="_sources/quickstart.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -166,12 +162,12 @@ Say in addition to the above files you also have:</p>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.5.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2011-2015, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+        &#169; Copyright 2011-2017, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
     </div>
   </body>
 </html>

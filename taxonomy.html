@@ -1,33 +1,32 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Manipulating the NCBI taxonomy &mdash; taxtastic 0.5.4 documentation</title>
-    
+    <title>Manipulating the NCBI taxonomy &#8212; taxtastic 0.8.0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.4',
+        VERSION:     '0.8.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="taxtastic 0.5.4 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Creating and manipulating refpkgs" href="refpkg.html" />
     <link rel="prev" title="Quickstart" href="quickstart.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -40,7 +39,7 @@
         <li class="right" >
           <a href="quickstart.html" title="Quickstart"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.5.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -52,61 +51,61 @@
   <div class="section" id="manipulating-the-ncbi-taxonomy">
 <h1>Manipulating the NCBI taxonomy<a class="headerlink" href="#manipulating-the-ncbi-taxonomy" title="Permalink to this headline">¶</a></h1>
 <p>The first thing we must do is download a copy of the NCBI taxonomy.  The taxit subcommand <code class="docutils literal"><span class="pre">new_database</span></code> does this for us and loads the taxonomy into an SQLite3 database that taxit can use.:</p>
-<div class="highlight-python"><div class="highlight"><pre>$ taxit new_database -d taxonomy.db
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ taxit new_database -d taxonomy.db
 </pre></div>
 </div>
 <p>The primary use for the taxonomy is extracting subsets of it for use in references packages.  For instance, if we want the minimal subtaxonomy that contains both Lactobacillus crispatus (tax_id 47770) and Enterococcus avium (tax_id 33945), we would run:</p>
-<div class="highlight-python"><div class="highlight"><pre>$ taxit taxtable -d taxonomy.db -t 47770,33945 -o minimal_taxonomy.csv
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ taxit taxtable -d taxonomy.db -t 47770,33945 -o minimal_taxonomy.csv
 </pre></div>
 </div>
-<p>The file <code class="docutils literal"><span class="pre">minimal_taxonomy.csv</span></code> contains the entries for the two species we specified, along with all nodes of the taxonomy which connect them to the root of the taxonomy.  The file&#8217;s contents are:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="s">&quot;tax_id&quot;</span><span class="p">,</span><span class="s">&quot;parent_id&quot;</span><span class="p">,</span><span class="s">&quot;rank&quot;</span><span class="p">,</span><span class="s">&quot;tax_name&quot;</span><span class="p">,</span><span class="s">&quot;root&quot;</span><span class="p">,</span><span class="s">&quot;below_root&quot;</span><span class="p">,</span><span class="s">&quot;superkingdom&quot;</span><span class="p">,</span><span class="s">&quot;phylum&quot;</span><span class="p">,</span><span class="s">&quot;class&quot;</span><span class="p">,</span><span class="s">&quot;order&quot;</span><span class="p">,</span><span class="s">&quot;family&quot;</span><span class="p">,</span><span class="s">&quot;genus&quot;</span><span class="p">,</span><span class="s">&quot;species&quot;</span>
-<span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;root&quot;</span><span class="p">,</span><span class="s">&quot;root&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
-<span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;below_root&quot;</span><span class="p">,</span><span class="s">&quot;cellular organisms&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
-<span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;superkingdom&quot;</span><span class="p">,</span><span class="s">&quot;Bacteria&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
-<span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;phylum&quot;</span><span class="p">,</span><span class="s">&quot;Firmicutes&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
-<span class="s">&quot;91061&quot;</span><span class="p">,</span><span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;class&quot;</span><span class="p">,</span><span class="s">&quot;Bacilli&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;91061&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
-<span class="s">&quot;186826&quot;</span><span class="p">,</span><span class="s">&quot;91061&quot;</span><span class="p">,</span><span class="s">&quot;order&quot;</span><span class="p">,</span><span class="s">&quot;Lactobacillales&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;91061&quot;</span><span class="p">,</span><span class="s">&quot;186826&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
-<span class="s">&quot;81852&quot;</span><span class="p">,</span><span class="s">&quot;186826&quot;</span><span class="p">,</span><span class="s">&quot;family&quot;</span><span class="p">,</span><span class="s">&quot;Enterococcaceae&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;91061&quot;</span><span class="p">,</span><span class="s">&quot;186826&quot;</span><span class="p">,</span><span class="s">&quot;81852&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
-<span class="s">&quot;33958&quot;</span><span class="p">,</span><span class="s">&quot;186826&quot;</span><span class="p">,</span><span class="s">&quot;family&quot;</span><span class="p">,</span><span class="s">&quot;Lactobacillaceae&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;91061&quot;</span><span class="p">,</span><span class="s">&quot;186826&quot;</span><span class="p">,</span><span class="s">&quot;33958&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
-<span class="s">&quot;1350&quot;</span><span class="p">,</span><span class="s">&quot;81852&quot;</span><span class="p">,</span><span class="s">&quot;genus&quot;</span><span class="p">,</span><span class="s">&quot;Enterococcus&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;91061&quot;</span><span class="p">,</span><span class="s">&quot;186826&quot;</span><span class="p">,</span><span class="s">&quot;81852&quot;</span><span class="p">,</span><span class="s">&quot;1350&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
-<span class="s">&quot;1578&quot;</span><span class="p">,</span><span class="s">&quot;33958&quot;</span><span class="p">,</span><span class="s">&quot;genus&quot;</span><span class="p">,</span><span class="s">&quot;Lactobacillus&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;91061&quot;</span><span class="p">,</span><span class="s">&quot;186826&quot;</span><span class="p">,</span><span class="s">&quot;33958&quot;</span><span class="p">,</span><span class="s">&quot;1578&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span>
-<span class="s">&quot;33945&quot;</span><span class="p">,</span><span class="s">&quot;1350&quot;</span><span class="p">,</span><span class="s">&quot;species&quot;</span><span class="p">,</span><span class="s">&quot;Enterococcus avium&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;91061&quot;</span><span class="p">,</span><span class="s">&quot;186826&quot;</span><span class="p">,</span><span class="s">&quot;81852&quot;</span><span class="p">,</span><span class="s">&quot;1350&quot;</span><span class="p">,</span><span class="s">&quot;33945&quot;</span>
-<span class="s">&quot;47770&quot;</span><span class="p">,</span><span class="s">&quot;1578&quot;</span><span class="p">,</span><span class="s">&quot;species&quot;</span><span class="p">,</span><span class="s">&quot;Lactobacillus crispatus&quot;</span><span class="p">,</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="s">&quot;131567&quot;</span><span class="p">,</span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="s">&quot;1239&quot;</span><span class="p">,</span><span class="s">&quot;91061&quot;</span><span class="p">,</span><span class="s">&quot;186826&quot;</span><span class="p">,</span><span class="s">&quot;33958&quot;</span><span class="p">,</span><span class="s">&quot;1578&quot;</span><span class="p">,</span><span class="s">&quot;47770&quot;</span>
+<p>The file <code class="docutils literal"><span class="pre">minimal_taxonomy.csv</span></code> contains the entries for the two species we specified, along with all nodes of the taxonomy which connect them to the root of the taxonomy.  The file’s contents are:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="s2">&quot;tax_id&quot;</span><span class="p">,</span><span class="s2">&quot;parent_id&quot;</span><span class="p">,</span><span class="s2">&quot;rank&quot;</span><span class="p">,</span><span class="s2">&quot;tax_name&quot;</span><span class="p">,</span><span class="s2">&quot;root&quot;</span><span class="p">,</span><span class="s2">&quot;below_root&quot;</span><span class="p">,</span><span class="s2">&quot;superkingdom&quot;</span><span class="p">,</span><span class="s2">&quot;phylum&quot;</span><span class="p">,</span><span class="s2">&quot;class&quot;</span><span class="p">,</span><span class="s2">&quot;order&quot;</span><span class="p">,</span><span class="s2">&quot;family&quot;</span><span class="p">,</span><span class="s2">&quot;genus&quot;</span><span class="p">,</span><span class="s2">&quot;species&quot;</span>
+<span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;root&quot;</span><span class="p">,</span><span class="s2">&quot;root&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span>
+<span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;below_root&quot;</span><span class="p">,</span><span class="s2">&quot;cellular organisms&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span>
+<span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;superkingdom&quot;</span><span class="p">,</span><span class="s2">&quot;Bacteria&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span>
+<span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;phylum&quot;</span><span class="p">,</span><span class="s2">&quot;Firmicutes&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span>
+<span class="s2">&quot;91061&quot;</span><span class="p">,</span><span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;class&quot;</span><span class="p">,</span><span class="s2">&quot;Bacilli&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;91061&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span>
+<span class="s2">&quot;186826&quot;</span><span class="p">,</span><span class="s2">&quot;91061&quot;</span><span class="p">,</span><span class="s2">&quot;order&quot;</span><span class="p">,</span><span class="s2">&quot;Lactobacillales&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;91061&quot;</span><span class="p">,</span><span class="s2">&quot;186826&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span>
+<span class="s2">&quot;81852&quot;</span><span class="p">,</span><span class="s2">&quot;186826&quot;</span><span class="p">,</span><span class="s2">&quot;family&quot;</span><span class="p">,</span><span class="s2">&quot;Enterococcaceae&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;91061&quot;</span><span class="p">,</span><span class="s2">&quot;186826&quot;</span><span class="p">,</span><span class="s2">&quot;81852&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span>
+<span class="s2">&quot;33958&quot;</span><span class="p">,</span><span class="s2">&quot;186826&quot;</span><span class="p">,</span><span class="s2">&quot;family&quot;</span><span class="p">,</span><span class="s2">&quot;Lactobacillaceae&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;91061&quot;</span><span class="p">,</span><span class="s2">&quot;186826&quot;</span><span class="p">,</span><span class="s2">&quot;33958&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span>
+<span class="s2">&quot;1350&quot;</span><span class="p">,</span><span class="s2">&quot;81852&quot;</span><span class="p">,</span><span class="s2">&quot;genus&quot;</span><span class="p">,</span><span class="s2">&quot;Enterococcus&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;91061&quot;</span><span class="p">,</span><span class="s2">&quot;186826&quot;</span><span class="p">,</span><span class="s2">&quot;81852&quot;</span><span class="p">,</span><span class="s2">&quot;1350&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span>
+<span class="s2">&quot;1578&quot;</span><span class="p">,</span><span class="s2">&quot;33958&quot;</span><span class="p">,</span><span class="s2">&quot;genus&quot;</span><span class="p">,</span><span class="s2">&quot;Lactobacillus&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;91061&quot;</span><span class="p">,</span><span class="s2">&quot;186826&quot;</span><span class="p">,</span><span class="s2">&quot;33958&quot;</span><span class="p">,</span><span class="s2">&quot;1578&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span>
+<span class="s2">&quot;33945&quot;</span><span class="p">,</span><span class="s2">&quot;1350&quot;</span><span class="p">,</span><span class="s2">&quot;species&quot;</span><span class="p">,</span><span class="s2">&quot;Enterococcus avium&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;91061&quot;</span><span class="p">,</span><span class="s2">&quot;186826&quot;</span><span class="p">,</span><span class="s2">&quot;81852&quot;</span><span class="p">,</span><span class="s2">&quot;1350&quot;</span><span class="p">,</span><span class="s2">&quot;33945&quot;</span>
+<span class="s2">&quot;47770&quot;</span><span class="p">,</span><span class="s2">&quot;1578&quot;</span><span class="p">,</span><span class="s2">&quot;species&quot;</span><span class="p">,</span><span class="s2">&quot;Lactobacillus crispatus&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;131567&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="s2">&quot;1239&quot;</span><span class="p">,</span><span class="s2">&quot;91061&quot;</span><span class="p">,</span><span class="s2">&quot;186826&quot;</span><span class="p">,</span><span class="s2">&quot;33958&quot;</span><span class="p">,</span><span class="s2">&quot;1578&quot;</span><span class="p">,</span><span class="s2">&quot;47770&quot;</span>
 </pre></div>
 </div>
 <p>Each entry is listed with the information about its node (tax_id, parent, rank, etc.), and a series of fields giving the lineage of taxids connecting this node to the root of the taxonomy.</p>
 <p>For large numbers of tax_ids, it is awkard or impossible to pass them on the command line to <code class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></code>.  In these cases, you can also give the <code class="docutils literal"><span class="pre">-t</span></code> option a filename containing taxids.  The file understands Python style comments, and extracts tax_ids from each line seperated by spaces, commas, or semicolons, as in:</p>
-<div class="highlight-python"><div class="highlight"><pre># This is an example file of tax_ids
-47770 # one per line works just fine
-33945 87541, 358;    1383 # or separations with spaces, commas, or semicolons
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># This is an example file of tax_ids</span>
+<span class="mi">47770</span> <span class="c1"># one per line works just fine</span>
+<span class="mi">33945</span> <span class="mi">87541</span><span class="p">,</span> <span class="mi">358</span><span class="p">;</span>    <span class="mi">1383</span> <span class="c1"># or separations with spaces, commas, or semicolons</span>
 
-# and empty lines are just fine
-47770 # repeating taxids is just fine; they will only be included one
+<span class="c1"># and empty lines are just fine</span>
+<span class="mi">47770</span> <span class="c1"># repeating taxids is just fine; they will only be included one</span>
 </pre></div>
 </div>
 <p>If this were placed in <code class="docutils literal"><span class="pre">taxids.txt</span></code>, we would extract the minimal taxonomy containing these taxids with:</p>
-<div class="highlight-python"><div class="highlight"><pre>$ taxit taxtable -d taxonomy.db -t taxids.txt -o taxonomy_from_taxids.csv
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ taxit taxtable -d taxonomy.db -t taxids.txt -o taxonomy_from_taxids.csv
 </pre></div>
 </div>
 <p>Sometimes you will have the names of taxonomic nodes instead of tax_ids or some names and some tax_ids.  <code class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></code> also accepts names, passed in a file via the <code class="docutils literal"><span class="pre">-n</span></code> option.  For instance, if we had the tax_ids from the above file besides 47770 and 33945 as names instead,:</p>
-<div class="highlight-python"><div class="highlight"><pre>Aerococcus christensenii # Python style comments work here as well
-Agrobacterium tumefaciens, Atopobium rimae # but only , and ; separate fields, not space
-Atopobium rimae # Again, repeated names don&#39;t matter
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Aerococcus</span> <span class="n">christensenii</span> <span class="c1"># Python style comments work here as well</span>
+<span class="n">Agrobacterium</span> <span class="n">tumefaciens</span><span class="p">,</span> <span class="n">Atopobium</span> <span class="n">rimae</span> <span class="c1"># but only , and ; separate fields, not space</span>
+<span class="n">Atopobium</span> <span class="n">rimae</span> <span class="c1"># Again, repeated names don&#39;t matter</span>
 </pre></div>
 </div>
 <p>If this were placed in <code class="docutils literal"><span class="pre">taxnames.txt</span></code> and we passed the original tax_ids of 47770 and 33945 as well, we would extract the same subtaxonomy as above with:</p>
-<div class="highlight-python"><div class="highlight"><pre>$ taxit taxtable -d taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ taxit taxtable -d taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv
 </pre></div>
 </div>
 <p>In these examples we have used only species level tax_ids.  This is not necessary.  If you pass <code class="docutils literal"><span class="pre">taxit</span> <span class="pre">taxtable</span></code> a family level tax_id, it will add the family and all nodes connecting it to the root of the taxonomy.  However, it will not add any species, genera, or the like below the level of that family, so passing higher rank tax_ids in this manner is not terribly useful.</p>
-<p>Occasionally you will want to augment the NCBI taxonomy with entries of your own.  The <code class="docutils literal"><span class="pre">taxit</span> <span class="pre">add_nodes</span></code> command takes an Excel 97 or CSV file, with a header line, and adds its entries to the database.  The new nodes must include fields for <code class="docutils literal"><span class="pre">tax_id</span></code>, <code class="docutils literal"><span class="pre">parent_id</span></code>, <code class="docutils literal"><span class="pre">rank</span></code>, and <code class="docutils literal"><span class="pre">tax_name</span></code>.  For instance, if we want to add a new species Lactobacillus borisii, to which we have assigned the arbitrary tax_id AA1 (the NCBI taxonomy doesn&#8217;t use letters in its tax_ids, so a safe way to avoid collisions is to choose a couple letters as a prefix for your own additions), we would put it in the following form::</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="s">&quot;tax_id&quot;</span><span class="p">,</span><span class="s">&quot;parent_id&quot;</span><span class="p">,</span><span class="s">&quot;rank&quot;</span><span class="p">,</span><span class="s">&quot;tax_name&quot;</span>
-<span class="s">&quot;AA1&quot;</span><span class="p">,</span><span class="s">&quot;1578&quot;</span><span class="p">,</span><span class="s">&quot;species&quot;</span><span class="p">,</span><span class="s">&quot;Lactobacillus borisii&quot;</span>
+<p>Occasionally you will want to augment the NCBI taxonomy with entries of your own.  The <code class="docutils literal"><span class="pre">taxit</span> <span class="pre">add_nodes</span></code> command takes an Excel 97 or CSV file, with a header line, and adds its entries to the database.  The new nodes must include fields for <code class="docutils literal"><span class="pre">tax_id</span></code>, <code class="docutils literal"><span class="pre">parent_id</span></code>, <code class="docutils literal"><span class="pre">rank</span></code>, and <code class="docutils literal"><span class="pre">tax_name</span></code>.  For instance, if we want to add a new species Lactobacillus borisii, to which we have assigned the arbitrary tax_id AA1 (the NCBI taxonomy doesn’t use letters in its tax_ids, so a safe way to avoid collisions is to choose a couple letters as a prefix for your own additions), we would put it in the following form::</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="s2">&quot;tax_id&quot;</span><span class="p">,</span><span class="s2">&quot;parent_id&quot;</span><span class="p">,</span><span class="s2">&quot;rank&quot;</span><span class="p">,</span><span class="s2">&quot;tax_name&quot;</span>
+<span class="s2">&quot;AA1&quot;</span><span class="p">,</span><span class="s2">&quot;1578&quot;</span><span class="p">,</span><span class="s2">&quot;species&quot;</span><span class="p">,</span><span class="s2">&quot;Lactobacillus borisii&quot;</span>
 </pre></div>
 </div>
 <p>where 1578 is the tax_id of the genus Lactobacillus.  If we put this text in <code class="docutils literal"><span class="pre">new_taxa.csv</span></code>, we would add it with the command:</p>
-<div class="highlight-python"><div class="highlight"><pre>$ taxit add_nodes -d taxonomy.db -N new_taxa.csv
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ taxit add_nodes -d taxonomy.db -N new_taxa.csv
 </pre></div>
 </div>
 <p>Then we could refer to either Lactobacillus borisii or the tax_id AA1 when extracting subtaxonomies from <code class="docutils literal"><span class="pre">taxonomy.db</span></code>.</p>
@@ -127,21 +126,18 @@ Atopobium rimae # Again, repeated names don&#39;t matter
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/taxonomy.txt"
+      <li><a href="_sources/taxonomy.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -160,12 +156,12 @@ Atopobium rimae # Again, repeated names don&#39;t matter
         <li class="right" >
           <a href="quickstart.html" title="Quickstart"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.5.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2011-2015, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+        &#169; Copyright 2011-2017, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
     </div>
   </body>
 </html>
