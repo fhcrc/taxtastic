@@ -4,37 +4,38 @@ Installation
 ``taxtastic`` requires Python 2.7.  The simplest method of installing
 is using `pip <http://pip-installer.org>`_::
 
-    pip install taxtastic
+  pip install taxtastic
 
-If you don't have pip, download the latest version from
-https://pypi.python.org/pypi/taxtastic, decompress the archive, enter
-the directory containing the source code, and install with::
-
-    python setup.py install
-
-Note that either method above will attempt to download and install
-several additional Python packages, which, in turn have their own
-system requirements. For example, at least one of the dependencies
-require that the Python libraries are available to compile C
-extensions. On Ubuntu (or another system using apt), the Python
-libraries can be installed with::
-
-  sudo apt-get install python-dev
-
-Although you can certainly install to the system, we recommend
-installing ``taxtastic`` in a `virtualenv
-<http://virtualenv.readthedocs.org/en/latest/virtualenv.html>`_ to
-avoid conflicts with system packages that may already be installed (or
-that may be installed later).
-
-So to put this all together, the following will result in
-``taxtastic`` and dependencies installed in a new virtualenv named
-``taxit-env`` (tested on Ubuntu 12.04 and 14.04)::
+We strongly recommend installation into a virtualenv. On a clean
+Ubuntu 16.04 system, complete instructions for installing the
+``taxtastic`` package and the ``taxit`` command line entry point in a
+virtualenv are below. Note that python2.7 is not longer installed
+by default in this OS::
 
   sudo apt-get update
-  sudo apt-get install python-pip python-virtualenv python-dev
-  virtualenv taxit-env
-  source taxit-env/bin/activate
-  pip install taxtastic
-  taxit -h
+  sudo apt-get install python2.7 python-virtualenv
 
+Once python2 is installed, create a virtualenv and install ``taxtastic``::
+
+  virtualenv taxtastic-env
+  source taxtastic-env/bin/activate
+  pip install -U pip
+  pip install taxtastic
+
+If you prefer to install from the git repository::
+
+  git clone https://github.com/fhcrc/taxtastic.git
+  cd taxtastic
+  virtualenv taxtastic-env
+  source taxtastic-env/bin/activate
+  pip install .
+
+If you want to live dangerously and install the package to the system
+despite our pleas not to do so::
+
+  sudo apt-get install python-pip
+  sudo pip install taxtastic
+
+If you are not familiar with python virtual environments, the
+following post is helpful:
+https://realpython.com/blog/python/python-virtual-environments-a-primer/

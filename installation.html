@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Installation &#8212; taxtastic 0.8.1-2-g0a5c216 documentation</title>
+    <title>Installation &#8212; taxtastic 0.8.1-3-gadd82f0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.8.1-2-g0a5c216',
+        VERSION:     '0.8.1-3-gadd82f0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="index.html" title="taxtastic"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.1-2-g0a5c216 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.1-3-gadd82f0 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -55,36 +55,39 @@ is using <a class="reference external" href="http://pip-installer.org">pip</a>:<
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">taxtastic</span>
 </pre></div>
 </div>
-<p>If you don’t have pip, download the latest version from
-<a class="reference external" href="https://pypi.python.org/pypi/taxtastic">https://pypi.python.org/pypi/taxtastic</a>, decompress the archive, enter
-the directory containing the source code, and install with:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
-</pre></div>
-</div>
-<p>Note that either method above will attempt to download and install
-several additional Python packages, which, in turn have their own
-system requirements. For example, at least one of the dependencies
-require that the Python libraries are available to compile C
-extensions. On Ubuntu (or another system using apt), the Python
-libraries can be installed with:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python</span><span class="o">-</span><span class="n">dev</span>
-</pre></div>
-</div>
-<p>Although you can certainly install to the system, we recommend
-installing <code class="docutils literal"><span class="pre">taxtastic</span></code> in a <a class="reference external" href="http://virtualenv.readthedocs.org/en/latest/virtualenv.html">virtualenv</a> to
-avoid conflicts with system packages that may already be installed (or
-that may be installed later).</p>
-<p>So to put this all together, the following will result in
-<code class="docutils literal"><span class="pre">taxtastic</span></code> and dependencies installed in a new virtualenv named
-<code class="docutils literal"><span class="pre">taxit-env</span></code> (tested on Ubuntu 12.04 and 14.04):</p>
+<p>We strongly recommend installation into a virtualenv. On a clean
+Ubuntu 16.04 system, complete instructions for installing the
+<code class="docutils literal"><span class="pre">taxtastic</span></code> package and the <code class="docutils literal"><span class="pre">taxit</span></code> command line entry point in a
+virtualenv are below. Note that python2.7 is not longer installed
+by default in this OS:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">update</span>
-<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python</span><span class="o">-</span><span class="n">pip</span> <span class="n">python</span><span class="o">-</span><span class="n">virtualenv</span> <span class="n">python</span><span class="o">-</span><span class="n">dev</span>
-<span class="n">virtualenv</span> <span class="n">taxit</span><span class="o">-</span><span class="n">env</span>
-<span class="n">source</span> <span class="n">taxit</span><span class="o">-</span><span class="n">env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">taxtastic</span>
-<span class="n">taxit</span> <span class="o">-</span><span class="n">h</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python2</span><span class="o">.</span><span class="mi">7</span> <span class="n">python</span><span class="o">-</span><span class="n">virtualenv</span>
 </pre></div>
 </div>
+<p>Once python2 is installed, create a virtualenv and install <code class="docutils literal"><span class="pre">taxtastic</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">virtualenv</span> <span class="n">taxtastic</span><span class="o">-</span><span class="n">env</span>
+<span class="n">source</span> <span class="n">taxtastic</span><span class="o">-</span><span class="n">env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">pip</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">taxtastic</span>
+</pre></div>
+</div>
+<p>If you prefer to install from the git repository:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">fhcrc</span><span class="o">/</span><span class="n">taxtastic</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">taxtastic</span>
+<span class="n">virtualenv</span> <span class="n">taxtastic</span><span class="o">-</span><span class="n">env</span>
+<span class="n">source</span> <span class="n">taxtastic</span><span class="o">-</span><span class="n">env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>If you want to live dangerously and install the package to the system
+despite our pleas not to do so:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python</span><span class="o">-</span><span class="n">pip</span>
+<span class="n">sudo</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">taxtastic</span>
+</pre></div>
+</div>
+<p>If you are not familiar with python virtual environments, the
+following post is helpful:
+<a class="reference external" href="https://realpython.com/blog/python/python-virtual-environments-a-primer/">https://realpython.com/blog/python/python-virtual-environments-a-primer/</a></p>
 </div>
 
 
@@ -132,7 +135,7 @@ that may be installed later).</p>
         <li class="right" >
           <a href="index.html" title="taxtastic"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.1-2-g0a5c216 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.1-3-gadd82f0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
