@@ -2,7 +2,12 @@
  change log for taxtastic
 ==========================
 
-0.8.0
+0.8.2
+=====
+
+* add psycopg2 as a requirement (support for postgresql from a docker image)
+
+0.8.1
 =====
 
 * major speedups (> 30x) for ``new_database`` and ``taxtable``
