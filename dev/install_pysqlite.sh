@@ -5,7 +5,7 @@ set -e
 sqlite_min_version=3.8.3
 pysqlite_version=2.8.3
 
-sqlite_ok=$(python <<EOF
+sqlite_ok=$(python2 <<EOF
 from distutils.version import LooseVersion as v
 try:
     from pysqlite2 import dbapi2 as sqlite3
@@ -47,6 +47,6 @@ wget --quiet https://sqlite.org/2017/sqlite-amalgamation-3200100.zip
 unzip sqlite-amalgamation-3200100.zip
 mv sqlite-amalgamation-3200100/* .
 
-rm -rf build && python setup.py build_static && python setup.py install
+rm -rf build && python2 setup.py build_static && python2 setup.py install
 
-python -c 'from pysqlite2 import dbapi2; print dbapi2.sqlite_version'
+python2 -c 'from pysqlite2 import dbapi2; print dbapi2.sqlite_version'
