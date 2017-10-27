@@ -111,6 +111,16 @@ If you are not familiar with python virtual environments, the
 following post is helpful:
 https://realpython.com/blog/python/python-virtual-environments-a-primer/
 
+Finally, ``taxit`` can be run from a docker image hosted from Docker
+Hub (https://hub.docker.com/r/nghoffman/taxtastic/), for example::
+
+  docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) nghoffman/taxtastic:0.8.3 taxit -v new_database
+
+Note that the tag for a given release must be specified: using
+``:latest`` (for this or any other Docker image) isn't very
+reproducible!
+
+
 sqlite3
 -------
 
