@@ -18,9 +18,11 @@ The input file specifies new nodes (type: node) and names (type:
 name) in yaml format (see http://fhcrc.github.io/taxtastic/commands.html#add-nodes).
 """
 
+import sys
 import logging
 import sqlalchemy
 import pprint
+import traceback
 
 import yaml
 from fastalite import Opener
@@ -91,12 +93,9 @@ def action(args):
 
                     log.info('new *name* for "{tax_id}": "{tax_name}"'.format(**name))
                     tax.add_name(**name)
-        except ValueError, err:
-            log.error(err)
-            retval = 1
-        except TypeError:
-            log.error('Error in record (check for missing fields):')
-            log.error(pprint.pformat(rec))
+        except (ValueError, TypeError):
+            log.error('Error in record with tax_id {}'.format(rec['tax_id']))
+            log.error(''.join(traceback.format_exception(*sys.exc_info())))
             retval = 1
 
     engine.dispose()
