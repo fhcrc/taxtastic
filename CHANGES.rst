@@ -2,6 +2,13 @@
  change log for taxtastic
 ==========================
 
+0.8.3
+=====
+
+* add_nodes prints traceback on error
+* Taxonomy.add_node() tolerates extra fields
+* create additional mount points in Docker image
+
 0.8.2
 =====
 

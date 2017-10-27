@@ -10,4 +10,6 @@ RUN apt-get update && \
     apt-get purge -y --auto-remove unzip && \
     pip install /src/taxtastic.tar.gz
 
+RUN mkdir -p /app /fh /mnt /run/shm
+
 CMD ["taxit", "-h"]

@@ -5,3 +5,4 @@ From:nghoffman/taxtastic:TAG
     mkdir -p /fh
     mkdir -p /app
     mkdir -p /mnt
+    mkdir -p /run/shm
