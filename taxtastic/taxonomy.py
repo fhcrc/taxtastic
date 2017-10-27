@@ -529,7 +529,7 @@ class Taxonomy(object):
             return statements
 
     def update_node(self, tax_id, source_name, parent_id=None, rank=None, names=None,
-                    children=None, is_valid=None, execute=True):
+                    children=None, is_valid=None, execute=True, **ignored):
 
         children = children or []
         source_id, __ = self.add_source(source_name)
