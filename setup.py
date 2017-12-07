@@ -99,7 +99,7 @@ params = {'name': 'taxtastic',
               'Topic :: Scientific/Engineering :: Bio-Informatics'],
           'download_url': 'https://github.com/fhcrc/taxtastic',
           'package_data': {
-              'taxtastic': [path.join('data', f) for f in ['sha']]},
+              'taxtastic': ['data/*']},
           'entry_points': {'console_scripts': ['taxit = taxtastic.scripts.taxit:main']},
           'test_suite': 'tests',
           'install_requires': [
