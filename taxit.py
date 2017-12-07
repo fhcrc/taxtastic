@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 # This file is part of taxtastic.
 #
@@ -15,8 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
-from taxtastic.scripts.taxit import main
 import sys
+from taxtastic.scripts.taxit import main
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
