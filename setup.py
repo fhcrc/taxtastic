@@ -3,7 +3,8 @@ Create unix package:    python setup.py sdist
 Upload to pypi:         python setup.py sdist upload
 """
 
-import versioneer
+import subprocess
+import os
 from distutils.version import LooseVersion
 from setuptools import setup, find_packages, Command
 # To use a consistent encoding
@@ -17,6 +18,7 @@ except ImportError:
     import sqlite3
     print 'using sqlite3, sqlite3 version {}'.format(sqlite3.sqlite_version)
 
+
 min_sqlite3_version = '3.8.3'
 if LooseVersion(sqlite3.sqlite_version) < LooseVersion(min_sqlite3_version):
     raise ImportError(('the sqlite3 library version for this python interpreter is '
@@ -24,14 +26,19 @@ if LooseVersion(sqlite3.sqlite_version) < LooseVersion(min_sqlite3_version):
                        'see https://github.com/fhcrc/taxtastic#installing').format(
                            sqlite3.sqlite_version, min_sqlite3_version))
 
-versioneer.versionfile_source = 'taxtastic/_version.py'
-versioneer.versionfile_build = 'taxtastic/_version.py'
-versioneer.tag_prefix = 'v'  # tags are like v1.2.0
-versioneer.parentdir_prefix = 'taxtastic-'
 
-here = path.abspath(path.dirname(__file__))
+subprocess.call(
+    ('mkdir -p taxtastic/data && '
+     'git describe --tags --dirty > taxtastic/data/ver.tmp'
+     '&& mv taxtastic/data/ver.tmp taxtastic/data/ver '
+     '|| rm -f taxtastic/data/ver.tmp'),
+    shell=True, stderr=open(os.devnull, "w"))
+
+# must import __version__ *after* running 'git describe' above
+from taxtastic import __version__
 
 # Get the long description from the README file
+here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as fi:
     long_description = fi.read()
 
@@ -86,8 +93,7 @@ params = {'name': 'taxtastic',
               exclude=['tests', 'testfiles', 'devtools', 'docs']),
           'scripts': scripts,
           'url': 'https://github.com/fhcrc/taxtastic',
-          'version': versioneer.get_version(),
-          'cmdclass': versioneer.get_cmdclass(),
+          'version': __version__,
           'license': 'GPL',
           'classifiers': [
               'License :: OSI Approved :: GNU General Public License (GPL)',

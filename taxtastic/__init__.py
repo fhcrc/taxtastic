@@ -13,7 +13,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 
+from os import path
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+try:
+    with open(path.join(path.dirname(__file__), 'data', 'ver')) as f:
+        __version__ = f.read().strip().replace('-', '+', 1).replace('-', '.')
+        __version__ = __version__.lstrip('v')
+except Exception as e:
+    __version__ = ''
