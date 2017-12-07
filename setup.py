@@ -97,6 +97,7 @@ params = {'name': 'taxtastic',
           'download_url': 'https://github.com/fhcrc/taxtastic',
           'package_data': {
               'taxtastic': [path.join('data', f) for f in ['sha']]},
+          'test_suite': 'tests',
           'install_requires': [
               'decorator>=4.1.2',
               'fastalite>=0.3',
