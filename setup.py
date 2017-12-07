@@ -13,10 +13,10 @@ from os import path
 
 try:
     from pysqlite2 import dbapi2 as sqlite3
-    print 'using pysqlite2, sqlite3 version {}'.format(sqlite3.sqlite_version)
+    print('using pysqlite2, sqlite3 version {}'.format(sqlite3.sqlite_version))
 except ImportError:
     import sqlite3
-    print 'using sqlite3, sqlite3 version {}'.format(sqlite3.sqlite_version)
+    print('using sqlite3, sqlite3 version {}'.format(sqlite3.sqlite_version))
 
 
 min_sqlite3_version = '3.8.3'
@@ -63,7 +63,7 @@ class run_audit(Command):
         try:
             import pyflakes.scripts.pyflakes as flakes
         except ImportError:
-            print "Audit requires PyFlakes installed in your system."
+            print("Audit requires PyFlakes installed in your system.")
             sys.exit(-1)
 
         warns = 0
@@ -75,9 +75,9 @@ class run_audit(Command):
                     if file != '__init__.py' and file.endswith('.py'):
                         warns += flakes.checkPath(os.path.join(root, file))
         if warns > 0:
-            print "Audit finished with total %d warnings." % warns
+            print("Audit finished with total %d warnings." % warns)
         else:
-            print "No problems found in sourcecode."
+            print("No problems found in sourcecode.")
 
 
 params = {'name': 'taxtastic',

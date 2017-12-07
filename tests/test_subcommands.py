@@ -17,8 +17,8 @@ from taxtastic.scripts.taxit import main
 from taxtastic.taxonomy import Taxonomy
 
 
-import config
-from config import OutputRedirectMixin, TestBase, data_path
+from . import config
+from .config import OutputRedirectMixin, TestBase, data_path
 
 
 class TestUpdate(OutputRedirectMixin, unittest.TestCase):
@@ -368,7 +368,7 @@ class TestUpdateTaxids(TestBase):
 
     def test02(self):
         # test the test harness itself
-        self.assertEquals(self.input, self.get_rows(self.infile))
+        self.assertEqual(self.input, self.get_rows(self.infile))
 
     def test03(self):
         args = ['update_taxids', self.infile, self.db]
@@ -388,7 +388,7 @@ class TestUpdateTaxids(TestBase):
             ('foo', 'unknown', 'completely unknown'),
         ]
 
-        self.assertEquals(expected, self.get_rows(self.outfile))
+        self.assertEqual(expected, self.get_rows(self.outfile))
 
     def test05(self):
         args = ['update_taxids', self.infile, self.db,
@@ -402,7 +402,7 @@ class TestUpdateTaxids(TestBase):
             ('1287', 'Staphylococcus staphylolyticus', 'merged with 1287'),
         ]
 
-        self.assertEquals(expected, self.get_rows(self.outfile))
+        self.assertEqual(expected, self.get_rows(self.outfile))
 
     def test06(self):
         args = ['update_taxids', self.infile, self.db,
@@ -417,7 +417,7 @@ class TestUpdateTaxids(TestBase):
             ('foo', 'unknown', 'completely unknown'),
         ]
 
-        self.assertEquals(unknowns, self.get_rows(self.unknowns))
+        self.assertEqual(unknowns, self.get_rows(self.unknowns))
 
 
 class TestAddNode(TestBase):
@@ -458,11 +458,11 @@ class TestAddNode(TestBase):
         tax = Taxonomy(sqlalchemy.create_engine('sqlite:///' + self.dbname))
         with tax.engine.connect() as con:
             result = con.execute('select * from nodes where parent_id = ?', ('stapha_sg',))
-            keys = result.keys()
-            nodes = [dict(zip(keys, row)) for row in result.fetchall()]
+            keys = list(result.keys())
+            nodes = [dict(list(zip(keys, row))) for row in result.fetchall()]
 
         self.assertEqual(len(nodes), 5)
-        self.assertEquals([row['source_id'] for row in nodes], [2] * len(nodes))
+        self.assertEqual([row['source_id'] for row in nodes], [2] * len(nodes))
 
     def test_new_nodes05(self):
         args = ['add_nodes', self.dbname, data_path('staph_species_group2.yml')]
@@ -471,11 +471,11 @@ class TestAddNode(TestBase):
         tax = Taxonomy(sqlalchemy.create_engine('sqlite:///' + self.dbname))
         with tax.engine.connect() as con:
             result = con.execute('select * from nodes where parent_id = ?', ('stapha_sg',))
-            keys = result.keys()
-            nodes = [dict(zip(keys, row)) for row in result.fetchall()]
+            keys = list(result.keys())
+            nodes = [dict(list(zip(keys, row))) for row in result.fetchall()]
 
         self.assertEqual(len(nodes), 5)
-        self.assertEquals([row['source_id'] for row in nodes], [2] * len(nodes))
+        self.assertEqual([row['source_id'] for row in nodes], [2] * len(nodes))
 
 
 class TestExtractNodes(TestBase):

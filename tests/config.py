@@ -1,5 +1,5 @@
 import contextlib
-from cStringIO import StringIO
+from io import StringIO
 import os
 from os import path
 import sys

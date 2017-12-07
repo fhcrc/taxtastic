@@ -58,7 +58,7 @@ def as_taxtable_rows(rows, seen=None):
 
     tax_rows = []
     while tids and tids[-1] not in seen:
-        d = dict(zip(ranks, tids))
+        d = dict(list(zip(ranks, tids)))
         d['tax_id'] = tids.pop(-1)
         d['parent_id'] = pids.pop(-1)
         d['tax_name'] = names.pop(-1)
@@ -172,7 +172,7 @@ def action(args):
     # guppy requires this column order
     fieldnames = ['tax_id', 'parent_id', 'rank', 'tax_name'] + sorted_ranks
 
-    output = taxtable.values()
+    output = list(taxtable.values())
     log.info('sorting lineages')
     output = sorted(output, key=getitems(*sorted_ranks))
 

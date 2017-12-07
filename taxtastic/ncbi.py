@@ -20,7 +20,7 @@ import itertools
 import logging
 import os
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import zipfile
 from operator import itemgetter
 
@@ -505,7 +505,7 @@ def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
     else:
         downloaded = True
         logging.info('downloading {} to {}'.format(url, fout))
-        urllib.urlretrieve(url, fout)
+        urllib.request.urlretrieve(url, fout)
 
     return (fout, downloaded)
 

@@ -26,7 +26,7 @@ class Tree(object):
         self.descendents = {key: self}
 
     def __repr__(self, n=0):
-        return "  " * n + "Tree(%s" % self.key + "".join(', %s=%s' % (k, v) for k, v in self.data.iteritems()) + ")" + \
+        return "  " * n + "Tree(%s" % self.key + "".join(', %s=%s' % (k, v) for k, v in self.data.items()) + ")" + \
             ("" if len(self.children) == 0 else "(\n" +
              ",\n".join(c.__repr__(n + 1) for c in self.children) + ")") + ''
 
@@ -63,19 +63,19 @@ class Tree(object):
         return self.parent == self or self.parent is None
 
     def lonelynodes(self):
-        return [x for x in self.descendents.itervalues()
+        return [x for x in self.descendents.values()
                 if x.parent is not None and len(x.parent.children) == 1]
 
 
 def taxtable_to_tree(handle):
     """Read a CSV taxonomy from *handle* into a Tree."""
     c = csv.reader(handle, quoting=csv.QUOTE_NONNUMERIC)
-    header = c.next()
-    rootdict = dict(zip(header, c.next()))
+    header = next(c)
+    rootdict = dict(list(zip(header, next(c))))
     t = Tree(rootdict['tax_id'], rank=rootdict[
              'rank'], tax_name=rootdict['tax_name'])
     for l in c:
-        d = dict(zip(header, l))
+        d = dict(list(zip(header, l)))
         target = t.descendents[d['parent_id']]
         target(Tree(d['tax_id'], rank=d['rank'], tax_name=d['tax_name']))
     return t

@@ -116,7 +116,7 @@ class Taxonomy(object):
         try:
             for statement in statements:
                 session.execute(statement)
-        except exc, err:
+        except exc as err:
             session.rollback()
             raise rasie_as(str(err))
         else:
@@ -440,7 +440,7 @@ class Taxonomy(object):
                 'there is no source with id {} or name {}'.format(
                     source_id, source_name))
 
-        return dict(zip(sel.keys(), result))
+        return dict(list(zip(list(sel.keys()), result)))
 
     def verify_rank_integrity(self, tax_id, rank, parent_id, children):
         """Confirm that for each node the parent ranks and children ranks are
@@ -537,7 +537,7 @@ class Taxonomy(object):
         statements = []
 
         result = select([self.nodes], self.nodes.c.tax_id == tax_id).execute()
-        current = dict(zip(result.keys(), result.fetchone()))
+        current = dict(list(zip(list(result.keys()), result.fetchone())))
 
         # update node
         values = dict(source_id=source_id)
@@ -689,7 +689,7 @@ class Taxonomy(object):
         if node is None or ancestor is None:
             return False
         l = self.lineage(node)
-        return ancestor in l.values()
+        return ancestor in list(l.values())
 
     def rank(self, tax_id):
         if tax_id is None:

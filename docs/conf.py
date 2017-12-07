@@ -44,8 +44,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'taxtastic'
-copyright = u'2011-{}, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy'.format(
+project = 'taxtastic'
+copyright = '2011-{}, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy'.format(
     datetime.date.today().strftime('%Y'))
 
 # The version info for the project you're documenting, acts as replacement for
@@ -184,8 +184,8 @@ htmlhelp_basename = 'taxtasticdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'taxtastic.tex', u'taxtastic Documentation',
-     u'Noah Hoffman, Erick Matsen, Brian Hodges', 'manual'),
+    ('index', 'taxtastic.tex', 'taxtastic Documentation',
+     'Noah Hoffman, Erick Matsen, Brian Hodges', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -217,6 +217,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'taxtastic', u'taxtastic Documentation',
-     [u'Noah Hoffman, Erick Matsen, Brian Hodges, Frederick Ross'], 1)
+    ('index', 'taxtastic', 'taxtastic Documentation',
+     ['Noah Hoffman, Erick Matsen, Brian Hodges, Frederick Ross'], 1)
 ]

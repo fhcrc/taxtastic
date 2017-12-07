@@ -335,11 +335,11 @@ class Refpkg(object):
 
     def file_keys(self):
         """Return a list of all the keys referring to files in this refpkg."""
-        return self.contents['files'].keys()
+        return list(self.contents['files'].keys())
 
     def metadata_keys(self):
         """Return a list of all the keys referring to metadata in this refpkg."""
-        return self.contents['metadata'].keys()
+        return list(self.contents['metadata'].keys())
 
     def _log(self, msg):
         """Set the log message for this operation.
@@ -391,7 +391,7 @@ class Refpkg(object):
             elif len(self.contents['rollforward']) != 2:
                 return "Key rollforward had wrong length, found %d" % \
                     len(self.contents['rollforward'])
-            elif not(isinstance(self.contents['rollforward'][0], basestring)):
+            elif not(isinstance(self.contents['rollforward'][0], str)):
                 return "Key rollforward's first entry was not a string, found %s" % \
                     str(self.contents['rollforward'][0])
             elif not(isinstance(self.contents['rollforward'][1], dict)):
@@ -403,14 +403,14 @@ class Refpkg(object):
         if not(isinstance(self.contents['log'], list)):
             return "Key 'log' in manifest did not refer to a list"
         # MD5 keys and filenames are in one to one correspondence
-        if self.contents['files'].viewkeys() != self.contents[
-                'md5'].viewkeys():
+        if self.contents['files'].keys() != self.contents[
+                'md5'].keys():
             return ("Files and MD5 sums in manifest do not "
                     "match (files: %s, MD5 sums: %s)") % \
-                (self.contents['files'].keys(),
-                 self.contents['md5'].keys())
+                (list(self.contents['files'].keys()),
+                 list(self.contents['md5'].keys()))
         # All files in the manifest exist and match the MD5 sums
-        for key, filename in self.contents['files'].iteritems():
+        for key, filename in self.contents['files'].items():
             # we don't need to explicitly check for existence;
             # calculate_resource_md5 will open the file for us.
             expected_md5 = self.resource_md5(key)

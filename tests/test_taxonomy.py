@@ -7,8 +7,8 @@ import shutil
 
 from sqlalchemy import create_engine
 
-import config
-from config import TestBase
+from . import config
+from .config import TestBase
 
 import taxtastic
 from taxtastic.taxonomy import Taxonomy, TaxonIntegrityError
@@ -234,14 +234,14 @@ class TestGetSource(TestTaxonomyBase):
     def test03(self):
         result = self.tax.get_source(source_id=1)
         self.assertDictEqual(result, {
-            'description': u'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip',
-            'id': 1, 'name': u'ncbi'})
+            'description': 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip',
+            'id': 1, 'name': 'ncbi'})
 
     def test04(self):
         result = self.tax.get_source(source_name='ncbi')
         self.assertDictEqual(result, {
-            'description': u'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip',
-            'id': 1, 'name': u'ncbi'})
+            'description': 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip',
+            'id': 1, 'name': 'ncbi'})
 
     def test05(self):
         self.assertRaises(ValueError, self.tax.get_source, source_id=2)
@@ -264,13 +264,13 @@ class TestAddSource(TestTaxonomyBase):
 
     def test01(self):
         self.tax.add_source('foo')
-        self.assertEquals(self.sources()[1], (2, u'foo', None))
+        self.assertEqual(self.sources()[1], (2, 'foo', None))
 
     def test02(self):
         self.tax.add_source('ncbi')
-        self.assertEquals(
+        self.assertEqual(
             self.sources(),
-            [(1, u'ncbi', u'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip')])
+            [(1, 'ncbi', 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip')])
 
 
 def test__node():
@@ -278,7 +278,7 @@ def test__node():
         'sqlite:///../testfiles/small_taxonomy.db', echo=False)
     tax = Taxonomy(engine, taxtastic.ncbi.RANKS)
     assert tax._node(None) is None
-    assert tax._node('91061') == (u'1239', u'class')
+    assert tax._node('91061') == ('1239', 'class')
 
 
 def test_sibling_of():

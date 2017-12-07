@@ -49,7 +49,7 @@ def action(args):
 
     # First check if we can do n rollbacks
     q = r.contents
-    for i in xrange(args.n):
+    for i in range(args.n):
         if q['rollback'] is None:
             log.error('Cannot rollback {} changes; '
                       'refpkg only records {} changes.'.format(args.n, i))
@@ -57,7 +57,7 @@ def action(args):
         else:
             q = q['rollback']
 
-    for i in xrange(args.n):
+    for i in range(args.n):
         r.rollback()
 
     return 0

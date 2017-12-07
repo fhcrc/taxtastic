@@ -65,13 +65,13 @@ def action(args):
         """.format(x=tax.placeholder, nodes=tax.nodes, source=tax.source)
 
         result = con.execute(cmd, (args.source_name,))
-        keys = result.keys()
+        keys = list(result.keys())
         nodes = [clean_dict(keys, vals) for vals in result.fetchall()]
 
         # get the complete lineage for each node, and provide an
         # ordering for all nodes so that children may be placed after
         # parents.
-        tax_ids = map(itemgetter('tax_id'), nodes)
+        tax_ids = list(map(itemgetter('tax_id'), nodes))
         lineages = tax._get_lineage_table(tax_ids)
         ordering = {}
         for i, lineage in enumerate(lineages):
@@ -89,7 +89,7 @@ def action(args):
         """.format(x=tax.placeholder, names=tax.names, source=tax.source)
 
         result = con.execute(cmd, (args.source_name,))
-        keys = result.keys()
+        keys = list(result.keys())
         names = [clean_dict(keys, vals) for vals in result.fetchall()]
         namedict = {key: list(grp)
                     for key, grp in groupby(names, itemgetter('tax_id'))}
@@ -105,7 +105,7 @@ def action(args):
 
         # prepare remaining names
         remaining_names = []
-        for tax_id, names in namedict.items():
+        for tax_id, names in list(namedict.items()):
             for name in names:
                 del name['tax_id']
 

@@ -12,7 +12,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-import ConfigParser
+import configparser
 import csv
 import logging
 import os
@@ -64,7 +64,7 @@ def try_set_fields(d, regex, text, hook=lambda x: x):
     v = re.search(regex, text, re.MULTILINE)
     if v:
         d.update(dict([(key, hook(val)) for key, val
-                       in v.groupdict().iteritems()]))
+                       in v.groupdict().items()]))
     return d
 
 
@@ -129,15 +129,15 @@ def parse_fasttree(fobj):
         if splut[0] == 'FastTree':
             data['program'] = line.strip()
         elif splut[0] == 'Rates':
-            data['Price-CAT']['Rates'] = map(float, splut[1:])
+            data['Price-CAT']['Rates'] = list(map(float, splut[1:]))
         elif splut[0] == 'SiteCategories':
-            data['Price-CAT']['SiteCategories'] = map(int, splut[1:])
+            data['Price-CAT']['SiteCategories'] = list(map(int, splut[1:]))
         elif splut[0] == 'NCategories':
             data['Price-CAT']['n_cats'] = int(splut[1])
         elif splut[0] == 'GTRRates':
             data['subs_rates'] = dict(
-                zip(['ac', 'ag', 'at', 'cg', 'ct', 'gt'],
-                    map(float, splut[1:])))
+                list(zip(['ac', 'ag', 'at', 'cg', 'ct', 'gt'],
+                    list(map(float, splut[1:])))))
         elif line.strip() == JTT_MODEL:
             data['subs_model'] = 'JTT'
             data['datatype'] = 'AA'
@@ -223,7 +223,7 @@ def parse_stockholm(fobj):
     if not found_eof:
         raise ValueError('Invalid Stockholm format: no file terminator')
 
-    return names.keys()
+    return list(names.keys())
 
 
 def has_rppr(rppr_name='rppr'):
@@ -278,7 +278,7 @@ def sqlite_default():
             if not url.startswith('sqlite:///'):
                 url = 'sqlite:///' + url
         elif url.endswith('.cfg') or url.endswith('.conf'):
-            conf = ConfigParser.SafeConfigParser(allow_no_value=True)
+            conf = configparser.SafeConfigParser(allow_no_value=True)
             conf.optionxform = str  # options are case-sensitive
             conf.read(url)
             url = conf.get('sqlalchemy', 'url')
@@ -288,5 +288,5 @@ def sqlite_default():
 
 
 def random_name(length):
-    return ''.join([random.choice(string.ascii_letters) for n in xrange(length)])
+    return ''.join([random.choice(string.ascii_letters) for n in range(length)])
 

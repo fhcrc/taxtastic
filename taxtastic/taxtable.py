@@ -279,7 +279,7 @@ class TaxNode(object):
         """
         r = csv.reader(taxtable_fp)
         headers = next(r)
-        rows = (collections.OrderedDict(zip(headers, i)) for i in r)
+        rows = (collections.OrderedDict(list(zip(headers, i))) for i in r)
 
         row = next(rows)
         root = cls(rank=row['rank'], tax_id=row[
@@ -289,7 +289,7 @@ class TaxNode(object):
         for row in rows:
             rank, tax_id, name = [
                 row[i] for i in ('rank', 'tax_id', 'tax_name')]
-            path = filter(None, row.values()[path_root:])
+            path = [_f for _f in list(row.values())[path_root:] if _f]
             parent = root.path(path[:-1])
             parent.add_child(cls(rank, tax_id, name=name))
 

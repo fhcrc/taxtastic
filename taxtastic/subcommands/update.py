@@ -101,7 +101,7 @@ def action(args):
     else:
         for key, filename in pairs:
             if not(os.path.exists(filename)):
-                print "No such file: %s" % filename
+                print("No such file: %s" % filename)
                 exit(1)
 
         rp = refpkg.Refpkg(args.refpkg, create=False)

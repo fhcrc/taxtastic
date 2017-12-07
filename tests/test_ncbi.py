@@ -63,7 +63,7 @@ class TestReadNames(TestBase):
         rows = read_names(rows=read_archive(self.zipfile, 'names.dmp'))
         headers = next(rows)
         is_classified = headers.index('is_classified')
-        self.assertEquals(
+        self.assertEqual(
             set(row[is_classified] for row in rows), set([None]))
 
 

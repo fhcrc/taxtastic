@@ -74,7 +74,7 @@ class TestRefpkg(unittest.TestCase):
             os.mkdir(pkg_path)
             boris = os.path.join(pkg_path, 'boris')
             with open(boris, 'w') as h:
-                print >>h, "Hello, world!"
+                print("Hello, world!", file=h)
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
                 json.dump({'metadata': {},
                            'log': [],
@@ -95,7 +95,7 @@ class TestRefpkg(unittest.TestCase):
             os.mkdir(pkg_path)
             boris = os.path.join(pkg_path, 'boris')
             with open(boris, 'w') as h:
-                print >>h, "Hello, world!"
+                print("Hello, world!", file=h)
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
                 json.dump({'metadata': {},
                            'log': [], 'rollback': None, 'rollforward': None,
@@ -280,7 +280,7 @@ class TestRefpkg(unittest.TestCase):
             r = refpkg.Refpkg(rpkg, create=False)
             self.assertFalse(r.is_ill_formed())
             r.update_file('aln_fasta', config.data_path('little.fasta'))
-            self.assertTrue(isinstance(r.is_ill_formed(), basestring))
+            self.assertTrue(isinstance(r.is_ill_formed(), str))
 
     def test_init_dne(self):
         with config.tempdir() as d:

@@ -4,7 +4,7 @@ import os
 import unittest
 import logging
 
-import config
+from . import config
 import taxtastic
 
 log = logging
