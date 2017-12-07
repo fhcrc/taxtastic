@@ -80,8 +80,6 @@ class run_audit(Command):
             print "No problems found in sourcecode."
 
 
-scripts = ['taxit']
-
 params = {'name': 'taxtastic',
           'author': 'Noah Hoffman',
           'author_email': 'ngh2@uw.edu',
@@ -91,7 +89,6 @@ params = {'name': 'taxtastic',
           'long_description': long_description,
           'packages': find_packages(
               exclude=['tests', 'testfiles', 'devtools', 'docs']),
-          'scripts': scripts,
           'url': 'https://github.com/fhcrc/taxtastic',
           'version': __version__,
           'license': 'GPL',
@@ -103,6 +100,7 @@ params = {'name': 'taxtastic',
           'download_url': 'https://github.com/fhcrc/taxtastic',
           'package_data': {
               'taxtastic': [path.join('data', f) for f in ['sha']]},
+          'entry_points': {'console_scripts': ['taxit = taxtastic.scripts.taxit:main']},
           'test_suite': 'tests',
           'install_requires': [
               'decorator>=4.1.2',

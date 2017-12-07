@@ -28,7 +28,8 @@ from taxtastic import subcommands, __version__ as version
 DESCRIPTION = __doc__.strip()
 
 
-def main(argv):
+def main(argv=None):
+    argv = argv or sys.argv[1:]
     action, arguments = parse_arguments(argv)
 
     loglevel = {
