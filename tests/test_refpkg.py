@@ -114,7 +114,8 @@ class TestRefpkg(unittest.TestCase):
             r = refpkg.Refpkg(pkg_path, create=True)
             test_file = config.data_path('bv_refdata.csv')
             test_name = 'bv_refdata.csv'
-            md5_value = refpkg.md5file(open(test_file))
+            with open(test_file, 'rb') as f:
+                md5_value = refpkg.md5file(f)
             self.assertEqual(None, r.update_file('a', test_file))
             # Make sure it's properly written
             with open(os.path.join(r.path, r._manifest_name)) as h:

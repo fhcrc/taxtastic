@@ -51,8 +51,7 @@ class DerivedFileNotUpdatedWarning(UserWarning):
 
 def md5file(fobj):
     md5 = hashlib.md5()
-    for block in iter(lambda: fobj.read(4096), ''):
-        md5.update(block)
+    md5.update(fobj.read())
     return md5.hexdigest()
 
 
@@ -255,7 +254,8 @@ class Refpkg(object):
 
     def calculate_resource_md5(self, resource):
         """Calculate the MD5 sum for a particular named resource."""
-        return md5file(self.open_resource(resource, 'r'))
+        with self.open_resource(resource, 'rb') as f:
+            return md5file(f)
 
     def resource_path(self, resource):
         """
@@ -320,7 +320,8 @@ class Refpkg(object):
         filename = os.path.basename(path)
         base, ext = os.path.splitext(filename)
         if os.path.exists(self.file_path(filename)):
-            with tempfile.NamedTemporaryFile(dir=self.path, prefix=base, suffix=ext) as tf:
+            with tempfile.NamedTemporaryFile(
+                    dir=self.path, prefix=base, suffix=ext) as tf:
                 filename = os.path.basename(tf.name)
         shutil.copyfile(path, self.file_path(filename))
         self.contents['files'][key] = filename
@@ -384,10 +385,11 @@ class Refpkg(object):
 
         if not('rollforward' in self.contents):
             return "Manifest file missing key rollforward"
+
         if self.contents['rollforward'] is not None:
             if not(isinstance(self.contents['rollforward'], list)):
-                return "Key rollforward was not a list, found %s" % str(self.contents[
-                                                                        'rollforward'])
+                return "Key rollforward was not a list, found %s" % str(
+                    self.contents['rollforward'])
             elif len(self.contents['rollforward']) != 2:
                 return "Key rollforward had wrong length, found %d" % \
                     len(self.contents['rollforward'])
@@ -400,8 +402,10 @@ class Refpkg(object):
 
         if not("log" in self.contents):
             return "Manifest file missing key 'log'"
+
         if not(isinstance(self.contents['log'], list)):
             return "Key 'log' in manifest did not refer to a list"
+
         # MD5 keys and filenames are in one to one correspondence
         if self.contents['files'].keys() != self.contents[
                 'md5'].keys():
@@ -409,6 +413,7 @@ class Refpkg(object):
                     "match (files: %s, MD5 sums: %s)") % \
                 (list(self.contents['files'].keys()),
                  list(self.contents['md5'].keys()))
+
         # All files in the manifest exist and match the MD5 sums
         for key, filename in self.contents['files'].items():
             # we don't need to explicitly check for existence;
@@ -457,7 +462,8 @@ class Refpkg(object):
         else:
             old_path = None
         self._add_file(key, new_path)
-        md5_value = md5file(open(new_path))
+        with open(new_path, 'rb') as f:
+            md5_value = md5file(f)
         self.contents['md5'][key] = md5_value
         self._log('Updated file: %s=%s' % (key, new_path))
         if key == 'tree_stats' and old_path:
