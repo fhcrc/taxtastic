@@ -275,7 +275,7 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
 
     def test_invalid_taxid(self):
         with scratch_file() as out:
-            with open(out, 'w') as h:
+            with open(out, 'wt') as h:
                 class _Args(object):
                     url = 'sqlite:///' + config.ncbi_master_db
                     schema = None
@@ -289,7 +289,7 @@ class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
                 self.assertRaises(ValueError, taxtable.action, _Args())
 
     def test_seqinfo(self):
-        with tempfile.TemporaryFile() as tf, \
+        with tempfile.TemporaryFile('wt') as tf, \
                 open(data_path('simple_seqinfo.csv')) as ifp:
             class _Args(object):
                 url = 'sqlite:///' + config.ncbi_master_db

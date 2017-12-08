@@ -117,22 +117,22 @@ def build_parser(parser):
         help='one or more tax_ids')
 
     input_group.add_argument(
-        '-f', '--tax-id-file', metavar='FILE', type=argparse.FileType('r'),
+        '-f', '--tax-id-file', metavar='FILE', type=argparse.FileType('rt'),
         help=('File containing a whitespace-delimited list of '
               'tax_ids (ie, separated by tabs, spaces, or newlines.'))
 
     input_group.add_argument(
         '-i', '--seq-info',
-        type=argparse.FileType('r'),
+        type=argparse.FileType('rt'),
         help=('Read tax_ids from sequence info file, minimally '
-              'containing a columnm named "tax_id"'))
+              'containing a column named "tax_id"'))
 
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
 
     output_group.add_argument(
         '-o', '--outfile',
-        type=argparse.FileType('w'),
+        type=argparse.FileType('wt'),
         default=sys.stdout,
         metavar='FILE',
         help=('Output file containing lineages for the specified taxa '
@@ -174,7 +174,12 @@ def action(args):
 
     output = list(taxtable.values())
     log.info('sorting lineages')
-    output = sorted(output, key=getitems(*sorted_ranks))
+
+    output = sorted(
+        output,
+        # key=getitems(*sorted_ranks)
+        key=lambda row: tuple(row.get(rank) or '' for rank in sorted_ranks)
+    )
 
     log.info('writing taxtable')
     writer = csv.DictWriter(
