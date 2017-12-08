@@ -28,8 +28,8 @@ if [[ $sqlite_ok ]]; then
 fi
 
 rm -rf pysqlite-$pysqlite_version
-pip2 install -U pip
-pip2 download pysqlite==$pysqlite_version
+pip install -U pip
+pip download pysqlite==$pysqlite_version
 tar -xf pysqlite-$pysqlite_version.tar.gz
 cd pysqlite-$pysqlite_version
 
@@ -49,4 +49,4 @@ mv sqlite-amalgamation-3200100/* .
 
 rm -rf build && python setup.py build_static && python setup.py install
 
-python -c 'from pysqlite2 import dbapi2; print dbapi2.sqlite_version'
+python -c 'from pysqlite2 import dbapi2; print(dbapi2.sqlite_version)'
