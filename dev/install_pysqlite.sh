@@ -5,7 +5,7 @@ set -e
 sqlite_min_version=3.8.3
 pysqlite_version=2.8.3
 
-sqlite_ok=$(python <<EOF
+sqlite_ok=$(python3 <<EOF
 from distutils.version import LooseVersion as v
 try:
     from pysqlite2 import dbapi2 as sqlite3
@@ -15,7 +15,7 @@ except ImportError:
     module='sqlite3'
 
 if v(sqlite3.sqlite_version) > v("$sqlite_min_version"):
-    print '{}-{}'.format(module, sqlite3.sqlite_version)
+    print('{}-{}'.format(module, sqlite3.sqlite_version))
 
 EOF
 )
