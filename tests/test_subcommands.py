@@ -313,7 +313,7 @@ class TestAddToTaxtable(OutputRedirectMixin, unittest.TestCase):
     maxDiff = None
 
     def test_seqinfo(self):
-        with tempfile.TemporaryFile() as tf, \
+        with tempfile.TemporaryFile('wt') as tf, \
                 open(data_path('minimal_taxonomy.csv')) as taxtable_fp, \
                 open(data_path('minimal_add_taxonomy.csv')) as extra_nodes_fp:
             class _Args(object):

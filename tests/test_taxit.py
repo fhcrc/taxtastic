@@ -142,5 +142,5 @@ cellular organisms,131567,below_root""", fp.read().strip().replace('\r', ''))
         self.cmd_ok('lonelynodes %(refpkg)s -o %(outfile)s -r species')
         self.assertTrue(path.isfile(self.outfile))
         with open(self.outfile) as fp:
-            line = 'tax_name,tax_id,rank\r\nEscherichia coli,562,species'
+            line = 'tax_name,tax_id,rank\nEscherichia coli,562,species'
             self.assertEqual(line, fp.read().strip())

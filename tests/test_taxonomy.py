@@ -214,7 +214,7 @@ class TestAddName(TestTaxonomyBase):
                           source_name='ncbi')
 
         self.assertRaises(
-            self.tax.add_name, tax_id='1280', tax_name='SA',
+            ValueError, self.tax.add_name, tax_id='1280', tax_name='SA',
             is_primary=True, source_name='ncbi')
 
         self.assertEqual(self.primary_name('1280'), 'SA')

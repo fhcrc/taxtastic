@@ -22,6 +22,7 @@ import os
 import re
 import urllib.request, urllib.parse, urllib.error
 import zipfile
+import io
 from operator import itemgetter
 
 import sqlalchemy
@@ -518,8 +519,11 @@ def read_archive(archive, fname):
     * fname - name of the compressed file within the archive.
     """
 
-    zfile = zipfile.ZipFile(archive, 'r')
-    for line in zfile.read(fname).splitlines():
+    zfile = zipfile.ZipFile(archive)
+    contents = zfile.open(fname, 'r')
+    fobj = io.TextIOWrapper(contents)
+
+    for line in fobj:
         yield line.rstrip('\t|\n').split('\t|\t')
 
 
