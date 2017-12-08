@@ -47,7 +47,10 @@ def main(argv=None):
     # set up logging
     logging.basicConfig(stream=sys.stdout, format=logformat, level=loglevel)
 
-    return action(arguments)
+    try:
+        return action(arguments)
+    finally:
+        subcommands.close_all_files(arguments)
 
 
 def parse_arguments(argv):

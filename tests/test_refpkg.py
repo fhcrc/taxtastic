@@ -18,14 +18,14 @@ class TestReadStockholm(unittest.TestCase):
                                   'lactobacillus2.sto')
 
     def test01(self):
-        with open(self.fname, 'rU') as fobj:
+        with open(self.fname, 'r') as fobj:
             names = utils.parse_stockholm(fobj)
         self.assertEqual(len(names), 46)
         self.assertEqual(names[0], '123f3-34')
         self.assertEqual(names[-1], 'S000727873')
 
     def test02(self):
-        with open(self.fname, 'rU') as fobj:
+        with open(self.fname, 'r') as fobj:
             lines = [line for line in fobj][:-1]
             self.assertRaises(ValueError, utils.parse_stockholm, lines)
 

@@ -50,3 +50,9 @@ def itermodules(subcommands_path=None, root=__name__):
 
     for command in commands:
         yield command, __import__('%s.%s' % (root, command), fromlist=[command])
+
+
+def close_all_files(args):
+    for name, obj in args.__dict__.items():
+        if obj and hasattr(obj, 'close'):
+            obj.close()

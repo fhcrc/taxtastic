@@ -270,43 +270,21 @@ def scratch_file(unlink=True):
             os.unlink(tmp_name)
 
 
-class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
-    maxDiff = None
+class TestTaxtable(TestBase):
 
     def test_invalid_taxid(self):
-        with scratch_file() as out:
-            with open(out, 'wt') as h:
-                class _Args(object):
-                    url = 'sqlite:///' + config.ncbi_master_db
-                    schema = None
-                    tax_ids = ['horace', '1280']
-                    valid = False
-                    taxnames = None
-                    seq_info = None
-                    verbosity = 0
-                    outfile = h
-                    clade_ids = None
-                self.assertRaises(ValueError, taxtable.action, _Args())
+        outdir = self.mkoutdir()
+        args = ['taxtable', config.ncbi_master_db,
+                '--tax-ids', 'horace', '1280',
+                '-o', os.path.join(outdir, 'taxonomy.csv')]
+        self.assertRaises(ValueError, main, args)
 
     def test_seqinfo(self):
-        with tempfile.TemporaryFile('wt') as tf, \
-                open(data_path('simple_seqinfo.csv')) as ifp:
-            class _Args(object):
-                url = 'sqlite:///' + config.ncbi_master_db
-                schema = None
-                valid = False
-                ranked = False
-                tax_ids = None
-                taxnames = None
-                tax_id_file = None
-                seq_info = ifp
-                outfile = tf
-                verbosity = 0
-                clade_ids = None
-                taxtable = None
-            self.assertIsNone(taxtable.action(_Args()))
-            # No output check at present
-            self.assertTrue(tf.tell() > 0)
+        outdir = self.mkoutdir()
+        args = ['taxtable', config.ncbi_master_db,
+                '--seq-info', data_path('simple_seqinfo.csv'),
+                '-o', os.path.join(outdir, 'taxonomy.csv')]
+        self.assertIsNone(main(args))
 
 
 class TestAddToTaxtable(OutputRedirectMixin, unittest.TestCase):
@@ -457,7 +435,8 @@ class TestAddNode(TestBase):
 
         tax = Taxonomy(sqlalchemy.create_engine('sqlite:///' + self.dbname))
         with tax.engine.connect() as con:
-            result = con.execute('select * from nodes where parent_id = ?', ('stapha_sg',))
+            result = con.execute(
+                'select * from nodes where parent_id = ?', ('stapha_sg',))
             keys = list(result.keys())
             nodes = [dict(list(zip(keys, row))) for row in result.fetchall()]
 
@@ -470,7 +449,8 @@ class TestAddNode(TestBase):
 
         tax = Taxonomy(sqlalchemy.create_engine('sqlite:///' + self.dbname))
         with tax.engine.connect() as con:
-            result = con.execute('select * from nodes where parent_id = ?', ('stapha_sg',))
+            result = con.execute(
+                'select * from nodes where parent_id = ?', ('stapha_sg',))
             keys = list(result.keys())
             nodes = [dict(list(zip(keys, row))) for row in result.fetchall()]
 
@@ -499,5 +479,4 @@ class TestExtractNodes(TestBase):
         args = ['extract_nodes', self.dbname, source_name,
                 '-o', self.outfile]
         main(args)
-
 
