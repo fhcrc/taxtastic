@@ -19,12 +19,12 @@ except ImportError:
     print('using sqlite3, sqlite3 version {}'.format(sqlite3.sqlite_version))
 
 
-min_sqlite3_version = '3.8.3'
-if LooseVersion(sqlite3.sqlite_version) < LooseVersion(min_sqlite3_version):
-    raise ImportError(('the sqlite3 library version for this python interpreter is '
-                       '{}, but a version >= {} is required; '
-                       'see https://github.com/fhcrc/taxtastic#installing').format(
-                           sqlite3.sqlite_version, min_sqlite3_version))
+# min_sqlite3_version = '3.8.3'
+# if LooseVersion(sqlite3.sqlite_version) < LooseVersion(min_sqlite3_version):
+#     raise ImportError(('the sqlite3 library version for this python interpreter is '
+#                        '{}, but a version >= {} is required; '
+#                        'see https://github.com/fhcrc/taxtastic#installing').format(
+#                            sqlite3.sqlite_version, min_sqlite3_version))
 
 
 subprocess.call(
