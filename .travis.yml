@@ -36,12 +36,13 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 
 before_install:
-  - pip3 install -U pip
-  - pip3 install check-manifest readme_renderer flake8 docutils
+  - python --version
+  - pip install -U pip
+  # - pip install check-manifest readme_renderer flake8 docutils
   # - dev/install_pysqlite.sh
 
 install:
-  - pip3 install -U -e .
+  - pip install -U -e .
 
 script:
   - python3 setup.py test
