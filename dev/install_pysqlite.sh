@@ -47,6 +47,6 @@ wget --quiet https://sqlite.org/2017/sqlite-amalgamation-3200100.zip
 unzip sqlite-amalgamation-3200100.zip
 mv sqlite-amalgamation-3200100/* .
 
-rm -rf build && python setup.py build_static && python setup.py install
+rm -rf build && python3 setup.py build_static && python3 setup.py install
 
-python -c 'from pysqlite2 import dbapi2; print(dbapi2.sqlite_version)'
+python3 -c 'from pysqlite2 import dbapi2; print(dbapi2.sqlite_version)'
