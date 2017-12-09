@@ -1,4 +1,10 @@
-sudo: false
+# sudo: false
+# dist: trusty
+
+os:
+  - linux
+  - osx
+
 language: python
 python:
   # - "2.7"

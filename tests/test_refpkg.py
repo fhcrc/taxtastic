@@ -182,8 +182,9 @@ class TestRefpkg(unittest.TestCase):
             shutil.copytree(config.data_path(
                 'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
-            self.assertEqual(r.update_metadata('author', 'Boris and Hilda'),
-                             "Noah Hoffman <ngh2@uw.edu>, Sujatha Srinivasan <ssriniva@fhcrc.org>, Erick Matsen <matsen@fhcrc.org>")
+            self.assertEqual(
+                r.update_metadata('author', 'Boris and Hilda'),
+                ("Noah Hoffman <ngh2@uw.edu>, Sujatha Srinivasan <ssriniva@fhcrc.org>, Erick Matsen <matsen@fhcrc.org>"))
             self.assertEqual(r.current_transaction, None)
             self.assertEqual(r.log(),
                              ['Updated metadata: author=Boris and Hilda'])

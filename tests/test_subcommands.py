@@ -287,21 +287,15 @@ class TestTaxtable(TestBase):
         self.assertIsNone(main(args))
 
 
-class TestAddToTaxtable(OutputRedirectMixin, unittest.TestCase):
+class TestAddToTaxtable(TestBase):
     maxDiff = None
 
     def test_seqinfo(self):
-        with tempfile.TemporaryFile('wt') as tf, \
-                open(data_path('minimal_taxonomy.csv')) as taxtable_fp, \
-                open(data_path('minimal_add_taxonomy.csv')) as extra_nodes_fp:
-            class _Args(object):
-                extra_nodes_csv = extra_nodes_fp
-                taxtable = taxtable_fp
-                out = tf
-                verbosity = 0
-            self.assertFalse(add_to_taxtable.action(_Args()))
-            # No output check at present
-            self.assertTrue(tf.tell() > 0)
+        args = ['add_to_taxtable',
+                data_path('minimal_taxonomy.csv'),
+                data_path('minimal_add_taxonomy.csv'),
+                '-o', os.path.join(self.mkoutdir(), 'taxonomy.csv')]
+        self.assertIsNone(main(args))
 
 
 class TestCheck(OutputRedirectMixin, unittest.TestCase):
