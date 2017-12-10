@@ -6,6 +6,7 @@ import copy
 import os
 import os.path
 import csv
+import sys
 
 import sqlalchemy
 
@@ -309,8 +310,9 @@ class TestCheck(OutputRedirectMixin, unittest.TestCase):
 class TestUpdateTaxids(TestBase):
 
     def setUp(self):
-        self.suppress_stdout()
-        self.suppress_stderr()
+        if '-v' not in sys.argv:
+            self.suppress_stdout()
+            self.suppress_stderr()
 
         self.outdir = self.mkoutdir()
         self.infile = os.path.join(self.outdir, 'infile.csv')

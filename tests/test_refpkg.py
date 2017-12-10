@@ -74,7 +74,7 @@ class TestRefpkg(unittest.TestCase):
             os.mkdir(pkg_path)
             boris = os.path.join(pkg_path, 'boris')
             with open(boris, 'w') as h:
-                print("Hello, world!", file=h)
+                h.write("Hello, world!")
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
                 json.dump({'metadata': {},
                            'log': [],
@@ -95,7 +95,7 @@ class TestRefpkg(unittest.TestCase):
             os.mkdir(pkg_path)
             boris = os.path.join(pkg_path, 'boris')
             with open(boris, 'w') as h:
-                print("Hello, world!", file=h)
+                h.write("Hello, world!")
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
                 json.dump({'metadata': {},
                            'log': [], 'rollback': None, 'rollforward': None,

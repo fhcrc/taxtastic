@@ -40,13 +40,13 @@ def build_parser(parser):
               'Use "-" for stdin.'))
     parser = taxtastic.utils.add_database_args(parser)
     parser.add_argument(
-        '-o', '--outfile', default=sys.stdout, type=Opener('w'),
+        '-o', '--outfile', default=sys.stdout, type=Opener('wt'),
         help='Modified version of input file [default: stdout]')
     parser.add_argument(
         '--taxid-column', default='tax_id',
         help='name of column containing tax_ids to be replaced [%(default)s]')
     parser.add_argument(
-        '--unknowns', type=Opener('w'),
+        '--unknowns', type=Opener('wt'),
         help=('optional output file containing rows with unknown tax_ids '
               'having no replacements in merged table'))
     parser.add_argument(
@@ -92,7 +92,8 @@ def action(args):
 
     with tax.engine.connect() as con:
         log.info('reading table merged')
-        result = con.execute('select old_tax_id, new_tax_id from {merged}'.format(merged=tax.merged))
+        result = con.execute(
+            'select old_tax_id, new_tax_id from {merged}'.format(merged=tax.merged))
         mergedict = dict(result.fetchall())
 
         log.info('reading tax_ids from table {nodes}'.format(nodes=tax.nodes))

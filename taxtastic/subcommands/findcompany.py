@@ -73,7 +73,7 @@ def action(args):
         txt += "%s\n" % (t if t else "")
     if args.out:
         with open(args.out, 'w') as h:
-            print(txt, file=h)
+            h.write(txt)
     else:
         print(txt)
     return 0

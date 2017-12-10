@@ -20,7 +20,9 @@ import itertools
 import logging
 import os
 import re
-import urllib.request, urllib.parse, urllib.error
+from six.moves.urllib import request
+# import urllib.parse
+# import urllib.error
 import zipfile
 import io
 from operator import itemgetter
@@ -506,7 +508,7 @@ def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
     else:
         downloaded = True
         logging.info('downloading {} to {}'.format(url, fout))
-        urllib.request.urlretrieve(url, fout)
+        request.urlretrieve(url, fout)
 
     return (fout, downloaded)
 

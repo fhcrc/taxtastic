@@ -123,17 +123,17 @@ def action(args):
     if args.clobber and os.path.isdir(args.package_name):
         try:
             shutil.rmtree(args.package_name)
-        except:
-            print("Failed: Could not delete %s" % args.package_name, file=sys.stderr)
+        except Exception:
+            log.error("Failed: Could not delete %s" % args.package_name)
             return 1
     elif args.clobber and os.path.exists(args.package_name):
         try:
             os.unlink(args.package_name)
-        except:
-            print("Failed: Could not delete %s" % args.package_name, file=sys.stderr)
+        except Exception:
+            log.error("Failed: Could not delete %s" % args.package_name)
             return 1
     elif not args.clobber and os.path.exists(args.package_name):
-        print('Failed: {0} exists.'.format(args.package_name), file=sys.stderr)
+        log.error('Failed: {0} exists.'.format(args.package_name))
         return 1
 
     r = refpkg.Refpkg(args.package_name, create=True)

@@ -3,10 +3,11 @@ import logging
 from os import path
 import shutil
 
+from taxtastic.scripts.taxit import main
 from taxtastic import refpkg
 
 from . import config
-from .config import TestScriptBase
+from .config import TestScriptBase, TestBase
 
 log = logging
 

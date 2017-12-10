@@ -1,5 +1,4 @@
 import contextlib
-from io import StringIO
 import os
 from os import path
 import sys
@@ -9,6 +8,16 @@ import unittest
 import shutil
 import tempfile
 import subprocess
+
+
+from taxtastic.scripts.taxit import main
+
+try:
+    # python2
+    from cStringIO import StringIO
+except ImportError:
+    # python3
+    from io import StringIO
 
 log = logging
 
@@ -84,14 +93,18 @@ def tempdir(*args, **kwargs):
 class OutputRedirectMixin(object):
 
     def setUp(self):
-        self.old_stdout = sys.stdout
-        self.old_stderr = sys.stderr
-        sys.stdout = StringIO()
-        sys.stderr = StringIO()
+        self.silent = '-v' not in sys.argv
+
+        if self.silent:
+            self.old_stdout = sys.stdout
+            self.old_stderr = sys.stderr
+            sys.stdout = StringIO()
+            sys.stderr = StringIO()
 
     def tearDown(self):
-        sys.stdout = self.old_stdout
-        sys.stderr = self.old_stderr
+        if self.silent:
+            sys.stdout = self.old_stdout
+            sys.stderr = self.old_stderr
 
 
 class TestBase(unittest.TestCase):
@@ -159,21 +172,28 @@ class TestScriptBase(OutputRedirectMixin, TestBase):
         """
         return getattr(self, i)
 
-    def wrap_cmd(self, args=None, cmd=None):
-        if cmd is None:
-            cmd = self.executable
-        input = (cmd + ' ' + args) % self
-        log.info('--> ' + input)
-        # hide error results, send to DEVNULL
-        log.info(subprocess.check_output(input.split(), stderr=self.DEVNULL))
-        return True
+    def wrap_cmd(self, cmd):
+        cmd = cmd % self
+        try:
+            retval = main(cmd.split())
+        except SystemExit as err:
+            return None, err
+        else:
+            return retval, None
 
-    def cmd_ok(self, args=None, cmd=None):
-        self.assertTrue(self.wrap_cmd(args, cmd))
+    def cmd_ok(self, cmd):
+        retval, err = self.wrap_cmd(cmd)
+        if err:
+            self.assertEqual(err.message, 0)
+        else:
+            self.assertFalse(bool(retval))
 
-    def cmd_fails(self, args=None, cmd=None):
-        self.assertRaises(
-            subprocess.CalledProcessError, self.wrap_cmd, args, cmd)
+    def cmd_fails(self, cmd):
+        retval, err = self.wrap_cmd(cmd)
+        if err:
+            self.assertNotEqual(err.message, 0)
+        else:
+            self.assertTrue(bool(retval))
 
 
 # Small NCBI taxonomy database

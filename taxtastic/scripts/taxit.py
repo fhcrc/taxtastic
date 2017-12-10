@@ -54,9 +54,9 @@ def main(argv=None):
 
 
 def parse_arguments(argv):
+    """Create the argument parser
+
     """
-    """
-    # Create the argument parser
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     base_parser = argparse.ArgumentParser(add_help=False)
 
