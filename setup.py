@@ -107,9 +107,10 @@ params = {'name': 'taxtastic',
               'fastalite>=0.3',
               'DendroPy>=4.3.0',
               'jinja2>=2.9',
-              'sqlalchemy>=0.7',
+              'sqlalchemy>=1.0',
               'PyYAML>=3.12',
-              'psycopg2>=2.7.3.1'
+              'psycopg2>=2.7.3.1',
+              'six'
           ]}
 
 setup(**params)
