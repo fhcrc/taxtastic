@@ -40,6 +40,8 @@ before_install: |
     source venv/bin/activate
     # A manual check that the correct version of Python is running.
     python --version
+    pip install -U pip
+    pip install check-manifest readme_renderer flake8 docutils
   fi
 
 install:
