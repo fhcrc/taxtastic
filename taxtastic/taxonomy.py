@@ -76,11 +76,11 @@ class Taxonomy(object):
         # single attribute self.tablenames. This will avoid name
         # collisions (eg with self.ranks) and allow the idiom
         # cmd = 'select * from {<table>}'.format(**self.tablenames)
-        self.nodes = self.meta.tables[self.prepend_schema('nodes')]
-        self.names = self.meta.tables[self.prepend_schema('names')]
-        self.source = self.meta.tables[self.prepend_schema('source')]
-        self.merged = self.meta.tables[self.prepend_schema('merged')]
-        ranks_table = self.meta.tables[self.prepend_schema('ranks')]
+        self.nodes = self._get_table('nodes')
+        self.names = self._get_table('names')
+        self.source = self._get_table('source')
+        self.merged = self._get_table('merged')
+        ranks_table = self._get_table('ranks')
         self.ranks_table = ranks_table
 
         ranks = select([ranks_table.c.rank, ranks_table.c.height]).execute().fetchall()
@@ -101,6 +101,15 @@ class Taxonomy(object):
                 raise TaxonIntegrityError('the root node must have parent_id = None')
 
         self.placeholder = '%s' if self.engine.name == 'postgresql' else '?'
+
+    def _get_table(self, name):
+        try:
+            val = self.meta.tables[self.prepend_schema(name)]
+        except KeyError:
+            raise ValueError(
+                'Table "{}" is missing from the input database.'.format(name))
+        else:
+            return val
 
     def execute(self, statements, exc=IntegrityError, rasie_as=ValueError):
         """Execute ``statements`` in a session, and perform a rollback on
