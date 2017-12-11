@@ -29,7 +29,7 @@ install:
   - pip install -U -e .
 
 script:
-  - ./testall
+  - python setup.py test
   - check-manifest --ignore "tox.ini,test*,devtools*,docs*"
   - python setup.py check --metadata --restructuredtext --strict
   - flake8 taxtastic
