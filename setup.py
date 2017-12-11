@@ -6,25 +6,24 @@ Upload to pypi:         python setup.py sdist upload
 import subprocess
 import os
 from distutils.version import LooseVersion
-from setuptools import setup, find_packages, Command
+from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
 from os import path
 
 try:
     from pysqlite2 import dbapi2 as sqlite3
-    print('using pysqlite2, sqlite3 version {}'.format(sqlite3.sqlite_version))
 except ImportError:
     import sqlite3
-    print('using sqlite3, sqlite3 version {}'.format(sqlite3.sqlite_version))
 
+print('using {}, sqlite3 version {}'.format(sqlite3.__name__, sqlite3.sqlite_version))
 
-# min_sqlite3_version = '3.8.3'
-# if LooseVersion(sqlite3.sqlite_version) < LooseVersion(min_sqlite3_version):
-#     raise ImportError(('the sqlite3 library version for this python interpreter is '
-#                        '{}, but a version >= {} is required; '
-#                        'see https://github.com/fhcrc/taxtastic#installing').format(
-#                            sqlite3.sqlite_version, min_sqlite3_version))
+min_sqlite3_version = '3.8.3'
+if LooseVersion(sqlite3.sqlite_version) < LooseVersion(min_sqlite3_version):
+    raise ImportError(('the sqlite3 library version for this python interpreter is '
+                       '{}, but a version >= {} is required; '
+                       'see https://github.com/fhcrc/taxtastic#installing').format(
+                           sqlite3.sqlite_version, min_sqlite3_version))
 
 
 subprocess.call(
@@ -43,43 +42,6 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as fi:
     long_description = fi.read()
 
 
-class run_audit(Command):
-    """Audits source code using PyFlakes for following issues:
-        - Names which are used but not defined or used before they are defined.
-        - Names which are redefined without having been used.
-    """
-    description = "Audit source code with PyFlakes"
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        import os
-        import sys
-        try:
-            import pyflakes.scripts.pyflakes as flakes
-        except ImportError:
-            print("Audit requires PyFlakes installed in your system.")
-            sys.exit(-1)
-
-        warns = 0
-        # Define top-level directories
-        dirs = ['taxtastic']
-        for dir in dirs:
-            for root, _, files in os.walk(dir):
-                for file in files:
-                    if file != '__init__.py' and file.endswith('.py'):
-                        warns += flakes.checkPath(os.path.join(root, file))
-        if warns > 0:
-            print("Audit finished with total %d warnings." % warns)
-        else:
-            print("No problems found in sourcecode.")
-
-
 params = {'name': 'taxtastic',
           'author': 'Noah Hoffman',
           'author_email': 'ngh2@uw.edu',
@@ -96,6 +58,9 @@ params = {'name': 'taxtastic',
               'License :: OSI Approved :: GNU General Public License (GPL)',
               'Development Status :: 3 - Alpha',
               'Programming Language :: Python :: 2.7',
+              'Programming Language :: Python :: 3.4',
+              'Programming Language :: Python :: 3.5',
+              'Programming Language :: Python :: 3.6',
               'Topic :: Scientific/Engineering :: Bio-Informatics'],
           'download_url': 'https://github.com/fhcrc/taxtastic',
           'package_data': {
