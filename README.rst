@@ -133,10 +133,10 @@ version like this::
   python -c 'import sqlite3; print sqlite3.sqlite_version'
 
 ``python setup.py`` will exit with an error if the sqlite3 library
-dependency is not met. On older systems, it is possible to replace the
-builtin ``sqlite3`` module by installing ``pysqlite2`` with updated
-sqlite3 libraries using a provided script (assuming an active
-virtualenv)::
+dependency is not met. On older systems (and for python2 only), it is
+possible to replace the builtin ``sqlite3`` module by installing
+``pysqlite2`` with updated sqlite3 libraries using a provided script
+(assuming an active virtualenv)::
 
   dev/install_pysqlite.sh
 
@@ -145,6 +145,11 @@ After the script completes, confirm that ``pysqlite2`` was installed::
   python -c 'from pysqlite2 import dbapi2; print dbapi2.sqlite_version'
 
 At this point, taxtastic may be installed as described above.
+
+Note that ``pysqlite2`` is available for python2 only, so there really
+is no good option for using python3 on older systems like Ubuntu 14.04
+and earlier, unless you want to compile a version of the python3
+interpreter linked against updated sqlite3 libraries.
 
 A note on databases
 ===================
