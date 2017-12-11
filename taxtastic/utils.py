@@ -12,7 +12,6 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-import configparser
 import csv
 import logging
 import os
@@ -21,6 +20,8 @@ import subprocess
 import string
 import random
 from collections import OrderedDict
+
+from six.moves import configparser
 
 log = logging
 
