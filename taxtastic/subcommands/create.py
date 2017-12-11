@@ -22,7 +22,6 @@ a refpkg at ``refpkg``, this command will fail unless you specify
 import logging
 import shutil
 import os
-import sys
 
 from taxtastic import refpkg, utils
 

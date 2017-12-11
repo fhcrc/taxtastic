@@ -180,9 +180,9 @@ class TaxNode(object):
         if not self.parent:
             return [self]
         else:
-            l = self.parent.lineage()
-            l.append(self)
-            return l
+            L = self.parent.lineage()
+            L.append(self)
+            return L
 
     def __repr__(self):
         return ("<TaxNode {0.tax_id}:{0.name} [rank={0.rank};"
@@ -208,8 +208,8 @@ class TaxNode(object):
                  'tax_name': node.name,
                  'parent_id': parent_id,
                  'rank': node.rank}
-            l = {i.rank: i.tax_id for i in node.lineage()}
-            d.update(l)
+            L = {i.rank: i.tax_id for i in node.lineage()}
+            d.update(L)
             return d
 
         header = ['tax_id', 'parent_id', 'rank', 'tax_name'] + ranks

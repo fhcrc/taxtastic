@@ -136,7 +136,7 @@ def transaction(f, self, *args, **kwargs):
             r = f(self, *args, **kwargs)
             self.commit_transaction()
             return r
-        except:
+        except Exception:
             self.contents = self.current_transaction['rollback']
             self._sync_to_disk()
             raise
@@ -675,9 +675,9 @@ class Refpkg(object):
             for req_header in 'seqname', 'tax_id':
                 if req_header not in headers:
                     return "seq_info is missing {0}".format(req_header)
-            lens = [len(l) for l in lines]
-            if not(all([l == lens[0] and l > 1 for l in lens])):
-                return "seq_info is not valid CSV."
+            lengths = {len(line) for line in lines}
+            if len(lengths) > 1:
+                return "some lines in seq_info differ in field cout"
             csv_names = {line[0] for line in lines[1:]}
 
         with self.open_resource('aln_sto') as f:
@@ -693,7 +693,7 @@ class Refpkg(object):
                 case_sensitive_taxon_labels=True,
                 preserve_underscores=True)
             tree_names = set(tree.taxon_namespace.labels())
-        except:
+        except Exception:
             return 'tree file is not valid Newick.'
 
         d = fasta_names.symmetric_difference(sto_names)
@@ -712,9 +712,10 @@ class Refpkg(object):
         # Next make sure that taxonomy is valid CSV, phylo_model is valid JSON
         with self.open_resource('taxonomy') as f:
             lines = list(csv.reader(f))
-            lens = [len(l) for l in lines]
-            if not(all([l == lens[0] and l > 1 for l in lens])):
-                return "Taxonomy is invalid: not all lines had the same number of fields."
+            lengths = {len(line) for line in lines}
+            if len(lengths) > 1:
+                return ("Taxonomy is invalid: not all lines had "
+                        "the same number of fields.")
             # I don't try to check if the taxids match up to those
             # mentioned in aln_fasta, since that would make taxtastic
             # depend on RefsetInternalFasta in romperroom.

@@ -2,6 +2,7 @@ exclude docker docker/*
 exclude singularity singularity/*
 exclude dev dev/*
 exclude README.txt readme.txt
+include *.py
 include *.in
 include *.rst
 include *.txt

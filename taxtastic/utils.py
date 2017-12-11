@@ -137,7 +137,7 @@ def parse_fasttree(fobj):
         elif splut[0] == 'GTRRates':
             data['subs_rates'] = dict(
                 list(zip(['ac', 'ag', 'at', 'cg', 'ct', 'gt'],
-                    list(map(float, splut[1:])))))
+                         list(map(float, splut[1:])))))
         elif line.strip() == JTT_MODEL:
             data['subs_model'] = 'JTT'
             data['datatype'] = 'AA'

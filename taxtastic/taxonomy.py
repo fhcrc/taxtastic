@@ -688,8 +688,8 @@ class Taxonomy(object):
     def is_ancestor_of(self, node, ancestor):
         if node is None or ancestor is None:
             return False
-        l = self.lineage(node)
-        return ancestor in list(l.values())
+        lineage = self.lineage(node)
+        return ancestor in list(lineage.values())
 
     def rank(self, tax_id):
         if tax_id is None:
