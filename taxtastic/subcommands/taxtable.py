@@ -114,7 +114,7 @@ def build_parser(parser):
 
     input_group.add_argument(
         '-t', '--tax-ids', nargs='+',
-        help='one or more tax_ids')
+        help='one or more space-delimited tax_ids (eg "-t 47770 33945")')
 
     input_group.add_argument(
         '-f', '--tax-id-file', metavar='FILE', type=argparse.FileType('rt'),
