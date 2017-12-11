@@ -2,6 +2,11 @@
  change log for taxtastic
 ==========================
 
+0.8.4
+=====
+
+* python3.4+ compatibility
+
 0.8.3
 =====
 
