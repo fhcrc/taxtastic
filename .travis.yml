@@ -1,22 +1,7 @@
-# sudo: false
-# dist: trusty
-
-# os:
-#   - linux
-#   - osx
-
+sudo: false
 language: python
-# python:
-#   # - "2.7"
-#   - "3.4"
-#   - "3.5"
-#   - "3.6"
-
-matrix:
-  include:
-    - os: osx
-      language: generic
-      env: TOXENV=py36
+python:
+  - 2.7
 
 cache:
   # must specify pip dir
@@ -36,16 +21,15 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 
 before_install:
-  - python --version
   - pip install -U pip
-  # - pip install check-manifest readme_renderer flake8 docutils
-  # - dev/install_pysqlite.sh
+  - pip install check-manifest readme_renderer flake8 docutils
+  - dev/install_pysqlite.sh
 
 install:
   - pip install -U -e .
 
 script:
-  - python3 setup.py test
+  - ./testall
   - check-manifest --ignore "tox.ini,test*,devtools*,docs*"
   - python setup.py check --metadata --restructuredtext --strict
   - flake8 taxtastic
