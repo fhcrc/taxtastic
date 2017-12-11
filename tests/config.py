@@ -164,6 +164,7 @@ class TestScriptBase(OutputRedirectMixin, TestBase):
 
     executable = None
     DEVNULL = open(os.devnull, 'w')
+    openargs = {'mode': 'rU'} if sys.version_info.major == 2 else {'newline': None}
 
     def __getitem__(self, i):
         """
@@ -184,16 +185,23 @@ class TestScriptBase(OutputRedirectMixin, TestBase):
     def cmd_ok(self, cmd):
         retval, err = self.wrap_cmd(cmd)
         if err:
-            self.assertEqual(err.message, 0)
+            self.assertEqual(errval(err), 0)
         else:
             self.assertFalse(bool(retval))
 
     def cmd_fails(self, cmd):
         retval, err = self.wrap_cmd(cmd)
         if err:
-            self.assertNotEqual(err.message, 0)
+            self.assertNotEqual(errval(err), 0)
         else:
             self.assertTrue(bool(retval))
+
+
+def errval(err):
+    if sys.version_info.major == 2:
+        return err.message
+    else:
+        return err.args[0]
 
 
 # Small NCBI taxonomy database

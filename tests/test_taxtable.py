@@ -1,6 +1,12 @@
-from io import StringIO
 import os.path
 import unittest
+
+try:
+    # python2
+    from cStringIO import StringIO
+except ImportError:
+    # python3
+    from io import StringIO
 
 from taxtastic.taxtable import TaxNode
 from .config import data_path

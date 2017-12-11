@@ -24,7 +24,7 @@ import errno
 import os
 import time
 import warnings
-
+import sys
 import contextlib
 import copy
 import csv
@@ -47,6 +47,13 @@ FORMAT_VERSION = '1.1'
 
 class DerivedFileNotUpdatedWarning(UserWarning):
     pass
+
+
+def is_string(val):
+    if sys.version_info.major == 2:
+        return isinstance(val, basestring)
+    else:
+        return isinstance(val, str)
 
 
 def md5file(fobj):
@@ -393,7 +400,8 @@ class Refpkg(object):
             elif len(self.contents['rollforward']) != 2:
                 return "Key rollforward had wrong length, found %d" % \
                     len(self.contents['rollforward'])
-            elif not(isinstance(self.contents['rollforward'][0], str)):
+            elif not is_string(self.contents['rollforward'][0]):
+                print(type(self.contents['rollforward'][0]))
                 return "Key rollforward's first entry was not a string, found %s" % \
                     str(self.contents['rollforward'][0])
             elif not(isinstance(self.contents['rollforward'][1], dict)):
@@ -600,8 +608,8 @@ class Refpkg(object):
             self._delete_file(f)
         self.contents['rollback'] = None
         self.contents['rollforward'] = None
-        self.contents['log'].insert(0,
-                                    'Stripped refpkg (removed %d files)' % len(to_delete))
+        self.contents['log'].insert(
+            0, 'Stripped refpkg (removed %d files)' % len(to_delete))
         self._sync_to_disk()
 
     def start_transaction(self):

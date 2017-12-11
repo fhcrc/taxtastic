@@ -2,6 +2,7 @@ import json
 import logging
 from os import path
 import shutil
+import sys
 
 from taxtastic.scripts.taxit import main
 from taxtastic import refpkg
@@ -125,7 +126,7 @@ class LonelyNodesTestCase(TestScriptBase):
     def test_all_ranks(self):
         self.cmd_ok('lonelynodes %(refpkg)s -o %(outfile)s')
         self.assertTrue(path.isfile(self.outfile))
-        with open(self.outfile) as fp:
+        with open(self.outfile, **self.openargs) as fp:
             self.assertEqual("""tax_name,tax_id,rank
 Bacilli,91061,class
 Bacteria,2,superkingdom
@@ -137,11 +138,12 @@ Gammaproteobacteria,1236,class
 Lactobacillaceae,33958,family
 Lactobacillales,186826,order
 Lactobacillus,1578,genus
-cellular organisms,131567,below_root""", fp.read().strip().replace('\r', ''))
+cellular organisms,131567,below_root
+""", fp.read())
 
     def test_species(self):
         self.cmd_ok('lonelynodes %(refpkg)s -o %(outfile)s -r species')
         self.assertTrue(path.isfile(self.outfile))
-        with open(self.outfile) as fp:
+        with open(self.outfile, **self.openargs) as fp:
             line = 'tax_name,tax_id,rank\nEscherichia coli,562,species'
             self.assertEqual(line, fp.read().strip())
