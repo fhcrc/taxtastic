@@ -50,6 +50,6 @@ install:
 script:
   - python setup.py -q test
   - check-manifest --ignore
-    "tox.ini,test*,devtools*,docs*,taxtastic/data,taxtastic/data/*"
+    "tox.ini,test*,dev*,docs*,taxtastic/data,taxtastic/data/*"
   - python setup.py check --metadata --restructuredtext --strict
   - flake8 taxtastic
