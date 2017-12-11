@@ -1,7 +1,9 @@
-sudo: false
-language: python
-python:
-  - 2.7
+matrix:
+  include:
+    - os: linux
+      sudo: false
+      language: python
+      python: 2.7
 
 cache:
   # must specify pip dir
@@ -23,7 +25,7 @@ env:
 before_install:
   - pip install -U pip
   - pip install check-manifest readme_renderer flake8 docutils
-  - dev/install_pysqlite.sh
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dev/install_pysqlite.sh; fi
 
 install:
   - pip install -U -e .
