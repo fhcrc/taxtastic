@@ -135,10 +135,15 @@ version like this::
 ``python setup.py`` will exit with an error if the sqlite3 library
 dependency is not met. On older systems (and for python2 only), it is
 possible to replace the builtin ``sqlite3`` module by installing
-``pysqlite2`` with updated sqlite3 libraries using a provided script
-(assuming an active virtualenv)::
+``pysqlite2`` with updated sqlite3 libraries **before** installing the
+package with pip using a provided script in the ``taxtastic`` git
+repository (assuming an active virtualenv)::
 
   dev/install_pysqlite.sh
+
+Or, to avoid cloning the repo::
+
+  curl https://raw.githubusercontent.com/fhcrc/taxtastic/master/dev/install_pysqlite.sh | bash
 
 After the script completes, confirm that ``pysqlite2`` was installed::
 
