@@ -45,7 +45,7 @@ def main(argv=None):
         logformat = '%(message)s'
 
     # set up logging
-    logging.basicConfig(stream=sys.stdout, format=logformat, level=loglevel)
+    logging.basicConfig(stream=sys.stderr, format=logformat, level=loglevel)
 
     try:
         return action(arguments)
