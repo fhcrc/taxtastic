@@ -6,6 +6,8 @@
 =====
 
 * python3.4+ compatibility
+* logging messages write to stderr
+* add subcommand ``taxit namelookup``
 
 0.8.3
 =====
