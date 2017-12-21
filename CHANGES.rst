@@ -2,6 +2,11 @@
  change log for taxtastic
 ==========================
 
+0.8.5
+=====
+
+* add ``taxit lineage_table`` [GH-117]
+
 0.8.4
 =====
 
