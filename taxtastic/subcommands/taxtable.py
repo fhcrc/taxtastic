@@ -89,28 +89,7 @@ def getitems(*items):
 def build_parser(parser):
     parser = add_database_args(parser)
 
-    # TODO: do we need the commented-out options?
-    # node_parser = parser.add_argument_group(title='node options')
-
-    # node_parser.add_argument(
-    #     '--valid',
-    #     action='store_true',
-    #     help='Include only valid nodes.')
-    # node_parser.add_argument(
-    #     '--ranked',
-    #     choices=['columns', 'rows'],
-    #     help='Include only ranked columns or ranked rows and columns.')
-
     input_group = parser.add_argument_group('input options')
-
-    # input_group.add_argument(
-    #     '--taxtable',
-    #     metavar='CSV',
-    #     help='build from a previous built taxtable')
-
-    # input_group.add_argument(
-    #     '--clade-ids',
-    #     help=('return top-down tax_id clades'))
 
     input_group.add_argument(
         '-t', '--tax-ids', nargs='+',
