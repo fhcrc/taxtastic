@@ -72,16 +72,16 @@ A script named ``taxit`` provides a command line interface::
 Installation
 ============
 
-``taxtastic`` requires Python 2.7.  The simplest method of installing
-is using `pip <http://pip-installer.org>`_::
+``taxtastic`` requires Python versions 2.7 or 3.4+.  The simplest
+method of installing is using `pip <http://pip-installer.org>`_::
 
   pip install taxtastic
 
 We strongly recommend installation into a virtualenv. On a clean
 Ubuntu 16.04 system, complete instructions for installing the
 ``taxtastic`` package and the ``taxit`` command line entry point in a
-virtualenv are below. Note that python2.7 is not longer installed
-by default in this OS::
+virtualenv are below. Note that python2.7 is no longer installed
+by default in 16.04::
 
   sudo apt-get update
   sudo apt-get install python2.7 python-virtualenv
@@ -89,6 +89,13 @@ by default in this OS::
 Once python2 is installed, create a virtualenv and install ``taxtastic``::
 
   virtualenv taxtastic-env
+
+Or using python3.4+::
+
+  python3 -m venv taxtastic-env
+
+Then, for all python versions::
+
   source taxtastic-env/bin/activate
   pip install -U pip
   pip install taxtastic
@@ -97,7 +104,7 @@ If you prefer to install from the git repository::
 
   git clone https://github.com/fhcrc/taxtastic.git
   cd taxtastic
-  virtualenv taxtastic-env
+  virtualenv taxtastic-env  # eg, for python2
   source taxtastic-env/bin/activate
   pip install .
 
@@ -154,7 +161,8 @@ At this point, taxtastic may be installed as described above.
 Note that ``pysqlite2`` is available for python2 only, so there really
 is no good option for using python3 on older systems like Ubuntu 14.04
 and earlier, unless you want to compile a version of the python3
-interpreter linked against updated sqlite3 libraries.
+interpreter linked against updated sqlite3 libraries. If you must use
+an older system, stick with python2, or use the Docker image.
 
 A note on databases
 ===================
