@@ -476,3 +476,56 @@ class TestExtractNodes(TestBase):
                 '-o', self.outfile]
         main(args)
 
+
+class TestLineageTable(TestBase):
+    def setUp(self):
+        self.outdir = self.mkoutdir()
+        self.taxtable = os.path.join(self.outdir, 'taxtable.csv')
+        self.seq_info = os.path.join(self.outdir, 'seq_info.csv')
+        self.info = [('seqname', 'tax_id', 'species', 'mothur'),
+                     ('s1', '1280', 'Staphylococcus aureus', '"sp__Staphylococcus aureus"'),
+                     ('s2', '246432', 'Staphylococcus equorum', '"sp__Staphylococcus equorum"'),
+                     ('s3', '29383', 'Staphylococcus equorum', '"sp__Staphylococcus equorum"'),
+                     ('s4', '1279', '', '"sp__unclassified"')]
+
+        with open(self.seq_info, 'w') as f:
+            csv.writer(f).writerows(self.info)
+
+        main(['taxtable', config.ncbi_master_db, '-i', self.seq_info, '-o', self.taxtable])
+
+    def test_csv_table(self):
+        outfile = os.path.join(self.outdir, 'lineages.csv')
+        args = ['lineage_table', self.taxtable, self.seq_info,
+                '--csv-table', outfile]
+        main(args)
+
+        with open(outfile) as f:
+            output = list(csv.DictReader(f))
+            self.assertEqual(
+                [row['seqname'] for row in output],
+                [row[0] for row in self.info[1:]]
+            )
+
+            self.assertEqual(
+                [row['species'] for row in output],
+                [row[-2] for row in self.info[1:]]
+            )
+
+    def test_lineage_table(self):
+        outfile = os.path.join(self.outdir, 'taxonomy.txt')
+        args = ['lineage_table', self.taxtable, self.seq_info,
+                '--taxonomy-table', outfile]
+        main(args)
+
+        with open(outfile) as f:
+            output = list(csv.reader(f, delimiter='\t'))
+
+            self.assertEqual(
+                [row[0] for row in output],
+                [row[0] for row in self.info[1:]]
+            )
+
+            self.assertEqual(
+                [row[-1].split(';')[-1] for row in output],
+                [row[-1] for row in self.info[1:]]
+            )

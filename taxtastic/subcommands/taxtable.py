@@ -133,6 +133,7 @@ def action(args):
     tax = Taxonomy(engine, schema=args.schema)
 
     rows = tax._get_lineage_table(tax_ids)
+
     log.info('grouping lineages')
     all_ranks = set()
     taxtable = {}
