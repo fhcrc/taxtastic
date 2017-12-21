@@ -12,8 +12,12 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>
-"""
-Representation of a taxonomic hierarchy.
+"""Representation of a taxonomic hierarchy.
+
+Warning: methods here related to taxtable creation and manupulation
+may be out of date; see subcommands/taxtable.py for current methods
+for constructing taxtables.
+
 """
 
 import collections
