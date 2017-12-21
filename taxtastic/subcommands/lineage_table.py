@@ -31,6 +31,9 @@ sequence names to tax_ids. Outputs are one or more of:
    ('genus', 'ge'),
    ('species', 'sp')]
 
+  Lineages are truncated to species, and missing values reported
+  as '<abbrev>__unclassified'
+
 """
 
 import argparse
