@@ -190,6 +190,25 @@ info
 .. literalinclude:: _helptext/info.txt
 
 
+lineage_table
+-------------
+
+.. literalinclude:: _helptext/lineage_table.txt
+
+Examples::
+
+  taxit taxtable taxonomy.db -i seq_info.csv -o taxtable.csv
+  taxit lineage_table taxtable.csv seq_info.csv \
+      --csv-table taxonomy.csv --taxonomy-table taxonomy.txt
+
+``taxonomy.txt`` looks like this::
+
+  s1	"pk__Bacteria";"ph__Firmicutes";"cl__Bacilli";"or__Bacillales";"fa__Staphylococcaceae";"ge__Staphylococcus";"sp__Staphylococcus aureus"
+  s2	"pk__Bacteria";"ph__Firmicutes";"cl__Bacilli";"or__Bacillales";"fa__Staphylococcaceae";"ge__Staphylococcus";"sp__Staphylococcus equorum"
+  s3	"pk__Bacteria";"ph__Firmicutes";"cl__Bacilli";"or__Bacillales";"fa__Staphylococcaceae";"ge__Staphylococcus";"sp__Staphylococcus equorum"
+  s4	"pk__Bacteria";"ph__Firmicutes";"cl__Bacilli";"or__Bacillales";"fa__Staphylococcaceae";"ge__Staphylococcus";"sp__unclassified"
+
+
 lonelynodes
 -----------
 
