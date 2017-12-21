@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>taxtastic.refpkg &#8212; taxtastic 0.8.3 documentation</title>
+    <title>taxtastic.refpkg &#8212; taxtastic 0.8.4 documentation</title>
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.3',
+        VERSION:     '0.8.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">taxtastic 0.8.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">taxtastic 0.8.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -68,7 +68,7 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-
+<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">contextlib</span>
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">csv</span>
@@ -93,10 +93,16 @@
     <span class="k">pass</span>
 
 
+<span class="k">def</span> <span class="nf">is_string</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">basestring</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+
 <span class="k">def</span> <span class="nf">md5file</span><span class="p">(</span><span class="n">fobj</span><span class="p">):</span>
     <span class="n">md5</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">fobj</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4096</span><span class="p">),</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
-        <span class="n">md5</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+    <span class="n">md5</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fobj</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">md5</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
 
@@ -174,7 +180,7 @@
             <span class="n">r</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">commit_transaction</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">r</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_transaction</span><span class="p">[</span><span class="s1">&#39;rollback&#39;</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sync_to_disk</span><span class="p">()</span>
             <span class="k">raise</span>
@@ -299,7 +305,8 @@
 
     <span class="k">def</span> <span class="nf">calculate_resource_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Calculate the MD5 sum for a particular named resource.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">md5file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">))</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">md5file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Refpkg.resource_path"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.resource_path">[docs]</a>    <span class="k">def</span> <span class="nf">resource_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -364,7 +371,8 @@
         <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="n">base</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">filename</span><span class="p">)):</span>
-            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">ext</span><span class="p">)</span> <span class="k">as</span> <span class="n">tf</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+                    <span class="nb">dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">ext</span><span class="p">)</span> <span class="k">as</span> <span class="n">tf</span><span class="p">:</span>
                 <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">filename</span>
@@ -379,11 +387,11 @@
 
 <div class="viewcode-block" id="Refpkg.file_keys"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.file_keys">[docs]</a>    <span class="k">def</span> <span class="nf">file_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return a list of all the keys referring to files in this refpkg.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="Refpkg.metadata_keys"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.metadata_keys">[docs]</a>    <span class="k">def</span> <span class="nf">metadata_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return a list of all the keys referring to metadata in this refpkg.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
     <span class="k">def</span> <span class="nf">_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Set the log message for this operation.</span>
@@ -428,14 +436,16 @@
 
         <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s1">&#39;rollforward&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">):</span>
             <span class="k">return</span> <span class="s2">&quot;Manifest file missing key rollforward&quot;</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">)):</span>
-                <span class="k">return</span> <span class="s2">&quot;Key rollforward was not a list, found </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span>
-                                                                        <span class="s1">&#39;rollforward&#39;</span><span class="p">])</span>
+                <span class="k">return</span> <span class="s2">&quot;Key rollforward was not a list, found </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">])</span>
             <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="k">return</span> <span class="s2">&quot;Key rollforward had wrong length, found </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> \
                     <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">])</span>
-            <span class="k">elif</span> <span class="ow">not</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">basestring</span><span class="p">)):</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">is_string</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
                 <span class="k">return</span> <span class="s2">&quot;Key rollforward&#39;s first entry was not a string, found </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> \
                     <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
             <span class="k">elif</span> <span class="ow">not</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)):</span>
@@ -444,17 +454,20 @@
 
         <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="s2">&quot;log&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">):</span>
             <span class="k">return</span> <span class="s2">&quot;Manifest file missing key &#39;log&#39;&quot;</span>
+
         <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;log&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">)):</span>
             <span class="k">return</span> <span class="s2">&quot;Key &#39;log&#39; in manifest did not refer to a list&quot;</span>
+
         <span class="c1"># MD5 keys and filenames are in one to one correspondence</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">viewkeys</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span>
-                <span class="s1">&#39;md5&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">viewkeys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span>
+                <span class="s1">&#39;md5&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;Files and MD5 sums in manifest do not &quot;</span>
                     <span class="s2">&quot;match (files: </span><span class="si">%s</span><span class="s2">, MD5 sums: </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">)</span> <span class="o">%</span> \
-                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
-                 <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;md5&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                 <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;md5&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
         <span class="c1"># All files in the manifest exist and match the MD5 sums</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">filename</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">filename</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="c1"># we don&#39;t need to explicitly check for existence;</span>
             <span class="c1"># calculate_resource_md5 will open the file for us.</span>
             <span class="n">expected_md5</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_md5</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
@@ -501,7 +514,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">old_path</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_add_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">new_path</span><span class="p">)</span>
-        <span class="n">md5_value</span> <span class="o">=</span> <span class="n">md5file</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">new_path</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">new_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">md5_value</span> <span class="o">=</span> <span class="n">md5file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;md5&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">md5_value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s1">&#39;Updated file: </span><span class="si">%s</span><span class="s1">=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">new_path</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;tree_stats&#39;</span> <span class="ow">and</span> <span class="n">old_path</span><span class="p">:</span>
@@ -638,8 +652,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_delete_file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollback&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;log&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>
-                                    <span class="s1">&#39;Stripped refpkg (removed </span><span class="si">%d</span><span class="s1"> files)&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">to_delete</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;log&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Stripped refpkg (removed </span><span class="si">%d</span><span class="s1"> files)&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">to_delete</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sync_to_disk</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="Refpkg.start_transaction"><a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.start_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">start_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -705,9 +719,9 @@
             <span class="k">for</span> <span class="n">req_header</span> <span class="ow">in</span> <span class="s1">&#39;seqname&#39;</span><span class="p">,</span> <span class="s1">&#39;tax_id&#39;</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">req_header</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
                     <span class="k">return</span> <span class="s2">&quot;seq_info is missing </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">req_header</span><span class="p">)</span>
-            <span class="n">lens</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="nb">all</span><span class="p">([</span><span class="n">l</span> <span class="o">==</span> <span class="n">lens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lens</span><span class="p">])):</span>
-                <span class="k">return</span> <span class="s2">&quot;seq_info is not valid CSV.&quot;</span>
+            <span class="n">lengths</span> <span class="o">=</span> <span class="p">{</span><span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">}</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;some lines in seq_info differ in field cout&quot;</span>
             <span class="n">csv_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">:]}</span>
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s1">&#39;aln_sto&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -723,7 +737,7 @@
                 <span class="n">case_sensitive_taxon_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">preserve_underscores</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">tree_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">taxon_namespace</span><span class="o">.</span><span class="n">labels</span><span class="p">())</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">return</span> <span class="s1">&#39;tree file is not valid Newick.&#39;</span>
 
         <span class="n">d</span> <span class="o">=</span> <span class="n">fasta_names</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">sto_names</span><span class="p">)</span>
@@ -742,9 +756,10 @@
         <span class="c1"># Next make sure that taxonomy is valid CSV, phylo_model is valid JSON</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="s1">&#39;taxonomy&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">lines</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
-            <span class="n">lens</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="nb">all</span><span class="p">([</span><span class="n">l</span> <span class="o">==</span> <span class="n">lens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lens</span><span class="p">])):</span>
-                <span class="k">return</span> <span class="s2">&quot;Taxonomy is invalid: not all lines had the same number of fields.&quot;</span>
+            <span class="n">lengths</span> <span class="o">=</span> <span class="p">{</span><span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">}</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;Taxonomy is invalid: not all lines had &quot;</span>
+                        <span class="s2">&quot;the same number of fields.&quot;</span><span class="p">)</span>
             <span class="c1"># I don&#39;t try to check if the taxids match up to those</span>
             <span class="c1"># mentioned in aln_fasta, since that would make taxtastic</span>
             <span class="c1"># depend on RefsetInternalFasta in romperroom.</span>
@@ -896,7 +911,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">taxtastic 0.8.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">taxtastic 0.8.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
