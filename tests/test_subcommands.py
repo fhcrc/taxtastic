@@ -482,16 +482,19 @@ class TestLineageTable(TestBase):
         self.outdir = self.mkoutdir()
         self.taxtable = os.path.join(self.outdir, 'taxtable.csv')
         self.seq_info = os.path.join(self.outdir, 'seq_info.csv')
-        self.info = [('seqname', 'tax_id', 'species', 'mothur'),
-                     ('s1', '1280', 'Staphylococcus aureus', '"sp__Staphylococcus aureus"'),
-                     ('s2', '246432', 'Staphylococcus equorum', '"sp__Staphylococcus equorum"'),
-                     ('s3', '29383', 'Staphylococcus equorum', '"sp__Staphylococcus equorum"'),
-                     ('s4', '1279', '', '"sp__unclassified"')]
+        self.info = [
+            ('seqname', 'tax_id', 'species', 'mothur'),
+            ('s1', '1280', 'Staphylococcus aureus', 's__Staphylococcus_aureus;'),
+            ('s2', '246432', 'Staphylococcus equorum', 's__Staphylococcus_equorum;'),
+            ('s3', '29383', 'Staphylococcus equorum', 's__Staphylococcus_equorum;'),
+            ('s4', '1279', '', 'g__Staphylococcus;')
+        ]
 
         with open(self.seq_info, 'w') as f:
             csv.writer(f).writerows(self.info)
 
-        main(['taxtable', config.ncbi_master_db, '-i', self.seq_info, '-o', self.taxtable])
+        main(['taxtable', config.ncbi_master_db, '-i',
+              self.seq_info, '-o', self.taxtable])
 
     def test_csv_table(self):
         outfile = os.path.join(self.outdir, 'lineages.csv')
@@ -525,7 +528,5 @@ class TestLineageTable(TestBase):
                 [row[0] for row in self.info[1:]]
             )
 
-            self.assertEqual(
-                [row[-1].split(';')[-1] for row in output],
-                [row[-1] for row in self.info[1:]]
-            )
+            for expected, actual in zip(self.info[1:], output):
+                self.assertTrue(actual[1].endswith(actual[-1]))

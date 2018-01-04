@@ -23,19 +23,27 @@ sequence names to tax_ids. Outputs are one or more of:
   (https://mothur.org/wiki/Taxonomy_File). Ranks are limited to the
   following, with corresponding abbreviations:
 
-  [('superkingdom', 'pk'),
-   ('phylum', 'ph'),
-   ('class', 'cl'),
-   ('order', 'or'),
-   ('family', 'fa'),
-   ('genus', 'ge'),
-   ('species', 'sp')]
+    ('species', 's'),
+    ('genus', 'g'),
+    ('family', 'f'),
+    ('order', 'o'),
+    ('class', 'c'),
+    ('phylum', 'p'),
+    ('superkingdom', 'k'),
 
-  Lineages are truncated to species, and missing values reported
-  as '<abbrev>__unclassified'
+  Lineages are truncated to either the most specific defined rank or
+  species, and missing tax_names at a given rank are replaced with the
+  tax_name of the parent, eg
+
+    "...;f__something;g__<None>;s__whatever"
+
+  would become
+
+    "...;f__something;g__something_unclassified;s__whatever"
 
 """
 
+import re
 import argparse
 import csv
 import logging
@@ -50,7 +58,8 @@ def build_parser(parser):
 
     input_group.add_argument(
         'taxtable', metavar='FILE', type=argparse.FileType('rt'),
-        help=('output of "taxit taxtable" containing all tax_ids represented in "seq_info"'))
+        help=('output of "taxit taxtable" containing all '
+              'tax_ids represented in "seq_info"'))
 
     input_group.add_argument(
         'seq_info', metavar='FILE',
@@ -105,17 +114,41 @@ def action(args):
             writer.writerow(dict(lineages[tax_id], seqname=name))
 
     if args.taxonomy_table:
-        # abbreviations from http://blog.mothur.org/2017/03/22/SILVA-v128-reference-files/
-        base_ranks = [('superkingdom', 'pk'),
-                      ('phylum', 'ph'),
-                      ('class', 'cl'),
-                      ('order', 'or'),
-                      ('family', 'fa'),
-                      ('genus', 'ge'),
-                      ('species', 'sp')]
+        # these abbreviations appear to be those used in SILVA
+        base_ranks = [
+            ('species', 's'),
+            ('genus', 'g'),
+            ('family', 'f'),
+            ('order', 'o'),
+            ('class', 'c'),
+            ('phylum', 'p'),
+            ('superkingdom', 'k'),
+        ]
+
+        def clean(tax_name, rexp=re.compile(r'[^-A-Z0-9_\[\]]+', re.I)):
+            if tax_name:
+                return rexp.sub('_', tax_name.replace('(', '[').replace(')', ']'))
 
         for name, tax_id in namedict.items():
             lineage = lineages[tax_id]
-            taxstr = ';'.join('"{}__{}"'.format(abbrev, lineage.get(rank) or 'unclassified')
-                              for rank, abbrev in base_ranks)
+            # first, truncate to most specific defined rank
+            truncated = []
+            for rank, abbrev in base_ranks:
+                tax_name = lineage.get(rank)
+                if (truncated or tax_name):
+                    # remove any illegal characters here
+                    truncated.append((abbrev, clean(tax_name)))
+
+            truncated = list(reversed(truncated))
+
+            # fill in missing tax_names with the tax_name of the
+            # parent, starting with the second rank (assumes kingdom
+            # is always present)
+            for i, (abbrev, tax_name) in enumerate(truncated[1:], start=1):
+                if not tax_name:
+                    truncated[i] = (
+                        abbrev, truncated[i - 1][1].replace('_unclassified', '') +
+                        '_unclassified')
+
+            taxstr = ';'.join('__'.join(t) for t in truncated) + ';'
             args.taxonomy_table.write('{}\t{}\n'.format(name, taxstr))
