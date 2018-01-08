@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Detailed taxit documentation &#8212; taxtastic 0.8.5rc1 documentation</title>
+    <title>Detailed taxit documentation &#8212; taxtastic 0.8.5 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.8.5rc1',
+        VERSION:     '0.8.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="refpkg_api.html" title="The Python Refpkg API"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.5rc1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.5 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -459,16 +459,23 @@ optional arguments:
   <span class="p">(</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">mothur</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">wiki</span><span class="o">/</span><span class="n">Taxonomy_File</span><span class="p">)</span><span class="o">.</span> <span class="n">Ranks</span> <span class="n">are</span> <span class="n">limited</span> <span class="n">to</span> <span class="n">the</span>
   <span class="n">following</span><span class="p">,</span> <span class="k">with</span> <span class="n">corresponding</span> <span class="n">abbreviations</span><span class="p">:</span>
 
-  <span class="p">[(</span><span class="s1">&#39;superkingdom&#39;</span><span class="p">,</span> <span class="s1">&#39;pk&#39;</span><span class="p">),</span>
-   <span class="p">(</span><span class="s1">&#39;phylum&#39;</span><span class="p">,</span> <span class="s1">&#39;ph&#39;</span><span class="p">),</span>
-   <span class="p">(</span><span class="s1">&#39;class&#39;</span><span class="p">,</span> <span class="s1">&#39;cl&#39;</span><span class="p">),</span>
-   <span class="p">(</span><span class="s1">&#39;order&#39;</span><span class="p">,</span> <span class="s1">&#39;or&#39;</span><span class="p">),</span>
-   <span class="p">(</span><span class="s1">&#39;family&#39;</span><span class="p">,</span> <span class="s1">&#39;fa&#39;</span><span class="p">),</span>
-   <span class="p">(</span><span class="s1">&#39;genus&#39;</span><span class="p">,</span> <span class="s1">&#39;ge&#39;</span><span class="p">),</span>
-   <span class="p">(</span><span class="s1">&#39;species&#39;</span><span class="p">,</span> <span class="s1">&#39;sp&#39;</span><span class="p">)]</span>
+    <span class="p">(</span><span class="s1">&#39;species&#39;</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;genus&#39;</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;family&#39;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;order&#39;</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;class&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;phylum&#39;</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;superkingdom&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">),</span>
 
-  <span class="n">Lineages</span> <span class="n">are</span> <span class="n">truncated</span> <span class="n">to</span> <span class="n">species</span><span class="p">,</span> <span class="ow">and</span> <span class="n">missing</span> <span class="n">values</span> <span class="n">reported</span>
-  <span class="k">as</span> <span class="s1">&#39;&lt;abbrev&gt;__unclassified&#39;</span>
+  <span class="n">Lineages</span> <span class="n">are</span> <span class="n">truncated</span> <span class="n">to</span> <span class="n">either</span> <span class="n">the</span> <span class="n">most</span> <span class="n">specific</span> <span class="n">defined</span> <span class="n">rank</span> <span class="ow">or</span>
+  <span class="n">species</span><span class="p">,</span> <span class="ow">and</span> <span class="n">missing</span> <span class="n">tax_names</span> <span class="n">at</span> <span class="n">a</span> <span class="n">given</span> <span class="n">rank</span> <span class="n">are</span> <span class="n">replaced</span> <span class="k">with</span> <span class="n">the</span>
+  <span class="n">tax_name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">parent</span><span class="p">,</span> <span class="n">eg</span>
+
+    <span class="s2">&quot;...;f__something;g__&lt;None&gt;;s__whatever&quot;</span>
+
+  <span class="n">would</span> <span class="n">become</span>
+
+    <span class="s2">&quot;...;f__something;g__something_unclassified;s__whatever&quot;</span>
 
 <span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
   <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
@@ -1037,11 +1044,11 @@ database options:
         <li class="right" >
           <a href="refpkg_api.html" title="The Python Refpkg API"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.5rc1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.5 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2011-2017, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
+        &#169; Copyright 2011-2018, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
     </div>
   </body>
