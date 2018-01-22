@@ -75,7 +75,7 @@ def build_parser(parser):
         help=('name of column in "seq_info" containing tax_ids'))
 
     output_group = parser.add_argument_group(
-        "Output options").add_mutually_exclusive_group()
+        "Output options")
 
     output_group.add_argument(
         '-c', '--csv-table', type=argparse.FileType('wt'), metavar='FILE',
