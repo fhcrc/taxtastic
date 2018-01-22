@@ -2,6 +2,11 @@
  change log for taxtastic
 ==========================
 
+next release
+============
+
+* recognize LG-model in Fasttree stats file
+
 0.8.5
 =====
 

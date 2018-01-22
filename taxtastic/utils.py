@@ -113,7 +113,7 @@ JTT_MODEL = ('ML Model: Jones-Taylor-Thorton, CAT '
              'approximation with 20 rate categories')
 WAG_MODEL = ('ML Model: Whelan-And-Goldman, CAT '
              'approximation with 20 rate categories')
-
+LG_MODEL = 'ML Model: Le-Gascuel 2008, CAT approximation with 20 rate categories'
 
 def parse_fasttree(fobj):
     data = {
@@ -145,6 +145,10 @@ def parse_fasttree(fobj):
             data['empirical_frequencies'] = False
         elif line.strip() == WAG_MODEL:
             data['subs_model'] = 'WAG'
+            data['datatype'] = 'AA'
+            data['empirical_frequencies'] = False
+        elif line.strip() == LG_MODEL:
+            data['subs_model'] = 'LG'
             data['datatype'] = 'AA'
             data['empirical_frequencies'] = False
 
