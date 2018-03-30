@@ -82,7 +82,7 @@ def parse_raxml(handle):
     s = ''.join(handle.readlines())
     result = {}
     try_set_fields(result, r'(?P<program>RAxML version [0-9.]+)', s)
-    try_set_fields(result, r'(?P<datatype>DNA|RNA|AA)', s)
+    try_set_fields(result, r'DataType: (?P<datatype>DNA|RNA|AA)', s)
     result['empirical_frequencies'] = (
         result['datatype'] != 'AA' or
         re.search('empirical base frequencies', s, re.IGNORECASE) is not None)
@@ -114,6 +114,7 @@ JTT_MODEL = ('ML Model: Jones-Taylor-Thorton, CAT '
 WAG_MODEL = ('ML Model: Whelan-And-Goldman, CAT '
              'approximation with 20 rate categories')
 LG_MODEL = 'ML Model: Le-Gascuel 2008, CAT approximation with 20 rate categories'
+
 
 def parse_fasttree(fobj):
     data = {
@@ -294,4 +295,3 @@ def sqlite_default():
 
 def random_name(length):
     return ''.join([random.choice(string.ascii_letters) for n in range(length)])
-
