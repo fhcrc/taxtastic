@@ -12,32 +12,18 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-import ConfigParser
 import csv
 import logging
 import os
 import re
 import subprocess
-import sys
+import string
+import random
+from collections import OrderedDict
+
+from six.moves import configparser
 
 log = logging
-
-
-def apply_df_status(func, df, msg=''):
-    """
-
-    """
-    tmp_column = 'index_number'
-    row_count = float(len(df))
-    df[tmp_column] = xrange(int(row_count))
-    msg += ' {:.0%}\r'
-
-    def apply_func(item, msg):
-        sys.stderr.write(msg.format(item[tmp_column] / row_count))
-        return func(item)
-
-    df = df.apply(apply_func, args=[msg], axis=1)
-    return df.drop(tmp_column, axis=1)
 
 
 def get_new_nodes(fname):
@@ -79,7 +65,7 @@ def try_set_fields(d, regex, text, hook=lambda x: x):
     v = re.search(regex, text, re.MULTILINE)
     if v:
         d.update(dict([(key, hook(val)) for key, val
-                       in v.groupdict().iteritems()]))
+                       in v.groupdict().items()]))
     return d
 
 
@@ -127,7 +113,7 @@ JTT_MODEL = ('ML Model: Jones-Taylor-Thorton, CAT '
              'approximation with 20 rate categories')
 WAG_MODEL = ('ML Model: Whelan-And-Goldman, CAT '
              'approximation with 20 rate categories')
-
+LG_MODEL = 'ML Model: Le-Gascuel 2008, CAT approximation with 20 rate categories'
 
 def parse_fasttree(fobj):
     data = {
@@ -144,21 +130,25 @@ def parse_fasttree(fobj):
         if splut[0] == 'FastTree':
             data['program'] = line.strip()
         elif splut[0] == 'Rates':
-            data['Price-CAT']['Rates'] = map(float, splut[1:])
+            data['Price-CAT']['Rates'] = list(map(float, splut[1:]))
         elif splut[0] == 'SiteCategories':
-            data['Price-CAT']['SiteCategories'] = map(int, splut[1:])
+            data['Price-CAT']['SiteCategories'] = list(map(int, splut[1:]))
         elif splut[0] == 'NCategories':
             data['Price-CAT']['n_cats'] = int(splut[1])
         elif splut[0] == 'GTRRates':
             data['subs_rates'] = dict(
-                zip(['ac', 'ag', 'at', 'cg', 'ct', 'gt'],
-                    map(float, splut[1:])))
+                list(zip(['ac', 'ag', 'at', 'cg', 'ct', 'gt'],
+                         list(map(float, splut[1:])))))
         elif line.strip() == JTT_MODEL:
             data['subs_model'] = 'JTT'
             data['datatype'] = 'AA'
             data['empirical_frequencies'] = False
         elif line.strip() == WAG_MODEL:
             data['subs_model'] = 'WAG'
+            data['datatype'] = 'AA'
+            data['empirical_frequencies'] = False
+        elif line.strip() == LG_MODEL:
+            data['subs_model'] = 'LG'
             data['datatype'] = 'AA'
             data['empirical_frequencies'] = False
 
@@ -215,6 +205,32 @@ def parse_phyml(fobj, frequency_type=None):
     return result
 
 
+def parse_stockholm(fobj):
+    """Return a list of names from an Stockholm-format sequence alignment
+    file. ``fobj`` is an open file or another object representing a
+    sequence of lines.
+
+    """
+
+    names = OrderedDict()
+
+    found_eof = False
+    for line in fobj:
+        line = line.strip()
+        if line == '//':
+            found_eof = True
+        elif line.startswith('#') or not line.strip():
+            continue
+        else:
+            name, __ = line.split(None, 1)
+            names[name] = None
+
+    if not found_eof:
+        raise ValueError('Invalid Stockholm format: no file terminator')
+
+    return list(names.keys())
+
+
 def has_rppr(rppr_name='rppr'):
     """
     Check for rppr binary in path
@@ -245,6 +261,8 @@ def add_database_args(parser):
         help=('Database string URI or filename.  If no database scheme '
               'specified \"sqlite:///\" will be prepended. [%(default)s]'))
     db_parser = parser.add_argument_group(title='database options')
+
+    # TODO: better description of what --schema does
     db_parser.add_argument(
         '--schema',
         help=('Name of SQL schema in database to query '
@@ -260,13 +278,20 @@ def sqlite_default():
     default database.
     '''
     def parse_url(url):
+        # TODO: need separate option for a config file
         if url.endswith('.db') or url.endswith('.sqlite'):
             if not url.startswith('sqlite:///'):
                 url = 'sqlite:///' + url
-        else:
-            conf = ConfigParser.SafeConfigParser(allow_no_value=True)
+        elif url.endswith('.cfg') or url.endswith('.conf'):
+            conf = configparser.SafeConfigParser(allow_no_value=True)
             conf.optionxform = str  # options are case-sensitive
             conf.read(url)
             url = conf.get('sqlalchemy', 'url')
+
         return url
     return parse_url
+
+
+def random_name(length):
+    return ''.join([random.choice(string.ascii_letters) for n in range(length)])
+

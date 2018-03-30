@@ -14,162 +14,109 @@
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 """Update obsolete tax_ids
 
-Use in preparation for ``taxit taxtable``. Takes sequence info file as
-passed to ``taxit create --seq-info``
+Replaces tax_ids as specified in table 'merged' in the taxonomy
+database. Use in preparation for ``taxit taxtable``. Takes sequence
+info file as passed to ``taxit create --seq-info``
 
-TODO: refactor to simplify the action function.
 """
 
 import csv
 import logging
-import pandas
 import sqlalchemy
 import sys
 import taxtastic
+
+from fastalite import Opener
+
+from taxtastic.taxonomy import Taxonomy
 
 log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
     parser.add_argument(
-        'infile',
-        nargs='?',
-        default=sys.stdin,
-        help=('Input CSV file to process, minimally '
-              'containing the fields `tax_id`. Rows with '
-              'missing tax_ids are left unchanged.'))
-
+        'infile', type=Opener('rU'),
+        help=('Input CSV file to process, minimally containing the field `tax_id`. '
+              'Use "-" for stdin.'))
     parser = taxtastic.utils.add_database_args(parser)
+    parser.add_argument(
+        '-o', '--outfile', default=sys.stdout, type=Opener('wt'),
+        help='Modified version of input file [default: stdout]')
+    parser.add_argument(
+        '--taxid-column', default='tax_id',
+        help='name of column containing tax_ids to be replaced [%(default)s]')
+    parser.add_argument(
+        '--unknowns', type=Opener('wt'),
+        help=('optional output file containing rows with unknown tax_ids '
+              'having no replacements in merged table'))
+    parser.add_argument(
+        '-a', '--unknown-action', choices=['drop', 'ignore', 'error'], default='error',
+        help=('action to perform for tax_ids with no replacement '
+              'in merged table [%(default)s]'))
 
-    parser.add_argument(
-        '-o', '--out',
-        default=sys.stdout,
-        help='Output file to write updates [default: stdout]')
-    parser.add_argument(
-        '--taxid-column',
-        default='tax_id',
-        help='name of tax_id column to update [%(default)s]')
-    parser.add_argument(
-        '--unknowns',
-        help=('unchanged taxonomy output of records with unknown taxids'))
-    parser.add_argument(
-        '--ignore-unknowns',
-        action='store_true',
-        help='allow unknown tax_ids in final output')
-    parser.add_argument(
-        '--taxid-classified',
-        action='store_true',
-        help=('add column True/False column if '
-              'the tax_id is primary and valid'))
-    parser.add_argument(
-        '--name-column',
-        help=('column with taxon name(s) to help '
-              'find tax_ids. ex: organism name'))
+    # not implemented for now
+    # parser.add_argument(
+    #     '--use-names', action='store_true', default=False,
+    #     help='Use tax_name to assign replacement for unknown tax_ids'),
+    # parser.add_argument(
+    #     '--name-column', default='tax_name',
+    #     help=('column to use for name lookup if --use-name '
+    #           'is specified [%(default)s]'))
 
 
 def action(args):
-    try:
-        rows = pandas.read_csv(args.infile, dtype='str')
-    except pandas.io.common.EmptyDataError as e:
-        log.error(e)
-        return
-    columns = rows.columns.tolist()  # preserve column order
+    reader = csv.DictReader(args.infile)
+    fieldnames = reader.fieldnames
+    taxid_column = args.taxid_column
+    drop = args.unknown_action == 'drop'
+    error = args.unknown_action == 'error'
+    ignore = args.unknown_action == 'ignore'
 
-    if args.taxid_column not in columns:
+    if taxid_column not in fieldnames:
         raise ValueError("No column " + args.taxid_column)
 
-    if args.name_column:
-        if args.name_column not in columns:
-            msg = '"No "' + args.name_column + '" column'
-            raise ValueError(msg)
+    # TODO: remove unless --use-names is implemented
+    # if args.use_names and args.name_column not in fieldnames:
+    #     raise ValueError("No column " + args.name_column)
+
+    writer = csv.DictWriter(args.outfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
+    writer.writeheader()
+
+    if args.unknowns:
+        unknowns = csv.DictWriter(
+            args.unknowns, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
+        unknowns.writeheader()
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
+    tax = Taxonomy(engine, taxtastic.ncbi.RANKS, schema=args.schema)
 
-    merged = pandas.read_sql_table(
-        'merged', engine,
-        schema=args.schema,
-        index_col='old_tax_id')
-    log.info('updating tax_ids')
-    rows = rows.join(merged, on=args.taxid_column)
+    with tax.engine.connect() as con:
+        log.info('reading table merged')
+        result = con.execute(
+            'select old_tax_id, new_tax_id from {merged}'.format(merged=tax.merged))
+        mergedict = dict(result.fetchall())
 
-    # overwrite tax_ids where there is a new_tax_id
-    inew_tax_ids = ~rows['new_tax_id'].isnull()
-    rows.loc[inew_tax_ids, args.taxid_column] = \
-        rows[inew_tax_ids]['new_tax_id']
-    rows = rows.drop('new_tax_id', axis=1)
+        log.info('reading tax_ids from table {nodes}'.format(nodes=tax.nodes))
+        result = con.execute('select tax_id from {nodes}'.format(nodes=tax.nodes))
+        all_tax_ids = {x[0] for x in result.fetchall()}
 
-    log.info('loading names table')
-    names = pandas.read_sql_table(
-        'names', engine,
-        schema=args.schema,
-        columns=['tax_id', 'tax_name', 'is_primary'])
+    log.info('reading input file')
+    for row in reader:
+        tax_id = row[taxid_column]
 
-    if args.name_column:
-        """
-        use the args.name_column to do a string comparison with
-        names.tax_name column to find a suitable tax_id
-        """
-        unknowns = rows[~rows[args.taxid_column].isin(names['tax_id'])]
+        if tax_id in all_tax_ids:
+            pass  # write row without modification
+        elif tax_id in mergedict:
+            row[taxid_column] = mergedict[tax_id]
+        else:  # tax_id is unknown
+            if args.unknowns:
+                unknowns.writerow(row)
 
-        if not unknowns.empty:
-            """
-            Take any tax_id associated with a string match
-            to tax_name prioritizing is_primary=True
-            """
-            unknowns = unknowns.drop(args.taxid_column, axis=1)
-            names = names.sort_values('is_primary', ascending=False)
-            names = names.drop_duplicates(subset='tax_name', keep='first')
-            names = names.set_index('tax_name')
-            found = unknowns.join(names, on=args.name_column, how='inner')
-            rows.loc[found.index, args.taxid_column] = found['tax_id']
+            if ignore:
+                pass
+            elif drop:
+                continue
+            elif error:
+                sys.exit('Error: tax_id {} is unknown'.format(tax_id))
 
-    if not args.ignore_unknowns:
-        unknowns = rows[~rows[args.taxid_column].isin(names['tax_id'])]
-        if args.unknowns:
-            """
-            Output unknown tax_ids
-            """
-            unknowns.to_csv(
-                args.unknowns,
-                index=False,
-                columns=columns,
-                quoting=csv.QUOTE_NONNUMERIC)
-        elif not unknowns.empty:
-            raise ValueError('Unknown or missing tax_ids present')
-        rows = rows[~rows.index.isin(unknowns.index)]
-
-    if args.taxid_classified:
-        """
-        split seq_info into two dfs rank <> species
-
-        ranks <= species get is_valid column
-        ranks > species get False
-        """
-
-        if 'taxid_classified' in columns:
-            rows = rows.drop('taxid_classified', axis=1)
-        else:
-            columns.append('taxid_classified')
-        ranks = pandas.read_sql_table('ranks', engine, schema=args.schema)
-        nodes = pandas.read_sql_table(
-            'nodes', engine,
-            schema=args.schema,
-            columns=['tax_id', 'rank', 'is_valid'],
-            index_col='tax_id')
-        rows = species_is_classified(rows, nodes, ranks)
-
-    # output seq_info with new tax_ids
-    rows.to_csv(
-        args.out,
-        index=False,
-        columns=columns,
-        quoting=csv.QUOTE_NONNUMERIC)
-
-
-def species_is_classified(rows, nodes, ranks):
-    rows = rows.join(nodes, on='tax_id')
-    rows['rank'] = rows['rank'].astype(
-        'category', categories=ranks['rank'].tolist(), ordered=True)
-    rows.loc[rows['rank'] > 'species', 'is_valid'] = False
-    rows = rows.rename(columns={'is_valid': 'taxid_classified'})
-    return rows
+        writer.writerow(row)

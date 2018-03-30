@@ -1,11 +1,18 @@
-sudo: false
-language: python
-python: 2.7
+matrix:
+  include:
+    - os: linux
+      sudo: false
+      language: python
+      python: 2.7
+    - os: osx
+      language: generic
+      env: PYTHON=3.6.3
 
 cache:
   # must specify pip dir
   # https://github.com/travis-ci/travis-ci/issues/3239
   directories:
+    - $HOME/virtualenv
     - $HOME/.cache/pip
 
 env:
@@ -18,17 +25,31 @@ env:
     - PIP_WHEEL_DIR=$HOME/.cache/pip/wheels
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 
-# Install numpy, then BioPython and other dependencies
-# BioPython doesn't always play well with pip install
-# Install Cython before Pandas
-before_install: 
-  - pip install Cython
-  - pip wheel Cython pandas sqlalchemy decorator biopython
-# for tox
-  - pip wheel check-manifest readme_renderer flake8 tox
+before_install: |
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    dev/install_pysqlite.sh
+    pip install -U pip
+    pip install check-manifest readme_renderer flake8 docutils
+  else
+    # see https://pythonhosted.org/CodeChat/.travis.yml.html
+    brew install pyenv-virtualenv
+    pyenv install $PYTHON
+    export PYENV_VERSION=$PYTHON
+    export PATH="/Users/travis/.pyenv/shims:${PATH}"
+    pyenv-virtualenv venv
+    source venv/bin/activate
+    # A manual check that the correct version of Python is running.
+    python --version
+    pip install -U pip
+    pip install check-manifest readme_renderer flake8 docutils
+  fi
 
-install: 
-  - pip install .
-  - pip install tox
+install:
+  - pip install -U -e .
 
-script: tox
+script:
+  - python setup.py -q test
+  - check-manifest --ignore
+    "tox.ini,test*,dev*,docs*,taxtastic/data,taxtastic/data/*"
+  - python setup.py check --metadata --restructuredtext --strict
+  # - flake8 taxtastic

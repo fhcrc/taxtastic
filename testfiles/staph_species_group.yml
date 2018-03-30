@@ -1,0 +1,15 @@
+# sqlite3 -separator ' ' /home/nhoffman/src/taxtastic/test_output/test_subcommands.TestAddNode.test_new_nodes04/taxonomy.db "select '-', tax_id, '#', tax_name from nodes join names using(tax_id) where is_primary and rank='species' and parent_id='1279' and tax_name not like '%sp.%' order by tax_name"
+---
+type: node
+tax_id: 'stapha_sg'
+parent_id: '1279'
+rank: species_group
+source_name: uw
+names:
+  - tax_name: Staph A group
+children:
+  - '1607738' # Staphylococcus argensis
+  - '985002' # Staphylococcus argenteus
+  - '29378' # Staphylococcus arlettae
+  - '1280' # Staphylococcus aureus
+  - '29379' # Staphylococcus auricularis

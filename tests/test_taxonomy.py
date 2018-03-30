@@ -7,11 +7,11 @@ import shutil
 
 from sqlalchemy import create_engine
 
-import config
-from config import TestBase
+from . import config
+from .config import TestBase
 
 import taxtastic
-from taxtastic.taxonomy import Taxonomy
+from taxtastic.taxonomy import Taxonomy, TaxonIntegrityError
 import taxtastic.ncbi
 import taxtastic.utils
 
@@ -35,9 +35,6 @@ class TestTaxonomyBase(TestBase):
 
 
 class TestAddNode(TestTaxonomyBase):
-    """
-    test tax.add_node
-    """
 
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
@@ -50,32 +47,30 @@ class TestAddNode(TestTaxonomyBase):
 
     def test01(self):
         self.tax.add_node(
-            tax_id='1578_1',
-            parent_id='1578',
-            rank='species_group',
-            tax_name='Lactobacillus helveticis/crispatus',
-            source_id=2
+            tax_id='1280_1',
+            parent_id='1280',
+            rank='subspecies',
+            names=[{'tax_name': 'foo'}],
+            source_name='ncbi'
         )
 
-        lineage = self.tax.lineage('1578_1')
-        self.assertTrue(lineage['tax_id'] == '1578_1')
-        self.assertTrue(lineage['tax_name'] ==
-                        'Lactobacillus helveticis/crispatus')
+        lineage = self.tax.lineage('1280_1')
+        self.assertEqual(lineage['tax_id'], '1280_1')
+        self.assertEqual(lineage['tax_name'], 'foo')
 
     def test02(self):
 
-        new_taxid = '1578_1'
-        new_taxname = 'Lactobacillus helveticis/crispatus'
-        children = ['47770',  # crispatus
-                    '1587']  # helveticus
+        new_taxid = '1279_1'
+        new_taxname = 'between genus and species'
+        children = ['1280', '1281']
 
         self.tax.add_node(
             tax_id=new_taxid,
-            parent_id='1578',
+            parent_id='1279',
             rank='species_group',
-            tax_name=new_taxname,
+            names=[{'tax_name': new_taxname}],
             children=children,
-            source_id=2
+            source_name='foo'
         )
 
         lineage = self.tax.lineage(new_taxid)
@@ -88,25 +83,194 @@ class TestAddNode(TestTaxonomyBase):
 
     def test03(self):
 
-        rows = taxtastic.utils.get_new_nodes(
-            os.path.join(datadir, 'new_taxa.csv'))
-        for d in rows:
-            d['source_id'] = 2
-            d.pop('comments')  # not part of add_node constructor
-            self.tax.add_node(**d)
+        new_taxid = '1279_1'
+        new_taxname = 'between genus and species'
+        children = ['1280', '1281']
 
-        new_taxid = '1578_1'
-        new_taxname = 'Lactobacillus helveticis/crispatus'
-        children = ['47770',  # crispatus
-                    '1587']  # helveticus
-        lineage = self.tax.lineage(new_taxid)
+        self.assertRaises(
+            TaxonIntegrityError,
+            self.tax.add_node,
+            tax_id=new_taxid,
+            parent_id='1279',
+            rank='genus',
+            names=[{'tax_name': new_taxname}],
+            children=children,
+            source_name='ncbi')
 
-        self.assertTrue(lineage['tax_id'] == new_taxid)
-        self.assertTrue(lineage['tax_name'] == new_taxname)
+    def test04(self):
+        # existing node
+        self.assertRaises(
+            ValueError,
+            self.tax.add_node,
+            tax_id='1280',
+            parent_id='1279',
+            rank='species',
+            names=[{'tax_name': 'I already exist'}],
+            source_name='ncbi'
+        )
 
-        for taxid in children:
-            lineage = self.tax.lineage(taxid)
-            self.assertTrue(lineage['parent_id'] == new_taxid)
+    def test05(self):
+        self.tax.add_node(
+            tax_id='1280_1',
+            parent_id='1280',
+            rank='subspecies',
+            names=[
+                {'tax_name': 'foo', 'is_primary': True},
+                {'tax_name': 'bar'},
+            ],
+            source_name='ncbi'
+        )
+
+        lineage = self.tax.lineage('1280_1')
+        self.assertEqual(lineage['tax_id'], '1280_1')
+        self.assertEqual(lineage['tax_name'], 'foo')
+
+    def test06(self):
+        # multiple names, none primary
+        self.assertRaises(
+            ValueError,
+            self.tax.add_node,
+            tax_id='1280_1',
+            parent_id='1280',
+            rank='subspecies',
+            names=[
+                {'tax_name': 'foo'},
+                {'tax_name': 'bar'},
+            ],
+            source_name='ncbi')
+
+    def test07(self):
+        self.tax.add_node(
+            tax_id='1280_1',
+            parent_id='1280',
+            rank='subspecies',
+            names=[
+                {'tax_name': 'foo', 'is_primary': True},
+                {'tax_name': 'bar'},
+            ],
+            source_name='ncbi',
+            execute=False
+        )
+
+        self.assertRaises(ValueError, self.tax.lineage, '1280_1')
+
+    def test08(self):
+        # test has_node()
+        self.assertTrue(self.tax.has_node('1280'))
+        self.assertFalse(self.tax.has_node('foo'))
+
+
+class TestAddName(TestTaxonomyBase):
+    """
+    test tax.add_node
+    """
+
+    def count_names(self, tax_id):
+        with self.tax.engine.connect() as con:
+            result = con.execute(
+                'select count(*) from names where tax_id = ?', (tax_id,))
+            return result.fetchone()[0]
+
+    def count_primary_names(self, tax_id):
+        with self.tax.engine.connect() as con:
+            result = con.execute(
+                'select count(*) from names where tax_id = ? and is_primary',
+                (tax_id,))
+            return result.fetchone()[0]
+
+    def primary_name(self, tax_id):
+        with self.tax.engine.connect() as con:
+            result = con.execute(
+                'select tax_name from names where tax_id = ? and is_primary',
+                (tax_id,))
+            val = result.fetchone()
+            return val[0] if val else None
+
+    def setUp(self):
+        self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
+        log.info(self.dbname)
+        shutil.copyfile(dbname, self.dbname)
+        super(TestAddName, self).setUp()
+
+    def test_name01(self):
+        names_before = self.count_names('1280')
+        self.tax.add_name(tax_id='1280', tax_name='SA', source_name='ncbi')
+        self.assertEqual(names_before + 1, self.count_names('1280'))
+
+    def test_name02(self):
+        # number of primary names should remain 1
+        names_before = self.count_names('1280')
+        self.assertEqual(self.count_primary_names('1280'), 1)
+        self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True,
+                          source_name='ncbi')
+        self.tax.add_name(tax_id='1280', tax_name='SA2', is_primary=True,
+                          source_name='ncbi')
+        self.assertEqual(names_before + 2, self.count_names('1280'))
+        self.assertEqual(self.count_primary_names('1280'), 1)
+
+    def test_name03(self):
+        # insertion of duplicate row fails
+        self.tax.add_name(tax_id='1280', tax_name='SA', is_primary=True,
+                          source_name='ncbi')
+
+        self.assertRaises(
+            ValueError, self.tax.add_name, tax_id='1280', tax_name='SA',
+            is_primary=True, source_name='ncbi')
+
+        self.assertEqual(self.primary_name('1280'), 'SA')
+
+
+class TestGetSource(TestTaxonomyBase):
+    def setUp(self):
+        self.dbname = dbname
+        super(TestGetSource, self).setUp()
+
+    def test01(self):
+        self.assertRaises(ValueError, self.tax.get_source)
+
+    def test02(self):
+        self.assertRaises(ValueError, self.tax.get_source, 1, 'ncbi')
+
+    def test03(self):
+        result = self.tax.get_source(source_id=1)
+        self.assertDictEqual(result, {
+            'description': 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip',
+            'id': 1, 'name': 'ncbi'})
+
+    def test04(self):
+        result = self.tax.get_source(source_name='ncbi')
+        self.assertDictEqual(result, {
+            'description': 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip',
+            'id': 1, 'name': 'ncbi'})
+
+    def test05(self):
+        self.assertRaises(ValueError, self.tax.get_source, source_id=2)
+
+
+class TestAddSource(TestTaxonomyBase):
+    def setUp(self):
+        self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
+        log.info(self.dbname)
+        shutil.copyfile(dbname, self.dbname)
+        super(TestAddSource, self).setUp()
+
+    def tearDown(self):
+        pass
+
+    def sources(self):
+        with self.tax.engine.connect() as con:
+            result = con.execute('select * from source')
+            return result.fetchall()
+
+    def test01(self):
+        self.tax.add_source('foo')
+        self.assertEqual(self.sources()[1], (2, 'foo', None))
+
+    def test02(self):
+        self.tax.add_source('ncbi')
+        self.assertEqual(
+            self.sources(),
+            [(1, 'ncbi', 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip')])
 
 
 def test__node():
@@ -114,7 +278,7 @@ def test__node():
         'sqlite:///../testfiles/small_taxonomy.db', echo=False)
     tax = Taxonomy(engine, taxtastic.ncbi.RANKS)
     assert tax._node(None) is None
-    assert tax._node('91061') == (u'1239', u'class')
+    assert tax._node('91061') == ('1239', 'class')
 
 
 def test_sibling_of():

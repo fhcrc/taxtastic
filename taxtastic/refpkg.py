@@ -24,9 +24,7 @@ import errno
 import os
 import time
 import warnings
-
-import Bio.Phylo
-import Bio.SeqIO
+import sys
 import contextlib
 import copy
 import csv
@@ -38,10 +36,11 @@ import subprocess
 import tempfile
 import zipfile
 
+import dendropy
 from decorator import decorator
+from fastalite import fastalite
 
 from taxtastic import utils, taxdb
-
 
 FORMAT_VERSION = '1.1'
 
@@ -50,10 +49,16 @@ class DerivedFileNotUpdatedWarning(UserWarning):
     pass
 
 
+def is_string(val):
+    if sys.version_info.major == 2:
+        return isinstance(val, basestring)
+    else:
+        return isinstance(val, str)
+
+
 def md5file(fobj):
     md5 = hashlib.md5()
-    for block in iter(lambda: fobj.read(4096), ''):
-        md5.update(block)
+    md5.update(fobj.read())
     return md5.hexdigest()
 
 
@@ -131,7 +136,7 @@ def transaction(f, self, *args, **kwargs):
             r = f(self, *args, **kwargs)
             self.commit_transaction()
             return r
-        except:
+        except Exception:
             self.contents = self.current_transaction['rollback']
             self._sync_to_disk()
             raise
@@ -256,7 +261,8 @@ class Refpkg(object):
 
     def calculate_resource_md5(self, resource):
         """Calculate the MD5 sum for a particular named resource."""
-        return md5file(self.open_resource(resource, 'r'))
+        with self.open_resource(resource, 'rb') as f:
+            return md5file(f)
 
     def resource_path(self, resource):
         """
@@ -321,7 +327,8 @@ class Refpkg(object):
         filename = os.path.basename(path)
         base, ext = os.path.splitext(filename)
         if os.path.exists(self.file_path(filename)):
-            with tempfile.NamedTemporaryFile(dir=self.path, prefix=base, suffix=ext) as tf:
+            with tempfile.NamedTemporaryFile(
+                    dir=self.path, prefix=base, suffix=ext) as tf:
                 filename = os.path.basename(tf.name)
         shutil.copyfile(path, self.file_path(filename))
         self.contents['files'][key] = filename
@@ -336,11 +343,11 @@ class Refpkg(object):
 
     def file_keys(self):
         """Return a list of all the keys referring to files in this refpkg."""
-        return self.contents['files'].keys()
+        return list(self.contents['files'].keys())
 
     def metadata_keys(self):
         """Return a list of all the keys referring to metadata in this refpkg."""
-        return self.contents['metadata'].keys()
+        return list(self.contents['metadata'].keys())
 
     def _log(self, msg):
         """Set the log message for this operation.
@@ -385,14 +392,16 @@ class Refpkg(object):
 
         if not('rollforward' in self.contents):
             return "Manifest file missing key rollforward"
+
         if self.contents['rollforward'] is not None:
             if not(isinstance(self.contents['rollforward'], list)):
-                return "Key rollforward was not a list, found %s" % str(self.contents[
-                                                                        'rollforward'])
+                return "Key rollforward was not a list, found %s" % str(
+                    self.contents['rollforward'])
             elif len(self.contents['rollforward']) != 2:
                 return "Key rollforward had wrong length, found %d" % \
                     len(self.contents['rollforward'])
-            elif not(isinstance(self.contents['rollforward'][0], basestring)):
+            elif not is_string(self.contents['rollforward'][0]):
+                print(type(self.contents['rollforward'][0]))
                 return "Key rollforward's first entry was not a string, found %s" % \
                     str(self.contents['rollforward'][0])
             elif not(isinstance(self.contents['rollforward'][1], dict)):
@@ -401,17 +410,20 @@ class Refpkg(object):
 
         if not("log" in self.contents):
             return "Manifest file missing key 'log'"
+
         if not(isinstance(self.contents['log'], list)):
             return "Key 'log' in manifest did not refer to a list"
+
         # MD5 keys and filenames are in one to one correspondence
-        if self.contents['files'].viewkeys() != self.contents[
-                'md5'].viewkeys():
+        if self.contents['files'].keys() != self.contents[
+                'md5'].keys():
             return ("Files and MD5 sums in manifest do not "
                     "match (files: %s, MD5 sums: %s)") % \
-                (self.contents['files'].keys(),
-                 self.contents['md5'].keys())
+                (list(self.contents['files'].keys()),
+                 list(self.contents['md5'].keys()))
+
         # All files in the manifest exist and match the MD5 sums
-        for key, filename in self.contents['files'].iteritems():
+        for key, filename in self.contents['files'].items():
             # we don't need to explicitly check for existence;
             # calculate_resource_md5 will open the file for us.
             expected_md5 = self.resource_md5(key)
@@ -458,7 +470,8 @@ class Refpkg(object):
         else:
             old_path = None
         self._add_file(key, new_path)
-        md5_value = md5file(open(new_path))
+        with open(new_path, 'rb') as f:
+            md5_value = md5file(f)
         self.contents['md5'][key] = md5_value
         self._log('Updated file: %s=%s' % (key, new_path))
         if key == 'tree_stats' and old_path:
@@ -595,8 +608,8 @@ class Refpkg(object):
             self._delete_file(f)
         self.contents['rollback'] = None
         self.contents['rollforward'] = None
-        self.contents['log'].insert(0,
-                                    'Stripped refpkg (removed %d files)' % len(to_delete))
+        self.contents['log'].insert(
+            0, 'Stripped refpkg (removed %d files)' % len(to_delete))
         self._sync_to_disk()
 
     def start_transaction(self):
@@ -647,11 +660,12 @@ class Refpkg(object):
         # the same sequences.
 
         with self.open_resource('aln_fasta') as f:
-            try:
-                Bio.SeqIO.read(f, 'fasta')
-            except ValueError as v:
-                if v[0] == 'No records found in handle':
-                    return 'aln_fasta file is not valid FASTA.'
+            firstline = f.readline()
+            if firstline.startswith('>'):
+                f.seek(0)
+            else:
+                return 'aln_fasta file is not valid FASTA.'
+            fasta_names = {seq.id for seq in fastalite(f)}
 
         with self.open_resource('seq_info') as f:
             lines = list(csv.reader(f))
@@ -661,33 +675,27 @@ class Refpkg(object):
             for req_header in 'seqname', 'tax_id':
                 if req_header not in headers:
                     return "seq_info is missing {0}".format(req_header)
-            lens = [len(l) for l in lines]
-            if not(all([l == lens[0] and l > 1 for l in lens])):
-                return "seq_info is not valid CSV."
+            lengths = {len(line) for line in lines}
+            if len(lengths) > 1:
+                return "some lines in seq_info differ in field cout"
+            csv_names = {line[0] for line in lines[1:]}
 
         with self.open_resource('aln_sto') as f:
             try:
-                Bio.SeqIO.read(f, 'stockholm')
-            except ValueError as v:
-                if v[0] == 'No records found in handle':
-                    return 'aln_sto file is not valid Stockholm.'
+                sto_names = set(utils.parse_stockholm(f))
+            except ValueError:
+                return 'aln_sto file is not valid Stockholm.'
 
-        with self.open_resource('tree') as f:
-            try:
-                Bio.Phylo.read(f, 'newick')
-            except:
-                return 'tree file is not valid Newick.'
+        try:
+            tree = dendropy.Tree.get(
+                path=self.resource_path('tree'),
+                schema='newick',
+                case_sensitive_taxon_labels=True,
+                preserve_underscores=True)
+            tree_names = set(tree.taxon_namespace.labels())
+        except Exception:
+            return 'tree file is not valid Newick.'
 
-        with self.open_resource('aln_fasta') as f:
-            fasta_names = set([s.id for s in Bio.SeqIO.parse(f, 'fasta')])
-        with self.open_resource('seq_info') as f:
-            csv_names = set([s[0] for s in csv.reader(f)][
-                            1:])  # Remove header with [1:]
-        with self.open_resource('tree') as f:
-            tree_names = set([n.name for n in
-                              Bio.Phylo.read(f, 'newick').get_terminals()])
-        with self.open_resource('aln_sto') as f:
-            sto_names = set([s.id for s in Bio.SeqIO.parse(f, 'stockholm')])
         d = fasta_names.symmetric_difference(sto_names)
         if len(d) != 0:
             return "Names in aln_fasta did not match aln_sto.  Mismatches: " + \
@@ -704,16 +712,17 @@ class Refpkg(object):
         # Next make sure that taxonomy is valid CSV, phylo_model is valid JSON
         with self.open_resource('taxonomy') as f:
             lines = list(csv.reader(f))
-            lens = [len(l) for l in lines]
-            if not(all([l == lens[0] and l > 1 for l in lens])):
-                return "Taxonomy is invalid: not all lines had the same number of fields."
+            lengths = {len(line) for line in lines}
+            if len(lengths) > 1:
+                return ("Taxonomy is invalid: not all lines had "
+                        "the same number of fields.")
             # I don't try to check if the taxids match up to those
             # mentioned in aln_fasta, since that would make taxtastic
             # depend on RefsetInternalFasta in romperroom.
         with self.open_resource('phylo_model') as f:
             try:
                 json.load(f)
-            except ValueError as v:
+            except ValueError:
                 return "phylo_model is not valid JSON."
 
         return False

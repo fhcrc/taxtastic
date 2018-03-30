@@ -9,35 +9,117 @@ add_nodes
 
 .. literalinclude:: _helptext/add_nodes.txt
 
-Add additional nodes, specified in ``nodes.csv`` to the taxonomy in
-``database_file``.  ``nodes.csv`` should be a CSV file with its first
-line naming fields.  It *must* specify the columns
+Add nodes or names to the taxonomy in the specified database.
+``new_nodes`` should be a yaml format file containing one or more
+records, each of which specifies a new node or name.
 
+For a new **node** the following are required:
+
+``type``
+  The value must be "node"
 ``tax_id``
-  The tax_id for this new node in the taxonomy, which must not conflict with an existing tax_id.  NCBI's tax_ids are all integers, so it works well to choose an alphabetic prefix for the tax_ids for all new nodes (e.g., name them AB1, AB2, AB3, etc.).
+  The tax_id for this new node in the taxonomy, which must not
+  conflict with an existing tax_id.  NCBI's tax_ids are all integers,
+  so it works well to choose an alphabetic prefix for the tax_ids for
+  all new nodes (e.g., name them AB1, AB2, AB3, etc.).
 ``rank``
-  The name of the rank at which this node falls in the taxonomy (e.g., ``species`` or ``genus``).  The ranks understood by the NCBI taxonomy are ``root``, ``superkingdom``, ``kingdom``, ``subkingdom``, ``superphylum``, ``phylum``, ``subphylum``, ``superclass``, ``class``, ``subclass``, ``infraclass``, ``superorder``, ``order``, ``suborder``, ``parvorder``, ``infraorder``, ``superfamily``, ``family``, ``subfamily``, ``tribe``, ``subtribe``, ``genus``, ``subgenus``, ``species``, ``group``, ``species``, ``subgroup``, ``species``, ``subspecies``, ``varietas``, and ``forma``.
+  The name of the rank at which this node falls in the
+  taxonomy. Choose from among the ranks specified in table ``ranks``.
 ``parent_id``
   The tax_id which will be set as the parent of this node in the taxonomy.
-``tax_name``
-  The name of this taxon.
+``names``
+  One or more names to associate with the node. Minimally, must define
+  a single taxonomic name. See description of a name record below.
+
+Required unless a default source name is specified using the
+``--source-name`` option:
+
+``source_name``
+  A string describing the origin of these taxa so that it is easy to
+  find them in the database.
 
 Any combination of the following columns *may* be specified:
 
-``source_name``
-  A string describing the origin of these taxa so that it is easy to find them in the database.
-``source_id``
-  An integer specifying the source of these new nodes, used internally in the database to match to ``source_name``.
 ``children``
-  A semicolon separated list of tax_ids which should be detached from their current parents and attached to this node as its children.
+  A list of tax_ids which should be detached from their current
+  parents and attached to this node as its children.
 
-Examples::
+A minimal example of a record specifying a node (assuming
+``--source-name`` is provided on the command line)::
 
-    # Add the taxa specified in new_taxa.csv to taxonomy.db
-    taxit add_nodes -d taxonomy.db -N new_taxa.csv
+  ---
+  type: node
+  tax_id: "newid"
+  parent_id: "1279"
+  rank: species_group
+  names:
+    - tax_name: between genus and species
 
-    # Add the same taxa, but force the source name to be hetty_lab
-    taxit add_nodes -d taxonomy.db -N new_taxa.csv -S hetty_lab
+A record providing ``source_name``, multiple taxonomic names, plus
+child nodes::
+
+  ---
+  type: node
+  tax_id: "newid"
+  parent_id: "1279"
+  rank: species_group
+  names:
+    - tax_name: between genus and species
+      is_primary: true
+    - tax_name: another name
+  source_name: someplace
+  children:
+    - "1280" # Staphylococcus aureus
+    - "1281" # Staphylococcus carnosus
+
+A record specifying **names** to be added to existing nodes has the
+following required fields:
+
+``type``
+  The value must be "name"
+``tax_id``
+  The tax_id to add names to.
+``names``
+  A list of taxonomic names. If a single name is provided, requires
+  only ``tax_name``; if more than one, the primary name must be
+  indicated (see examples below).
+
+A minimal example (again, assuming ``source_name`` is defined from the command line)::
+
+  ---
+  type: name
+  tax_id: bar
+  names:
+    - tax_name: a new name for bar
+
+If there are multiple names::
+
+  ---
+  type: name
+  tax_id: bar
+  names:
+    - tax_name: a new name for bar
+      is_primary: true
+    - tax_name: another name
+
+Multiple records are delimited by ``---`` and may contain any
+combination of names and nodes::
+
+  ---
+  type: node
+  tax_id: "newid"
+  parent_id: "1279"
+  rank: species_group
+  names:
+    - tax_name: between genus and species
+  ---
+  type: name
+  tax_id: bar
+  names:
+    - tax_name: a new name for bar
+
+Note that the nodes and names are added to the database in the order
+specified; be sure to add parent nodes before children.
 
 add_to_taxtable
 ---------------
@@ -108,6 +190,25 @@ info
 .. literalinclude:: _helptext/info.txt
 
 
+lineage_table
+-------------
+
+.. literalinclude:: _helptext/lineage_table.txt
+
+Examples::
+
+  taxit taxtable taxonomy.db -i seq_info.csv -o taxtable.csv
+  taxit lineage_table taxtable.csv seq_info.csv \
+      --csv-table taxonomy.csv --taxonomy-table taxonomy.txt
+
+``taxonomy.txt`` looks like this::
+
+  s1	"pk__Bacteria";"ph__Firmicutes";"cl__Bacilli";"or__Bacillales";"fa__Staphylococcaceae";"ge__Staphylococcus";"sp__Staphylococcus aureus"
+  s2	"pk__Bacteria";"ph__Firmicutes";"cl__Bacilli";"or__Bacillales";"fa__Staphylococcaceae";"ge__Staphylococcus";"sp__Staphylococcus equorum"
+  s3	"pk__Bacteria";"ph__Firmicutes";"cl__Bacilli";"or__Bacillales";"fa__Staphylococcaceae";"ge__Staphylococcus";"sp__Staphylococcus equorum"
+  s4	"pk__Bacteria";"ph__Firmicutes";"cl__Bacilli";"or__Bacillales";"fa__Staphylococcaceae";"ge__Staphylococcus";"sp__unclassified"
+
+
 lonelynodes
 -----------
 
@@ -117,11 +218,6 @@ Examples::
 
     # Find lonely nodes in RefPkg mypkg-0.1.refpkg
     taxit lonelynodes mypkg-0.1.refpkg
-
-merge
------
-
-.. literalinclude:: _helptext/merge.txt
 
 new_database
 ------------

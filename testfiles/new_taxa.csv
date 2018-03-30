@@ -1,19 +1,2 @@
-tax_id,tax_name,parent_id,rank,comments,children
-,,,,,
-186802_1,BVAB1,186802,species,,
-186802_2,BVAB2,186802,species,,
-186802_3,BVAB3,186802,species,,
-1485_1,Clostridium sp. type 1,1485,species,C. perfringens 96%,
-39948_1,Dialister sp. type 1,39948,species,,
-39948_2,Dialister sp. type 2,39948,species,,
-906_1,Megasphaera sp. type 1,906,species,,
-906_2,Megasphaera sp. type 2,906,species,,
-2_1,Novel bacterial clone type 1,836,species,"123f-67, AY738701; 97-98% match to members of genus Porphyromonas",
-838_1,Prevotella genogroup 1,838,species,,
-838_2,Prevotella genogroup 2,838,species,,
-838_3,Prevotella genogroup 3,838,species,,
-838_4,Prevotella genogroup 4,838,species,,
-838_5,Prevotella genogroup 5,838,species,"99% match to AF385513, human oral clone",
-838_6,Prevotella genogroup 6,838,species,,
-838_7,Prevotella genogroup 7,838,species,"shahii, 123f2-72",
-1578_1,Lactobacillus helveticis/crispatus,1578,species_group,,47770;1587
+tax_id,tax_name,parent_id,rank,children,comments
+1279_1,"between genus and species",1279,species_group,1280;1281,"a pretend organism"

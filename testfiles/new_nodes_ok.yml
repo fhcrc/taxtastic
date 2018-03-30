@@ -1,0 +1,38 @@
+---
+type: node
+tax_id: "1279_1"
+parent_id: "1279"
+rank: species_group
+names:
+  - tax_name: between genus and species
+source_name: ncbi
+children:
+  - "1280" # Staphylococcus aureus
+  - "1281" # Staphylococcus carnosus
+---
+type: node
+tax_id: foo
+parent_id: "1280"
+rank: subspecies
+source_name: ncbi
+names:
+  - tax_name: My new foo
+    is_primary: true
+    is_classified: true
+  - tax_name: alternative to foo
+---
+type: node
+tax_id: bar
+parent_id: foo
+rank: no_rank
+source_name: someplace
+names:
+  - tax_name: son of foo
+---
+type: name
+tax_id: bar
+source_name: someplace
+names:
+  - tax_name: a new name for bar
+    is_primary: true
+  - tax_name: an additional name for bar

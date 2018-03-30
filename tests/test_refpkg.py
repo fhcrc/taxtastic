@@ -12,6 +12,24 @@ from . import config
 HAS_RPPR = utils.has_rppr()
 
 
+class TestReadStockholm(unittest.TestCase):
+    def setUp(self):
+        self.fname = os.path.join(config.data_path('lactobacillus2-0.2.refpkg'),
+                                  'lactobacillus2.sto')
+
+    def test01(self):
+        with open(self.fname, 'r') as fobj:
+            names = utils.parse_stockholm(fobj)
+        self.assertEqual(len(names), 46)
+        self.assertEqual(names[0], '123f3-34')
+        self.assertEqual(names[-1], 'S000727873')
+
+    def test02(self):
+        with open(self.fname, 'r') as fobj:
+            lines = [line for line in fobj][:-1]
+            self.assertRaises(ValueError, utils.parse_stockholm, lines)
+
+
 class TestRefpkg(unittest.TestCase):
     maxDiff = None
 
@@ -56,7 +74,7 @@ class TestRefpkg(unittest.TestCase):
             os.mkdir(pkg_path)
             boris = os.path.join(pkg_path, 'boris')
             with open(boris, 'w') as h:
-                print >>h, "Hello, world!"
+                h.write("Hello, world!")
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
                 json.dump({'metadata': {},
                            'log': [],
@@ -77,7 +95,7 @@ class TestRefpkg(unittest.TestCase):
             os.mkdir(pkg_path)
             boris = os.path.join(pkg_path, 'boris')
             with open(boris, 'w') as h:
-                print >>h, "Hello, world!"
+                h.write("Hello, world!")
             with open(os.path.join(pkg_path, refpkg.Refpkg._manifest_name), 'w') as h:
                 json.dump({'metadata': {},
                            'log': [], 'rollback': None, 'rollforward': None,
@@ -96,7 +114,8 @@ class TestRefpkg(unittest.TestCase):
             r = refpkg.Refpkg(pkg_path, create=True)
             test_file = config.data_path('bv_refdata.csv')
             test_name = 'bv_refdata.csv'
-            md5_value = refpkg.md5file(open(test_file))
+            with open(test_file, 'rb') as f:
+                md5_value = refpkg.md5file(f)
             self.assertEqual(None, r.update_file('a', test_file))
             # Make sure it's properly written
             with open(os.path.join(r.path, r._manifest_name)) as h:
@@ -163,8 +182,9 @@ class TestRefpkg(unittest.TestCase):
             shutil.copytree(config.data_path(
                 'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
-            self.assertEqual(r.update_metadata('author', 'Boris and Hilda'),
-                             "Noah Hoffman <ngh2@uw.edu>, Sujatha Srinivasan <ssriniva@fhcrc.org>, Erick Matsen <matsen@fhcrc.org>")
+            self.assertEqual(
+                r.update_metadata('author', 'Boris and Hilda'),
+                ("Noah Hoffman <ngh2@uw.edu>, Sujatha Srinivasan <ssriniva@fhcrc.org>, Erick Matsen <matsen@fhcrc.org>"))
             self.assertEqual(r.current_transaction, None)
             self.assertEqual(r.log(),
                              ['Updated metadata: author=Boris and Hilda'])
@@ -262,7 +282,7 @@ class TestRefpkg(unittest.TestCase):
             r = refpkg.Refpkg(rpkg, create=False)
             self.assertFalse(r.is_ill_formed())
             r.update_file('aln_fasta', config.data_path('little.fasta'))
-            self.assertTrue(isinstance(r.is_ill_formed(), basestring))
+            self.assertTrue(isinstance(r.is_ill_formed(), str))
 
     def test_init_dne(self):
         with config.tempdir() as d:

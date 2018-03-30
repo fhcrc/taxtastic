@@ -20,8 +20,8 @@ method of ``taxtastic.refpkg.Refpkg``.  If there are not at least
 ``N`` operations that can be rolled back, an error is returned and no
 changes are made to the refpkg.
 """
+
 import logging
-import sys
 
 from taxtastic import refpkg
 
@@ -49,15 +49,15 @@ def action(args):
 
     # First check if we can do n rollbacks
     q = r.contents
-    for i in xrange(args.n):
+    for i in range(args.n):
         if q['rollback'] is None:
-            print >>sys.stderr, 'Cannot rollback %d changes; refpkg only records %d changes.' % (
-                args.n, i)
+            log.error('Cannot rollback {} changes; '
+                      'refpkg only records {} changes.'.format(args.n, i))
             return 1
         else:
             q = q['rollback']
 
-    for i in xrange(args.n):
+    for i in range(args.n):
         r.rollback()
 
     return 0

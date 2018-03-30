@@ -49,8 +49,8 @@ def get_children(engine, parent_ids, rank='species', schema=None):
     species = []
     for parent_id in parent_ids:
         result = engine.execute(sqlalchemy.sql.text(cmd), tax_id=parent_id)
-        keys = result.keys()
-        rows = [dict(zip(keys, row)) for row in result.fetchall()]
+        keys = list(result.keys())
+        rows = [dict(list(zip(keys, row))) for row in result.fetchall()]
         for r in rows:
             if r['rank'] == rank and 'sp.' not in r['tax_name']:
                 species.append(r)
@@ -126,5 +126,5 @@ def action(args):
             keys, rows = get_children(engine, [tax_id], schema=args.schema)
             taxa.update(dict((row['tax_id'], row) for row in rows))
 
-    for d in sorted(taxa.values(), key=lambda x: x['tax_name']):
+    for d in sorted(list(taxa.values()), key=lambda x: x['tax_name']):
         args.out.write('%(tax_id)s # %(tax_name)s\n' % d)

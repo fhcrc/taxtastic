@@ -28,7 +28,8 @@ from taxtastic import subcommands, __version__ as version
 DESCRIPTION = __doc__.strip()
 
 
-def main(argv):
+def main(argv=None):
+    argv = argv or sys.argv[1:]
     action, arguments = parse_arguments(argv)
 
     loglevel = {
@@ -44,15 +45,18 @@ def main(argv):
         logformat = '%(message)s'
 
     # set up logging
-    logging.basicConfig(file=sys.stdout, format=logformat, level=loglevel)
+    logging.basicConfig(stream=sys.stderr, format=logformat, level=loglevel)
 
-    return action(arguments)
+    try:
+        return action(arguments)
+    finally:
+        subcommands.close_all_files(arguments)
 
 
 def parse_arguments(argv):
+    """Create the argument parser
+
     """
-    """
-    # Create the argument parser
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     base_parser = argparse.ArgumentParser(add_help=False)
 

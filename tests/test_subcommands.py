@@ -5,15 +5,21 @@ import shutil
 import copy
 import os
 import os.path
-import argparse
+import csv
+import sys
+
+import sqlalchemy
 
 from taxtastic import refpkg
 from taxtastic.subcommands import (
     update, create, strip, rollback, rollforward,
-    taxtable, check, add_to_taxtable, merge_taxtables)
+    taxtable, check, add_to_taxtable)
+from taxtastic.scripts.taxit import main
+from taxtastic.taxonomy import Taxonomy
 
-import config
-from config import OutputRedirectMixin, data_path, TestBase
+
+from . import config
+from .config import OutputRedirectMixin, TestBase, data_path
 
 
 class TestUpdate(OutputRedirectMixin, unittest.TestCase):
@@ -33,7 +39,7 @@ class TestUpdate(OutputRedirectMixin, unittest.TestCase):
         with config.tempdir() as scratch:
             pkg_path = os.path.join(scratch, 'test.refpkg')
             r = refpkg.Refpkg(pkg_path, create=True)
-            test_file = config.data_path('bv_refdata.csv')
+            test_file = data_path('bv_refdata.csv')
 
             self.args.refpkg = pkg_path
             self.args.changes = ['meep=' + test_file, 'hilda=' + test_file]
@@ -160,7 +166,7 @@ class TestStrip(OutputRedirectMixin, unittest.TestCase):
     def test_strip(self):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
-            shutil.copytree(config.data_path(
+            shutil.copytree(data_path(
                 'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             r.update_metadata('boris', 'hilda')
@@ -181,7 +187,7 @@ class TestRollback(OutputRedirectMixin, unittest.TestCase):
     def test_rollback(self):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
-            shutil.copytree(config.data_path(
+            shutil.copytree(data_path(
                 'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             original_contents = copy.deepcopy(r.contents)
@@ -207,13 +213,17 @@ class TestRollback(OutputRedirectMixin, unittest.TestCase):
             self.assertNotEqual(r.contents['rollforward'], None)
 
 
-class TestRollforward(OutputRedirectMixin, unittest.TestCase):
+class TestRollforward(TestBase):
     maxDiff = None
+
+    def setUp(self):
+        self.suppress_stderr()
+        self.suppress_stdout()
 
     def test_rollforward(self):
         with config.tempdir() as scratch:
             rpkg = os.path.join(scratch, 'tostrip.refpkg')
-            shutil.copytree(config.data_path(
+            shutil.copytree(data_path(
                 'lactobacillus2-0.2.refpkg'), rpkg)
             r = refpkg.Refpkg(rpkg, create=False)
             original_contents = copy.deepcopy(r.contents)
@@ -261,86 +271,262 @@ def scratch_file(unlink=True):
             os.unlink(tmp_name)
 
 
-class TestTaxtable(OutputRedirectMixin, unittest.TestCase):
-    maxDiff = None
+class TestTaxtable(TestBase):
 
     def test_invalid_taxid(self):
-        with scratch_file() as out:
-            with open(out, 'w') as h:
-                class _Args(object):
-                    url = 'sqlite:///' + config.ncbi_master_db
-                    schema = None
-                    tax_ids = 'horace,hilda'
-                    valid = False
-                    taxnames = None
-                    seq_info = None
-                    verbosity = 0
-                    out = h
-                    clade_ids = None
-                self.assertRaises(ValueError, taxtable.action, _Args())
+        outdir = self.mkoutdir()
+        args = ['taxtable', config.ncbi_master_db,
+                '--tax-ids', 'horace', '1280',
+                '-o', os.path.join(outdir, 'taxonomy.csv')]
+        self.assertRaises(ValueError, main, args)
 
     def test_seqinfo(self):
-        with tempfile.TemporaryFile() as tf, \
-                open(config.data_path('simple_seqinfo.csv')) as ifp:
-            class _Args(object):
-                url = 'sqlite:///' + config.ncbi_master_db
-                schema = None
-                valid = False
-                ranked = False
-                tax_ids = None
-                taxnames = None
-                seq_info = ifp
-                out = tf
-                verbosity = 0
-                clade_ids = None
-                taxtable = None
-            self.assertIsNone(taxtable.action(_Args()))
-            # No output check at present
-            self.assertTrue(tf.tell() > 0)
+        outdir = self.mkoutdir()
+        args = ['taxtable', config.ncbi_master_db,
+                '--seq-info', data_path('simple_seqinfo.csv'),
+                '-o', os.path.join(outdir, 'taxonomy.csv')]
+        self.assertIsNone(main(args))
 
 
-class TestAddToTaxtable(OutputRedirectMixin, unittest.TestCase):
+class TestAddToTaxtable(TestBase):
     maxDiff = None
 
     def test_seqinfo(self):
-        with tempfile.TemporaryFile() as tf, \
-                open(config.data_path('minimal_taxonomy.csv')) as taxtable_fp, \
-                open(config.data_path('minimal_add_taxonomy.csv')) as extra_nodes_fp:
-            class _Args(object):
-                extra_nodes_csv = extra_nodes_fp
-                taxtable = taxtable_fp
-                out = tf
-                verbosity = 0
-            self.assertFalse(add_to_taxtable.action(_Args()))
-            # No output check at present
-            self.assertTrue(tf.tell() > 0)
+        args = ['add_to_taxtable',
+                data_path('minimal_taxonomy.csv'),
+                data_path('minimal_add_taxonomy.csv'),
+                '-o', os.path.join(self.mkoutdir(), 'taxonomy.csv')]
+        self.assertIsNone(main(args))
 
 
 class TestCheck(OutputRedirectMixin, unittest.TestCase):
 
     def test_runs(self):
         class _Args(object):
-            refpkg = config.data_path('lactobacillus2-0.2.refpkg')
+            refpkg = data_path('lactobacillus2-0.2.refpkg')
         self.assertEqual(check.action(_Args()), 0)
 
 
-class TestMergeTaxtables(TestBase):
+class TestUpdateTaxids(TestBase):
 
     def setUp(self):
-        self.t1 = data_path('simple_taxtable.csv')
-        self.t2 = data_path('taxids1.taxtable')
-        self.parser = argparse.ArgumentParser()
-        merge_taxtables.build_parser(self.parser)
-        self.outfile = os.path.join(self.mkoutdir(), 'taxtable.csv')
+        if '-v' not in sys.argv:
+            self.suppress_stdout()
+            self.suppress_stderr()
+
+        self.outdir = self.mkoutdir()
+        self.infile = os.path.join(self.outdir, 'infile.csv')
+        self.outfile = os.path.join(self.outdir, 'outfile.csv')
+        self.unknowns = os.path.join(self.outdir, 'unknowns.csv')
+        self.db = data_path('small_taxonomy.db')
+
+        self.input = [
+            ('tax_id', 'tax_name', 'comment'),
+            ('1280', '', 'ok'),
+            ('1291', 'Staphylococcus staphylolyticus', 'merged with 1287'),
+            ('', 'who knows?', 'blank'),
+            ('foo', 'unknown', 'completely unknown'),
+        ]
+
+        with open(self.infile, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerows(self.input)
+
+    def get_rows(self, fname):
+        with open(fname) as f:
+            reader = csv.reader(f)
+            return [tuple(row) for row in reader]
 
     def test01(self):
-        args = self.parser.parse_args([self.t1])
-        self.assertRaises(SystemExit, merge_taxtables.action, args)
+        self.assertRaises(SystemExit, main, ['update_taxids', '-h'])
 
     def test02(self):
-        args = self.parser.parse_args([self.t1, self.t2, '-o', self.outfile])
-        merge_taxtables.action(args)
+        # test the test harness itself
+        self.assertEqual(self.input, self.get_rows(self.infile))
 
     def test03(self):
-        args = self.parser.parse_args([self.t2, self.t1, '-o', self.outfile])
-        self.assertRaises(SystemExit, merge_taxtables.action, args)
+        args = ['update_taxids', self.infile, self.db]
+        self.assertRaises(SystemExit, main, args)
+
+    def test04(self):
+        args = ['update_taxids', self.infile, self.db,
+                '-o', self.outfile,
+                '--unknown-action', 'ignore']
+        main(args)
+
+        expected = [
+            ('tax_id', 'tax_name', 'comment'),
+            ('1280', '', 'ok'),
+            ('1287', 'Staphylococcus staphylolyticus', 'merged with 1287'),
+            ('', 'who knows?', 'blank'),
+            ('foo', 'unknown', 'completely unknown'),
+        ]
+
+        self.assertEqual(expected, self.get_rows(self.outfile))
+
+    def test05(self):
+        args = ['update_taxids', self.infile, self.db,
+                '-o', self.outfile,
+                '--unknown-action', 'drop']
+        main(args)
+
+        expected = [
+            ('tax_id', 'tax_name', 'comment'),
+            ('1280', '', 'ok'),
+            ('1287', 'Staphylococcus staphylolyticus', 'merged with 1287'),
+        ]
+
+        self.assertEqual(expected, self.get_rows(self.outfile))
+
+    def test06(self):
+        args = ['update_taxids', self.infile, self.db,
+                '-o', self.outfile,
+                '--unknown-action', 'ignore',
+                '--unknowns', self.unknowns]
+        main(args)
+
+        unknowns = [
+            ('tax_id', 'tax_name', 'comment'),
+            ('', 'who knows?', 'blank'),
+            ('foo', 'unknown', 'completely unknown'),
+        ]
+
+        self.assertEqual(unknowns, self.get_rows(self.unknowns))
+
+
+class TestAddNode(TestBase):
+
+    def setUp(self):
+        self.suppress_stdout()
+        self.suppress_stderr()
+
+        self.outdir = self.mkoutdir()
+        self.dbname = os.path.join(self.outdir, 'taxonomy.db')
+        shutil.copyfile(data_path('small_taxonomy.db'), self.dbname)
+
+    def assertZeroExitStatus(self, val):
+        self.assertFalse(bool(val))
+
+    def assertNonZeroExitStatus(self, val):
+        self.assertTrue(bool(val))
+
+    def test_new_nodes01(self):
+        args = ['add_nodes', self.dbname, data_path('new_nodes_ok.yml')]
+        self.assertZeroExitStatus(main(args))
+
+    def test_new_nodes02(self):
+        # fails without --source-name
+        args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml')]
+        self.assertNonZeroExitStatus(main(args))
+
+    def test_new_nodes03(self):
+        args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml'),
+                '--source-name', 'some_source']
+        self.assertZeroExitStatus(main(args))
+
+    def test_new_nodes04(self):
+        args = ['add_nodes', self.dbname, data_path('staph_species_group.yml'),
+                '--source-name', 'foo']
+        self.assertZeroExitStatus(main(args))
+
+        tax = Taxonomy(sqlalchemy.create_engine('sqlite:///' + self.dbname))
+        with tax.engine.connect() as con:
+            result = con.execute(
+                'select * from nodes where parent_id = ?', ('stapha_sg',))
+            keys = list(result.keys())
+            nodes = [dict(list(zip(keys, row))) for row in result.fetchall()]
+
+        self.assertEqual(len(nodes), 5)
+        self.assertEqual([row['source_id'] for row in nodes], [2] * len(nodes))
+
+    def test_new_nodes05(self):
+        args = ['add_nodes', self.dbname, data_path('staph_species_group2.yml')]
+        self.assertZeroExitStatus(main(args))
+
+        tax = Taxonomy(sqlalchemy.create_engine('sqlite:///' + self.dbname))
+        with tax.engine.connect() as con:
+            result = con.execute(
+                'select * from nodes where parent_id = ?', ('stapha_sg',))
+            keys = list(result.keys())
+            nodes = [dict(list(zip(keys, row))) for row in result.fetchall()]
+
+        self.assertEqual(len(nodes), 5)
+        self.assertEqual([row['source_id'] for row in nodes], [2] * len(nodes))
+
+
+class TestExtractNodes(TestBase):
+
+    def setUp(self):
+        self.suppress_stdout()
+        self.suppress_stderr()
+
+        self.outdir = self.mkoutdir()
+        self.dbname = os.path.join(self.outdir, 'taxonomy.db')
+        self.outfile = os.path.join(self.outdir, 'extracted.yml')
+        shutil.copyfile(data_path('small_taxonomy.db'), self.dbname)
+
+    def test_new_nodes01(self):
+        source_name = 'some_source'
+
+        # add some nodes and names
+        args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml'),
+                '--source-name', source_name]
+        main(args)
+        args = ['extract_nodes', self.dbname, source_name,
+                '-o', self.outfile]
+        main(args)
+
+
+class TestLineageTable(TestBase):
+    def setUp(self):
+        self.outdir = self.mkoutdir()
+        self.taxtable = os.path.join(self.outdir, 'taxtable.csv')
+        self.seq_info = os.path.join(self.outdir, 'seq_info.csv')
+        self.info = [
+            ('seqname', 'tax_id', 'species', 'mothur'),
+            ('s1', '1280', 'Staphylococcus aureus', 's__Staphylococcus_aureus;'),
+            ('s2', '246432', 'Staphylococcus equorum', 's__Staphylococcus_equorum;'),
+            ('s3', '29383', 'Staphylococcus equorum', 's__Staphylococcus_equorum;'),
+            ('s4', '1279', '', 'g__Staphylococcus;')
+        ]
+
+        with open(self.seq_info, 'w') as f:
+            csv.writer(f).writerows(self.info)
+
+        main(['taxtable', config.ncbi_master_db, '-i',
+              self.seq_info, '-o', self.taxtable])
+
+    def test_csv_table(self):
+        outfile = os.path.join(self.outdir, 'lineages.csv')
+        args = ['lineage_table', self.taxtable, self.seq_info,
+                '--csv-table', outfile]
+        main(args)
+
+        with open(outfile) as f:
+            output = list(csv.DictReader(f))
+            self.assertEqual(
+                [row['seqname'] for row in output],
+                [row[0] for row in self.info[1:]]
+            )
+
+            self.assertEqual(
+                [row['species'] for row in output],
+                [row[-2] for row in self.info[1:]]
+            )
+
+    def test_lineage_table(self):
+        outfile = os.path.join(self.outdir, 'taxonomy.txt')
+        args = ['lineage_table', self.taxtable, self.seq_info,
+                '--taxonomy-table', outfile]
+        main(args)
+
+        with open(outfile) as f:
+            output = list(csv.reader(f, delimiter='\t'))
+
+            self.assertEqual(
+                [row[0] for row in output],
+                [row[0] for row in self.info[1:]]
+            )
+
+            for expected, actual in zip(self.info[1:], output):
+                self.assertTrue(actual[1].endswith(actual[-1]))

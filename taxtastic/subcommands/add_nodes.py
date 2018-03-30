@@ -12,71 +12,94 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
-"""Add new nodes to a database"""
-from taxtastic.taxonomy import Taxonomy
-from taxtastic.utils import get_new_nodes, add_database_args
+"""Add nodes and names to a database
 
+The input file specifies new nodes (type: node) and names (type:
+name) in yaml format (see http://fhcrc.github.io/taxtastic/commands.html#add-nodes).
+"""
+
+import sys
 import logging
 import sqlalchemy
-import sys
+import pprint
+import traceback
+
+import yaml
+from fastalite import Opener
+
+from taxtastic.taxonomy import Taxonomy
+from taxtastic.utils import add_database_args
 
 log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
-
-    parser.add_argument(
-        'new_nodes',
-        metavar='csv',
-        help=('A csv file defining nodes to add to the taxonomy. '
-              'Mandatory fields include "tax_id", "parent_id", "rank", '
-              '"tax_name"; optional fields include "source_name", '
-              '"source_id" and "children". The "children" field should '
-              'specify one or more existing taxids in a semicolon-'
-              'delimited list. Other columns are ignored.'))
-
     parser = add_database_args(parser)
-
+    parser.add_argument('new_nodes', metavar='FILE', type=Opener('r'),
+                        help='yaml file specifying new nodes')
     parser.add_argument(
-        '-S', '--source-name',
-        dest='source_name',
-        default='unknown',
-        help=('Identifies the source for new nodes (will override '
-              '"source_name" in the input provided '
-              'by `--new-nodes`). [%(default)s]'))
-
-    parser.add_argument(
-        '--update',
-        action='store_true',
-        help='Update any existing nodes')
-
-    parser.add_argument(
-        '--tax-table',
-        help='table name in database')
-
-    parser.add_argument(
-        '--out',
-        default=sys.stdout,
-        help='sql queries')
+        '--source-name', dest='source_name',
+        help=("""Provides the default source name for new nodes.  The
+              value is overridden by "source_name" in the input
+              file. If not provided, "source_name" is required in each
+              node or name definition. This source name is created if
+              it does not exist."""))
 
 
 def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
     tax = Taxonomy(engine, schema=args.schema)
-    nodes = list(get_new_nodes(args.new_nodes))
+
+    records = list(yaml.load_all(args.new_nodes))
 
     log.info('adding new nodes')
-    for d in nodes:
-        if args.source_name:
-            d['source_name'] = args.source_name
-            try:
-                tax.add_node(**d)
-            except sqlalchemy.exc.IntegrityError:
-                if args.update:
-                    tax.update_node(**d)
+    retval = None
+    for rec in records:
+        try:
+            record_type = rec.pop('type')
+            if record_type not in {'node', 'name'}:
+                raise ValueError
+        except (KeyError, ValueError):
+            log.error(('Error in record for tax_id {tax_id}: "type" is '
+                       'required and must be one of "node" or "name"').format(**rec))
+            retval = 1
+            continue
+
+        tax_id = rec['tax_id']
+        rec['source_name'] = rec.get('source_name') or args.source_name
+
+        try:
+            if record_type == 'node':
+                if not rec['source_name']:
+                    log.error('Error: record has no source_name:\n{}'.format(
+                        pprint.pformat(rec)))
+                    raise ValueError
+                if tax.has_node(tax_id):
+                    log.info('updating *node* "{tax_id}"'.format(**rec))
+                    tax.update_node(**rec)
                 else:
-                    log.warn('node with tax_id %(tax_id)s already exists' % d)
-            else:
-                log.info('added new node with tax_id %(tax_id)s' % d)
+                    log.info('new *node* "{tax_id}"'.format(**rec))
+                    tax.add_node(**rec)
+            elif record_type == 'name':
+                for name in rec['names']:
+                    name['tax_id'] = tax_id
+                    # source_name may be provided at the record or name level
+                    name['source_name'] = name.get('source_name') or rec['source_name']
+                    if not name['source_name']:
+                        log.error(
+                            'Error: record has no source_name:\n {}'.format(
+                                pprint.pformat(rec)))
+                        raise ValueError
+
+                    log.info('new *name* for "{tax_id}": "{tax_name}"'.format(**name))
+                    tax.add_name(**name)
+        except (ValueError, TypeError):
+            log.error('Error in record with tax_id {}'.format(rec['tax_id']))
+            log.error(''.join(traceback.format_exception(*sys.exc_info())))
+            retval = 1
 
     engine.dispose()
+
+    if retval:
+        log.error('Error: some records were malformed')
+    return retval

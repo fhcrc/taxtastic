@@ -1,5 +1,9 @@
 import itertools
-import sqlite3
+
+try:
+    from pysqlite2 import dbapi2 as sqlite3
+except ImportError:
+    import sqlite3
 
 
 class OnUpdate(object):
@@ -122,10 +126,10 @@ class Taxdb(object):
                 row['tax_id'], parent, row['rank'], row['tax_name'])
             taxon_map[taxon.tax_id] = taxon
 
-        root = next(taxon_map.itervalues())
+        root = next(iter(taxon_map.values()))
         while root.parent is not None:
             root = root.parent
-        counter = itertools.count(1).next
+        counter = itertools.count(1).__next__
 
         def on_pop(parent):
             if parent is not None:
@@ -137,7 +141,7 @@ class Taxdb(object):
         curs.executemany("INSERT INTO ranks (rank_order, rank) VALUES (?, ?)",
                          enumerate(fieldnames[4:]))
         curs.executemany("INSERT INTO taxa VALUES (?, ?, ?)",
-                         ((t.tax_id, t.tax_name, t.rank) for t in taxon_map.itervalues()))
+                         ((t.tax_id, t.tax_name, t.rank) for t in taxon_map.values()))
         curs.executemany("INSERT INTO hierarchy VALUES (?, ?, ?)",
-                         ((t.tax_id, t.lft, t.rgt) for t in taxon_map.itervalues()))
+                         ((t.tax_id, t.lft, t.rgt) for t in taxon_map.values()))
         self.db.commit()

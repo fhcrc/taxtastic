@@ -1,7 +1,14 @@
+decorator>=4.1.2
+jinja2>=2.9
+sqlalchemy>=0.7
+fastalite>=0.3
+DendroPy>=4.3.0
+PyYAML>=3.12
+psycopg2>=2.7.3.1
+
 # for development
 sphinx
 ghp-import
 twine
 wheel
 tox
-psycopg2

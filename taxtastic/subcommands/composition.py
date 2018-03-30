@@ -84,4 +84,4 @@ def action(args):
 
     writer = csv.writer(args.out)
     writer.writerow(['tax_name', 'tax_id', 'count'])
-    writer.writerows(sorted((n, i, c) for (n, i), c in counts.items()))
+    writer.writerows(sorted((n, i, c) for (n, i), c in list(counts.items())))

@@ -9,4 +9,5 @@ name=$(basename ${tarball%.tar.gz})
 tag=taxtastic:${name#taxtastic-}
 
 cp $tarball taxtastic.tar.gz
+cp ../dev/install_pplacer.sh .
 docker build -t $tag .

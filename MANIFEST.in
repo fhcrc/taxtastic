@@ -1,11 +1,14 @@
+exclude docker docker/*
+exclude singularity singularity/*
+exclude dev dev/*
+exclude README.txt readme.txt
+include *.py
 include *.in
 include *.rst
 include *.txt
 include LICENSE
 include Makefile
 include setup.py
-include distribute_setup.py
-include versioneer.py
 
 global-exclude *.pyd
 global-exclude *.pyc

@@ -25,6 +25,7 @@ import argparse
 import logging
 import sqlalchemy
 import sys
+
 import taxtastic
 
 log = logging.getLogger(__name__)
@@ -34,8 +35,8 @@ def build_parser(parser):
     parser = taxtastic.utils.add_database_args(parser)
 
     parser.add_argument(
-        '--append',
-        action='store_false',
+        '--no-clobber',
+        action='store_false', default=True,
         dest='clobber',
         help=('If database exists keep current data '
               'and append new data. [False]'))
@@ -43,7 +44,7 @@ def build_parser(parser):
     download_parser = parser.add_argument_group(title='download options')
     download_parser.add_argument(
         '-z', '--taxdump-file',
-        metavar='ZIP',
+        metavar='FILE.zip',
         help='Location of zipped taxdump file [taxdmp.zip]')
 
     download_parser.add_argument(
@@ -75,11 +76,18 @@ def action(args):
             dest_dir=zip_dest,
             clobber=args.clobber,
             url=args.taxdump_url)
+
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
-    base = taxtastic.ncbi.db_connect(
-        engine, schema=args.schema, clobber=args.clobber)
-    taxtastic.ncbi.db_load(engine, zfile, schema=args.schema)
-    print_sql(args.out, engine.name, base.metadata)
+
+    # creates database schema
+    taxtastic.ncbi.db_connect(engine, schema=args.schema, clobber=args.clobber)
+
+    ncbi_loader = taxtastic.ncbi.NCBILoader(engine, args.schema)
+    ncbi_loader.load_archive(zfile)
+    ncbi_loader.set_names_is_classified()
+    ncbi_loader.set_nodes_is_valid()
+
+    # print_sql(args.out, engine.name, base.metadata)
 
 
 def print_sql(out, engine_name, metadata):
@@ -87,5 +95,6 @@ def print_sql(out, engine_name, metadata):
         out.write(str(sql.compile(dialect=dump.dialect)).strip() + ';\n')
     engine = sqlalchemy.create_engine(
         engine_name + '://', strategy='mock', executor=dump)
+
     dump.dialect = engine.dialect
     metadata.create_all(bind=engine)

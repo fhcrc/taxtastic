@@ -40,7 +40,7 @@ clean:
 
 helptext:
 	PYTHONPATH=$(BASEDIR) \
-	$(BASEDIR)/devtools/helptext.py $(BASEDIR)/taxit -d $(BASEDIR)/docs/_helptext
+	$(BASEDIR)/dev/helptext.py $(BASEDIR)/taxit.py -d $(BASEDIR)/docs/_helptext
 
 html:	helptext
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

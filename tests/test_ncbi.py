@@ -8,7 +8,7 @@ import sqlalchemy
 
 import taxtastic
 import taxtastic.ncbi
-from taxtastic.ncbi import read_names, read_archive, UNCLASSIFIED_REGEX
+from taxtastic.ncbi import read_names, read_archive
 
 from . import config
 from .config import TestBase
@@ -36,33 +36,18 @@ class TestDbconnect(TestBase):
 
 class TestLoadData(TestBase):
 
-    names_rows_count = 1108
-
     def setUp(self):
         outdir = self.mkoutdir()
-        self.url = 'sqlite:///' + os.path.join(outdir, 'taxonomy.db')
+        self.db_path = os.path.join(outdir, 'taxonomy.db')
+        self.url = 'sqlite:///' + self.db_path
 
     def test01(self):
         # we should be starting from scratch
-        self.assertFalse(path.isfile(self.url))
+        self.assertFalse(path.isfile(self.db_path))
         engine = sqlalchemy.create_engine(self.url)
 
         taxtastic.ncbi.db_connect(engine)
-        taxtastic.ncbi.db_load(engine, ncbi_data)
-        with engine.begin() as conn:
-            result = conn.execute('select 1 AS i from names')
-            self.assertEqual(self.names_rows_count, len(list(result)))
-
-        # test clobber argument
-        taxtastic.ncbi.db_connect(engine, clobber=True)
-        taxtastic.ncbi.db_load(engine, ncbi_data)
-        with engine.begin() as conn:
-            result = conn.execute('select 1 AS i from names')
-            self.assertEqual(self.names_rows_count, len(list(result)))
-
-            # shouldn't be able to load data a second time
-            with self.assertRaises(sqlalchemy.exc.IntegrityError):
-                taxtastic.ncbi.db_load(engine, archive=ncbi_data)
+        self.assertTrue(path.isfile(self.db_path))
 
 
 class TestReadNames(TestBase):
@@ -70,24 +55,16 @@ class TestReadNames(TestBase):
     def setUp(self):
         self.zipfile = ncbi_data
 
-    def test01(self):
-        """
-        is_classified always 0 or 1 if unclassified_regex is provided
-        """
-
-        rows = read_names(rows=read_archive(self.zipfile, 'names.dmp'),
-                          unclassified_regex=UNCLASSIFIED_REGEX)
-        self.assertEquals(set(row['is_classified']
-                              for row in rows), set([0, 1]))
-
     def test02(self):
         """
-        is_classified always None if unclassified_regex not provided
+        is_classified always None
         """
 
         rows = read_names(rows=read_archive(self.zipfile, 'names.dmp'))
-        self.assertEquals(set(row['is_classified']
-                              for row in rows), set([None]))
+        headers = next(rows)
+        is_classified = headers.index('is_classified')
+        self.assertEqual(
+            set(row[is_classified] for row in rows), set([None]))
 
 
 class TestUnclassifiedRegex(TestBase):

@@ -47,18 +47,18 @@ class TestGetLineagePrivate(TaxTableSetup):
     def test02(self):
         tax_id = '1280'  # staph aureus
 
-        self.assertFalse(tax_id in self.tax.cached)
         lineage = self.tax._get_lineage(tax_id)
-        self.assertTrue(tax_id in self.tax.cached)
         self.assertTrue(lineage[0][0] == 'root')
         self.assertTrue(lineage[-1][0] == 'species')
 
     def test03(self):
         tax_id = '30630'  # deprecated; Microtus levis Taxonomy ID: 537919
+        self.assertRaises(
+            ValueError, self.tax._get_lineage, tax_id, merge_obsolete=False)
 
-        self.assertFalse(tax_id in self.tax.cached)
-        self.assertRaises(ValueError, self.tax._get_lineage, tax_id,
-                          merge_obsolete=False)
+    def test04(self):
+        tax_id = 'foo'
+        self.assertRaises(ValueError, self.tax._get_lineage, tax_id)
 
 
 class TestGetMerged(TaxTableSetup):
@@ -111,10 +111,7 @@ class TestGetLineagePublic(TaxTableSetup):
 
     def test02(self):
         tax_id = '1280'  # staph aureus
-
-        self.assertFalse(tax_id in self.tax.cached)
         lineage = self.tax.lineage(tax_id)
-        self.assertTrue(tax_id in self.tax.cached)
         self.assertTrue(lineage['rank'] == 'species')
 
         keys = set(lineage.keys())
@@ -145,12 +142,8 @@ class TestGetLineagePublic(TaxTableSetup):
         tax_name = 'Gemella'
         self.tax.lineage(tax_name=tax_name)
 
-        self.tax.lineage(tax_id)
-        # self.assertTrue(lineage['rank'] == 'genus')
-
-    def test07(self):
-        tax_id = '537919'
-        self.tax.lineage(tax_id=tax_id)
+        lineage = self.tax.lineage(tax_id)
+        self.assertEqual(lineage['rank'], 'genus')
 
 
 class TestMethods(TaxTableSetup):
@@ -162,31 +155,3 @@ class TestMethods(TaxTableSetup):
     def test02(self):
         self.assertRaises(ValueError, self.tax.primary_from_id, 'buh')
 
-
-class TestWriteTable(TaxTableSetup):
-    """
-    test tax.write_table - note that this method produces output.
-    """
-
-    def setUp(self):
-        super(TestWriteTable, self).setUp()
-        self.fname = path.join(self.mkoutdir(), 'taxtab') + '.csv'
-        self.file = open(self.fname, 'w')
-
-    def tearDown(self):
-        self.tax.write_table(taxa=None, csvfile=self.file)
-        self.file.close()
-        self.assertTrue(path.isfile(self.fname))
-
-    def test02(self):
-        tax_id = '1280'  # staph aureus
-        self.tax.lineage(tax_id)
-
-    def test03(self):
-        tax_id = '1378'  # Gemella; lineage has two successive no_rank taxa
-        self.tax.lineage(tax_id)
-
-    def test04(self):
-        tax_id = '1378'  # Gemella; lineage has two successive no_rank taxa
-        for tax_id in ['1378', '1280', '131110']:
-            self.tax.lineage(tax_id)

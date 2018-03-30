@@ -1,6 +1,12 @@
-from cStringIO import StringIO
 import os.path
 import unittest
+
+try:
+    # python2
+    from cStringIO import StringIO
+except ImportError:
+    # python3
+    from io import StringIO
 
 from taxtastic.taxtable import TaxNode
 from .config import data_path
@@ -44,7 +50,7 @@ class TaxNodeTestCase(unittest.TestCase):
 
         node.write_taxtable(s)
         v = s.getvalue()
-        self.assertEquals(expected, v)
+        self.assertEqual(expected, v)
 
     def test_prune_unrepresented(self):
         self.root.get_node('1303').sequence_ids.add('sequence1')
@@ -76,8 +82,8 @@ class TaxNodeTestCase(unittest.TestCase):
         for child in children:
             self.assertIn(child, parent.children)
             self.assertIn(child.tax_id, self.root.index)
-            self.assertEquals(parent, child.parent)
-            self.assertEquals(parent.index, child.index)
+            self.assertEqual(parent, child.parent)
+            self.assertEqual(parent.index, child.index)
 
         self.assertIsNone(to_drop.index)
         self.assertIsNone(to_drop.parent)

@@ -15,96 +15,103 @@
 """Create a tabular representation of taxonomic lineages
 
 Write a CSV file containing the minimal subset of the taxonomy in
-``database_file`` which encompasses all the taxa specified in
-``taxa_names.txt`` and ``tax_ids`` and all nodes connecting them to
-the root of the taxonomy.  By default the CSV is written to
-``stdout``, unless redirectored with ``-o`` or ``--out-file``.
+``database_file`` representing all of the lineages specified by the
+provided tax_ids. Duplicate tax_ids are ignored.
 
-``taxa_names.txt`` should be a text file specifying names of taxa.
-Python style comments are ignored as are empty lines.  Names may be
-separated by commas, semicolons, and arbitrary amounts of whitespace
-on both sides of those separators, but the whitespace within them must
-be exact (e.g., ``Lactobacillus crispatus`` must have exactly one space
-between the two words to match the entry in the taxonomy).
+By default the CSV is written to ``stdout``, unless a file is
+specified with ``-o/--outfile``.
 
-``tax_ids`` is either a comma or semicolon delimited list of tax_ids
-(e.g., ``4522,2213;44;221``) or the name of a text file containing
-tax_ids.  The text file also allows Python style comments, and any
-non-comment text separated by and combination of spaces, commas, and
-semicolons is considered a tax_id.
-
-tax_ids and taxa names can overlap, nor does anything have to be
-unique within either file.  The nodes will only be written once in the
-CSV output no matter how many times a particular taxon is mentioned.
 """
 import argparse
 import csv
 import logging
-import os
-import pandas
 import re
 import sqlalchemy
 import sys
+from itertools import groupby
 
 from taxtastic.taxonomy import Taxonomy
-from taxtastic.utils import getlines, add_database_args
+from taxtastic.utils import add_database_args
 
 log = logging.getLogger(__name__)
+
+
+def replace_no_rank(ranks):
+    ranks = list(ranks)
+    while True:
+        try:
+            idx = ranks.index('no_rank')
+            ranks[idx] = ranks[idx - 1] + '_'
+        except ValueError:
+            return ranks
+
+
+def as_taxtable_rows(rows, seen=None):
+
+    # allows termination when we've seen a tax_id before - shaves just
+    # a few seconds off the total time.
+    seen = seen or {}
+
+    __, tids, pids, ranks, names = [list(tup) for tup in zip(*rows)]
+    ranks = replace_no_rank(ranks)
+    ranks_out = ranks[:]
+
+    tax_rows = []
+    while tids and tids[-1] not in seen:
+        d = dict(list(zip(ranks, tids)))
+        d['tax_id'] = tids.pop(-1)
+        d['parent_id'] = pids.pop(-1)
+        d['tax_name'] = names.pop(-1)
+        d['rank'] = ranks.pop(-1)
+        tax_rows.append((d['tax_id'], d))
+
+    return ranks_out, tax_rows
+
+
+def order_ranks(ref_ranks):
+    def _inner(rank):
+        trailing_ = re.findall(r'_+$', rank)
+        if trailing_:
+            return (ref_ranks.index(rank.rstrip('_')), len(trailing_[0]))
+        else:
+            return (ref_ranks.index(rank), 0)
+
+    return _inner
+
+
+def getitems(*items):
+    def _getter(d):
+        return [d.get(item) for item in items]
+
+    return _getter
 
 
 def build_parser(parser):
     parser = add_database_args(parser)
 
-    node_parser = parser.add_argument_group(title='node options')
-    node_parser.add_argument(
-        '--valid',
-        action='store_true',
-        help='Include only valid nodes.')
-    node_parser.add_argument(
-        '--ranked',
-        choices=['columns', 'rows'],
-        help='Include only ranked columns or ranked rows and columns.')
-
     input_group = parser.add_argument_group('input options')
 
     input_group.add_argument(
-        '--taxtable',
-        metavar='CSV',
-        help='build from a previous built taxtable')
+        '-t', '--tax-ids', nargs='+',
+        help='one or more space-delimited tax_ids (eg "-t 47770 33945")')
 
     input_group.add_argument(
-        '--clade-ids',
-        help=('return top-down tax_id clades'))
-
-    input_group.add_argument(
-        '-n', '--taxnames',
-        metavar='FILE',
-        help=('A file identifing taxa in the form of taxonomic '
-              'names. Names are matched against both primary names and '
-              'synonyms. Lines beginning with "#" are ignored. Taxa '
-              'identified here will be added to those specified using '
-              '--tax-ids'))
-
-    input_group.add_argument(
-        '-t', '--tax-ids',
-        metavar='FILE-OR-LIST',
+        '-f', '--tax-id-file', metavar='FILE', type=argparse.FileType('rt'),
         help=('File containing a whitespace-delimited list of '
-              'tax_ids (ie, separated by tabs, spaces, or newlines; lines '
-              'beginning with "#" are ignored). This option can also be '
-              'passed a comma-delited list of tax_ids on the command line.'))
+              'tax_ids (ie, separated by tabs, spaces, or newlines.'))
 
     input_group.add_argument(
         '-i', '--seq-info',
-        type=argparse.FileType('r'),
+        type=argparse.FileType('rt'),
         help=('Read tax_ids from sequence info file, minimally '
-              'containing the field "tax_id"'))
+              'containing a column named "tax_id"'))
 
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
 
     output_group.add_argument(
-        '-o', '--out',
-        type=argparse.FileType('w'),
+        '-o', '--outfile',
+        type=argparse.FileType('wt'),
         default=sys.stdout,
         metavar='FILE',
         help=('Output file containing lineages for the specified taxa '
@@ -112,202 +119,50 @@ def build_parser(parser):
 
 
 def action(args):
+    log.info('reading tax_ids')
+    if args.tax_ids:
+        tax_ids = set(args.tax_ids)
+    elif args.tax_id_file:
+        tax_ids = set(args.tax_id_file.read().split())
+    elif args.seq_info:
+        tax_ids = {row['tax_id'] for row in csv.DictReader(args.seq_info)}
+    else:
+        sys.exit('Error: no tax_ids were specified')
+
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
+    tax = Taxonomy(engine, schema=args.schema)
 
-    ranks_df = pandas.read_sql_table(
-        'ranks', engine,
-        schema=args.schema)
-    # most operations in this script require ordering from 'root' down
-    ranks_df = ranks_df.sort_values(by='height', ascending=False)
-    ranks = ranks_df['rank'].tolist()
+    rows = tax._get_lineage_table(tax_ids)
 
-    nodes = None
-    subset_ids = set()
+    log.info('grouping lineages')
+    all_ranks = set()
+    taxtable = {}
+    for tax_id, grp in groupby(rows, lambda row: row[0]):
+        ranks, tax_rows = as_taxtable_rows(grp, seen=taxtable)
+        taxtable.update(dict(tax_rows))
+        all_ranks |= set(ranks)
 
-    # check tax_ids subsets first before building taxtable
-    if any([args.tax_ids, args.taxnames, args.seq_info]):
-        tax = Taxonomy(engine, schema=args.schema)
-        if args.tax_ids:
-            if os.access(args.tax_ids, os.F_OK):
-                for line in getlines(args.tax_ids):
-                    subset_ids.update(set(re.split(r'[\s,;]+', line)))
-            else:
-                subset_ids.update(
-                    [x.strip() for x in re.split(r'[\s,;]+', args.tax_ids)])
+    # guppy requires that tax_id == parent_id for the root node;
+    # identify the root node by calculating an arbitrary lineage.
+    root_id = tax.lineage(tax_id)['root']
+    taxtable[root_id]['parent_id'] = root_id
 
-        if args.seq_info:
-            log.info('reading tax_ids ' + args.seq_info.name)
-            with args.seq_info:
-                reader = csv.DictReader(args.seq_info)
-                subset_ids.update(
-                    frozenset(i['tax_id'] for i in reader if i['tax_id']))
+    sorted_ranks = sorted(all_ranks, key=order_ranks(tax.ranks[::-1]))
 
-        # this will raise an error if any tax_ids do not exist in database
-        all_known(subset_ids, tax)
+    # guppy requires this column order
+    fieldnames = ['tax_id', 'parent_id', 'rank', 'tax_name'] + sorted_ranks
 
-        if args.taxnames:
-            for taxname in getlines(args.taxnames):
-                for name in re.split(r'\s*[,;]\s*', taxname):
-                    tax_id, primary_name, is_primary = tax.primary_from_name(
-                        name.strip())
-                    subset_ids.add(tax_id)
+    output = list(taxtable.values())
+    log.info('sorting lineages')
 
-        if not subset_ids:
-            log.error('no tax_ids to subset taxtable, exiting')
-            return
+    output = sorted(
+        output,
+        # key=getitems(*sorted_ranks)
+        key=lambda row: tuple(row.get(rank) or '' for rank in sorted_ranks)
+    )
 
-    log.info('loading nodes table from database')
-    nodes = pandas.read_sql_table(
-        'nodes', engine, schema=args.schema, index_col='tax_id')
-
-    if args.taxtable:
-        log.info('using existing taxtable ' + args.taxtable)
-        taxtable = pandas.read_csv(args.taxtable, dtype=str)
-        taxtable = taxtable.set_index('tax_id')
-        taxtable = taxtable.join(nodes[['parent_id', 'is_valid']], lsuffix='old_')
-    else:
-        log.info('building taxtable')
-        names = pandas.read_sql_table(
-            'names', engine,
-            schema=args.schema,
-            columns=['tax_id', 'tax_name', 'is_primary'])
-        names = names[names['is_primary']].set_index('tax_id')
-        len_nodes = len(nodes)
-        nodes = nodes.join(names['tax_name'])
-        assert len_nodes == len(nodes)
-        taxtable = build_taxtable(nodes, ranks)
-
-    # subset taxtable clade lineages
-    if args.clade_ids:
-        dtypes = taxtable.dtypes
-        clades = []
-        for i in args.clade_ids.split(','):
-            ancestor = taxtable.loc[i]
-
-            # select all rows where rank column == args.from_id
-            clade = taxtable[taxtable[ancestor['rank']] == i]
-
-            # build taxtable up to root from args.from_id
-            while ancestor.name != '1':  # root
-                parent = taxtable.loc[ancestor['parent_id']]
-                clade = pandas.concat(
-                    [pandas.DataFrame(parent).T, clade])
-                ancestor = parent
-            # reset lost index name after concatenating transposed series
-            clades.append(clade)
-        taxtable = pandas.concat(clades)
-        taxtable = taxtable[~taxtable.index.duplicated()]
-
-        # set index.name and dtypes back after concating transposed series
-        taxtable.index.name = 'tax_id'
-        for d, t in dtypes.iteritems():
-            taxtable[d] = taxtable[d].astype(t)
-
-    # subset taxtable by set of tax_ids
-    if subset_ids:
-        keepers = taxtable.loc[subset_ids]
-        for col in keepers.columns:
-            if col in ranks:
-                subset_ids.update(keepers[col].dropna().values)
-        taxtable = taxtable.loc[subset_ids]
-
-    # drop no_rank rows and/or columns
-    if args.ranked:
-        rank_cols = ranks_df[~ranks_df['no_rank']]['rank'].tolist()
-        if args.ranked == 'rows':
-            # drop rows not in ranked columns
-            taxtable = taxtable[taxtable['rank'].isin(rank_cols)]
-    else:
-        # keep all columns
-        rank_cols = ranks_df['rank'].tolist()
-
-    # drop invalid nodes throughout taxtable
-    if args.valid:
-        # remove all invalids from the rank columns
-        invalid = taxtable[~taxtable['is_valid']]
-        for r, g in invalid.groupby(by='rank'):
-            if r in rank_cols:
-                taxtable.loc[taxtable[r].isin(g.index), r] = None
-            # else don't bother with columns that will be dropped
-        taxtable = taxtable[taxtable['is_valid']]
-
-    # clean up empty rank columns
-    taxtable = taxtable.dropna(axis=1, how='all')
-    rank_cols = [r for r in rank_cols if r in taxtable.columns]
-
-    # include parent_id column for pplacer when returning all rows
-    taxtable = taxtable[['parent_id', 'rank', 'tax_name'] + rank_cols]
-
-    # sort rows
-    taxtable['rank'] = taxtable['rank'].astype(
-        'category', categories=ranks_df['rank'].tolist())
-    taxtable = taxtable.sort_values('rank')
-
-    # write and close db
-    taxtable.to_csv(args.out)
-    engine.dispose()
-
-
-def all_known(tax_ids, tax):
-    '''
-    Check if ALL tax_ids are known.  Return True/False
-    '''
-    all_known = True
-    for t in tax_ids:
-        try:
-            tax._node(t)
-        except ValueError:
-            # Check for merged
-            m = tax._get_merged(t)
-            if m and m != t:
-                msg = ("Taxid {} has been replaced by {}. "
-                       "Please update your records").format(t, m)
-                log.error(msg)
-            else:
-                log.error('Taxid {} not found in taxonomy'.format(t))
-            all_known = False
-
-    if not all_known:
-        raise ValueError('Some tax_ids are unknown.  Exiting.')
-
-
-def build_taxtable(nodes, ranks):
-    '''
-    Given list of tax_ids with parent_ids and an ordered list of ranks return
-    a table of taxonomic lineages with ranks as columns
-
-    Iterate by rank starting with root and joining on parent_id to build
-    lineages.
-    '''
-    df_index_name = nodes.index.name
-
-    nodes = nodes.join(nodes['rank'], on='parent_id', rsuffix='_parent').reset_index()
-    nodes['rank_parent'] = nodes['rank_parent'].astype('category', categories=ranks)
-    lineages = nodes[nodes['tax_id'] == '1'].iloc[[0]]
-    lineages.loc[:, 'root'] = lineages['tax_id']
-    nodes = nodes.drop(lineages.index)
-    tax_parent_groups = nodes.groupby(by='rank_parent', sort=True)
-    # standard message width so everything prints nice
-    msg = 'Processing lineages: {:<' + str(max(map(len, ranks))) + '}\r'
-    for parent, pdf in tax_parent_groups:
-        at_rank = []
-        for child, df in pdf.groupby(by='rank'):
-            df = df.copy()
-            df[child] = df['tax_id']
-            at_rank.append(df)
-        if at_rank:
-            '''bug in pandas 0.18.1 puts all categories as group
-               keys even when there are no values so we much test
-               for at_rank to be not empty'''
-            at_rank = pandas.concat(at_rank)
-            at_rank = at_rank.merge(
-                lineages[ranks[:ranks.index(parent) + 1]],
-                left_on='parent_id',
-                right_on=parent,
-                how='inner')
-            lineages = lineages.append(at_rank)
-
-        # status message
-        sys.stderr.write(msg.format(parent))
-
-    return lineages.drop('rank_parent', axis=1).set_index(df_index_name)
+    log.info('writing taxtable')
+    writer = csv.DictWriter(
+        args.outfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
+    writer.writeheader()
+    writer.writerows(output)

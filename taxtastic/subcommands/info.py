@@ -21,7 +21,7 @@ import csv
 from collections import defaultdict
 import sys
 
-from Bio import SeqIO
+from fastalite import fastalite
 
 from taxtastic import refpkg
 
@@ -50,14 +50,15 @@ def tally_taxa(pkg):
         tally[tax_id] += 1
 
     rows = [(taxdict[tax_id]['tax_name'], tax_id, count)
-            for tax_id, count in tally.items()]
+            for tax_id, count in list(tally.items())]
 
     writer = csv.writer(sys.stdout, quoting=csv.QUOTE_NONNUMERIC)
     writer.writerows(sorted(rows))
 
 
 def print_lengths(pkg):
-    seqs = SeqIO.parse(pkg.file_abspath('aln_fasta'), 'fasta')
+    with pkg.open_resource('aln_fasta') as f:
+        seqs = fastalite(f)
     writer = csv.writer(sys.stdout)
     writer.writerow(["seqname", "length"])
     for seq in seqs:
@@ -77,11 +78,11 @@ def action(args):
         snames = [row['seqname'] for row in seqinfo]
 
     if args.seq_names:
-        print '\n'.join(snames)
+        print('\n'.join(snames))
     elif args.tally:
         tally_taxa(pkg)
     elif args.lengths:
         print_lengths(pkg)
     else:
-        print 'number of sequences:', len(snames)
-        print 'package components\n', '\n'.join(sorted(pkg.file_keys()))
+        print('number of sequences:', len(snames))
+        print('package components\n', '\n'.join(sorted(pkg.file_keys())))
