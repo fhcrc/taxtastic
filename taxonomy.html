@@ -79,7 +79,7 @@
 </pre></div>
 </div>
 <p>If this were placed in <code class="docutils literal notranslate"><span class="pre">taxids.txt</span></code>, we would extract the minimal taxonomy containing these taxids with:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ taxit taxtable taxonomy.db -t taxids.txt -o taxonomy_from_taxids.csv
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ taxit taxtable taxonomy.db -f taxids.txt -o taxonomy_from_taxids.csv
 </pre></div>
 </div>
 <p>Sometimes you will have the names of taxonomic nodes instead of tax_ids or some names and some tax_ids.  <code class="docutils literal notranslate"><span class="pre">taxit</span> <span class="pre">taxtable</span></code> also accepts names, passed in a file via the <code class="docutils literal notranslate"><span class="pre">-n</span></code> option.  For instance, if we had the tax_ids from the above file besides 47770 and 33945 as names instead,:</p>

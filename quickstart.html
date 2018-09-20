@@ -80,7 +80,7 @@ Say in addition to the above files you also have:</p>
 </pre></div>
 </div>
 <p>This will download zipped files containing the NCBI taxonomy into the current directory and load the data into an sqlite databse named <code class="docutils literal notranslate"><span class="pre">taxonomy.db</span></code>.  This takes a while!  Plan to go get a cup of coffee.  Then run:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">taxit</span> <span class="n">taxtable</span> <span class="n">taxonomy</span><span class="o">.</span><span class="n">db</span> <span class="o">-</span><span class="n">t</span> <span class="n">tax_ids</span><span class="o">.</span><span class="n">txt</span> <span class="o">-</span><span class="n">o</span> <span class="n">taxa</span><span class="o">.</span><span class="n">csv</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">taxit</span> <span class="n">taxtable</span> <span class="n">taxonomy</span><span class="o">.</span><span class="n">db</span> <span class="o">-</span><span class="n">f</span> <span class="n">tax_ids</span><span class="o">.</span><span class="n">txt</span> <span class="o">-</span><span class="n">o</span> <span class="n">taxa</span><span class="o">.</span><span class="n">csv</span>
 </pre></div>
 </div>
 <p>The output, <code class="docutils literal notranslate"><span class="pre">taxa.csv</span></code>, is a CSV file containing the minimum subtaxonomy of <code class="docutils literal notranslate"><span class="pre">taxonomy.db</span></code> which contains all the entries in <code class="docutils literal notranslate"><span class="pre">tax_ids.txt</span></code>.</p>
