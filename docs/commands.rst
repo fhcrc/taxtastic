@@ -233,7 +233,7 @@ Examples:
     Force the creation of taxonomy.db in the parent directory, putting
     the downloaded NCBI data in /tmp/ncbi::
 
-      taxit new_database ../taxonomy.db -x -p /tmp/ncbi
+      taxit new_database ../taxonomy.db -p /tmp/ncbi
 
 refpkg_intersection
 -------------------
