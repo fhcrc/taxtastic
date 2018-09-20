@@ -18,11 +18,11 @@ import datetime
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-venv = '{venv}/lib/python{v.major}.{v.minor}/site-packages'.format(
-    venv=os.environ['VIRTUAL_ENV'],
-    v=sys.version_info)
-
-sys.path.insert(0, os.path.abspath(venv))
+if 'VIRTUAL_ENV' in os.environ:
+    venv = '{venv}/lib/python{v.major}.{v.minor}/site-packages'.format(
+        venv=os.environ['VIRTUAL_ENV'],
+        v=sys.version_info)
+    sys.path.insert(0, os.path.abspath(venv))
 sys.path.insert(0, os.path.abspath('..'))
 
 from taxtastic import __version__
@@ -50,7 +50,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'taxtastic'
-copyright = '2011-{}, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy'.format(
+copyright = ('2011-{}, Noah Hoffman, Erick Matsen, '
+             'Brian Hodges, Connor McCoy, Chris Rosenthal').format(
     datetime.date.today().strftime('%Y'))
 
 # The version info for the project you're documenting, acts as replacement for

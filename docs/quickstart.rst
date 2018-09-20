@@ -40,7 +40,7 @@ First we have to represent the tax_ids as a taxonomy.  You will need a copy of t
 
 This will download zipped files containing the NCBI taxonomy into the current directory and load the data into an sqlite databse named ``taxonomy.db``.  This takes a while!  Plan to go get a cup of coffee.  Then run::
 
-    taxit taxtable taxonomy.db -t tax_ids.txt -o taxa.csv
+    taxit taxtable taxonomy.db -f tax_ids.txt -o taxa.csv
 
 The output, ``taxa.csv``, is a CSV file containing the minimum subtaxonomy of ``taxonomy.db`` which contains all the entries in ``tax_ids.txt``.
 
