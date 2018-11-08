@@ -5,6 +5,9 @@
 next release
 ============
 
+0.8.6
+=====
+
 * recognize LG-model in Fasttree stats file
 * bugfix to prevent error reading NCBI taxonomy [GH-124]
 
