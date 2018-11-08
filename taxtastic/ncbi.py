@@ -287,6 +287,14 @@ def read_names(rows, source_id=1):
     * rows - iterator of lists (eg, output from read_archive or read_dmp)
     * unclassified_regex - a compiled re matching "unclassified" names
 
+    From the NCBI docs:
+
+    Taxonomy names file (names.dmp):
+        tax_id -- the id of node associated with this name
+        name_txt -- name itself
+        unique name -- the unique variant of this name if name not unique
+        name class -- (synonym, common name, ...)
+
     """
 
     ncbi_keys = ['tax_id', 'tax_name', 'unique_name', 'name_class']
@@ -296,8 +304,10 @@ def read_names(rows, source_id=1):
     # later
     is_classified = None
 
-    name_class = ncbi_keys.index('name_class')
     tax_id = ncbi_keys.index('tax_id')
+    tax_name = ncbi_keys.index('tax_name')
+    unique_name = ncbi_keys.index('unique_name')
+    name_class = ncbi_keys.index('name_class')
 
     yield ncbi_keys + extra_keys
 
@@ -306,6 +316,9 @@ def read_names(rows, source_id=1):
         num_primary = 0
         for r in grp:
             is_primary = r[name_class] == 'scientific name'
+            # fix primary key uniqueness violation
+            if r[unique_name]:
+                r[tax_name] = r[unique_name]
             num_primary += is_primary
             yield (r + [source_id, is_primary, is_classified])
 
@@ -410,7 +423,7 @@ class NCBILoader(object):
         species_names = cur.fetchall()
         log.info('found {} species names'.format(len(species_names)))
 
-        log.info('checking species names')
+        log.info('checking for unclassified species names')
         classified_taxids = [(tax_id,) for tax_id, tax_name in species_names
                              if not unclassified_regex.search(tax_name)]
 
