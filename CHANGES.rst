@@ -5,6 +5,12 @@
 next release
 ============
 
+0.8.7
+=====
+
+* fixed psycopg2 library warning
+* updated Docker and Singularity build files to use Python 3.6.7
+
 0.8.6
 =====
 

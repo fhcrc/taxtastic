@@ -1,4 +1,4 @@
-FROM python:2.7.14-stretch
+FROM python:3.6.7-stretch
 
 COPY taxtastic.tar.gz /src/taxtastic.tar.gz
 COPY install_pplacer.sh /usr/local/bin/install_pplacer.sh

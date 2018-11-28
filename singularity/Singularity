@@ -1,5 +1,5 @@
 Bootstrap:docker
-From:python:2.7.14-stretch
+From:python:3.6.7-stretch
 
 %setup
   mkdir ${SINGULARITY_ROOTFS}/src
