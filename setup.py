@@ -69,13 +69,13 @@ params = {'name': 'taxtastic',
           'test_suite': 'tests',
           'install_requires': [
               'decorator>=4.1.2',
-              'fastalite>=0.3',
               'DendroPy>=4.3.0',
+              'fastalite>=0.3',
               'jinja2>=2.9',
-              'sqlalchemy>=1.0',
+              'psycopg2-binary>=2.7.3.1',
               'PyYAML>=3.12',
-              'psycopg2>=2.7.3.1',
-              'six'
+              'six',
+              'sqlalchemy>=1.0',
           ]}
 
 setup(**params)
