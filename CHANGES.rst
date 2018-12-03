@@ -5,6 +5,8 @@
 next release
 ============
 
+* new ``taxit get_descendants`` that returns given and descendant taxids [GH-126]
+
 0.8.7
 =====
 
