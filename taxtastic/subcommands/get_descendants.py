@@ -38,7 +38,7 @@ def build_parser(parser):
 
 def action(args):
     if os.path.isfile(args.taxids):
-        taxids = [i.strip() for i in open(args.tax_ids) if i]
+        taxids = [i.strip() for i in open(args.taxids) if i]
     else:
         taxids = args.taxids.split(',')
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
