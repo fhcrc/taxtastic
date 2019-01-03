@@ -2,8 +2,11 @@
  change log for taxtastic
 ==========================
 
-next release
-============
+0.8.9
+=====
+
+* prevent unique constraint violation when file in taxdmp contains
+  duplicate lines [GH-124].
 
 0.8.8
 =====

@@ -527,21 +527,31 @@ def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
 
 
 def read_archive(archive, fname):
-    """
-    Return an iterator of rows from a zip archive.
+    """Return an iterator of unique rows from a zip archive.
 
     * archive - path to the zip archive.
     * fname - name of the compressed file within the archive.
+
     """
+
+    # Note that deduplication here is equivalent to an upsert/ignore,
+    # but avoids requirement for a database-specific implementation.
 
     zfile = zipfile.ZipFile(archive)
     contents = zfile.open(fname, 'r')
     fobj = io.TextIOWrapper(contents)
 
+    seen = set()
     for line in fobj:
-        yield line.rstrip('\t|\n').split('\t|\t')
+        line = line.rstrip('\t|\n')
+        if line not in seen:
+            yield line.split('\t|\t')
+            seen.add(line)
 
-
-def read_dmp(fname):
-    for line in open(fname, 'rU'):
-        yield line.rstrip('\t|\n').split('\t|\t')
+# def read_dmp(fname):
+#     seen = set()
+#     for line in open(fname, 'rU'):
+#         line = line.rstrip('\t|\n')
+#         if line not in seen:
+#             yield line.split('\t|\t')
+#             seen.add(line)
