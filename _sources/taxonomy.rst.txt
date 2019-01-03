@@ -3,11 +3,11 @@ Manipulating the NCBI taxonomy
 
 The first thing we must do is download a copy of the NCBI taxonomy.  The taxit subcommand ``new_database`` does this for us and loads the taxonomy into an SQLite3 database that taxit can use.::
 
-    $ taxit new_database -d taxonomy.db
+    $ taxit new_database taxonomy.db
 
 The primary use for the taxonomy is extracting subsets of it for use in references packages.  For instance, if we want the minimal subtaxonomy that contains both Lactobacillus crispatus (tax_id 47770) and Enterococcus avium (tax_id 33945), we would run::
 
-    $ taxit taxtable -d taxonomy.db -t 47770,33945 -o minimal_taxonomy.csv
+    $ taxit taxtable taxonomy.db -t 47770,33945 -o minimal_taxonomy.csv
 
 The file ``minimal_taxonomy.csv`` contains the entries for the two species we specified, along with all nodes of the taxonomy which connect them to the root of the taxonomy.  The file's contents are::
 
@@ -38,7 +38,7 @@ For large numbers of tax_ids, it is awkard or impossible to pass them on the com
 
 If this were placed in ``taxids.txt``, we would extract the minimal taxonomy containing these taxids with::
 
-    $ taxit taxtable -d taxonomy.db -t taxids.txt -o taxonomy_from_taxids.csv
+    $ taxit taxtable taxonomy.db -f taxids.txt -o taxonomy_from_taxids.csv
 
 Sometimes you will have the names of taxonomic nodes instead of tax_ids or some names and some tax_ids.  ``taxit taxtable`` also accepts names, passed in a file via the ``-n`` option.  For instance, if we had the tax_ids from the above file besides 47770 and 33945 as names instead,::
 
@@ -48,7 +48,7 @@ Sometimes you will have the names of taxonomic nodes instead of tax_ids or some 
 
 If this were placed in ``taxnames.txt`` and we passed the original tax_ids of 47770 and 33945 as well, we would extract the same subtaxonomy as above with::
 
-    $ taxit taxtable -d taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv
+    $ taxit taxtable taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv
 
 In these examples we have used only species level tax_ids.  This is not necessary.  If you pass ``taxit taxtable`` a family level tax_id, it will add the family and all nodes connecting it to the root of the taxonomy.  However, it will not add any species, genera, or the like below the level of that family, so passing higher rank tax_ids in this manner is not terribly useful.
 
@@ -59,7 +59,7 @@ Occasionally you will want to augment the NCBI taxonomy with entries of your own
 
 where 1578 is the tax_id of the genus Lactobacillus.  If we put this text in ``new_taxa.csv``, we would add it with the command::
 
-    $ taxit add_nodes -d taxonomy.db -N new_taxa.csv
+    $ taxit add_nodes taxonomy.db -N new_taxa.csv
 
 Then we could refer to either Lactobacillus borisii or the tax_id AA1 when extracting subtaxonomies from ``taxonomy.db``.
 

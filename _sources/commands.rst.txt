@@ -228,12 +228,12 @@ Examples:
 
     Download the NCBI taxonomy and create taxonomy.db if it does not exist::
 
-      taxit new_database -d taxonomy.db
+      taxit new_database taxonomy.db
 
     Force the creation of taxonomy.db in the parent directory, putting
     the downloaded NCBI data in /tmp/ncbi::
 
-      taxit new_database -d ../taxonomy.db -x -p /tmp/ncbi
+      taxit new_database ../taxonomy.db -p /tmp/ncbi
 
 refpkg_intersection
 -------------------
@@ -326,11 +326,11 @@ Examples:
 
 Look up two species and print their tax_ids to stdout, one per line::
 
-  taxit taxids -d ncbi_database.db -n "Lactobacillus crispatus,Lactobacillus helveticus"
+  taxit taxids ncbi_database.db -n "Lactobacillus crispatus,Lactobacillus helveticus"
 
 Read the species from some_names.txt and write their tax_ids to some_taxids.txt::
 
-  taxit taxids -d ncbi_database.db -f some_names.txt -o some_taxids.txt
+  taxit taxids ncbi_database.db -f some_names.txt -o some_taxids.txt
 
 taxtable
 --------
@@ -341,15 +341,15 @@ Examples:
 
 Extract tax_ids 47770 and 33945 and all nodes connecting them to the root.::
 
-  taxit taxtable -d taxonomy.db -t 47770,33945
+  taxit taxtable taxonomy.db -t 47770,33945
 
 The same as above, but write the output to subtax.csv instead of stdout::
 
-  taxit taxtable -d taxonomy.db -t 47770,33945 -o subtax.csv
+  taxit taxtable taxonomy.db -t 47770,33945 -o subtax.csv
 
 Extract the same tax_ids, plus the taxa specifies in taxnames.txt::
 
-  taxit taxtable -d taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv
+  taxit taxtable taxonomy.db -t 47770,33945 -n taxnames.txt -o taxonomy_from_both.csv
 
 update
 ------
