@@ -61,6 +61,7 @@ RANKS = [
     'suborder',
     'order',
     'superorder',
+    'subcohort',
     'cohort',
     'infraclass',
     'subclass',

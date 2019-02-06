@@ -5,6 +5,11 @@
 next release
 ============
 
+0.8.10
+======
+
+* adding subcohort to ncbi.py ranks
+
 0.8.8
 =====
 
