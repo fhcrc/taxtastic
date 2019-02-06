@@ -2,16 +2,16 @@
  change log for taxtastic
 ==========================
 
+0.8.10
+======
+
+* adding subcohort to ncbi.py ranks
+
 0.8.9
 =====
 
 * prevent unique constraint violation when file in taxdmp contains
   duplicate lines [GH-124].
-
-0.8.10
-======
-
-* adding subcohort to ncbi.py ranks
 
 0.8.8
 =====
