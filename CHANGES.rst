@@ -2,6 +2,11 @@
  change log for taxtastic
 ==========================
 
+0.8.11
+======
+
+* adding section, subsection, series and subseries to ncbi.py ranks
+
 0.8.10
 ======
 
