@@ -1,12 +1,10 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Detailed taxit documentation &#8212; taxtastic 0.8.8 documentation</title>
+    <meta charset="utf-8" />
+    <title>Detailed taxit documentation &#8212; taxtastic 0.8.11 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -29,7 +27,7 @@
         <li class="right" >
           <a href="refpkg_api.html" title="The Python Refpkg API"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.8 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.11 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -75,35 +73,35 @@
 <code class="docutils literal notranslate"><span class="pre">new_nodes</span></code> should be a yaml format file containing one or more
 records, each of which specifies a new node or name.</p>
 <p>For a new <strong>node</strong> the following are required:</p>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">type</span></code></dt>
-<dd>The value must be “node”</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">tax_id</span></code></dt>
-<dd>The tax_id for this new node in the taxonomy, which must not
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">type</span></code></dt><dd><p>The value must be “node”</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tax_id</span></code></dt><dd><p>The tax_id for this new node in the taxonomy, which must not
 conflict with an existing tax_id.  NCBI’s tax_ids are all integers,
 so it works well to choose an alphabetic prefix for the tax_ids for
-all new nodes (e.g., name them AB1, AB2, AB3, etc.).</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">rank</span></code></dt>
-<dd>The name of the rank at which this node falls in the
-taxonomy. Choose from among the ranks specified in table <code class="docutils literal notranslate"><span class="pre">ranks</span></code>.</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">parent_id</span></code></dt>
-<dd>The tax_id which will be set as the parent of this node in the taxonomy.</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">names</span></code></dt>
-<dd>One or more names to associate with the node. Minimally, must define
-a single taxonomic name. See description of a name record below.</dd>
+all new nodes (e.g., name them AB1, AB2, AB3, etc.).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">rank</span></code></dt><dd><p>The name of the rank at which this node falls in the
+taxonomy. Choose from among the ranks specified in table <code class="docutils literal notranslate"><span class="pre">ranks</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">parent_id</span></code></dt><dd><p>The tax_id which will be set as the parent of this node in the taxonomy.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">names</span></code></dt><dd><p>One or more names to associate with the node. Minimally, must define
+a single taxonomic name. See description of a name record below.</p>
+</dd>
 </dl>
 <p>Required unless a default source name is specified using the
 <code class="docutils literal notranslate"><span class="pre">--source-name</span></code> option:</p>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">source_name</span></code></dt>
-<dd>A string describing the origin of these taxa so that it is easy to
-find them in the database.</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">source_name</span></code></dt><dd><p>A string describing the origin of these taxa so that it is easy to
+find them in the database.</p>
+</dd>
 </dl>
 <p>Any combination of the following columns <em>may</em> be specified:</p>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">children</span></code></dt>
-<dd>A list of tax_ids which should be detached from their current
-parents and attached to this node as its children.</dd>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">children</span></code></dt><dd><p>A list of tax_ids which should be detached from their current
+parents and attached to this node as its children.</p>
+</dd>
 </dl>
 <p>A minimal example of a record specifying a node (assuming
 <code class="docutils literal notranslate"><span class="pre">--source-name</span></code> is provided on the command line):</p>
@@ -135,15 +133,15 @@ child nodes:</p>
 </div>
 <p>A record specifying <strong>names</strong> to be added to existing nodes has the
 following required fields:</p>
-<dl class="docutils">
-<dt><code class="docutils literal notranslate"><span class="pre">type</span></code></dt>
-<dd>The value must be “name”</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">tax_id</span></code></dt>
-<dd>The tax_id to add names to.</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">names</span></code></dt>
-<dd>A list of taxonomic names. If a single name is provided, requires
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">type</span></code></dt><dd><p>The value must be “name”</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tax_id</span></code></dt><dd><p>The tax_id to add names to.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">names</span></code></dt><dd><p>A list of taxonomic names. If a single name is provided, requires
 only <code class="docutils literal notranslate"><span class="pre">tax_name</span></code>; if more than one, the primary name must be
-indicated (see examples below).</dd>
+indicated (see examples below).</p>
+</dd>
 </dl>
 <p>A minimal example (again, assuming <code class="docutils literal notranslate"><span class="pre">source_name</span></code> is defined from the command line):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">---</span>
@@ -321,54 +319,54 @@ Taxonomic Rerooting:
 <p><strong>Input files</strong></p>
 <p>Input files are identified in the refpkg using the following labels
 (see, for example <code class="docutils literal notranslate"><span class="pre">taxit</span> <span class="pre">rp</span></code>):</p>
-<table border="1" class="docutils">
+<table class="docutils align-center">
 <colgroup>
-<col width="33%" />
-<col width="18%" />
-<col width="49%" />
+<col style="width: 33%" />
+<col style="width: 18%" />
+<col style="width: 49%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Option</th>
-<th class="head">File key</th>
-<th class="head">Description</th>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>File key</p></th>
+<th class="head"><p>Description</p></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">-f</span></code>, <code class="docutils literal notranslate"><span class="pre">--aln-fasta</span></code></td>
-<td><code class="docutils literal notranslate"><span class="pre">aln_fasta</span></code></td>
-<td>Reference sequences in FASTA format</td>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-f</span></code>, <code class="docutils literal notranslate"><span class="pre">--aln-fasta</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">aln_fasta</span></code></p></td>
+<td><p>Reference sequences in FASTA format</p></td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">-i</span></code>, <code class="docutils literal notranslate"><span class="pre">--seq-info</span></code></td>
-<td><code class="docutils literal notranslate"><span class="pre">seq_info</span></code></td>
-<td>CSV describing aligned sequences</td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-i</span></code>, <code class="docutils literal notranslate"><span class="pre">--seq-info</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">seq_info</span></code></p></td>
+<td><p>CSV describing aligned sequences</p></td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">-m</span></code>, <code class="docutils literal notranslate"><span class="pre">--mask</span></code></td>
-<td><code class="docutils literal notranslate"><span class="pre">mask</span></code></td>
-<td>Text file containing sequence mask</td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-m</span></code>, <code class="docutils literal notranslate"><span class="pre">--mask</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mask</span></code></p></td>
+<td><p>Text file containing sequence mask</p></td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">-p</span></code>, <code class="docutils literal notranslate"><span class="pre">--profile</span></code></td>
-<td><code class="docutils literal notranslate"><span class="pre">profile</span></code></td>
-<td>Multiple alignment profile</td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-p</span></code>, <code class="docutils literal notranslate"><span class="pre">--profile</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">profile</span></code></p></td>
+<td><p>Multiple alignment profile</p></td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">-R</span></code>, <code class="docutils literal notranslate"><span class="pre">--readme</span></code></td>
-<td><code class="docutils literal notranslate"><span class="pre">readme</span></code></td>
-<td>A README file for the refpkg</td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-R</span></code>, <code class="docutils literal notranslate"><span class="pre">--readme</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">readme</span></code></p></td>
+<td><p>A README file for the refpkg</p></td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">-s</span></code>, <code class="docutils literal notranslate"><span class="pre">--tree-stats</span></code></td>
-<td><code class="docutils literal notranslate"><span class="pre">tree_stats</span></code></td>
-<td>Typically written by the tree builder</td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-s</span></code>, <code class="docutils literal notranslate"><span class="pre">--tree-stats</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tree_stats</span></code></p></td>
+<td><p>Typically written by the tree builder</p></td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">-S</span></code>, <code class="docutils literal notranslate"><span class="pre">--aln-sto</span></code></td>
-<td><code class="docutils literal notranslate"><span class="pre">aln_sto</span></code></td>
-<td>Stockholm file of reference sequences</td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-S</span></code>, <code class="docutils literal notranslate"><span class="pre">--aln-sto</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">aln_sto</span></code></p></td>
+<td><p>Stockholm file of reference sequences</p></td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">-t</span></code>, <code class="docutils literal notranslate"><span class="pre">--tree-file</span></code></td>
-<td><code class="docutils literal notranslate"><span class="pre">tree</span></code></td>
-<td>Phylogenetic tree in Newick format</td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-t</span></code>, <code class="docutils literal notranslate"><span class="pre">--tree-file</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tree</span></code></p></td>
+<td><p>Phylogenetic tree in Newick format</p></td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">-T</span></code>, <code class="docutils literal notranslate"><span class="pre">--taxonomy</span></code></td>
-<td><code class="docutils literal notranslate"><span class="pre">taxonomy</span></code></td>
-<td>CSV file specifying taxonomy</td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-T</span></code>, <code class="docutils literal notranslate"><span class="pre">--taxonomy</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">taxonomy</span></code></p></td>
+<td><p>CSV file specifying taxonomy</p></td>
 </tr>
 </tbody>
 </table>
@@ -1021,8 +1019,6 @@ database options:
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -1040,12 +1036,12 @@ database options:
         <li class="right" >
           <a href="refpkg_api.html" title="The Python Refpkg API"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.8 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.11 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2011-2019, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy, Chris Rosenthal.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
     </div>
   </body>
 </html>
