@@ -68,14 +68,14 @@ params = {'name': 'taxtastic',
           'entry_points': {'console_scripts': ['taxit = taxtastic.scripts.taxit:main']},
           'test_suite': 'tests',
           'install_requires': [
+              'DendroPy>=4.3.0',
+              'PyYAML>=3.12',
               'decorator>=4.1.2',
               'fastalite>=0.3',
-              'DendroPy>=4.3.0',
               'jinja2>=2.9',
+              'psycopg2-binary>=2.7.3.1',
+              'six',
               'sqlalchemy>=1.0',
-              'PyYAML>=3.12',
-              'psycopg2>=2.7.3.1',
-              'six'
           ]}
 
 setup(**params)

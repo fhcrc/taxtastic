@@ -2,10 +2,38 @@
  change log for taxtastic
 ==========================
 
-next release
-============
+0.8.11
+======
+
+* adding section, subsection, series and subseries to ncbi.py ranks
+
+0.8.10
+======
+
+* adding subcohort to ncbi.py ranks
+
+0.8.9
+=====
+
+* prevent unique constraint violation when file in taxdmp contains
+  duplicate lines [GH-124].
+
+0.8.8
+=====
+
+* new ``taxit get_descendants`` that returns given and descendant taxids [GH-126]
+
+0.8.7
+=====
+
+* fixed psycopg2 library warning
+* updated Docker and Singularity build files to use Python 3.6.7
+
+0.8.6
+=====
 
 * recognize LG-model in Fasttree stats file
+* bugfix to prevent error reading NCBI taxonomy [GH-124]
 
 0.8.5
 =====

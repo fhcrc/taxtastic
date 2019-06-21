@@ -3,10 +3,10 @@
 DEFAULT_PPLACER_BUILD=1.1.alpha19
 
 if [[ -z $1 ]]; then
-    echo "usage: $(basename $0) <prefix> [<pplacer-build>]"
+    echo "usage: $(basename $0) <prefix> [<pplacer-build>] [<pip-binary>]"
     echo
-    echo "Installs pplacer binaries to <prefix>/bin"
-    echo "and accompanying python scripts to wherever pip2 puts things"
+    echo "Installs pplacer binaries to <prefix>/bin "
+    echo "and accompanying python scripts to wherever <pip-binary> puts things"
     echo "the default value of pplacer-build is $DEFAULT_PPLACER_BUILD"
     exit 1
 fi
@@ -30,8 +30,10 @@ else
         (cd src && \
         wget --quiet -nc $PPLACER_URL && \
         unzip -o $PPLACER_ZIP && \
-        cp $PPLACER_DIR/{pplacer,guppy,rppr} $PREFIX/bin && \
-        pip2 install -U $PPLACER_DIR/scripts)
+        cp $PPLACER_DIR/{pplacer,guppy,rppr} $PREFIX/bin)
+        if [[ ! -z $3 ]]; then
+          $3 install -U src/$PPLACER_DIR/scripts
+        fi
     # confirm that we have installed the requested build
     if ! pplacer_is_installed; then
         echo -n "Error: you requested pplacer build $PPLACER_BUILD "

@@ -1,31 +1,28 @@
 #!/bin/bash
 
-set -e
-
-if [[ $1 == '-h' ]]; then
-    echo "usage: ./build.sh [<version>] [<outdir>]"
-    echo "builds :latest by default"
-    exit
+if [[ -z $1 ]]; then
+    echo "usage: ./build.sh TAG [<outdir>]"
+    exit 1
 fi
 
 outdir=$(readlink -f ${2-.})
 
-if [[ -z $1 ]]; then
-    version=latest
-    tag=latest
-else
-    version=$1
-    tag=release-$1
+version=$1
+singularity_version=$(singularity --version)
+img=$(readlink -f $outdir/taxtastic-${version}-singularity${singularity_version}.img)
+
+if [[ -f $img ]]; then
+    echo "$img already exists"
+    exit 1
 fi
 
-img=taxtastic-${version}.img
-singfile=$(mktemp Singularity-XXXXXX)
-sed s"/TAG/$tag/" < Singularity > $singfile
+echo $img
 
-if [[ ! -f $img ]]; then
-    singularity create --size 1500 $img
-    sudo singularity bootstrap $img $singfile
-fi
+rm -rf dist
+(cd .. && python setup.py sdist --dist-dir singularity/dist)
+tarball=$(ls dist/taxtastic*)
+name=$(basename ${tarball%.tar.gz})
 
-rm $singfile
-
+cp $tarball taxtastic.tar.gz
+cp ../dev/install_pplacer.sh .
+sudo singularity build $img Singularity
