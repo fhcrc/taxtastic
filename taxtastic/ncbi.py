@@ -51,7 +51,6 @@ RANKS = [
     'forma',
     'varietas',
     'subspecies',
-    'clade',
     'species',
     'species_subgroup',
     'species_group',
@@ -90,6 +89,7 @@ RANKS = [
     'kingdom',
     'superkingdom',
     'root',
+    'clade',
     'no_rank',
 ]
 
