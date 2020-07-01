@@ -1,9 +1,21 @@
 matrix:
   include:
     - os: linux
-      sudo: false
       language: python
-      python: 2.7
+      python:
+        - 3.5
+    - os: linux
+      language: python
+      python:
+        - 3.6
+    - os: linux
+      language: python
+      python:
+        - 3.7
+    - os: linux
+      language: python
+      python:
+        - 3.8
     - os: osx
       language: generic
       env: PYTHON=3.6.3
@@ -50,6 +62,6 @@ install:
 script:
   - python setup.py -q test
   - check-manifest --ignore
-    "tox.ini,test*,dev*,docs*,taxtastic/data,taxtastic/data/*"
+    "tox.ini,tests/**/*,testfiles/**/*,docs/*,taxtastic/data/*"
   - python setup.py check --metadata --restructuredtext --strict
   # - flake8 taxtastic
