@@ -162,7 +162,7 @@ class TestRefpkg(unittest.TestCase):
             r = refpkg.Refpkg(rpkg, create=False)
             r.reroot()
             self.assertEqual('9bdbf22f8bf140074d126f3d27989100',
-                             r.file_md5('tree'))
+                             r.resource_md5('tree'))
             self.assertEqual(r.log(), ['Rerooting refpkg'])
 
     @unittest.skipUnless(HAS_RPPR, "`rppr` binary is not installed.")
@@ -174,7 +174,7 @@ class TestRefpkg(unittest.TestCase):
             r = refpkg.Refpkg(rpkg, create=False)
             r.reroot(pretend=True)
             self.assertEqual('2f11faa616fc7f04d7694436b5cca05f',
-                             r.file_md5('tree'))
+                             r.resource_md5('tree'))
 
     def test_transaction(self):
         with config.tempdir() as d:
