@@ -88,7 +88,7 @@ def action(args):
         unknowns.writeheader()
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
-    tax = Taxonomy(engine, taxtastic.ncbi.RANKS, schema=args.schema)
+    tax = Taxonomy(engine, schema=args.schema)
 
     with tax.engine.connect() as con:
         log.info('reading table merged')

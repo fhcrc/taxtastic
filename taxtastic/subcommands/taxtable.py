@@ -25,34 +25,24 @@ specified with ``-o/--outfile``.
 import argparse
 import csv
 import logging
+import re
 import sqlalchemy
 import sys
 from itertools import groupby
 
+from taxtastic.ncbi import RANK_LOOPS
 from taxtastic.taxonomy import Taxonomy
 from taxtastic.utils import add_database_args
 
 log = logging.getLogger(__name__)
 
 
-def replace_clade(ranks):
+def replace_loops(ranks):
     ranks = list(ranks)
-    while True:
-        try:
-            idx = ranks.index('clade')
-            ranks[idx] = '_' + ranks[idx - 1]
-        except ValueError:
-            return ranks
-
-
-def replace_no_rank(ranks):
-    ranks = list(ranks)
-    while True:
-        try:
-            idx = ranks.index('no_rank')
+    for idx, r in enumerate(ranks[:]):
+        if r in RANK_LOOPS:
             ranks[idx] = ranks[idx - 1] + '_'
-        except ValueError:
-            return ranks
+    return ranks
 
 
 def as_taxtable_rows(rows, seen=None):
@@ -62,8 +52,7 @@ def as_taxtable_rows(rows, seen=None):
     seen = seen or {}
 
     __, tids, pids, ranks, names = [list(tup) for tup in zip(*rows)]
-    ranks = replace_no_rank(ranks)
-    ranks = replace_clade(ranks)
+    ranks = replace_loops(ranks)
     ranks_out = ranks[:]
 
     tax_rows = []
@@ -80,9 +69,12 @@ def as_taxtable_rows(rows, seen=None):
 
 def order_ranks(ref_ranks):
     def _inner(rank):
-        parent = rank.strip('_')
-        below = len(rank) - len(parent)
-        return (ref_ranks.index(parent), below)
+        trailing_ = re.findall(r'_+$', rank)
+        if trailing_:
+            return (ref_ranks.index(rank.rstrip('_')), len(trailing_[0]))
+        else:
+            return (ref_ranks.index(rank), 0)
+
     return _inner
 
 

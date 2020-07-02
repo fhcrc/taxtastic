@@ -42,14 +42,15 @@ log = logging.getLogger(__name__)
 DATA_URL = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
 
 # For rank order: https://en.wikipedia.org/wiki/Taxonomic_rank
-
-RANKS = [
-    'isolate',
-    'strain',
-    'serotype',
-    'forma_specialis',
+RANK_ORDER = [
     'forma',
+    'subvariety',
     'varietas',
+    'serogroup',
+    'pathogroup',
+    'morph',
+    'genotype',
+    'biotype',
     'subspecies',
     'species',
     'species_subgroup',
@@ -76,12 +77,6 @@ RANKS = [
     'subclass',
     'class',
     'superclass',
-    'subvariety',
-    'morph',
-    'biotype',
-    'pathogroup',
-    'genotype',
-    'serogroup',
     'subphylum',
     'phylum',
     'superphylum',
@@ -89,9 +84,17 @@ RANKS = [
     'kingdom',
     'superkingdom',
     'root',
-    'clade',
-    'no_rank',
 ]
+
+RANK_LOOPS = [
+    'clade',
+    'isolate',
+    'forma_specialis',
+    'no_rank',
+    'serotype',
+    'strain']
+
+RANKS = RANK_ORDER + RANK_LOOPS
 
 # Components of a regex to apply to all names. Names matching this regex are
 # marked as invalid.

@@ -25,6 +25,7 @@ import taxtastic
 import sqlalchemy
 import sys
 
+from taxtastic.ncbi import RANK_LOOPS
 from taxtastic.taxonomy import Taxonomy
 
 log = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ def get_children(engine, parent_ids, rank='species', schema=None):
         for r in rows:
             if r['rank'] == rank and 'sp.' not in r['tax_name']:
                 species.append(r)
-        others = [r for r in rows if r['rank'] not in (rank, 'no_rank', 'clade')]
+        others = [r for r in rows if r['rank'] not in [rank] + RANK_LOOPS]
         if others:
             _, s = get_children(engine, [r['tax_id'] for r in others])
             species.extend(s)
