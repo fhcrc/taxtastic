@@ -54,7 +54,7 @@ def get_children(engine, parent_ids, rank='species', schema=None):
         for r in rows:
             if r['rank'] == rank and 'sp.' not in r['tax_name']:
                 species.append(r)
-        others = [r for r in rows if r['rank'] not in (rank, 'no_rank')]
+        others = [r for r in rows if r['rank'] not in (rank, 'no_rank', 'clade')]
         if others:
             _, s = get_children(engine, [r['tax_id'] for r in others])
             species.extend(s)
