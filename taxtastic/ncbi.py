@@ -86,7 +86,7 @@ RANK_ORDER = [
     'root',
 ]
 
-RANK_LOOPS = [
+UNORDERED_RANKS = [
     'clade',
     'isolate',
     'forma_specialis',
@@ -94,7 +94,7 @@ RANK_LOOPS = [
     'serotype',
     'strain']
 
-RANKS = RANK_ORDER + RANK_LOOPS
+RANKS = RANK_ORDER + UNORDERED_RANKS
 
 # Components of a regex to apply to all names. Names matching this regex are
 # marked as invalid.

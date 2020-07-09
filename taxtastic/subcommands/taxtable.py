@@ -30,29 +30,27 @@ import sqlalchemy
 import sys
 from itertools import groupby
 
-from taxtastic.ncbi import RANK_LOOPS
 from taxtastic.taxonomy import Taxonomy
 from taxtastic.utils import add_database_args
 
 log = logging.getLogger(__name__)
 
 
-def replace_loops(ranks):
-    ranks = list(ranks)
+def replace_unordered(ranks, unordered):
     for idx, r in enumerate(ranks[:]):
-        if r in RANK_LOOPS:
+        if r in unordered:
             ranks[idx] = ranks[idx - 1] + '_'
     return ranks
 
 
-def as_taxtable_rows(rows, seen=None):
+def as_taxtable_rows(rows, unordered, seen=None):
 
     # allows termination when we've seen a tax_id before - shaves just
     # a few seconds off the total time.
     seen = seen or {}
 
     __, tids, pids, ranks, names = [list(tup) for tup in zip(*rows)]
-    ranks = replace_loops(ranks)
+    ranks = replace_unordered(ranks, unordered)
     ranks_out = ranks[:]
 
     tax_rows = []
@@ -137,7 +135,8 @@ def action(args):
     all_ranks = set()
     taxtable = {}
     for tax_id, grp in groupby(rows, lambda row: row[0]):
-        ranks, tax_rows = as_taxtable_rows(grp, seen=taxtable)
+        ranks, tax_rows = as_taxtable_rows(
+            grp, tax.unordered_ranks, seen=taxtable)
         taxtable.update(dict(tax_rows))
         all_ranks |= set(ranks)
 
