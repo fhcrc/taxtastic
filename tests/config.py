@@ -1,4 +1,5 @@
 import contextlib
+from io import StringIO
 import os
 from os import path
 import sys
@@ -12,12 +13,6 @@ import subprocess
 
 from taxtastic.scripts.taxit import main
 
-try:
-    # python2
-    from cStringIO import StringIO
-except ImportError:
-    # python3
-    from io import StringIO
 
 log = logging
 
@@ -164,7 +159,6 @@ class TestScriptBase(OutputRedirectMixin, TestBase):
     """
 
     executable = None
-    DEVNULL = open(os.devnull, 'w')
     openargs = {'mode': 'rU'} if sys.version_info.major == 2 else {'newline': None}
 
     def __getitem__(self, i):
