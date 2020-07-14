@@ -50,7 +50,7 @@ def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
     tax = Taxonomy(engine, schema=args.schema)
 
-    records = list(yaml.load_all(args.new_nodes))
+    records = list(yaml.load_all(args.new_nodes, Loader=yaml.SafeLoader))
 
     log.info('adding new nodes')
     retval = None
