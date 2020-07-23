@@ -2,6 +2,14 @@
  change log for taxtastic
 ==========================
 
+0.9.0
+=====
+
+* New ordered ranks: biotype, genotype, morph, pathogroup, serogroup and subvariety [GH-133]
+* New unordered ranks: clade, isolate, forma specialis, serotype and strain [GH-133]
+* Python 3 only support
+* Bug fixes
+
 0.8.11
 ======
 
