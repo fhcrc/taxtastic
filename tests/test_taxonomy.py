@@ -28,7 +28,7 @@ class TestTaxonomyBase(TestBase):
 
     def setUp(self):
         self.engine = create_engine('sqlite:///' + self.dbname, echo=echo)
-        self.tax = Taxonomy(self.engine, taxtastic.ncbi.RANKS)
+        self.tax = Taxonomy(self.engine)
 
     def tearDown(self):
         self.engine.dispose()

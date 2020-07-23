@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 import csv
+import errno
 import logging
 import os
 import re
@@ -240,7 +241,7 @@ def has_rppr(rppr_name='rppr'):
         try:
             subprocess.check_call([rppr_name], stdout=dn, stderr=dn)
         except OSError as e:
-            if e.errno == os.errno.ENOENT:
+            if e.errno == errno.ENOENT:
                 return False
             else:
                 raise

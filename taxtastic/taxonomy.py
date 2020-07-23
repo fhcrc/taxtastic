@@ -27,6 +27,7 @@ from sqlalchemy.sql import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.session import sessionmaker
 
+from taxtastic.ncbi import UNORDERED_RANKS
 from taxtastic.utils import random_name
 
 log = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ class TaxonIntegrityError(Exception):
 
 class Taxonomy(object):
 
-    def __init__(self, engine, NO_RANK='no_rank', schema=None):
+    def __init__(self, engine, schema=None):
 
         """
         The Taxonomy class defines an object providing an interface to
@@ -86,8 +87,7 @@ class Taxonomy(object):
         ranks = select([ranks_table.c.rank, ranks_table.c.height]).execute().fetchall()
         ranks = sorted(ranks, key=lambda x: int(x[1]))  # sort by height
         self.ranks = [r[0] for r in ranks]  # just the ordered ranks
-
-        self.NO_RANK = NO_RANK
+        self.unordered_ranks = set(self.ranks) & set(UNORDERED_RANKS)
 
         # TODO: can probably remove this check at some point;
         # historically the root node had tax_id == parent_id ==
@@ -467,7 +467,7 @@ class Taxonomy(object):
 
         parent_rank = self.rank(parent_id)
         # undefined ranks can be placed anywhere in a lineage
-        if not _lower(rank, parent_rank) and rank != self.NO_RANK:
+        if not _lower(rank, parent_rank) and rank not in self.unordered_ranks:
             msg = ('New node "{}", rank "{}" has same or '
                    'higher rank than parent node "{}", rank "{}"')
             msg = msg.format(tax_id, rank, parent_id, parent_rank)

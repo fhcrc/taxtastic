@@ -72,30 +72,19 @@ A script named ``taxit`` provides a command line interface::
 Installation
 ============
 
-``taxtastic`` requires Python versions 2.7 or 3.4+.  The simplest
+``taxtastic`` requires Python 3.4+.  The simplest
 method of installing is using `pip <http://pip-installer.org>`_::
 
   pip install taxtastic
 
 We strongly recommend installation into a virtualenv. On a clean
-Ubuntu 16.04 system, complete instructions for installing the
+Ubuntu 16.04+ system, complete instructions for installing the
 ``taxtastic`` package and the ``taxit`` command line entry point in a
-virtualenv are below. Note that python2.7 is no longer installed
-by default in 16.04::
+virtualenv are below.
 
-  sudo apt-get update
-  sudo apt-get install python2.7 python-virtualenv
-
-Once python2 is installed, create a virtualenv and install ``taxtastic``::
-
-  virtualenv taxtastic-env
-
-Or using python3.4+::
+Create a virtualenv and install ``taxtastic``::
 
   python3 -m venv taxtastic-env
-
-Then, for all python versions::
-
   source taxtastic-env/bin/activate
   pip install -U pip
   pip install taxtastic
@@ -104,7 +93,7 @@ If you prefer to install from the git repository::
 
   git clone https://github.com/fhcrc/taxtastic.git
   cd taxtastic
-  virtualenv taxtastic-env  # eg, for python2
+  python -m venv taxtastic-env
   source taxtastic-env/bin/activate
   pip install .
 

@@ -30,7 +30,7 @@ from taxtastic.taxonomy import Taxonomy
 log = logging.getLogger(__name__)
 
 
-def get_children(engine, parent_ids, rank='species', schema=None):
+def get_children(engine, parent_ids, unordered_ranks, rank='species', schema=None):
     """
     Recursively fetch children of tax_ids in `parent_ids` until the
     rank of `rank`
@@ -54,9 +54,11 @@ def get_children(engine, parent_ids, rank='species', schema=None):
         for r in rows:
             if r['rank'] == rank and 'sp.' not in r['tax_name']:
                 species.append(r)
-        others = [r for r in rows if r['rank'] not in (rank, 'no_rank')]
+        others = [r for r in rows
+                  if r['rank'] != rank and r['rank'] not in unordered_ranks]
         if others:
-            _, s = get_children(engine, [r['tax_id'] for r in others])
+            _, s = get_children(
+                engine, [r['tax_id'] for r in others], unordered_ranks)
             species.extend(s)
 
     return keys, species
@@ -123,7 +125,8 @@ def action(args):
         if rank == 'species':
             taxa[tax_id] = dict(tax_id=tax_id, tax_name=tax_name, rank=rank)
         else:
-            keys, rows = get_children(engine, [tax_id], schema=args.schema)
+            keys, rows = get_children(
+                engine, [tax_id], tax.unordered_ranks, schema=args.schema)
             taxa.update(dict((row['tax_id'], row) for row in rows))
 
     for d in sorted(list(taxa.values()), key=lambda x: x['tax_name']):
