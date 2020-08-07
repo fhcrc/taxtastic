@@ -59,7 +59,7 @@ Proceed to build and upload (assuming python3 in an active virtualenv)::
   pip install -r requirements.txt
   python setup.py clean
   rm -r dist
-  python setup.py sdist bdist_wheel
+  python3 setup.py sdist bdist_wheel
   python3 -m twine upload dist/*
 
 Building docs with Sphinx
