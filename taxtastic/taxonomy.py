@@ -507,6 +507,7 @@ class Taxonomy(object):
             self.nodes.insert().values(
                 tax_id=tax_id,
                 parent_id=parent_id,
+                is_valid=is_valid,
                 rank=rank,
                 source_id=source_id))
 
