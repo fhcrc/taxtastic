@@ -36,24 +36,21 @@ from taxtastic.utils import add_database_args
 log = logging.getLogger(__name__)
 
 
-def replace_no_rank(ranks):
-    ranks = list(ranks)
-    while True:
-        try:
-            idx = ranks.index('no_rank')
+def replace_unordered(ranks, unordered):
+    for idx, r in enumerate(ranks[:]):
+        if r in unordered:
             ranks[idx] = ranks[idx - 1] + '_'
-        except ValueError:
-            return ranks
+    return ranks
 
 
-def as_taxtable_rows(rows, seen=None):
+def as_taxtable_rows(rows, unordered, seen=None):
 
     # allows termination when we've seen a tax_id before - shaves just
     # a few seconds off the total time.
     seen = seen or {}
 
     __, tids, pids, ranks, names = [list(tup) for tup in zip(*rows)]
-    ranks = replace_no_rank(ranks)
+    ranks = replace_unordered(ranks, unordered)
     ranks_out = ranks[:]
 
     tax_rows = []
@@ -138,7 +135,8 @@ def action(args):
     all_ranks = set()
     taxtable = {}
     for tax_id, grp in groupby(rows, lambda row: row[0]):
-        ranks, tax_rows = as_taxtable_rows(grp, seen=taxtable)
+        ranks, tax_rows = as_taxtable_rows(
+            grp, tax.unordered_ranks, seen=taxtable)
         taxtable.update(dict(tax_rows))
         all_ranks |= set(ranks)
 
