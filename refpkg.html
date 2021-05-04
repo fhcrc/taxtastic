@@ -1,18 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>Creating and manipulating refpkgs &#8212; taxtastic 0.8.11 documentation</title>
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Creating and manipulating refpkgs &#8212; taxtastic 0.9.0 documentation</title>
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -31,7 +31,8 @@
         <li class="right" >
           <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.11 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Creating and manipulating refpkgs</a></li> 
       </ul>
     </div>  
 
@@ -46,7 +47,7 @@
 <h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
 <p>The refpkgs is a container format for keeping all the miscellaneous files required to run <a class="reference external" href="http://matsen.fhcrc.org/pplacer">pplacer</a> in one place.  Roughly, it is a directory containing files and JSON file describing the other contents.  Refpkgs can be created and manipulated either from the commandline with subcommands of <code class="docutils literal notranslate"><span class="pre">taxit</span></code>, or from Python using an API exposed by the module <code class="docutils literal notranslate"><span class="pre">taxtastic.refpkg</span></code>.</p>
 <p>To create an empty refpkg from Python, you would write:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="k">import</span> <span class="n">Refpkg</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="kn">import</span> <span class="n">Refpkg</span>
 
 <span class="n">r</span> <span class="o">=</span> <span class="n">Refpkg</span><span class="p">(</span><span class="s1">&#39;/path/to/new/refpkg&#39;</span><span class="p">)</span>
 </pre></div>
@@ -141,6 +142,7 @@
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -169,15 +171,15 @@
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -194,12 +196,13 @@
         <li class="right" >
           <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.8.11 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Creating and manipulating refpkgs</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2011-2019, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy, Chris Rosenthal.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
+        &#169; Copyright 2011-2021, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy, Chris Rosenthal.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
     </div>
   </body>
 </html>
