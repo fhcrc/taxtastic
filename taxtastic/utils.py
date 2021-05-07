@@ -93,6 +93,10 @@ def parse_raxmlng(handle):
         result['subs_rates'] = rates
     gamma = {}
     try_set_fields(gamma, r'Rate heterogeneity: GAMMA \((?P<n_cats>\d+) cats, mean\),  alpha: (?P<alpha>\d+\.\d+)', s, hook=float)
+    try:
+        gamma['n_cats'] = int(gamma['n_cats'])
+    except:
+        pass
     result['gamma'] = gamma
     result['ras_model'] = 'gamma'
 

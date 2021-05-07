@@ -1,6 +1,5 @@
 # # taxtastic
 #
-# VERSION               golob/taxtastic:0.9.5A
 
 FROM quay.io/biocontainers/biopython:1.78
 
