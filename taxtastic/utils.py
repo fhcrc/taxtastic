@@ -82,8 +82,9 @@ def parse_raxmlng(handle):
     s = handle.read()
     result = {}
     try_set_fields(result, r'(?P<program>RAxML-NG v. [\d\.]+)', s)
-    # Less ideal, but for now force DNA for now
+    # Less ideal, but for now force DNA and GTR for now
     result['datatype'] = 'DNA'
+    result["subs_model"] =  "GTR"
     try_set_fields(result, r'\\nModel: (?P<subs_model>[\w\+]+)\\n', s)
     result['empirical_frequencies'] = re.search(r'Base frequencies \(ML\)', s) is not None
     rates = {}
