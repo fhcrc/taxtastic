@@ -73,6 +73,29 @@ def try_set_fields(d, regex, text, hook=lambda x: x):
 class InvalidLogError(ValueError):
     pass
 
+def parse_raxmlng(handle):
+    """Parse RAxMLng's summary output.
+
+    *handle* should be an open file handle containing the RAxMLng
+    log.  It is parsed and a dictionary returned.
+    """
+    s = handle.read()
+    result = {}
+    try_set_fields(result, r'(?P<program>RAxML-NG v. [\d\.]+)', s)
+    # Less ideal, but for now force DNA for now
+    result['datatype'] = 'DNA'
+    try_set_fields(result, r'\\nModel: (?P<subs_model>[\w\+]+)\\n', s)
+    result['empirical_frequencies'] = re.search(r'Base frequencies \(ML\)', s) is not None
+    rates = {}
+    try_set_fields(rates, r'Substitution rates \(ML\): (?P<ac>\d+\.\d+) (?P<ag>\d+\.\d+) (?P<at>\d+\.\d+) (?P<cg>\d+\.\d+) (?P<ct>\d+\.\d+) (?P<gt>\d+\.\d+)', s, hook=float)
+    if len(rates) > 0:
+        result['subs_rates'] = rates
+    gamma = {}
+    try_set_fields(gamma, r'Rate heterogeneity: GAMMA \((?P<n_cats>\d+) cats, mean\),  alpha: (?P<alpha>\d+\.\d+)', s, hook=float)
+    result['gamma'] = gamma
+    result['ras_model'] = 'gamma'
+
+    return result        
 
 def parse_raxml(handle):
     """Parse RAxML's summary output.
