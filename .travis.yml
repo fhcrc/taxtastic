@@ -44,7 +44,7 @@ before_install: |
     pip install check-manifest readme_renderer flake8 docutils
   else
     # see https://pythonhosted.org/CodeChat/.travis.yml.html
-    brew install pyenv-virtualenv
+    HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv-virtualenv
     pyenv install $PYTHON
     export PYENV_VERSION=$PYTHON
     export PATH="/Users/travis/.pyenv/shims:${PATH}"
