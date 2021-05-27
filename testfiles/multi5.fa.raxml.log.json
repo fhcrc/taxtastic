@@ -1,0 +1,6 @@
+{
+  "program": "RAxML-NG v. 1.0.2",
+  "subs_model": "WAG",
+  "datatype": "RNA",
+  "empirical_frequencies": false
+}

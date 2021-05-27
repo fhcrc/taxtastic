@@ -1,0 +1,113 @@
+
+RAxML-NG v. 1.0.2 released on 22.02.2021 by The Exelixis Lab.
+Developed by: Alexey M. Kozlov and Alexandros Stamatakis.
+Contributors: Diego Darriba, Tomas Flouri, Benoit Morel, Sarah Lutteropp, Ben Bettisworth.
+Latest version: https://github.com/amkozlov/raxml-ng
+Questions/problems/suggestions? Please visit: https://groups.google.com/forum/#!forum/raxml
+
+System: Intel(R) Xeon(R) Gold 6242 CPU @ 2.80GHz, 64 cores, 503 GB RAM
+
+RAxML-NG was called at 27-May-2021 19:11:20 as follows:
+
+raxml-ng --data-type dna --msa terrace.fa --model GTR+G
+
+Analysis options:
+  run mode: ML tree search
+  start tree(s): random (10) + parsimony (10)
+  random seed: 1622142680
+  tip-inner: OFF
+  pattern compression: ON
+  per-rate scalers: OFF
+  site repeats: ON
+  fast spr radius: AUTO
+  spr subtree cutoff: 1.000000
+  branch lengths: proportional (ML estimate, algorithm: NR-FAST)
+  SIMD kernels: AVX2
+  parallelization: coarse-grained (auto), PTHREADS (auto)
+
+[00:00:00] Reading alignment from file: terrace.fa
+[00:00:00] Loaded alignment with 5 taxa and 10 sites
+
+Alignment comprises 1 partitions and 10 patterns
+
+Partition 0: noname
+Model: GTR+FO+G4m
+Alignment sites / patterns: 10 / 10
+Gaps: 40.00 %
+Invariant sites: 20.00 %
+
+
+NOTE: Binary MSA file created: terrace.fa.raxml.rba
+
+Parallelization scheme autoconfig: 20 worker(s) x 1 thread(s)
+
+Parallel reduction/worker buffer size: 1 KB  / 0 KB
+
+[00:00:00] Generating 10 random starting tree(s) with 5 taxa
+[00:00:00] Generating 10 parsimony starting tree(s) with 5 taxa
+[00:00:00] Data distribution: max. partitions/sites/weight per thread: 1 / 10 / 160
+[00:00:00] Data distribution: max. searches per worker: 1
+
+Starting ML tree search with 20 distinct starting trees
+
+[00:00:00 -44.034969] Initial branch length optimization
+[00:00:00 -39.041784] Model parameter optimization (eps = 10.000000)
+[00:00:00 -32.897548] AUTODETECT spr round 1 (radius: 5)
+[00:00:00 -32.362144] SPR radius for FAST iterations: 5 (autodetect)
+[00:00:00 -32.362144] Model parameter optimization (eps = 3.000000)
+[00:00:00 -31.691005] FAST spr round 1 (radius: 5)
+[00:00:00 -31.690881] Model parameter optimization (eps = 1.000000)
+[00:00:00 -31.619857] SLOW spr round 1 (radius: 5)
+[00:00:00] [worker #7] ML tree search #8, logLikelihood: -31.082082
+[00:00:00 -31.619199] Model parameter optimization (eps = 0.100000)
+[00:00:00] [worker #19] ML tree search #20, logLikelihood: -31.195337
+[00:00:00] [worker #14] ML tree search #15, logLikelihood: -31.157851
+
+[00:00:00] [worker #0] ML tree search #1, logLikelihood: -31.590728
+
+[00:00:00] [worker #9] ML tree search #10, logLikelihood: -30.979770
+[00:00:00] [worker #4] ML tree search #5, logLikelihood: -31.179482
+[00:00:00] [worker #13] ML tree search #14, logLikelihood: -30.924384
+[00:00:00] [worker #8] ML tree search #9, logLikelihood: -31.179482
+[00:00:00] [worker #2] ML tree search #3, logLikelihood: -30.979770
+[00:00:00] [worker #18] ML tree search #19, logLikelihood: -31.549673
+[00:00:00] [worker #11] ML tree search #12, logLikelihood: -31.205873
+[00:00:00] [worker #15] ML tree search #16, logLikelihood: -31.191667
+[00:00:00] [worker #16] ML tree search #17, logLikelihood: -31.568740
+[00:00:00] [worker #3] ML tree search #4, logLikelihood: -31.265070
+[00:00:00] [worker #17] ML tree search #18, logLikelihood: -30.935081
+[00:00:00] [worker #12] ML tree search #13, logLikelihood: -30.976249
+[00:00:00] [worker #6] ML tree search #7, logLikelihood: -30.944196
+[00:00:00] [worker #1] ML tree search #2, logLikelihood: -31.082082
+[00:00:00] [worker #5] ML tree search #6, logLikelihood: -31.196533
+[00:00:00] [worker #10] ML tree search #11, logLikelihood: -31.157851
+
+Optimized model parameters:
+
+   Partition 0: noname
+   Rate heterogeneity: GAMMA (4 cats, mean),  alpha: 99.848553 (ML),  weights&rates: (0.250000,0.875814) (0.250000,0.964710) (0.250000,1.029569) (0.250000,1.129907) 
+   Base frequencies (ML): 0.247300 0.167813 0.403313 0.181574 
+   Substitution rates (ML): 0.001000 0.001000 0.019771 0.208460 0.001000 1.000000 
+
+
+Final LogLikelihood: -30.924384
+
+AIC score: 93.848768 / AICc score: 637.848768 / BIC score: 98.690129
+Free parameters (model + branch lengths): 16
+
+WARNING: Number of free parameters (K=16) is larger than alignment size (n=10).
+         This might lead to overfitting and compromise tree inference results!
+
+
+Best ML tree saved to: /taxtastic/testfiles/terrace.fa.raxml.bestTree
+All ML trees saved to: /taxtastic/testfiles/terrace.fa.raxml.mlTrees
+Optimized model saved to: /taxtastic/testfiles/terrace.fa.raxml.bestModel
+
+Execution log saved to: /taxtastic/testfiles/terrace.fa.raxml.log
+
+Analysis started: 27-May-2021 19:11:20 / finished: 27-May-2021 19:11:21
+
+Elapsed time: 0.611 seconds
+
+Consumed energy: 0.101 Wh
+

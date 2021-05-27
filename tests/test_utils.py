@@ -159,3 +159,22 @@ class RAxMLDNATestCase(RAxMLStatsMixIn, unittest.TestCase):
 
 class RAxMLDNA772TestCase(RAxMLStatsMixIn, unittest.TestCase):
     test_file_name = 'RAxML_info_7.7.2.dna'
+
+
+class RAxMLNGStatsMixIn(StatsFileParsingMixIn):
+
+    @property
+    def parse_func(self):
+        return taxtastic.utils.parse_raxmlng
+
+
+class RAxMLNG102DNATestCase(RAxMLNGStatsMixIn, unittest.TestCase):
+    test_file_name = 'terrace.fa.raxml.log'
+
+
+class RAxMLNG102RNATestCase(RAxMLNGStatsMixIn, unittest.TestCase):
+    test_file_name = 'multi5.fa.raxml.log'
+
+
+class RAxMLNG102AminoAcidTestCase(RAxMLNGStatsMixIn, unittest.TestCase):
+    test_file_name = 'prot21.fa.raxml.log'
