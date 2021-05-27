@@ -1,21 +1,10 @@
-matrix:
-  include:
-    - os: linux
-      language: python
-      python:
-        - 3.5
-    - os: linux
-      language: python
-      python:
-        - 3.6
-    - os: linux
-      language: python
-      python:
-        - 3.7
-    - os: linux
-      language: python
-      python:
-        - 3.8
+language: python
+python:
+  - 3.5
+  - 3.6
+  - 3.7
+  - 3.8
+  - 3.9
 
 cache:
   # must specify pip dir
@@ -34,27 +23,12 @@ env:
     - PIP_WHEEL_DIR=$HOME/.cache/pip/wheels
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 
-before_install: |
-  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-    dev/install_pysqlite.sh
-    pip install -U pip
-    pip install check-manifest readme_renderer flake8 docutils
-  else
-    # see https://pythonhosted.org/CodeChat/.travis.yml.html
-    HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv-virtualenv
-    pyenv install $PYTHON
-    export PYENV_VERSION=$PYTHON
-    export PATH="/Users/travis/.pyenv/shims:${PATH}"
-    pyenv-virtualenv venv
-    source venv/bin/activate
-    # A manual check that the correct version of Python is running.
-    python --version
-    pip install -U pip
-    pip install check-manifest readme_renderer flake8 docutils
-  fi
+before_install:
+  - pip install -U pip
 
 install:
-  - pip install -U -e .
+  - pip install check-manifest readme_renderer flake8 docutils
+  - pip install .
 
 script:
   - python setup.py -q test
