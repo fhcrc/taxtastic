@@ -539,6 +539,9 @@ class Refpkg(object):
                           line.startswith('You are using RAxML')):
                         stats_type = 'RAxML'
                         break
+                    elif line.startswith('RAxML-NG'):
+                        stats_type = 'RAxML-NG'
+                        break
                     elif 'PhyML' in line:
                         stats_type = 'PhyML'
                         break
@@ -548,6 +551,8 @@ class Refpkg(object):
 
         if stats_type == 'RAxML':
             parser = utils.parse_raxml
+        elif stats_type == 'RAxML-NG':
+            parser = utils.parse_raxmlng
         elif stats_type == 'FastTree':
             parser = utils.parse_fasttree
         elif stats_type == 'PhyML':

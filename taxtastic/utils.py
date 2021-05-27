@@ -73,6 +73,34 @@ def try_set_fields(d, regex, text, hook=lambda x: x):
 class InvalidLogError(ValueError):
     pass
 
+def parse_raxmlng(handle):
+    """Parse RAxMLng's summary output.
+
+    *handle* should be an open file handle containing the RAxMLng
+    log.  It is parsed and a dictionary returned.
+    """
+    s = handle.read()
+    result = {}
+    try_set_fields(result, r'(?P<program>RAxML-NG v. [\d\.]+)', s)
+    # Less ideal, but for now force DNA and GTR for now
+    result['datatype'] = 'DNA'
+    result["subs_model"] =  "GTR"
+    try_set_fields(result, r'\\nModel: (?P<subs_model>[\w\+]+)\\n', s)
+    result['empirical_frequencies'] = re.search(r'Base frequencies \(ML\)', s) is not None
+    rates = {}
+    try_set_fields(rates, r'Substitution rates \(ML\): (?P<ac>\d+\.\d+) (?P<ag>\d+\.\d+) (?P<at>\d+\.\d+) (?P<cg>\d+\.\d+) (?P<ct>\d+\.\d+) (?P<gt>\d+\.\d+)', s, hook=float)
+    if len(rates) > 0:
+        result['subs_rates'] = rates
+    gamma = {}
+    try_set_fields(gamma, r'Rate heterogeneity: GAMMA \((?P<n_cats>\d+) cats, mean\),  alpha: (?P<alpha>\d+\.\d+)', s, hook=float)
+    try:
+        gamma['n_cats'] = int(gamma['n_cats'])
+    except:
+        pass
+    result['gamma'] = gamma
+    result['ras_model'] = 'gamma'
+
+    return result        
 
 # https://github.com/amkozlov/raxml-ng/wiki/Input-data#single-mode
 DNA = ['JC', 'K80', 'F81', 'HKY', 'TN93ef', 'TN93', 'K81', 'K81uf', 'TPM2',
