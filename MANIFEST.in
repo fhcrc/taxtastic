@@ -14,3 +14,7 @@ global-exclude *.pyd
 global-exclude *.pyc
 global-exclude .git*
 global-exclude .DS_Store
+
+# added by check-manifest
+include Dockerfile
+recursive-include pplacer *.zip
