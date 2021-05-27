@@ -695,6 +695,8 @@ class Refpkg(object):
             tree = dendropy.Tree.get(
                 path=self.resource_path('tree'),
                 schema='newick',
+                case_sensitive_taxon_labels=True,
+                taxon_namespace=dendropy.TaxonNamespace(is_case_sensitive=True),
                 preserve_underscores=True)
             tree_names = set(tree.taxon_namespace.labels())
         except Exception:
