@@ -74,6 +74,47 @@ class InvalidLogError(ValueError):
     pass
 
 
+# https://github.com/amkozlov/raxml-ng/wiki/Input-data#single-mode
+DNA = ['JC', 'K80', 'F81', 'HKY', 'TN93ef', 'TN93', 'K81', 'K81uf', 'TPM2',
+       'TPM2uf', 'TPM3', 'TPM3uf', 'TIM1', 'TIM1uf', 'TIM2', 'TIM2uf',
+       'TIM3', 'TIM3uf', 'TVMef', 'TVM', 'SYM', 'GTR']
+PROT = ['Blosum62', 'cpREV', 'Dayhoff', 'DCMut', 'DEN', 'FLU', 'HIVb',
+        'HIVw', 'JTT', 'JTT-DCMut', 'LG', 'mtART', 'mtMAM', 'mtREV',
+        'mtZOA', 'PMB', 'rtREV', 'stmtREV', 'VT', 'WAG', 'LG4M', 'LG4X',
+        'PROTGTR']
+
+
+def parse_raxmlng(handle):
+    """Parse RAxMLng's summary output.
+    *handle* should be an open file handle containing the RAxMLng
+    log.  It is parsed and a dictionary returned.
+    """
+    s = handle.read()
+    result = {}
+    try_set_fields(result, r'(?P<program>RAxML-NG v. [\d\.]+)', s)
+    try_set_fields(result, r'Model: (?P<subs_model>\w+)', s)
+    try_set_fields(result, r'raxml-ng.*?--data-type (?P<datatype>\w+)', s)
+    if 'datatype' not in result:
+        if result['subs_model'] in DNA:
+            result['datatype'] = 'DNA'
+        elif result['subs_model'] in PROT:
+            result['datatype'] = 'RNA'  # AA specified in --data-type
+        else:
+            result['datatype'] = ''  # There's more but stop here for now
+    result['empirical_frequencies'] = re.search(r'Base frequencies \(ML\)', s) is not None
+    rates = {}
+    try_set_fields(rates, r'Substitution rates \(ML\): (?P<ac>\d+\.\d+) (?P<ag>\d+\.\d+) (?P<at>\d+\.\d+) (?P<cg>\d+\.\d+) (?P<ct>\d+\.\d+) (?P<gt>\d+\.\d+)', s, hook=float)
+    if len(rates) > 0:
+        result['subs_rates'] = rates
+    gamma = {}
+    try_set_fields(gamma, r'Rate heterogeneity: GAMMA \((?P<n_cats>\d+) cats, mean\),  alpha: (?P<alpha>\d+\.\d+)', s, hook=float)
+    if gamma:
+        gamma['n_cats'] = int(gamma['n_cats'])
+        result['gamma'] = gamma
+        result['ras_model'] = 'gamma'
+    return result
+
+
 def parse_raxml(handle):
     """Parse RAxML's summary output.
 
