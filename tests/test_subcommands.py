@@ -108,6 +108,8 @@ class TestCreate(OutputRedirectMixin, unittest.TestCase):
             phylo_model = None
             seq_info = None
             mask = None
+            model = None
+
             profile = None
             readme = None
             tree = None

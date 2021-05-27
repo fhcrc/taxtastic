@@ -42,6 +42,10 @@ def build_parser(parser):
     required.add_argument('-P', '--package-name', required=True,
                           action='store', dest='package_name',
                           metavar='PATH', help='Name of refpkg to create')
+    required.add_argument("-l", "--locus",
+                          action="store", dest="locus", required=True,
+                          help='The locus described by the reference package',
+                          metavar='LOCUS')
 
     metadata = parser.add_argument_group('Package Metadata')
 
@@ -51,10 +55,6 @@ def build_parser(parser):
     metadata.add_argument("-d", "--description",
                           action="store", dest="description",
                           help='An arbitrary description field', metavar='TEXT')
-    metadata.add_argument("-l", "--locus",
-                          action="store", dest="locus", required=True,
-                          help='The locus described by the reference package',
-                          metavar='LOCUS')
     metadata.add_argument("-r", "--package-version",
                           action="store", dest="package_version",
                           help='Release version for the reference package',
@@ -73,6 +73,9 @@ def build_parser(parser):
     infiles.add_argument("-m", "--mask",
                          action="store", dest="mask",
                          help='Text file containing a mask', metavar='FILE')
+    infiles.add_argument("-M", "--model-file", action="store", dest="model",
+                         help=('File containing model information '
+                               'usually the .bestModel file'), metavar='FILE')
     infiles.add_argument("-p", "--profile",
                          action="store", dest="profile",
                          help='Alignment profile', metavar='FILE')
@@ -150,7 +153,7 @@ def action(args):
 
     for file_name in ['aln_fasta', 'aln_sto', 'mask',
                       'profile', 'seq_info', 'taxonomy', 'tree', 'tree_stats',
-                      'readme']:
+                      'readme', 'model']:
         path = getattr(args, file_name)
         if path:
             r.update_file(file_name, path)
