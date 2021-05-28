@@ -2,6 +2,12 @@
  change log for taxtastic
 ==========================
 
+0.9.1-dev
+=========
+
+* Support for parsing RAxML-ng v1.0.2 log file [GH-132]
+* Support for RAxML-ng/epa-ng .bestModel using taxit create
+
 0.9.1
 =====
 
