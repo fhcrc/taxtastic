@@ -2,7 +2,7 @@
  change log for taxtastic
 ==========================
 
-0.9.1-dev
+0.9.2
 =========
 
 * Support for parsing RAxML-ng v1.0.2 log file [GH-132]
