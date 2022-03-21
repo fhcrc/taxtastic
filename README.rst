@@ -65,15 +65,16 @@ A script named ``taxit`` provides a command line interface::
 
 
 .. Targets ..
-.. _quickstart: http://fhcrc.github.com/taxtastic/quickstart.html
-.. _full documentation: http://fhcrc.github.com/taxtastic/index.html
+.. _quickstart: https://fhcrc.github.io/taxtastic/quickstart.html
+.. _full documentation: https://fhcrc.github.io/taxtastic/index.html
 
 
 Installation
 ============
 
-``taxtastic`` requires Python 3.4+.  The simplest
-method of installing is using `pip <http://pip-installer.org>`_::
+``taxtastic`` requires Python 3.5+. Python 2 is no longer
+supported. The simplest method of installing is using `pip
+<http://pip-installer.org>`_::
 
   pip install taxtastic
 
@@ -110,12 +111,7 @@ https://realpython.com/blog/python/python-virtual-environments-a-primer/
 Finally, ``taxit`` can be run from a docker image hosted from Docker
 Hub (https://hub.docker.com/r/nghoffman/taxtastic/), for example::
 
-  docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) nghoffman/taxtastic:0.8.3 taxit -v new_database
-
-Note that the tag for a given release must be specified: using
-``:latest`` (for this or any other Docker image) isn't very
-reproducible!
-
+  docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) nghoffman/taxtastic:latest taxit -v new_database
 
 sqlite3
 -------
