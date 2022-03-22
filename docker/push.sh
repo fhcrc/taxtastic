@@ -23,3 +23,6 @@ docker image history "$image" > /dev/null
 
 docker tag "$image" "$DOCKER_ID_USER/$image"
 docker push "$DOCKER_ID_USER/$image"
+
+docker tag "$image" "$DOCKER_ID_USER/taxtastic:latest"
+docker push "$DOCKER_ID_USER/taxtastic:latest"
