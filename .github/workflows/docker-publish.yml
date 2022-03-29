@@ -2,12 +2,12 @@ name: Build docker image
 
 on:
   push:
-    tags: [ '*.*.*' ]
+    tags: [ 'v*.*.*' ]
 
 jobs:
   docker:
     runs-on: ubuntu-latest
-    steps:      
+    steps:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
