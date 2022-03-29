@@ -1,0 +1,4 @@
+*.pyc
+taxtastic.egg-info
+build
+test_output

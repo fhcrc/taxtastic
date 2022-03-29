@@ -1,7 +1,7 @@
 # # taxtastic
 #
 
-FROM quay.io/biocontainers/biopython:1.78
+FROM python:3.9-bullseye
 
 RUN mkdir -p /src/taxtastic
 ADD setup.py /src/taxtastic/
@@ -10,7 +10,7 @@ ADD README.rst /src/taxtastic/
 ADD taxtastic /src/taxtastic/taxtastic/
 RUN export DEBIAN_FRONTEND=noninteractive
 RUN ls -l /src/taxtastic/
-RUN pip3 install /src/taxtastic/
+RUN python /src/taxtastic/setup.py install
 
 ADD pplacer/pplacer-Linux-v1.1.alpha19.zip /src/
 WORKDIR /src/
