@@ -341,7 +341,9 @@ class Taxonomy(object):
     def ranks_below(self, rank, depth=None):
         below = []
         try:
-            below = self.ranks[self.ranks.index(rank):depth]
+            index = self.ranks.index(rank)
+            depth = 0 if depth is None else index - depth
+            below = self.ranks[depth:index]
         except ValueError as err:
             log.error(err)
         return below
@@ -681,8 +683,6 @@ class Taxonomy(object):
         If ``tax_id`` is None, then always returns None. Otherwise,
         returns None if there is no sibling.
         """
-        if tax_id is None:
-            return None
         parent_id, rank = self._node(tax_id)
         s = select([self.nodes.c.tax_id],
                    and_(self.nodes.c.parent_id == parent_id,
@@ -705,14 +705,7 @@ class Taxonomy(object):
         return ancestor in list(lineage.values())
 
     def rank(self, tax_id):
-        if tax_id is None:
-            return None
-        else:
-            q = self._node(tax_id)
-            if q:
-                return self._node(tax_id)[1]
-            else:
-                return None
+        return self._node(tax_id)[1]
 
     def tax_ids(self):
         '''
@@ -730,9 +723,7 @@ class Taxonomy(object):
         a proper rank below that of tax_id (i.e., genus, species, but
         not no_rank or below_below_kingdom).
         """
-        if tax_id is None:
-            return None
-        parent_id, rank = self._node(tax_id)
+        _, rank = self._node(tax_id)
         s = select([self.nodes.c.tax_id],
                    and_(self.nodes.c.parent_id == tax_id,
                         or_(*[self.nodes.c.rank == r
@@ -752,8 +743,6 @@ class Taxonomy(object):
 
     def children_of(self, tax_id, n):
         # TODO: replace with recursive CTE
-        if tax_id is None:
-            return None
         parent_id, rank = self._node(tax_id)
         s = select([self.nodes.c.tax_id],
                    and_(self.nodes.c.parent_id == tax_id,
@@ -786,9 +775,7 @@ class Taxonomy(object):
         """Return a list of species tax_ids under *tax_id* such that
         node under *tax_id* and above the species has two children.
         """
-        if tax_id is None:
-            return None
-        parent_id, rank = self._node(tax_id)
+        _, rank = self._node(tax_id)
         if rank == 'species':
             return [tax_id]
         else:
@@ -799,10 +786,8 @@ class Taxonomy(object):
             return species_taxids
 
     def species_below(self, tax_id):
-        if tax_id is None:
-            return None
         try:
-            parent_id, rank = self._node(tax_id)
+            _, rank = self._node(tax_id)
         except ValueError:
             return None
         if rank == 'species':

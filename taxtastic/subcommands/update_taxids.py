@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 def build_parser(parser):
     parser.add_argument(
-        'infile', type=Opener('rU'),
+        'infile', type=Opener('r'),
         help=('Input CSV file to process, minimally containing the field `tax_id`. '
               'Use "-" for stdin.'))
     parser = taxtastic.utils.add_database_args(parser)

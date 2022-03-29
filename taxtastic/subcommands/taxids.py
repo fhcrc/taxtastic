@@ -71,7 +71,7 @@ def build_parser(parser):
         "Input options").add_mutually_exclusive_group()
 
     input_group.add_argument(
-        '-f', '--name-file', metavar='FILE', type=argparse.FileType('rU'),
+        '-f', '--name-file', metavar='FILE', type=argparse.FileType('r'),
         dest='taxnames_file',
         help='file containing a list of taxonomic names, one per line')
 

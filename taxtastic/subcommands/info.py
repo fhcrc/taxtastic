@@ -41,7 +41,7 @@ def build_parser(parser):
 
 def tally_taxa(pkg):
     tally = defaultdict(int)
-    with open(pkg.file_abspath('taxonomy'), 'rU') as taxtab, open(pkg.file_abspath('seq_info'), 'rU') as seq_info:
+    with open(pkg.file_abspath('taxonomy'), 'r') as taxtab, open(pkg.file_abspath('seq_info'), 'r') as seq_info:
         taxdict = {row['tax_id']: row for row in csv.DictReader(taxtab)}
 
         tax_ids = [d['tax_id'] for d in csv.DictReader(seq_info)]
@@ -73,7 +73,7 @@ def action(args):
 
     pkg = refpkg.Refpkg(args.refpkg, create=False)
 
-    with open(pkg.file_abspath('seq_info'), 'rU') as seq_info:
+    with open(pkg.file_abspath('seq_info'), 'r') as seq_info:
         seqinfo = list(csv.DictReader(seq_info))
         snames = [row['seqname'] for row in seqinfo]
 

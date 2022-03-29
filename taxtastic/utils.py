@@ -32,7 +32,7 @@ def get_new_nodes(fname):
     Return an iterator of dicts given a .csv-format file.
     """
 
-    with open(fname, 'rU') as infile:
+    with open(fname, 'r') as infile:
         infile = (line for line in infile if not line.startswith('#'))
         reader = list(csv.DictReader(infile))
         rows = (d for d in reader if d['tax_id'])
@@ -56,7 +56,7 @@ def getlines(fname):
     the first '#' character.
     """
 
-    with open(fname, 'rU') as f:
+    with open(fname, 'r') as f:
         for line in f:
             if line.strip() and not line.startswith('#'):
                 yield line.split('#', 1)[0].strip()
@@ -100,7 +100,7 @@ def parse_raxmlng(handle):
     result['gamma'] = gamma
     result['ras_model'] = 'gamma'
 
-    return result        
+    return result
 
 # https://github.com/amkozlov/raxml-ng/wiki/Input-data#single-mode
 DNA = ['JC', 'K80', 'F81', 'HKY', 'TN93ef', 'TN93', 'K81', 'K81uf', 'TPM2',

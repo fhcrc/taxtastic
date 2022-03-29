@@ -58,13 +58,13 @@ def action(args):
     elif os.path.isdir(args.target):
         logging.info("Target is a refpkg. Working on taxonomy within it.")
         r = refpkg.Refpkg(args.target, create=False)
-        path = r.file_abspath('taxonomy')
+        path = r.resource_path('taxonomy')
     else:
         logging.info("Target is a CSV file")
         path = args.target
 
     logging.info("Loading taxonomy from file.")
-    with open(path, 'rU') as h:
+    with open(path, 'r') as h:
         tree = lonely.taxtable_to_tree(h)
     result = tree.lonelynodes()
     if args.ranks:

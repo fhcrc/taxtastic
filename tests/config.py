@@ -159,7 +159,7 @@ class TestScriptBase(OutputRedirectMixin, TestBase):
     """
 
     executable = None
-    openargs = {'mode': 'rU'} if sys.version_info.major == 2 else {'newline': None}
+    openargs = {'mode': 'r'} if sys.version_info.major == 2 else {'newline': None}
 
     def __getitem__(self, i):
         """

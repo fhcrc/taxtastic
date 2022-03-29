@@ -742,11 +742,11 @@ class Refpkg(object):
 
         db = taxdb.Taxdb()
         db.create_tables()
-        reader = csv.DictReader(self.open_resource('taxonomy', 'rU'))
+        reader = csv.DictReader(self.open_resource('taxonomy', 'r'))
         db.insert_from_taxtable(lambda: reader._fieldnames, reader)
 
         curs = db.cursor()
-        reader = csv.DictReader(self.open_resource('seq_info', 'rU'))
+        reader = csv.DictReader(self.open_resource('seq_info', 'r'))
         curs.executemany("INSERT INTO sequences VALUES (?, ?)",
                          ((row['seqname'], row['tax_id']) for row in reader))
 

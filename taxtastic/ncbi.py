@@ -569,7 +569,7 @@ def read_archive(archive, fname):
 
 # def read_dmp(fname):
 #     seen = set()
-#     for line in open(fname, 'rU'):
+#     for line in open(fname, 'r'):
 #         line = line.rstrip('\t|\n')
 #         if line not in seen:
 #             yield line.split('\t|\t')
