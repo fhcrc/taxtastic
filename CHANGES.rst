@@ -2,6 +2,11 @@
  change log for taxtastic
 ==========================
 
+0.9.3
+=====
+
+* migrated docker/* into Dockerfile and GH Actions automatic container build (.github/workflows/docker-publish.yml)
+
 0.9.2
 =========
 
