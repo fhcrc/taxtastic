@@ -1,6 +1,6 @@
 FROM python:3.9-bullseye
 
-COPY dist/taxtastic-*.tar.gz /src/taxtastic.tar.gz
+COPY taxtastic.tar.gz /src/taxtastic.tar.gz
 COPY dev/install_pplacer.sh /usr/local/bin/install_pplacer.sh
 
 RUN apt-get update && \
