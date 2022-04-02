@@ -15,8 +15,6 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v3
-        with:
-          ref: gh_actions
       -
         run: |
           python setup.py sdist
@@ -31,8 +29,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      -
-        run: ls && ls dist && pwd
       -
         name: Build and push
         uses: docker/build-push-action@v2
