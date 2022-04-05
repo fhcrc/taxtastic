@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: nghoffman/taxtastic:latest
+      image: ghcr.io/fhcrc/taxtastic:latest
     steps:
     - uses: actions/checkout@v3
     - name: Install dependencies
