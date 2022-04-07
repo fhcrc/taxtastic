@@ -1,15 +1,10 @@
-DendroPy>=4.3.0
-PyYAML>=3.12
-decorator>=4.1.2
-fastalite>=0.3
-jinja2>=2.9
-psycopg2-binary>=2.7.3.1
-six
-sqlalchemy>=1.0
-
-# for development
-sphinx
-ghp-import
-twine
-wheel
-tox
+decorator==5.1.1
+DendroPy==4.5.2
+fastalite==0.3
+greenlet==1.1.2
+Jinja2==3.1.1
+MarkupSafe==2.1.1
+psycopg2-binary==2.9.3
+PyYAML==6.0
+six==1.16.0
+SQLAlchemy==1.4.35

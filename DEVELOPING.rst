@@ -6,10 +6,9 @@ Requirements
 ============
 
 Note that building docs, publishing to pypi, etc require some
-additional dependencies. It's probably best to work in a virtualenv::
+additional dependencies. In your active virtualenv::
 
-  virtualenv taxtastic-env
-  pip install -r requirements.txt
+  pip3 install -r requirements-dev.txt
 
 
 Git workflow
@@ -56,8 +55,8 @@ If you have not done so create a ~/.pypirc file::
 
 Proceed to build and upload (assuming python3 in an active virtualenv)::
 
-  pip install -r requirements.txt
   python setup.py clean
+  pip install -e .
   rm -r dist
   python3 setup.py sdist bdist_wheel
   python3 -m twine upload dist/*
