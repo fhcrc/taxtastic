@@ -4,12 +4,13 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Creating and manipulating refpkgs &#8212; taxtastic 0.9.0 documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Creating and manipulating refpkgs &#8212; taxtastic 0.9.1+30.gcf010d9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
@@ -31,7 +32,7 @@
         <li class="right" >
           <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.9.1+30.gcf010d9 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Creating and manipulating refpkgs</a></li> 
       </ul>
     </div>  
@@ -41,9 +42,9 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="creating-and-manipulating-refpkgs">
+  <section id="creating-and-manipulating-refpkgs">
 <h1>Creating and manipulating refpkgs<a class="headerlink" href="#creating-and-manipulating-refpkgs" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="quickstart">
+<section id="quickstart">
 <h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
 <p>The refpkgs is a container format for keeping all the miscellaneous files required to run <a class="reference external" href="http://matsen.fhcrc.org/pplacer">pplacer</a> in one place.  Roughly, it is a directory containing files and JSON file describing the other contents.  Refpkgs can be created and manipulated either from the commandline with subcommands of <code class="docutils literal notranslate"><span class="pre">taxit</span></code>, or from Python using an API exposed by the module <code class="docutils literal notranslate"><span class="pre">taxtastic.refpkg</span></code>.</p>
 <p>To create an empty refpkg from Python, you would write:</p>
@@ -92,8 +93,8 @@
 </pre></div>
 </div>
 <p>There is a method and a command, both called <code class="docutils literal notranslate"><span class="pre">check</span></code>, which check if a refpkg is usable as an input to <code class="docutils literal notranslate"><span class="pre">pplacer</span></code>.  Running <code class="docutils literal notranslate"><span class="pre">r.check()</span></code> from Python or <code class="docutils literal notranslate"><span class="pre">taxit</span> <span class="pre">check</span> <span class="pre">/path/to/refpkg</span></code> from the command line will fail, saying that there is no such key <code class="docutils literal notranslate"><span class="pre">aln_fasta</span></code> in the refpkg.</p>
-</div>
-<div class="section" id="the-refpkg-format">
+</section>
+<section id="the-refpkg-format">
 <h2>The Refpkg format<a class="headerlink" href="#the-refpkg-format" title="Permalink to this headline">¶</a></h2>
 <p>A refpkg is a crude key-value store for files with some basic integrity checking, machinery for undo and redo of operations, and a little bit of metadata storage.  The minimal refpkg consists of a directory containing a file names <code class="docutils literal notranslate"><span class="pre">CONTENTS.json</span></code>.  The JSON file must contain the following keys:</p>
 <dl class="simple">
@@ -138,8 +139,8 @@
 <p>The undo/redo system is implemented as a purely functional data structure known as a zipper, used as a replacement for arrays with a pointer into them as a cursor in languages where data is immutable.  A zipper consists of a current entry, a ordered list of previous entries, and an ordered list of subsequent entries.  Moving the cursor one place to the right is equivalent to pushing the current entry onto the head of the list of previous entries, and popping the head of the list of subsequent entries and making that the new current entry.  Moving the cursor one place to the left is exactly the opposite.</p>
 <p>The top level object of <code class="docutils literal notranslate"><span class="pre">CONTENTS.json</span></code> plays the role of the current entry, and its fields <code class="docutils literal notranslate"><span class="pre">rollback</span></code> and <code class="docutils literal notranslate"><span class="pre">rollforward</span></code> are the heads of the lists of previous and subsequent entries.  The <code class="docutils literal notranslate"><span class="pre">rollback</span></code> field of the object in the <code class="docutils literal notranslate"><span class="pre">rollback</span></code> field is the second element of the list of previous entries, etc.  Thus undoing an operation consists of putting the current toplevel JSON object in the <code class="docutils literal notranslate"><span class="pre">rollforward</span></code> fields of the object in the <code class="docutils literal notranslate"><span class="pre">rollback</span></code> field, and making that object the new toplevel JSON object (with some book keeping details to keep everything consistent).</p>
 <p>As a result of this, there may be files besides those referenced in the <code class="docutils literal notranslate"><span class="pre">files</span></code> key of the JSON object in the refpkg.  They may be referenced by other entries in the zipper.  There is no attempt to intelligently garbage collect orphaned files.  They are only deleted when the refpkg’s <code class="docutils literal notranslate"><span class="pre">strip</span></code> method is called, which removes all undo/redo information as well.</p>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -148,8 +149,9 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Creating and manipulating refpkgs</a><ul>
 <li><a class="reference internal" href="#quickstart">Quickstart</a></li>
 <li><a class="reference internal" href="#the-refpkg-format">The Refpkg format</a></li>
@@ -157,12 +159,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="taxonomy.html"
-                        title="previous chapter">Manipulating the NCBI taxonomy</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="refpkg_api.html"
-                        title="next chapter">The Python Refpkg API</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="taxonomy.html"
+                          title="previous chapter">Manipulating the NCBI taxonomy</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="refpkg_api.html"
+                          title="next chapter">The Python Refpkg API</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -174,7 +181,7 @@
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -196,13 +203,13 @@
         <li class="right" >
           <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.9.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.9.1+30.gcf010d9 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Creating and manipulating refpkgs</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2011-2021, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy, Chris Rosenthal.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+        &#169; Copyright 2011-2022, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy, Chris Rosenthal.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
     </div>
   </body>
 </html>
