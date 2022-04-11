@@ -6,7 +6,6 @@ on:
 
 jobs:
   push_gh_pages:
-    environment: docker_build
     runs-on: ubuntu-latest
     steps:
       -
