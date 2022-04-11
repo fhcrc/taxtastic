@@ -12,13 +12,13 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v3
-	    -
-	      run: |
-	        cd docs
-	        make
+      -
+        run: |
+          cd docs
+          make
       -
         name: Deploy
-				uses: peaceiris/actions-gh-pages@v3
-				with:
-					github_token: ${{ secrets.GITHUB_TOKEN }}
-					publish_dir: ./html
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./html
