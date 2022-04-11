@@ -1,0 +1,22 @@
+name: Build and push GH-Pages
+
+on:
+  push:
+    tags: [ 'v*.*.*' ]
+
+jobs:
+  push_to_registry:
+    environment: docker_build
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+	    -
+	      run: cd docs && make
+      -
+        name: Deploy
+				uses: peaceiris/actions-gh-pages@v3
+				with:
+					github_token: ${{ secrets.GITHUB_TOKEN }}
+					publish_dir: ./html
