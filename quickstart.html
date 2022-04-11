@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Quickstart &#8212; taxtastic 0.9.4 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Manipulating the NCBI taxonomy" href="taxonomy.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.9.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Quickstart</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="quickstart">
+<h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
+<section id="minimal-example">
+<h2>Minimal example<a class="headerlink" href="#minimal-example" title="Permalink to this headline">¶</a></h2>
+<p>Say we have the following:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">seqs.fasta</span></code>: The multiply aligned reference sequences in FASTA format.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tree.nwk</span></code>: The tree built from reference alignment, in Newick format.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tree_stats.txt</span></code>: The log file from FastTree or the statistics file from RAxML/phyml.</p></li>
+</ul>
+<p>Build a reference package <code class="docutils literal notranslate"><span class="pre">my.refpkg</span></code> for a locus <code class="docutils literal notranslate"><span class="pre">locus_name</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">16s_rRNA</span></code>) in a single command as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">taxit</span> <span class="n">create</span> <span class="o">-</span><span class="n">l</span> <span class="mi">16</span><span class="n">s_rRNA</span> <span class="o">-</span><span class="n">P</span> <span class="n">my</span><span class="o">.</span><span class="n">refpkg</span> \
+    <span class="o">--</span><span class="n">aln</span><span class="o">-</span><span class="n">fasta</span> <span class="n">seqs</span><span class="o">.</span><span class="n">fasta</span> \
+    <span class="o">--</span><span class="n">tree</span><span class="o">-</span><span class="n">stats</span> <span class="n">tree_stats</span><span class="o">.</span><span class="n">txt</span> \
+    <span class="o">--</span><span class="n">tree</span><span class="o">-</span><span class="n">file</span> <span class="n">tree</span><span class="o">.</span><span class="n">nwk</span>
+</pre></div>
+</div>
+</section>
+<section id="taxonomically-equipped-reference-package-example">
+<h2>Taxonomically equipped reference package example<a class="headerlink" href="#taxonomically-equipped-reference-package-example" title="Permalink to this headline">¶</a></h2>
+<p>The fun really begins when we incorporate taxonomic information.
+Say in addition to the above files you also have:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">tax_ids.txt</span></code>: A list of all the tax_ids that the sequences in your refpkg use, one per line in a text file.  Blank lines and Python style comments in this file will be ignored, and repeated entries are only considered once.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seq_info.csv</span></code>: A CSV file describing each of the aligned sequences.  It begins with one line giving the field names:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;seqname&quot;</span><span class="p">,</span><span class="s2">&quot;accession&quot;</span><span class="p">,</span><span class="s2">&quot;tax_id&quot;</span><span class="p">,</span><span class="s2">&quot;species_name&quot;</span><span class="p">,</span><span class="s2">&quot;is_type&quot;</span>
+</pre></div>
+</div>
+<p>This is followed by one line for each sequence in your multiple alignment. Only <code class="docutils literal notranslate"><span class="pre">seqname</span></code> and <code class="docutils literal notranslate"><span class="pre">tax_id</span></code> are required. <code class="docutils literal notranslate"><span class="pre">seqname</span></code> should match the ID of the sequence in the FASTA file and must be unique. <code class="docutils literal notranslate"><span class="pre">accession</span></code> provides an additional identifier for the sequence, which can (but need not) be the same as <code class="docutils literal notranslate"><span class="pre">seqname</span></code>.  In our work, <code class="docutils literal notranslate"><span class="pre">seqname</span></code> is often an RDP accession number and <code class="docutils literal notranslate"><span class="pre">accession</span></code> is the NCBI accession number corresponding to that RDP entry (note that an NCBI accession number may not uniquely identify a sequence, as in tha case of a genomic sequence with multiple 16S rRNA gene loci).``tax_id`` is the entry in the taxonomy this sequence is mapped to, and <code class="docutils literal notranslate"><span class="pre">species_name</span></code> is the name associated with that entry. <code class="docutils literal notranslate"><span class="pre">is_type</span></code> indicates whether this sequence is from a type strain or not (should be <code class="docutils literal notranslate"><span class="pre">TRUE</span></code> or <code class="docutils literal notranslate"><span class="pre">FALSE</span></code>).  If you aren’t dealing with typestrains, just set it to <code class="docutils literal notranslate"><span class="pre">FALSE</span></code> for all your sequences.</p>
+</li>
+</ul>
+<p>Now there are a few additional steps to construct a taxonomically-annotated refpkg.</p>
+<p>First we have to represent the tax_ids as a taxonomy.  You will need a copy of the NCBI taxonomy in a format taxtastic understands in order to extract the minimal taxonomy containing the tax_ids in <code class="docutils literal notranslate"><span class="pre">tax_ids.txt</span></code>.  Run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">taxit</span> <span class="n">new_database</span> <span class="n">taxonomy</span><span class="o">.</span><span class="n">db</span>
+</pre></div>
+</div>
+<p>This will download zipped files containing the NCBI taxonomy into the current directory and load the data into an sqlite databse named <code class="docutils literal notranslate"><span class="pre">taxonomy.db</span></code>.  This takes a while!  Plan to go get a cup of coffee.  Then run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">taxit</span> <span class="n">taxtable</span> <span class="n">taxonomy</span><span class="o">.</span><span class="n">db</span> <span class="o">-</span><span class="n">f</span> <span class="n">tax_ids</span><span class="o">.</span><span class="n">txt</span> <span class="o">-</span><span class="n">o</span> <span class="n">taxa</span><span class="o">.</span><span class="n">csv</span>
+</pre></div>
+</div>
+<p>The output, <code class="docutils literal notranslate"><span class="pre">taxa.csv</span></code>, is a CSV file containing the minimum subtaxonomy of <code class="docutils literal notranslate"><span class="pre">taxonomy.db</span></code> which contains all the entries in <code class="docutils literal notranslate"><span class="pre">tax_ids.txt</span></code>.</p>
+<p>Now we are ready to build the refpkg:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">taxit</span> <span class="n">create</span> <span class="o">-</span><span class="n">l</span> <span class="n">locus_name</span> <span class="o">-</span><span class="n">P</span> <span class="n">my</span><span class="o">.</span><span class="n">refpkg</span> \
+    <span class="o">--</span><span class="n">taxonomy</span> <span class="n">taxa</span><span class="o">.</span><span class="n">csv</span> \
+    <span class="o">--</span><span class="n">aln</span><span class="o">-</span><span class="n">fasta</span> <span class="n">seqs</span><span class="o">.</span><span class="n">fasta</span> \
+    <span class="o">--</span><span class="n">seq</span><span class="o">-</span><span class="n">info</span> <span class="n">seq_info</span><span class="o">.</span><span class="n">csv</span> \
+    <span class="o">--</span><span class="n">tree</span><span class="o">-</span><span class="n">stats</span> <span class="n">tree_stats</span><span class="o">.</span><span class="n">txt</span> \
+    <span class="o">--</span><span class="n">tree</span><span class="o">-</span><span class="n">file</span> <span class="n">tree</span><span class="o">.</span><span class="n">nwk</span>
+</pre></div>
+</div>
+<p>You may also want to add some metadata fields using the options <code class="docutils literal notranslate"><span class="pre">--author</span></code>, <code class="docutils literal notranslate"><span class="pre">--description</span></code>, and <code class="docutils literal notranslate"><span class="pre">--package-version</span></code>, but these are optional. In addition, you may package in profile information and a Stockholm alignment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">aln</span><span class="o">-</span><span class="n">sto</span> <span class="n">seqs</span><span class="o">.</span><span class="n">sto</span> \
+<span class="o">--</span><span class="n">profile</span> <span class="n">align_profile</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">align_profile</span></code> is a profile that can be used to align query sequences using HMMER3 or Infernal, and <code class="docutils literal notranslate"><span class="pre">seqs.sto</span></code> is the reference alignment in Stockholm format. This is handy if you plan to use <code class="docutils literal notranslate"><span class="pre">cmalign</span></code> (in the Infernal suite of tools) or <code class="docutils literal notranslate"><span class="pre">hmmalign</span></code> (in the HMMER3 suite of tools) to perform your alignments.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Quickstart</a><ul>
+<li><a class="reference internal" href="#minimal-example">Minimal example</a></li>
+<li><a class="reference internal" href="#taxonomically-equipped-reference-package-example">Taxonomically equipped reference package example</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="installation.html"
+                          title="previous chapter">Installation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="taxonomy.html"
+                          title="next chapter">Manipulating the NCBI taxonomy</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/quickstart.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.9.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Quickstart</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011-2022, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy, Chris Rosenthal.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
+    </div>
+  </body>
+</html>
