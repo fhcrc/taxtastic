@@ -6,7 +6,6 @@ on:
 
 jobs:
   push_to_registry:
-    environment: docker_build
     runs-on: ubuntu-latest
     steps:
       -
