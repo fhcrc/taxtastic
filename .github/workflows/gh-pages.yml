@@ -13,6 +13,7 @@ jobs:
         name: Checkout
         uses: actions/checkout@v3
       -
+        name: Build Sphinx
         run: |
           pip install sphinx
           python setup.py build_sphinx --source-dir docs --build-dir .
