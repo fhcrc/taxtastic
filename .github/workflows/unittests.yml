@@ -1,4 +1,4 @@
-name: Run Taxtastic tests
+name: Run Taxtastic unittests
 
 on:
   push:
@@ -13,8 +13,4 @@ jobs:
       image: ghcr.io/fhcrc/taxtastic:latest
     steps:
     - uses: actions/checkout@v3
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install pytest
-    - run: pytest tests
+    - run: python -m unittest discover
