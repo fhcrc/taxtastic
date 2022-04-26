@@ -150,6 +150,15 @@ class Taxonomy(object):
         else:
             return output  # parent_id, rank
 
+    def id_from_names(self, tax_names):
+        """
+        Return tax_ids corresponding to tax_names.
+        """
+        names = self.names
+        s = select([names.c.tax_name, names.c.tax_id],
+                   names.c.tax_name.in_(tax_names)).distinct()
+        return s.execute()
+
     def primary_from_id(self, tax_id):
         """
         Returns primary taxonomic name associated with tax_id
@@ -165,6 +174,13 @@ class Taxonomy(object):
             raise ValueError(msg)
         else:
             return output[0]
+
+    def primary_from_ids(self, tax_ids):
+        names = self.names
+        s = select([names.c.tax_id, names.c.tax_name],
+                   and_(names.c.tax_id.in_(tax_ids),
+                        names.c.is_primary)).distinct()
+        return s.execute()
 
     def primary_from_name(self, tax_name):
         """
@@ -185,10 +201,7 @@ class Taxonomy(object):
             raise ValueError(msg)
 
         if not is_primary:
-            s2 = select([names.c.tax_name],
-                        and_(names.c.tax_id == tax_id,
-                             names.c.is_primary))
-            tax_name = s2.execute().fetchone()[0]
+            tax_name = self.primary_from_id(names.c.tax_id)
 
         return tax_id, tax_name, bool(is_primary)
 

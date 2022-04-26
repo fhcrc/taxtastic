@@ -43,8 +43,7 @@ def build_parser(parser):
         help=('one or more taxonomic names provided as a comma-delimited '
               'list on the command line'))
 
-    output_group = parser.add_argument_group(
-        "Output options").add_mutually_exclusive_group()
+    output_group = parser.add_argument_group("Output options")
     output_group.add_argument(
         '-o', '--outfile', metavar='FILE', type=argparse.FileType('w'),
         help='output file', default=sys.stdout)
@@ -66,19 +65,20 @@ def action(args):
     if args.names:
         names += [x.strip() for x in args.names.split(',')]
 
+    found_ids = dict(list(tax.id_from_names(names)))
+    primary = dict(list(tax.primary_from_ids(found_ids.values())))
+
     writer = csv.writer(args.outfile)
     writer.writerow(['input', 'tax_name', 'tax_id', 'rank'])
 
-    found = 0
     for name in names:
-        try:
-            tax_id, tax_name, is_primary = tax.primary_from_name(name)
-        except ValueError:
-            if args.include_unmatched:
-                writer.writerow([name, None, None, None])
+        if name in found_ids:
+            tax_id = found_ids[name]
+            _, rank = tax._node(tax_id)
+            writer.writerow([name, primary[tax_id], tax_id, rank])
+        elif args.include_unmatched:
+            writer.writerow([name, None, None, None])
         else:
-            found += 1
-            parent, rank = tax._node(tax_id)
-            writer.writerow([name, tax_name, tax_id, rank])
+            log.warning('dropping ({}), not found in database'.format(name))
 
-    log.warning('found {} of {} names'.format(found, len(names)))
+    log.warning('found {} of {} names'.format(len(found_ids), len(names)))

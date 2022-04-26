@@ -2,6 +2,16 @@
  change log for taxtastic
 ==========================
 
+0.9.5
+=====
+
+* major speed improvements to subcommand namelookup
+
+0.9.4
+=====
+
+* general improvements and updates to Github Actions Workflows
+
 0.9.3
 =====
 
