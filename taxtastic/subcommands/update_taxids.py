@@ -42,9 +42,14 @@ def build_parser(parser):
     parser.add_argument(
         '-o', '--outfile', default=sys.stdout, type=Opener('wt'),
         help='Modified version of input file [default: stdout]')
-    parser.add_argument(
+    input_format = parser.add_mutually_exclusive_group(required=False)
+    input_format.add_argument(
         '--taxid-column', default='tax_id',
         help='name of column containing tax_ids to be replaced [%(default)s]')
+    input_format.add_argument(
+        '--tax-id-file', action='store_true',
+        help='Infile is a headerless text file '
+             'of tax_ids separated by newlines. [%(default)s]')
     parser.add_argument(
         '--unknowns', type=Opener('wt'),
         help=('optional output file containing rows with unknown tax_ids '
@@ -65,7 +70,10 @@ def build_parser(parser):
 
 
 def action(args):
-    reader = csv.DictReader(args.infile)
+    if args.tax_id_file:
+        reader = csv.DictReader(args.infile, fieldnames=[args.taxid_column])
+    else:
+        reader = csv.DictReader(args.infile)
     fieldnames = reader.fieldnames
     taxid_column = args.taxid_column
     drop = args.unknown_action == 'drop'
@@ -79,13 +87,15 @@ def action(args):
     # if args.use_names and args.name_column not in fieldnames:
     #     raise ValueError("No column " + args.name_column)
 
-    writer = csv.DictWriter(args.outfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
-    writer.writeheader()
+    writer = csv.DictWriter(args.outfile, fieldnames=fieldnames)
+    if not args.tax_id_file:
+        writer.writeheader()
 
     if args.unknowns:
         unknowns = csv.DictWriter(
-            args.unknowns, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
-        unknowns.writeheader()
+            args.unknowns, fieldnames=fieldnames)
+        if not args.tax_id_file:
+            unknowns.writeheader()
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
     tax = Taxonomy(engine, schema=args.schema)
