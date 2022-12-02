@@ -2,10 +2,11 @@
  change log for taxtastic
 ==========================
 
-0.9.5
-=====
+0.9.5-dev
+=========
 
 * major speed improvements to subcommand namelookup
+* added support text file support for update_taxids
 
 0.9.4
 =====
