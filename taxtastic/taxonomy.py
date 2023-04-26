@@ -21,11 +21,12 @@ import logging
 
 from jinja2 import Template
 
-import sqlalchemy
+import sqlalchemy as sa
 from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.session import sessionmaker
+from sqlalchemy.orm import Session
 
 from taxtastic.ncbi import UNORDERED_RANKS
 from taxtastic.utils import random_name
@@ -37,7 +38,6 @@ class TaxonIntegrityError(Exception):
     '''
     Raised when something in the Taxonomy is not structured correctly
     '''
-    pass
 
 
 class Taxonomy(object):
@@ -69,8 +69,7 @@ class Taxonomy(object):
         self.engine = engine
         self.meta = MetaData(schema=schema)
         self.meta.bind = self.engine
-        self.meta.reflect()
-
+        self.meta.reflect(bind=self.engine)
         self.schema = schema
 
         # TODO: table names should probably be provided in a dict as a
@@ -84,30 +83,29 @@ class Taxonomy(object):
         ranks_table = self._get_table('ranks')
         self.ranks_table = ranks_table
 
-        ranks = select([ranks_table.c.rank, ranks_table.c.height]).execute().fetchall()
-        ranks = sorted(ranks, key=lambda x: int(x[1]))  # sort by height
-        self.ranks = [r[0] for r in ranks]  # just the ordered ranks
+        ranks = self.fetchall(
+            select(self.ranks_table.c.rank).order_by(ranks_table.c.height))
+        self.ranks = [r[0] for r in ranks]
+
         self.unordered_ranks = set(self.ranks) & set(UNORDERED_RANKS)
 
-        # TODO: can probably remove this check at some point;
-        # historically the root node had tax_id == parent_id ==
-        # '1', but with a recursive CTE, parent_id must be None for
-        # the recursive expression to terminate.
-        with self.engine.connect() as con:
-            cmd = "select parent_id from {nodes} where rank = 'root'".format(
-                nodes=self.nodes)
-            result = con.execute(cmd)
-            if result.fetchone()[0] is not None:
-                raise TaxonIntegrityError('the root node must have parent_id = None')
+        # parent_id must be None for the recursive CTE for calculating
+        # lineages to terminate.
+        parent_node = self.fetchone(
+            select(self.nodes).filter_by(rank='root'))
+
+        if parent_node.parent_id is not None:
+            raise TaxonIntegrityError(
+                'the root node must have parent_id = None')
 
         self.placeholder = '%s' if self.engine.name == 'postgresql' else '?'
 
     def _get_table(self, name):
         try:
             val = self.meta.tables[self.prepend_schema(name)]
-        except KeyError:
+        except KeyError as ex:
             raise ValueError(
-                'Table "{}" is missing from the input database.'.format(name))
+                f'Table "{name}" is missing from the input database.') from ex
         else:
             return val
 
@@ -258,7 +256,7 @@ class Taxonomy(object):
                 result = con.execute(cmd, (tax_id,))
                 # reorder so that root is first
                 lineage = result.fetchall()[::-1]
-        except sqlalchemy.exc.ResourceClosedError:
+        except sa.exc.ResourceClosedError:
             lineage = []
 
         if not lineage:
@@ -345,7 +343,7 @@ class Taxonomy(object):
 
                 return rows
 
-        except sqlalchemy.exc.ResourceClosedError:
+        except sa.exc.ResourceClosedError:
             raise ValueError('tax id "{}" not found'.format(tax_id))
 
     def is_below(self, lower, upper):
@@ -417,6 +415,16 @@ class Taxonomy(object):
 
         return ldict
 
+    def fetchone(self, statement):
+        """Return first result of select statement 'statement'"""
+        with Session(self.engine) as session:
+            return session.execute(statement).fetchone()
+
+    def fetchall(self, statement):
+        """Return all results of select statement 'statement'"""
+        with Session(self.engine) as session:
+            return session.execute(statement).fetchall()
+
     def add_source(self, source_name, description=None):
         """Adds a row to table "source" if "name" does not
         exist. Returns (source_id, True) if a new row is created,
@@ -424,19 +432,20 @@ class Taxonomy(object):
 
         """
 
-        # TODO: shoud be able to do this inside a transaction
-
         if not source_name:
             raise ValueError('"source_name" may not be None or an empty string')
 
-        sel = select([self.source.c.id], self.source.c.name == source_name).execute()
-        result = sel.fetchone()
+        result = self.fetchone(
+            select(self.source.c.id).filter_by(name=source_name))
+
         if result:
-            return result[0], False
+            return (result[0], False)
         else:
-            ins = self.source.insert().execute(
-                name=source_name, description=description)
-            return ins.inserted_primary_key[0], True
+            with self.engine.begin() as conn:
+                stmt = sa.insert(self.source).values(
+                    name=source_name, description=description)
+                result = conn.execute(stmt)
+                return (result.inserted_primary_key[0], True)
 
     def get_source(self, source_id=None, source_name=None):
         """Returns a dict with keys ['id', 'name', 'description'] or None if
@@ -496,19 +505,20 @@ class Taxonomy(object):
         return True
 
     def has_node(self, tax_id):
-        result = select([self.nodes], self.nodes.c.tax_id == tax_id).execute()
-        return bool(result.fetchone())
+        with Session(self.engine) as session:
+            result = session.execute(
+                select(self.nodes, self.nodes.c.tax_id == tax_id))
+            return bool(result.fetchone())
 
-    def add_node(self, tax_id, parent_id, rank, names, source_name, children=None,
-                 is_valid=True, execute=True, **ignored):
+    def add_node(self, tax_id, parent_id, rank, names, source_name,
+                 children=None, is_valid=True, execute=True, **ignored):
         """Add a node to the taxonomy.
 
         ``source_name`` is added to table "source" if necessary.
-
         """
 
         if ignored:
-            log.info('some arguments were ignored: {} '.format(str(ignored)))
+            log.info(f'some arguments were ignored: {ignored} ')
 
         children = children or []
         self.verify_rank_integrity(tax_id, rank, parent_id, children)
@@ -556,8 +566,9 @@ class Taxonomy(object):
         else:
             return statements
 
-    def update_node(self, tax_id, source_name, parent_id=None, rank=None, names=None,
-                    children=None, is_valid=None, execute=True, **ignored):
+    def update_node(self, tax_id, source_name, parent_id=None, rank=None,
+                    names=None, children=None, is_valid=None, execute=True,
+                    **ignored):
 
         children = children or []
         source_id, __ = self.add_source(source_name)

@@ -4,6 +4,7 @@ from os import path
 import logging
 import shutil
 
+import sqlalchemy as sa
 from sqlalchemy import create_engine
 
 from . import config
@@ -258,15 +259,17 @@ class TestAddSource(TestTaxonomyBase):
 
     def sources(self):
         with self.tax.engine.connect() as con:
-            result = con.execute('select * from source')
+            result = con.execute(sa.text('select * from source'))
             return result.fetchall()
 
     def test01(self):
-        self.tax.add_source('foo')
+        res = self.tax.add_source('foo')
+        self.assertEqual(res, (2, True))
         self.assertEqual(self.sources()[1], (2, 'foo', None))
 
     def test02(self):
-        self.tax.add_source('ncbi')
+        res = self.tax.add_source('ncbi')
+        self.assertEqual(res, (1, False))
         self.assertEqual(
             self.sources(),
             [(1, 'ncbi', 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip')])

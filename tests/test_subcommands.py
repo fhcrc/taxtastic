@@ -399,8 +399,9 @@ class TestUpdateTaxids(TestBase):
 class TestAddNode(TestBase):
 
     def setUp(self):
-        self.suppress_stdout()
-        self.suppress_stderr()
+        if '-v' not in sys.argv:
+            self.suppress_stdout()
+            self.suppress_stderr()
 
         self.outdir = self.mkoutdir()
         self.dbname = os.path.join(self.outdir, 'taxonomy.db')
