@@ -618,7 +618,6 @@ class Taxonomy(object):
     def add_name(self, tax_id, tax_name, source_name=None, source_id=None,
                  name_class='synonym', is_primary=False, is_classified=None,
                  execute=True, **ignored):
-
         """Add a record to the names table corresponding to
         ``tax_id``. Arguments are as follows:
 
@@ -648,27 +647,35 @@ class Taxonomy(object):
         assert isinstance(is_primary, bool)
         assert is_classified in {None, True, False}
         if ignored:
-            log.info('some arguments were ignored: {} '.format(str(ignored)))
+            log.info(f'some arguments were ignored: {ignored} ')
 
         source_id = self.get_source(source_id, source_name)['id']
 
         statements = []
 
         if is_primary:
-            statements.append(self.names.update(
-                whereclause=self.names.c.tax_id == tax_id,
-                values={'is_primary': False}))
+            statements.append(
+                sa.update(self.names)
+                .where(self.names.c.tax_id == tax_id)
+                .values(is_primary=False))
 
-        statements.append(self.names.insert().values(
-            tax_id=tax_id,
-            tax_name=tax_name,
-            source_id=source_id,
-            is_primary=is_primary,
-            name_class=name_class,
-            is_classified=is_classified))
+        statements.append(
+            sa.insert(self.names)
+            .values(tax_id=tax_id,
+                    tax_name=tax_name,
+                    source_id=source_id,
+                    is_primary=is_primary,
+                    name_class=name_class,
+                    is_classified=is_classified))
 
         if execute:
-            self.execute(statements)
+            try:
+                with self.engine.begin() as conn:
+                    for stmt in statements:
+                        conn.execute(stmt)
+            except sa.exc.IntegrityError as ex:
+                raise ValueError(
+                    f'{tax_id}, {tax_name} already ecists') from ex
         else:
             return statements
 
