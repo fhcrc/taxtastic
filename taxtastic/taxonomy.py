@@ -138,15 +138,15 @@ class Taxonomy(object):
         FIXME: expand return rank to include custom 'below' ranks built when
                get_lineage is caled
         """
-        s = select([self.nodes.c.parent_id, self.nodes.c.rank],
-                   self.nodes.c.tax_id == tax_id)
-        res = s.execute()
-        output = res.fetchone()
+
+        output = self.fetchone(
+            select(self.nodes.c.parent_id, self.nodes.c.rank)
+            .filter_by(tax_id=tax_id))
+
         if not output:
-            msg = 'value "{}" not found in nodes.tax_id'.format(tax_id)
-            raise ValueError(msg)
+            raise ValueError(f'value "{tax_id}" not found in nodes.tax_id')
         else:
-            return output  # parent_id, rank
+            return output
 
     def id_from_names(self, tax_names):
         """
