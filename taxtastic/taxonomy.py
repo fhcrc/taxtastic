@@ -448,35 +448,33 @@ class Taxonomy(object):
                 return (result.inserted_primary_key[0], True)
 
     def get_source(self, source_id=None, source_name=None):
-        """Returns a dict with keys ['id', 'name', 'description'] or None if
-        no match. The ``id`` field is guaranteed to be an int that
-        exists in table source. Requires exactly one of ``source_id``
-        or ``source_name``. A new source corresponding to
-        ``source_name`` is created if necessary.
+        """Returns a dict with keys ('id', 'name', 'description'). The
+        ``id`` field is guaranteed to be an int that exists in table
+        source. Requires exactly one of ``source_id`` or
+        ``source_name``.
 
         """
 
         if not (bool(source_id) ^ bool(source_name)):
-            raise ValueError('exactly one of source_id or source_name is required')
+            raise ValueError(
+                'exactly one of source_id and source_name is required')
 
         if source_id:
             try:
-                source_id = int(source_id)
-            except (ValueError, TypeError):
-                raise ValueError(
-                    'source_id must be an int or a string representing one')
+                condition = {'id': int(source_id)}
+            except (ValueError, TypeError) as ex:
+                raise ValueError(f'"{source_id}" is not an integer') from ex
+        elif source_name:
+            condition = {'name': source_name}
 
-            sel = select([self.source], self.source.c.id == source_id).execute()
-        else:
-            sel = select([self.source], self.source.c.name == source_name).execute()
+        result = self.fetchone(select(self.source).filter_by(**condition))
 
-        result = sel.fetchone()
         if not result:
             raise ValueError(
                 'there is no source with id {} or name {}'.format(
                     source_id, source_name))
 
-        return dict(list(zip(list(sel.keys()), result)))
+        return result._asdict()
 
     def verify_rank_integrity(self, tax_id, rank, parent_id, children):
         """Confirm that for each node the parent ranks and children ranks are
