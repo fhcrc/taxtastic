@@ -126,20 +126,6 @@ class Taxonomy(object):
         except exc as ex:
             raise raise_as(errormsg) from ex
 
-        # Session = sessionmaker(bind=self.engine)
-        # session = Session()
-
-        # try:
-        #     for statement in statements:
-        #         session.execute(statement)
-        # except exc as err:
-        #     session.rollback()
-        #     raise rasie_as(str(err))
-        # else:
-        #     session.commit()
-        # finally:
-        #     session.close()
-
     def _node(self, tax_id):
         """
         Returns parent_id, rank
@@ -218,20 +204,19 @@ class Taxonomy(object):
 
         """
 
-        cmd = """
+        cmd = sa.text("""
         SELECT COALESCE(
         (SELECT new_tax_id FROM {merged}
-         WHERE old_tax_id = {x}), {x})
-        """.format(x=self.placeholder, merged=self.merged)
+         WHERE old_tax_id = :tax_id), :tax_id)
+        """.format(merged=self._get_table('merged')))
 
-        with self.engine.connect() as con:
-            result = con.execute(cmd, (tax_id, tax_id))
-            return result.fetchone()[0]
+        return self.fetchone(cmd, tax_id=tax_id)[0]
 
     def _get_lineage(self, tax_id, merge_obsolete=True):
         """Return a list of [(rank, tax_id)] describing the lineage of
-        tax_id. If ``merge_obsolete`` is True and ``tax_id`` has been
-        replaced, use the corresponding value in table merged.
+        tax_id from root to tip. If ``merge_obsolete`` is True and
+        ``tax_id`` has been replaced, use the corresponding value in
+        table merged.
 
         """
 
@@ -245,26 +230,27 @@ class Taxonomy(object):
         # sort explicitly if this is the expected behavior, but it
         # seems like for the most part, the lineage is converted to a
         # dict and the order is irrelevant.
-        cmd = """
+
+        nodes = self._get_table('nodes')
+        ranks = self._get_table('ranks')
+
+        cmd = sa.text(f"""
         WITH RECURSIVE a AS (
          SELECT tax_id, parent_id, rank
           FROM {nodes}
-          WHERE tax_id = {}
+          WHERE tax_id = :tax_id
         UNION ALL
          SELECT p.tax_id, p.parent_id, p.rank
           FROM a JOIN {nodes} p ON a.parent_id = p.tax_id
         )
         SELECT a.rank, a.tax_id FROM a
         JOIN {ranks} using(rank)
-        """.format(self.placeholder, nodes=self.nodes, ranks=self.ranks_table)
+        """)
 
         # with some versions of sqlite3, an error is raised when no
         # rows are returned; with others, an empty list is returned.
         try:
-            with self.engine.connect() as con:
-                result = con.execute(cmd, (tax_id,))
-                # reorder so that root is first
-                lineage = result.fetchall()[::-1]
+            lineage = self.fetchall(cmd, tax_id=tax_id)[::-1]
         except sa.exc.ResourceClosedError:
             lineage = []
 
