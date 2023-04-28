@@ -144,8 +144,8 @@ class Taxonomy(object):
             return output
 
     def id_from_names(self, tax_names):
-        """
-        Return tax_ids corresponding to tax_names.
+        """Return tax_ids corresponding to tax_names.
+
         """
         names = self.names
         s = select([names.c.tax_name, names.c.tax_id],
@@ -153,20 +153,19 @@ class Taxonomy(object):
         return s.execute()
 
     def primary_from_id(self, tax_id):
-        """
-        Returns primary taxonomic name associated with tax_id
-        """
-        s = select([self.names.c.tax_name],
-                   and_(self.names.c.tax_id == tax_id,
-                        self.names.c.is_primary))
-        res = s.execute()
-        output = res.fetchone()
+        """Returns primary taxonomic name associated with tax_id
 
-        if not output:
-            msg = 'value "{}" not found in names.tax_id'.format(tax_id)
-            raise ValueError(msg)
-        else:
+        """
+
+        output = self.fetchone(
+            select(self.names.c.tax_name)
+            .where(and_(self.names.c.tax_id == tax_id,
+                        self.names.c.is_primary)))
+
+        if output:
             return output[0]
+        else:
+            raise ValueError(f'"{tax_id}" not found in names.tax_id')
 
     def primary_from_ids(self, tax_ids):
         names = self.names
@@ -506,10 +505,10 @@ class Taxonomy(object):
         return True
 
     def has_node(self, tax_id):
-        with Session(self.engine) as session:
-            result = session.execute(
-                select(self.nodes, self.nodes.c.tax_id == tax_id))
-            return bool(result.fetchone())
+        result = self.fetchone(
+            select(self.nodes)
+            .filter_by(tax_id=tax_id))
+        return bool(result)
 
     def add_node(self, tax_id, parent_id, rank, names, source_name,
                  children=None, is_valid=True, execute=True, **ignored):
@@ -558,9 +557,10 @@ class Taxonomy(object):
 
         # add children and update source_id
         for child in children:
-            statements.append(self.nodes.update(
-                whereclause=self.nodes.c.tax_id == child,
-                values={'parent_id': tax_id, 'source_id': source_id}))
+            statements.append(
+                sa.update(self.nodes)
+                .where(self.nodes.c.tax_id == child)
+                .values(parent_id=tax_id, source_id=source_id))
 
         if execute:
             self.execute(statements)
