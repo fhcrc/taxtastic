@@ -38,7 +38,7 @@ class TestAddNode(TestTaxonomyBase):
 
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
-        log.info(self.dbname)
+        # log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddNode, self).setUp()
 
@@ -189,7 +189,7 @@ class TestAddName(TestTaxonomyBase):
 
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
-        log.info(self.dbname)
+        # log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddName, self).setUp()
 
@@ -228,7 +228,7 @@ class TestAddNames(TestTaxonomyBase):
 
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
-        log.info(self.dbname)
+        # log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddNames, self).setUp()
 
@@ -308,7 +308,7 @@ class TestGetSource(TestTaxonomyBase):
 class TestAddSource(TestTaxonomyBase):
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
-        log.info(self.dbname)
+        # log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddSource, self).setUp()
 
@@ -353,6 +353,8 @@ class TestTaxonomyTree(TestTaxonomyBase):
     def test_child_of(self):
         self.assertRaises(ValueError, self.tax.child_of, None)
         self.assertEqual(self.tax.child_of('1239'), '91061')
+
+    def test_children_of(self):
         self.assertEqual(self.tax.children_of('90964', 2), ['1279', '45669'])
 
     def test_is_ancestor_of(self):

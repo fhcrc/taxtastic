@@ -711,19 +711,20 @@ class Taxonomy(object):
         returns None if there is no sibling.
         """
         parent_id, rank = self._node(tax_id)
-        s = select([self.nodes.c.tax_id],
-                   and_(self.nodes.c.parent_id == parent_id,
+
+        output = self.fetchone(
+            select(self.nodes.c.tax_id)
+            .where(and_(self.nodes.c.parent_id == parent_id,
                         self.nodes.c.tax_id != tax_id,
-                        self.nodes.c.rank == rank))
-        res = s.execute()
-        output = res.fetchone()
-        if not output:
-            msg = 'No sibling of tax_id {} with rank {} found in taxonomy'
-            msg = msg.format(tax_id, rank)
-            log.warning(msg)
-            return None
-        else:
+                        self.nodes.c.rank == rank)))
+
+        if output:
             return output[0]
+        else:
+            log.info(
+                f'No sibling of tax_id {tax_id} '
+                f'with rank {rank} found in taxonomy')
+            return None
 
     def is_ancestor_of(self, node, ancestor):
         if node is None or ancestor is None:
@@ -750,40 +751,41 @@ class Taxonomy(object):
         a proper rank below that of tax_id (i.e., genus, species, but
         not no_rank or below_below_kingdom).
         """
-        _, rank = self._node(tax_id)
-        s = select([self.nodes.c.tax_id],
-                   and_(self.nodes.c.parent_id == tax_id,
+        __, rank = self._node(tax_id)
+
+        output = self.fetchone(
+            select(self.nodes.c.tax_id)
+            .where(and_(self.nodes.c.parent_id == tax_id,
                         or_(*[self.nodes.c.rank == r
-                              for r in self.ranks_below(rank)])))
-        res = s.execute()
-        output = res.fetchone()
-        if not output:
-            msg = ('No children of tax_id {} with '
-                   'rank below {} found in database')
-            msg = msg.format(tax_id, rank)
-            log.warning(msg)
-            return None
-        else:
+                              for r in self.ranks_below(rank)]))))
+
+        if output:
             r = output[0]
             assert self.is_ancestor_of(r, tax_id)
             return r
+        else:
+            log.warning(f'No children of tax_id {tax_id} with '
+                        f'rank below {rank} found in database')
+            return None
 
     def children_of(self, tax_id, n):
-        # TODO: replace with recursive CTE
-        parent_id, rank = self._node(tax_id)
-        s = select([self.nodes.c.tax_id],
-                   and_(self.nodes.c.parent_id == tax_id,
+
+        # TODO: replace with recursive CTE?
+        __, rank = self._node(tax_id)
+        output = self.fetchall(
+            select(self.nodes.c.tax_id)
+            .where(and_(self.nodes.c.parent_id == tax_id,
                         or_(*[self.nodes.c.rank == r
-                              for r in self.ranks_below(rank)]))).limit(n)
-        res = s.execute()
-        output = res.fetchall()
-        if not output:
-            return []
-        else:
+                              for r in self.ranks_below(rank)])))
+            .limit(n))
+
+        if output:
             r = [x[0] for x in output]
             for x in r:
                 assert self.is_ancestor_of(x, tax_id)
             return r
+        else:
+            return []
 
     def parent_id(self, tax_id, rank=None):
         parent_id, tax_rank = self._node(tax_id)
