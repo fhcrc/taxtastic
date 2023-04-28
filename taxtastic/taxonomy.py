@@ -109,27 +109,36 @@ class Taxonomy(object):
         else:
             return val
 
-    def execute(self, statements, exc=IntegrityError, rasie_as=ValueError):
-        """Execute ``statements`` in a session, and perform a rollback on
-        error. ``exc`` is a single exception object or a tuple of
-        objects to be used in the except clause. The error message is
-        re-raised as the exception specified by ``raise_as``.
+    def execute(self, statements, exc=IntegrityError, raise_as=ValueError,
+                errormsg=''):
+        """Execute list of ``statements`` in a transaction, and
+        perform a rollback on error. ``exc`` is a single exception
+        object or a tuple of objects to be used in the except clause.
+        The error message is re-raised as the exception specified by
+        ``raise_as``.
 
         """
 
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
-
         try:
-            for statement in statements:
-                session.execute(statement)
-        except exc as err:
-            session.rollback()
-            raise rasie_as(str(err))
-        else:
-            session.commit()
-        finally:
-            session.close()
+            with self.engine.begin() as conn:
+                for stmt in statements:
+                    conn.execute(stmt)
+        except exc as ex:
+            raise raise_as(errormsg) from ex
+
+        # Session = sessionmaker(bind=self.engine)
+        # session = Session()
+
+        # try:
+        #     for statement in statements:
+        #         session.execute(statement)
+        # except exc as err:
+        #     session.rollback()
+        #     raise rasie_as(str(err))
+        # else:
+        #     session.commit()
+        # finally:
+        #     session.close()
 
     def _node(self, tax_id):
         """
@@ -204,8 +213,8 @@ class Taxonomy(object):
         return tax_id, tax_name, bool(is_primary)
 
     def _get_merged(self, tax_id):
-        """Returns tax_id into which `tax_id` has been merged or `tax_id` of
-        not obsolete.
+        """Returns tax_id into which `tax_id` has been merged or
+        `tax_id` if not obsolete.
 
         """
 
@@ -415,15 +424,23 @@ class Taxonomy(object):
 
         return ldict
 
-    def fetchone(self, statement):
-        """Return first result of select statement 'statement'"""
-        with Session(self.engine) as session:
-            return session.execute(statement).fetchone()
+    def fetchone(self, statement, **params):
+        """Return first result of select statement 'statement'. If
+        statement is a text statement, variable substitutions can be
+        provided as keyword arguments.
 
-    def fetchall(self, statement):
-        """Return all results of select statement 'statement'"""
+        """
         with Session(self.engine) as session:
-            return session.execute(statement).fetchall()
+            return session.execute(statement, params).fetchone()
+
+    def fetchall(self, statement, **params):
+        """Return all results of select statement 'statement'. If
+        statement is a text statement, variable substitutions can be
+        provided as keyword arguments.
+
+        """
+        with Session(self.engine) as session:
+            return session.execute(statement, params).fetchall()
 
     def add_source(self, source_name, description=None):
         """Adds a row to table "source" if "name" does not
@@ -669,13 +686,8 @@ class Taxonomy(object):
                     is_classified=is_classified))
 
         if execute:
-            try:
-                with self.engine.begin() as conn:
-                    for stmt in statements:
-                        conn.execute(stmt)
-            except sa.exc.IntegrityError as ex:
-                raise ValueError(
-                    f'{tax_id}, {tax_name} already ecists') from ex
+            self.execute(
+                statements, errormsg=f'{tax_id}, {tax_name} already exists')
         else:
             return statements
 

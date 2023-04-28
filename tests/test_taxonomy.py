@@ -162,7 +162,7 @@ class TestAddNode(TestTaxonomyBase):
 
 class TestAddName(TestTaxonomyBase):
     """
-    test tax.add_node
+    test tax.add_name
     """
 
     def query(self, query, **params):
@@ -219,6 +219,63 @@ class TestAddName(TestTaxonomyBase):
             is_primary=True, source_name='ncbi')
 
         self.assertEqual(self.primary_name('1280'), 'SA')
+
+
+class TestAddNames(TestTaxonomyBase):
+    """
+    test tax.add_names
+    """
+
+    def setUp(self):
+        self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
+        log.info(self.dbname)
+        shutil.copyfile(dbname, self.dbname)
+        super(TestAddNames, self).setUp()
+
+    def test01(self):
+
+        names = [
+            dict(tax_id='1280', tax_name='SA', is_primary=True,
+                 source_name='ncbi'),
+            dict(tax_id='1280', tax_name='SA2', is_primary=False,
+                 source_name='ncbi'),
+        ]
+
+        count_before = self.tax.fetchone(
+            sa.text("select count(*) from names where tax_id = :tax_id"),
+            tax_id='1280')[0]
+
+        self.tax.add_names(tax_id='1280', names=names)
+
+        count_after = self.tax.fetchone(
+            sa.text("select count(*) from names where tax_id = :tax_id"),
+            tax_id='1280')[0]
+
+        self.assertEqual(count_before + 2, count_after)
+
+    def test02(self):
+
+        names = [
+            dict(tax_id='1280', tax_name='SA', is_primary=True,
+                 source_name='ncbi'),
+            dict(tax_id='1280', tax_name='SA2', is_primary=True,
+                 source_name='ncbi'),
+        ]
+
+        self.assertRaises(
+            ValueError, self.tax.add_names, tax_id='1280', names=names)
+
+    def test03(self):
+
+        names = [
+            dict(tax_id='1280', tax_name='SA', is_primary=True,
+                 source_name='ncbi'),
+            dict(tax_id='1280', tax_name='SA', is_primary=False,
+                 source_name='ncbi'),
+        ]
+
+        self.assertRaises(
+            ValueError, self.tax.add_names, tax_id='1280', names=names)
 
 
 class TestGetSource(TestTaxonomyBase):
