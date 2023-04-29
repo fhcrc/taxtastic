@@ -576,8 +576,10 @@ class Taxonomy(object):
 
         statements = []
 
-        result = select([self.nodes], self.nodes.c.tax_id == tax_id).execute()
-        current = dict(list(zip(list(result.keys()), result.fetchone())))
+        result = self.fetchone(
+            select(self.nodes)
+            .where(self.nodes.c.tax_id == tax_id))
+        current = result._asdict()
 
         # update node
         values = dict(source_id=source_id)
@@ -594,8 +596,10 @@ class Taxonomy(object):
             assert isinstance(is_valid, bool)
             values['is_valid'] = is_valid
 
-        statements.append(self.nodes.update(
-            whereclause=self.nodes.c.tax_id == tax_id, values=values))
+        statements.append(
+            sa.update(self.nodes)
+            .where(self.nodes.c.tax_id == tax_id)
+            .values(values))
 
         # add names if any are provided; names are assumed to be new;
         # there is no checking for primary names.
@@ -609,9 +613,10 @@ class Taxonomy(object):
 
         # add children
         for child in children:
-            statements.append(self.nodes.update(
-                whereclause=self.nodes.c.tax_id == child,
-                values={'parent_id': tax_id}))
+            statements.append(
+                sa.update(self.nodes)
+                .where(self.nodes.c.tax_id == child)
+                .values(parent_id=tax_id))
 
         if execute:
             self.execute(statements)

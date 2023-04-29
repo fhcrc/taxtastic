@@ -452,13 +452,14 @@ class TestAddNode(TestBase):
 
         tax = Taxonomy(sa.create_engine('sqlite:///' + self.dbname))
         with tax.engine.connect() as con:
-            result = con.execute(
-                'select * from nodes where parent_id = ?', ('stapha_sg',))
-            keys = list(result.keys())
-            nodes = [dict(list(zip(keys, row))) for row in result.fetchall()]
+            result = tax.fetchall(
+                sa.text('select source_id from nodes '
+                        'where parent_id = :parent_id'),
+                parent_id='stapha_sg'
+            )
 
-        self.assertEqual(len(nodes), 5)
-        self.assertEqual([row['source_id'] for row in nodes], [2] * len(nodes))
+        self.assertEqual(len(result), 5)
+        self.assertEqual([row[0] for row in result], [2] * len(result))
 
 
 class TestExtractNodes(TestBase):
