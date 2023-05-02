@@ -25,7 +25,6 @@ import sqlalchemy as sa
 from sqlalchemy import MetaData, and_, or_
 from sqlalchemy.sql import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy.orm import Session
 
 from taxtastic.ncbi import UNORDERED_RANKS
@@ -43,10 +42,8 @@ class TaxonIntegrityError(Exception):
 class Taxonomy(object):
 
     def __init__(self, engine, schema=None):
-
-        """
-        The Taxonomy class defines an object providing an interface to
-        the taxonomy database.
+        """The Taxonomy class defines an object providing an interface
+        to the taxonomy database.
 
         * engine - sqlalchemy engine instance providing a connection to a
           database defining the taxonomy
@@ -180,14 +177,11 @@ class Taxonomy(object):
         """
         Return tax_id and primary tax_name corresponding to tax_name.
         """
-        names = self.names
 
-        s1 = select([names.c.tax_id, names.c.is_primary],
-                    names.c.tax_name == tax_name)
+        res = self.fetchone(
+            select(self.names.c.tax_id, self.names.c.is_primary)
+            .filter_by(tax_name=tax_name))
 
-        log.debug(str(s1))
-
-        res = s1.execute().fetchone()
         if res:
             tax_id, is_primary = res
         else:
@@ -195,7 +189,7 @@ class Taxonomy(object):
             raise ValueError(msg)
 
         if not is_primary:
-            tax_name = self.primary_from_id(names.c.tax_id)
+            tax_name = self.primary_from_id(self.names.c.tax_id)
 
         return tax_id, tax_name, bool(is_primary)
 
