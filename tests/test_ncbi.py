@@ -4,7 +4,8 @@ import re
 import os
 from os import path
 import logging
-import sqlalchemy
+
+import sqlalchemy as sa
 
 import taxtastic
 import taxtastic.ncbi
@@ -24,11 +25,11 @@ ncbi_data = config.ncbi_data
 class TestDbconnect(TestBase):
 
     def test01(self):
-        engine = sqlalchemy.create_engine('sqlite:///' + ncbi_master_db)
+        engine = sa.create_engine('sqlite:///' + ncbi_master_db)
         taxtastic.ncbi.db_connect(engine)
         with engine.begin() as con:
-            result = con.execute(
-                'select name from sqlite_master where type = "table"')
+            result = con.execute(sa.text(
+                'select name from sqlite_master where type = "table"'))
             tables = set(i[0] for i in result)
             self.assertTrue(
                 set(['nodes', 'names', 'merged', 'source']).issubset(tables))
@@ -44,7 +45,7 @@ class TestLoadData(TestBase):
     def test01(self):
         # we should be starting from scratch
         self.assertFalse(path.isfile(self.db_path))
-        engine = sqlalchemy.create_engine(self.url)
+        engine = sa.create_engine(self.url)
 
         taxtastic.ncbi.db_connect(engine)
         self.assertTrue(path.isfile(self.db_path))

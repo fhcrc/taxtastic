@@ -31,7 +31,7 @@ import sqlalchemy
 from sqlalchemy import (Column, Integer, String, Boolean,
                         ForeignKey, Index, MetaData, PrimaryKeyConstraint)
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 from taxtastic.utils import random_name
 
