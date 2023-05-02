@@ -72,16 +72,18 @@ class Taxonomy(object):
         self.meta.reflect(bind=self.engine)
         self.schema = schema
 
-        # TODO: table names should probably be provided in a dict as a
-        # single attribute self.tablenames. This will avoid name
-        # collisions (eg with self.ranks) and allow the idiom
-        # cmd = 'select * from {<table>}'.format(**self.tablenames)
         self.nodes = self._get_table('nodes')
         self.names = self._get_table('names')
         self.source = self._get_table('source')
         self.merged = self._get_table('merged')
         ranks_table = self._get_table('ranks')
         self.ranks_table = ranks_table
+
+        # intended for constructing text queries using the pattern
+        # cmd = 'select * from {<table>}'.format(**self.tablenames)
+        # to ensure that the schema is prepended to the table name when defined
+        self.tables = {name: self.prepend_schema(name) for name in [
+            'nodes', 'names', 'source', 'merged', 'ranks']}
 
         ranks = self.fetchall(
             select(self.ranks_table.c.rank).order_by(ranks_table.c.height))
