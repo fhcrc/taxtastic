@@ -20,9 +20,7 @@ import itertools
 import logging
 import os
 import re
-from six.moves.urllib import request
-# import urllib.parse
-# import urllib.error
+from urllib import request
 import zipfile
 import io
 from operator import itemgetter
@@ -243,16 +241,16 @@ def db_connect(engine, schema=None, clobber=False):
         try:
             engine.execute(sqlalchemy.schema.CreateSchema(schema))
         except sqlalchemy.exc.ProgrammingError as err:
-            logging.warn(err)
+            log.warning(err)
         base = declarative_base(metadata=MetaData(schema=schema))
 
     define_schema(base)
 
     if clobber:
-        logging.info('Clobbering database tables')
+        log.info('Clobbering database tables')
         base.metadata.drop_all(bind=engine)
 
-    logging.info('Creating database tables')
+    log.info('Creating database tables')
     base.metadata.create_all(bind=engine)
 
     return base
@@ -405,19 +403,19 @@ class NCBILoader(object):
         )
 
         # nodes
-        logging.info('loading nodes')
+        log.info('loading nodes')
         nodes_rows = read_nodes(
             read_archive(archive, 'nodes.dmp'), source_id=source_id)
         self.load_table('nodes', rows=nodes_rows)
 
         # names
-        logging.info('loading names')
+        log.info('loading names')
         names_rows = read_names(
             read_archive(archive, 'names.dmp'), source_id=source_id)
         self.load_table('names', rows=names_rows)
 
         # merged
-        logging.info('loading merged')
+        log.info('loading merged')
         merged_rows = read_merged(read_archive(archive, 'merged.dmp'))
         self.load_table('merged', rows=merged_rows)
 
@@ -536,10 +534,10 @@ def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
 
     if os.access(fout, os.F_OK) and not clobber:
         downloaded = False
-        logging.info(fout + ' exists; not downloading')
+        log.info(f'{fout} exists; not downloading')
     else:
         downloaded = True
-        logging.info('downloading {} to {}'.format(url, fout))
+        log.info(f'downloading {url} to {fout}')
         request.urlretrieve(url, fout)
 
     return (fout, downloaded)

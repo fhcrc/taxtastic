@@ -3,7 +3,7 @@
 ===========
 
 Taxtastic is a python package used to build and maintain reference
-packages-- i.e. collections of reference trees, reference alignments,
+packages, i.e. collections of reference trees, reference alignments,
 profiles, and associated taxonomic information.
 
 .. image:: https://travis-ci.org/fhcrc/taxtastic.svg?branch=master
@@ -72,18 +72,14 @@ A script named ``taxit`` provides a command line interface::
 Installation
 ============
 
-``taxtastic`` requires Python 3.5+. Python 2 is no longer
-supported. The simplest method of installing is using `pip
-<http://pip-installer.org>`_::
+``taxtastic`` requires Python 3.8+. The simplest method of installing
+is using `pip <http://pip-installer.org>`_::
 
   pip install taxtastic
 
-We strongly recommend installation into a virtualenv. On a clean
-Ubuntu 16.04+ system, complete instructions for installing the
-``taxtastic`` package and the ``taxit`` command line entry point in a
-virtualenv are below.
-
-Create a virtualenv and install ``taxtastic``::
+We strongly recommend installation into a virtualenv. Instructions for
+installing the ``taxtastic`` package and the ``taxit`` command line
+entry point in a virtualenv are as follows::
 
   python3 -m venv taxtastic-env
   source taxtastic-env/bin/activate
@@ -94,19 +90,9 @@ If you prefer to install from the git repository::
 
   git clone https://github.com/fhcrc/taxtastic.git
   cd taxtastic
-  python -m venv taxtastic-env
+  python3 -m venv taxtastic-env
   source taxtastic-env/bin/activate
   pip install .
-
-If you want to live dangerously and install the package to the system
-despite our pleas not to do so::
-
-  sudo apt-get install python-pip
-  sudo pip install taxtastic
-
-If you are not familiar with python virtual environments, the
-following post is helpful:
-https://realpython.com/blog/python/python-virtual-environments-a-primer/
 
 Finally, ``taxit`` can be run from a docker image hosted from Docker
 Hub (https://hub.docker.com/r/nghoffman/taxtastic/), for example::
@@ -122,32 +108,7 @@ is built against sqlite3 library version of 3.8.3 or higher
 (http://www.sqlite.org/releaselog/3_8_3.html). You can check the
 version like this::
 
-  python -c 'import sqlite3; print sqlite3.sqlite_version'
-
-``python setup.py`` will exit with an error if the sqlite3 library
-dependency is not met. On older systems (and for python2 only), it is
-possible to replace the builtin ``sqlite3`` module by installing
-``pysqlite2`` with updated sqlite3 libraries **before** installing the
-package with pip using a provided script in the ``taxtastic`` git
-repository (assuming an active virtualenv)::
-
-  dev/install_pysqlite.sh
-
-Or, to avoid cloning the repo::
-
-  curl https://raw.githubusercontent.com/fhcrc/taxtastic/master/dev/install_pysqlite.sh | bash
-
-After the script completes, confirm that ``pysqlite2`` was installed::
-
-  python -c 'from pysqlite2 import dbapi2; print dbapi2.sqlite_version'
-
-At this point, taxtastic may be installed as described above.
-
-Note that ``pysqlite2`` is available for python2 only, so there really
-is no good option for using python3 on older systems like Ubuntu 14.04
-and earlier, unless you want to compile a version of the python3
-interpreter linked against updated sqlite3 libraries. If you must use
-an older system, stick with python2, or use the Docker image.
+  python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
 
 A note on databases
 ===================
