@@ -3,6 +3,7 @@
 from os import path
 import logging
 import shutil
+from itertools import groupby
 
 import sqlalchemy as sa
 from sqlalchemy import create_engine
@@ -396,3 +397,27 @@ class TestTaxonomyTree(TestTaxonomyBase):
         self.assertEqual(
             self.tax.nary_subtree('1239'),
             ['1280', '1281', '45670', '138846'])
+
+
+class TestGetLineageTable(TestTaxonomyBase):
+
+    def setUp(self):
+        self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
+        # log.info(self.dbname)
+        shutil.copyfile(dbname, self.dbname)
+        super(TestGetLineageTable, self).setUp()
+
+    def tearDown(self):
+        pass
+
+    def test01(self):
+        lineage = self.tax._get_lineage_table(['1280', '1379'])
+
+        species = {}
+        for tax_id, grp in groupby(lineage, lambda row: getattr(row, 'tid')):
+            species[tax_id] = list(grp)[-1]
+
+        self.assertEqual(species['1280'].tax_name, 'Staphylococcus aureus')
+        self.assertEqual(species['1379'].tax_name, 'Gemella haemolysans')
+
+

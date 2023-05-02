@@ -276,53 +276,46 @@ class Taxonomy(object):
         try:
             with self.engine.connect() as con:
                 # insert tax_ids into a temporary table
-
                 temptab = self.prepend_schema(random_name(12))
 
-                cmd = 'CREATE TEMPORARY TABLE "{tab}" (old_tax_id text)'.format(
-                    tab=temptab)
-                con.execute(cmd)
+                cmd = f'CREATE TEMPORARY TABLE "{temptab}" (old_tax_id text)'
+                con.execute(sa.text(cmd))
 
                 log.info('inserting tax_ids into temporary table')
-                # TODO: couldn't find an equivalent of "executemany" - does one exist?
-                cmd = 'INSERT INTO "{tab}" VALUES ({x})'.format(
-                    tab=temptab, x=self.placeholder)
-                for tax_id in tax_ids:
-                    con.execute(cmd, tax_id)
+                cmd = sa.text(f'INSERT INTO "{temptab}" VALUES (:tax_id)')
+                con.execute(cmd, [{'tax_id': tax_id} for tax_id in tax_ids])
 
                 log.info('executing recursive CTE')
-                cmd = Template("""
+                cmd = sa.text(Template("""
                 WITH RECURSIVE a AS (
                  SELECT tax_id as tid, 1 AS ord, tax_id, parent_id, rank
-                  FROM {{ nodes }}
+                  FROM "{{ nodes }}"
                   WHERE tax_id in (
                   {% if merge_obsolete %}
                   SELECT COALESCE(m.new_tax_id, "{{ temptab }}".old_tax_id)
-                    FROM "{{ temptab }}" LEFT JOIN {{ merged }} m USING(old_tax_id)
+                    FROM "{{ temptab }}"
+                    LEFT JOIN {{ merged }} m USING(old_tax_id)
                   {% else %}
                   SELECT * from "{{ temptab }}"
-                  {% endif %}
-                  )
+                  {% endif %})
                 UNION ALL
                  SELECT a.tid, a.ord + 1, p.tax_id, p.parent_id, p.rank
-                  FROM a JOIN {{ nodes }} p ON a.parent_id = p.tax_id
+                  FROM a JOIN "{{ nodes }}" p ON a.parent_id = p.tax_id
                 )
                 SELECT a.tid, a.tax_id, a.parent_id, a.rank, tax_name FROM a
-                JOIN {{ names }} using(tax_id)
+                JOIN "{{ names }}" using(tax_id)
                 WHERE names.is_primary
                 ORDER BY tid, ord desc
                 """).render(
                     temptab=temptab,
                     merge_obsolete=merge_obsolete,
-                    merged=self.merged,
-                    nodes=self.nodes,
-                    names=self.names,
-                )
+                    **self.tables))
 
                 result = con.execute(cmd)
                 rows = result.fetchall()
 
-                con.execute('DROP TABLE "{}"'.format(temptab))
+                con.execute(sa.text(f'DROP TABLE "{temptab}"'))
+
                 log.info('returning lineages')
                 if not rows:
                     raise ValueError('no tax_ids were found')
