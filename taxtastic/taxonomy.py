@@ -350,21 +350,22 @@ class Taxonomy(object):
         names = self.names
 
         if tax_name:
-            s1 = select([names.c.tax_id], names.c.tax_name == tax_name)
-            res = s1.execute().fetchone()
+            res = self.fetchone(
+                select(names.c.tax_id)
+                .filter_by(tax_name=tax_name))
 
             if res:
                 tax_id = res[0]
             else:
-                msg = '"{}" not found in names.tax_names'.format(tax_name)
+                msg = f'"{tax_name}" not found in names.tax_names'
                 raise ValueError(msg)
 
-        s = select([names.c.tax_name, names.c.is_primary],
-                   names.c.tax_id == tax_id)
-        output = s.execute().fetchall()
+        output = self.fetchall(
+            select(names.c.tax_name, names.c.is_primary)
+            .filter_by(tax_id=tax_id))
 
         if not output:
-            raise ValueError('"{}" not found in names.tax_id'.format(tax_id))
+            raise ValueError(f'"{tax_name}" not found in names.tax_id')
 
         return output
 
