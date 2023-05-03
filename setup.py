@@ -61,6 +61,7 @@ params = {'name': 'taxtastic',
               'jinja2',
               'psycopg2-binary',
               'sqlalchemy>=2',
+              'sqlparse',
           ]}
 
 setup(**params)
