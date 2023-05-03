@@ -1,15 +1,17 @@
-FROM python:3.9-bullseye
+FROM python:3.11-slim-bullseye
 
-COPY taxtastic.tar.gz /src/taxtastic.tar.gz
-COPY dev/install_pplacer.sh /usr/local/bin/install_pplacer.sh
+RUN apt-get -y update && \
+    apt-get install -y unzip wget
 
-RUN apt-get update && \
-    apt-get install -y unzip --no-install-recommends && \
-    /usr/local/bin/install_pplacer.sh /usr/local 1.1.alpha19 && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt-get purge -y --auto-remove unzip && \
-    pip install /src/taxtastic.tar.gz
+WORKDIR /opt/build
+COPY dev/install_pplacer.sh /opt/build/install_pplacer.sh
+RUN /opt/build/install_pplacer.sh /usr/local
 
+COPY setup.py MANIFEST.in README.rst /opt/build
+COPY taxtastic /opt/build/taxtastic
+RUN python3 -m pip install .
+
+WORKDIR /opt/run
 RUN mkdir -p /app /fh /mnt /run/shm
 
 CMD ["taxit", "-h"]
