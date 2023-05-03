@@ -25,7 +25,10 @@ import zipfile
 import io
 from operator import itemgetter
 
-import sqlalchemy
+from jinja2 import Environment, PackageLoader
+import sqlparse
+
+import sqlalchemy as sa
 from sqlalchemy import (Column, Integer, String, Boolean,
                         ForeignKey, Index, MetaData, PrimaryKeyConstraint)
 from sqlalchemy.orm import relationship
@@ -169,6 +172,23 @@ UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
 UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
 
+def create_schema(engine):
+
+    env = Environment(
+        loader=PackageLoader('taxtastic'),
+        autoescape=False
+    )
+
+    template = env.get_template('schema.sql')
+    script = template.render()
+    commands = sqlparse.split(sqlparse.format(script, strip_comments=True))
+
+    with engine.connect() as conn:
+        for cmd in commands:
+            print(cmd)
+            conn.exec_driver_sql(cmd)
+
+
 def define_schema(Base):
 
     class Node(Base):
@@ -239,8 +259,8 @@ def db_connect(engine, schema=None, clobber=False):
         base = declarative_base()
     else:
         try:
-            engine.execute(sqlalchemy.schema.CreateSchema(schema))
-        except sqlalchemy.exc.ProgrammingError as err:
+            engine.execute(sa.schema.CreateSchema(schema))
+        except sa.exc.ProgrammingError as err:
             log.warning(err)
         base = declarative_base(metadata=MetaData(schema=schema))
 
@@ -549,10 +569,10 @@ def read_archive(archive, fname):
     * archive - path to the zip archive.
     * fname - name of the compressed file within the archive.
 
-    """
+    Lines are deduplicated (equivalent to an upsert/ignore) but avoids
+    requirement for a database-specific implementation.
 
-    # Note that deduplication here is equivalent to an upsert/ignore,
-    # but avoids requirement for a database-specific implementation.
+    """
 
     zfile = zipfile.ZipFile(archive)
     contents = zfile.open(fname, 'r')
@@ -564,11 +584,3 @@ def read_archive(archive, fname):
         if line not in seen:
             yield line.split('\t|\t')
             seen.add(line)
-
-# def read_dmp(fname):
-#     seen = set()
-#     for line in open(fname, 'r'):
-#         line = line.rstrip('\t|\n')
-#         if line not in seen:
-#             yield line.split('\t|\t')
-#             seen.add(line)
