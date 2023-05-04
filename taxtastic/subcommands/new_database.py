@@ -85,7 +85,10 @@ def action(args):
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
 
-    taxtastic.ncbi.create_schema(engine)
+    # sqlite, postgresql
+    dialect = engine.dialect.name
+
+    taxtastic.ncbi.create_schema(engine, dialect=dialect, add_constraints=False)
 
     # creates database schema
     # taxtastic.ncbi.db_connect(engine, schema=args.schema, clobber=args.clobber)

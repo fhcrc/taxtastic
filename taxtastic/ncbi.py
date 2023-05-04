@@ -172,7 +172,7 @@ UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
 UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
 
-def create_schema(engine):
+def create_schema(engine, dialect, add_constraints=False):
 
     env = Environment(
         loader=PackageLoader('taxtastic'),
@@ -180,14 +180,14 @@ def create_schema(engine):
     )
 
     template = env.get_template('schema.sql')
-    script = template.render()
+    script = template.render(dialect=dialect, add_constraints=add_constraints)
     commands = sqlparse.split(sqlparse.format(script, strip_comments=True))
 
     with engine.connect() as conn:
         for cmd in commands:
             print(cmd)
             conn.exec_driver_sql(cmd)
-
+        conn.commit()
 
 def define_schema(Base):
 

@@ -1,3 +1,11 @@
+{% for table in ['ranks', 'source', 'nodes', 'names', 'merged'] %}
+{% if dialect == 'postgresql' %}
+drop table if exists "{{ table }}" cascade;
+{% else %}
+drop table if exists "{{ table }}";
+{% endif %}
+{% endfor %}
+
 CREATE TABLE ranks (
         rank TEXT NOT NULL,
         height INTEGER NOT NULL--,
@@ -6,7 +14,7 @@ CREATE TABLE ranks (
 );
 
 CREATE TABLE source (
-        id INTEGER NOT NULL,
+        id {% if dialect == 'postgresql' %}SERIAL{% else %}INTEGER{% endif %} NOT NULL,
         name TEXT,
         description TEXT,
         PRIMARY KEY (id),
