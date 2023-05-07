@@ -14,8 +14,10 @@ jobs:
       -
         name: Build Sphinx
         run: |
-          pip install sphinx
-          python setup.py build_sphinx --source-dir docs --build-dir .
+          pip install -r requirements.txt
+          pip install Sphinx==7.0.0
+          python dev/helptext.py taxit.py -d docs/_helptext
+          sphinx-build docs html
       -
         name: Deploy
         uses: peaceiris/actions-gh-pages@v3
