@@ -9,24 +9,21 @@ profiles, and associated taxonomic information.
 .. image:: https://travis-ci.org/fhcrc/taxtastic.svg?branch=master
     :target: https://travis-ci.org/fhcrc/taxtastic
 
-We love it, but what is it?
-===========================
-
 * quickstart_
 * `full documentation`_
 
 A script named ``taxit`` provides a command line interface::
 
-  % taxit  --help
+  % taxit -h
   usage: taxit [-h] [-V] [-v] [-q]
-	       {help,add_nodes,add_to_taxtable,check,composition,create,extract_nodes,findcompany,get_lineage,info,lonelynodes,new_database,refpkg_intersection,reroot,rollback,rollforward,rp,strip,taxids,taxtable,update,update_taxids}
-	       ...
+               {help,add_nodes,add_to_taxtable,check,composition,create,extract_nodes,findcompany,get_descendants,get_lineage,info,lineage_table,lonelynodes,namelookup,new_database,refpkg_intersection,reroot,rollback,rollforward,rp,strip,taxids,taxtable,update,update_taxids}
+               ...
 
   Creation, validation, and modification of reference packages for use with
   `pplacer` and related software.
 
   positional arguments:
-    {help,add_nodes,add_to_taxtable,check,composition,create,extract_nodes,findcompany,get_lineage,info,lonelynodes,new_database,refpkg_intersection,reroot,rollback,rollforward,rp,strip,taxids,taxtable,update,update_taxids}
+    {help,add_nodes,add_to_taxtable,check,composition,create,extract_nodes,findcompany,get_descendants,get_lineage,info,lineage_table,lonelynodes,namelookup,new_database,refpkg_intersection,reroot,rollback,rollforward,rp,strip,taxids,taxtable,update,update_taxids}
       help                Detailed help for actions using `help <action>`
       add_nodes           Add nodes and names to a database
       add_to_taxtable     Add nodes to an existing taxtable csv
@@ -35,39 +32,37 @@ A script named ``taxit`` provides a command line interface::
       create              Create a reference package
       extract_nodes       Extract nodes from a given source in yaml format
       findcompany         Find company for lonely nodes
+      get_descendants     Returns given taxids including descendant taxids
       get_lineage         Calculate the taxonomic lineage of a taxid
       info                Show information about reference packages.
+      lineage_table       Create a table of lineages as taxonimic names for a
+                          collection of sequences
       lonelynodes         Extracts tax ids of all lonely nodes in a taxtable
+      namelookup          Find primary name and tax_id from taxonomic names
       new_database        Download NCBI taxonomy and create a database
       refpkg_intersection
-			  Find the intersection of a taxtable and a refpkg's
-			  taxonomy.
+                          Find the intersection of a taxtable and a refpkg's
+                          taxonomy.
       reroot              Taxonomically reroots a reference package
       rollback            Undo an operation performed on a refpkg
       rollforward         Restore a change to a refpkg immediately after being
-			  reverted
+                          reverted
       rp                  Resolve path; get the path to a file in the reference
-			  package
+                          package
       strip               Remove rollback and rollforward information from a
-			  refpkg
+                          refpkg
       taxids              Convert a list of taxonomic names into a recursive
-			  list of species
+                          list of species
       taxtable            Create a tabular representation of taxonomic lineages
       update              Add or modify files or metadata in a refpkg
       update_taxids       Update obsolete tax_ids
 
-  optional arguments:
+  options:
     -h, --help            show this help message and exit
     -V, --version         Print the version number and exit
     -v, --verbose         Increase verbosity of screen output (eg, -v is
-			  verbose, -vv more so)
+                          verbose, -vv more so)
     -q, --quiet           Suppress output
-
-
-.. Targets ..
-.. _quickstart: https://fhcrc.github.io/taxtastic/quickstart.html
-.. _full documentation: https://fhcrc.github.io/taxtastic/index.html
-
 
 Installation
 ============
@@ -94,10 +89,20 @@ If you prefer to install from the git repository::
   source taxtastic-env/bin/activate
   pip install .
 
-Finally, ``taxit`` can be run from a docker image hosted from Docker
-Hub (https://hub.docker.com/r/nghoffman/taxtastic/), for example::
+Finally, ``taxit`` can be run from a Docker image hosted in the GitHub
+Container Registry. For example, to create a new sqlite database::
 
-  docker run --rm -it -v $(pwd):$(pwd) -w $(pwd) nghoffman/taxtastic:latest taxit -v new_database
+  docker run --rm -it -v $(pwd):/opt/run --platform=linux/amd64 ghcr.io/fhcrc/taxtastic:latest taxit new_database ncbi_taxonomy.db
+
+Note that initial database creation (at least on MacOS using amd64
+emulation) is very slow using Docker and is not recommended.
+
+A note on databases
+===================
+
+This project supports both sqlite3 and postgresql as database
+backends. For most applications, we recommend sqlite3: some operations
+(particularly initial database creation) are much faster using sqlite3.
 
 sqlite3
 -------
@@ -110,18 +115,16 @@ version like this::
 
   python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
 
-A note on databases
-===================
+postgresql
+----------
 
-This project supports both sqlite3 and postgresql as database
-backends. For most applications, we recommend sqlite3: some operations
-(particularly initial database creation) are much faster using sqlite3
-due to the details of how postgresql enforces database constraints (we
-may try to optimize this in the future - in theory, postgresql can be
-made to be at least as fast). If you do want to use postgresql, note
-that some of the queries consume a lot of memory, and the default
-configuration tends to be memory constrained (and this *really* slows
-things down). On a reasonably new mac laptop, we found that the
-optimizations suggested here
-(http://big-elephants.com/2012-12/tuning-postgres-on-macos/) do the
-trick.
+Despite some recent optimizations as of version v0.10 (in which
+indexes and constraints are dropped before creating the taxonomy
+database), operations in Postgres are somewhat slower. Note that the
+default Postgres configuration on MacOS is likely to be quite resource
+constrained; consider tuning your database configuration by consulting
+a site such as PGTune (https://pgtune.leopard.in.ua).
+
+.. Targets ..
+.. _quickstart: https://fhcrc.github.io/taxtastic/quickstart.html
+.. _full documentation: https://fhcrc.github.io/taxtastic/index.html

@@ -2,9 +2,14 @@
  change log for taxtastic
 ==========================
 
-0.9.5-dev
-=========
+0.10.0
+======
 
+* drop support for Python versions before 3.8
+* works with sqlalchemy 2+, drop support for sqlalchemy 1.x series
+* drop indexes and constraints before creating Postgresql database
+* restructure Dockerfile, uses python:3.11-slim-bullseye base image
+* simplify setup.py and remove deprecated features
 * major speed improvements to subcommand namelookup
 * added support text file support for update_taxids
 
