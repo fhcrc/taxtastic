@@ -1,6 +1,7 @@
 recursive-include taxtastic/data *
 recursive-include taxtastic/scripts *
 recursive-include taxtastic/subcommands *
+recursive-include taxtastic/templates *
 
 recursive-exclude .DS_Store
 global-exclude */__pycache__/*
