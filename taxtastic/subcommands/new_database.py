@@ -88,23 +88,31 @@ def action(args):
     # sqlite, postgresql
     dialect = engine.dialect.name
 
-    taxtastic.ncbi.create_schema(engine, dialect=dialect, add_constraints=False)
-
     # creates database schema
-    # taxtastic.ncbi.db_connect(engine, schema=args.schema, clobber=args.clobber)
+    base = taxtastic.ncbi.db_connect(engine, schema=args.schema, clobber=args.clobber)
+
+    if dialect == 'postgresql':
+        taxtastic.ncbi.execute_template(engine, 'drop_pg_constraints.sql')
 
     if args.load:
         ncbi_loader = taxtastic.ncbi.NCBILoader(engine, args.schema)
         ncbi_loader.load_archive(zfile)
+
+        if dialect == 'postgresql':
+            taxtastic.ncbi.execute_template(engine, 'add_pg_indexes.sql')
+
         ncbi_loader.set_names_is_classified()
         ncbi_loader.set_nodes_is_valid()
 
-    # print_sql(args.out, engine.name, base.metadata)
+        if dialect == 'postgresql':
+            taxtastic.ncbi.execute_template(engine, 'add_pg_constraints.sql')
 
+    # print_sql(args.out, engine.name, base.metadata)
 
 def print_sql(out, engine_name, metadata):
     def dump(sql, *multiparams, **params):
         out.write(str(sql.compile(dialect=dump.dialect)).strip() + ';\n')
+
     engine = sqlalchemy.create_engine(
         engine_name + '://', strategy='mock', executor=dump)
 

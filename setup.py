@@ -60,6 +60,7 @@ params = {'name': 'taxtastic',
               'fastalite',
               'jinja2',
               'psycopg2-binary',
+              'psycopg[binary]',
               'sqlalchemy>=2',
               'sqlparse',
           ]}

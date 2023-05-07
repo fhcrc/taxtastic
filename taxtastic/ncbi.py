@@ -172,28 +172,29 @@ UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
 UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
 
-def create_schema(engine, dialect, add_constraints=False):
+def execute_template(engine, template, **kwargs):
+    """Execute sql commands in taxtastic/templates/{template}"""
 
     env = Environment(
         loader=PackageLoader('taxtastic'),
         autoescape=False
     )
 
-    template = env.get_template('schema.sql')
-    script = template.render(dialect=dialect, add_constraints=add_constraints)
+    script = env.get_template(template).render(**kwargs)
     commands = sqlparse.split(sqlparse.format(script, strip_comments=True))
 
     with engine.connect() as conn:
         for cmd in commands:
-            print(cmd)
+            log.info(cmd)
             conn.exec_driver_sql(cmd)
         conn.commit()
+
 
 def define_schema(Base):
 
     class Node(Base):
         __tablename__ = 'nodes'
-        tax_id = Column(String, primary_key=True, nullable=False)
+        tax_id = Column(String, primary_key=True, nullable=False, index=True)
 
         # TODO: temporarily remove foreign key constratint on parent
         # TODO: (creates order depencence during insertion); may need to
@@ -201,10 +202,10 @@ def define_schema(Base):
 
         # parent_id = Column(String, ForeignKey('nodes.tax_id'))
         parent_id = Column(String, index=True)
-        rank = Column(String, ForeignKey('ranks.rank'))
+        rank = Column(String, ForeignKey('ranks.rank'), index=True)
         embl_code = Column(String)
         division_id = Column(String)
-        source_id = Column(Integer, ForeignKey('source.id'))
+        source_id = Column(Integer, ForeignKey('source.id'), index=True)
         is_valid = Column(Boolean, default=True)
         names = relationship('Name')
         ranks = relationship('Rank', back_populates='nodes')
@@ -213,13 +214,14 @@ def define_schema(Base):
     class Name(Base):
         __tablename__ = 'names'
         # id = Column(Integer, primary_key=True)
-        tax_id = Column(String, ForeignKey('nodes.tax_id', ondelete='CASCADE'))
+        tax_id = Column(
+            String, ForeignKey('nodes.tax_id', ondelete='CASCADE'), index=True)
         node = relationship('Node', back_populates='names')
         tax_name = Column(String)
         unique_name = Column(String)
         name_class = Column(String)
         source_id = Column(Integer, ForeignKey('source.id'))
-        is_primary = Column(Boolean)
+        is_primary = Column(Boolean, index=True)
         is_classified = Column(Boolean)
         sources = relationship('Source', back_populates='names')
         __table_args__ = (
@@ -235,7 +237,7 @@ def define_schema(Base):
 
     class Rank(Base):
         __tablename__ = 'ranks'
-        rank = Column(String, primary_key=True)
+        rank = Column(String, primary_key=True, index=True)
         height = Column(Integer, unique=True, nullable=False)
         nodes = relationship('Node')
 
@@ -369,7 +371,11 @@ class NCBILoader(object):
         self.tables = {name: self.prepend_schema(name)
                        for name in ['merged', 'names', 'nodes', 'ranks', 'source']}
         self.ranks = ranks
-        self.placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
+        self.placeholder = {
+            'pysqlite': '?',
+            'psycopg2': '%s',
+            'psycopg': '%s',  # psycopg3
+        }[engine.driver]
 
     def prepend_schema(self, name):
         """Prepend schema name to 'name' when a schema is specified
