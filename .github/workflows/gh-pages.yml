@@ -14,8 +14,9 @@ jobs:
       -
         name: Build Sphinx
         run: |
-          pip install -r requirements.txt
-          pip install Sphinx==7.0.0
+          python -m pip install -r requirements.txt
+          python -m pip install .
+          python -m pip install sphinx
           python dev/helptext.py taxit.py -d docs/_helptext
           sphinx-build docs html
       -
