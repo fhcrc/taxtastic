@@ -37,6 +37,7 @@ def build_parser(parser):
 
 
 def action(args):
+    # TODO: move this logic into the taxonomy.py object file
     if os.path.isfile(args.taxids):
         taxids = [i.strip() for i in open(args.taxids) if i]
     else:
@@ -57,5 +58,6 @@ def action(args):
     JOIN names using(tax_id)
     WHERE is_primary;
     """.format(','.join("'{}'".format(t) for t in taxids))
-    for i in engine.execute(cmd):
-        args.out.write(i[0] + '\n')
+    with engine.connect() as conn:
+        for i in conn.exec_driver_sql(cmd):
+            args.out.write(i[0] + '\n')
