@@ -41,6 +41,12 @@ def build_parser(parser):
         help=('If database exists keep current data '
               'and append new data. [False]'))
 
+    parser.add_argument(
+        '-n', '--no-load',
+        action='store_false', default=True,
+        dest='load',
+        help=('Create schema and exit'))
+
     download_parser = parser.add_argument_group(title='download options')
     download_parser.add_argument(
         '-z', '--taxdump-file',
@@ -79,20 +85,34 @@ def action(args):
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
 
-    # creates database schema
-    taxtastic.ncbi.db_connect(engine, schema=args.schema, clobber=args.clobber)
+    # sqlite, postgresql
+    dialect = engine.dialect.name
 
-    ncbi_loader = taxtastic.ncbi.NCBILoader(engine, args.schema)
-    ncbi_loader.load_archive(zfile)
-    ncbi_loader.set_names_is_classified()
-    ncbi_loader.set_nodes_is_valid()
+    # creates database schema
+    base = taxtastic.ncbi.db_connect(engine, schema=args.schema, clobber=args.clobber)
+
+    if dialect == 'postgresql':
+        taxtastic.ncbi.execute_template(engine, 'drop_pg_constraints.sql')
+
+    if args.load:
+        ncbi_loader = taxtastic.ncbi.NCBILoader(engine, args.schema)
+        ncbi_loader.load_archive(zfile)
+
+        if dialect == 'postgresql':
+            taxtastic.ncbi.execute_template(engine, 'add_pg_indexes.sql')
+
+        ncbi_loader.set_names_is_classified()
+        ncbi_loader.set_nodes_is_valid()
+
+        if dialect == 'postgresql':
+            taxtastic.ncbi.execute_template(engine, 'add_pg_constraints.sql')
 
     # print_sql(args.out, engine.name, base.metadata)
-
 
 def print_sql(out, engine_name, metadata):
     def dump(sql, *multiparams, **params):
         out.write(str(sql.compile(dialect=dump.dialect)).strip() + ';\n')
+
     engine = sqlalchemy.create_engine(
         engine_name + '://', strategy='mock', executor=dump)
 

@@ -18,7 +18,7 @@
 
 import sys
 import logging
-import sqlalchemy
+import sqlalchemy as sa
 from itertools import groupby
 from operator import itemgetter
 # from collections import OrderedDict
@@ -32,10 +32,21 @@ from taxtastic.utils import add_database_args
 log = logging.getLogger(__name__)
 
 
-def clean_dict(keys, vals):
+# def clean_dict(keys, vals):
+#     # outdict = OrderedDict()
+#     outdict = {}
+#     for k, v in zip(keys, vals):
+#         if k == 'source_id' or v is None:
+#             continue
+#         outdict[k] = bool(v) if k.startswith('is_') else v
+
+#     return outdict
+
+
+def clean_dict(d):
     # outdict = OrderedDict()
     outdict = {}
-    for k, v in zip(keys, vals):
+    for k, v in d.items():
         if k == 'source_id' or v is None:
             continue
         outdict[k] = bool(v) if k.startswith('is_') else v
@@ -46,32 +57,32 @@ def clean_dict(keys, vals):
 def build_parser(parser):
     parser = add_database_args(parser)
     parser.add_argument('source_name',
-                        help='name of source identifying names and nodes to extract')
+                        help=('name of source identifying names '
+                              'and nodes to extract'))
     parser.add_argument('-o', '--outfile', type=Opener('w'), default=sys.stdout)
 
 
 def action(args):
-    engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 2)
+    engine = sa.create_engine(args.url, echo=args.verbosity > 2)
     tax = Taxonomy(engine, schema=args.schema)
 
     with engine.connect() as con:
         # TODO: need to order nodes so that parents are always created first
 
-        cmd = """
+        cmd = sa.text("""
         select nodes.*, source.name as source_name
         from {nodes}
         join {source} on nodes.source_id = source.id
-        where source.name = {x}
-        """.format(x=tax.placeholder, nodes=tax.nodes, source=tax.source)
+        where source.name = :name
+        """.format(**tax.tables))
 
-        result = con.execute(cmd, (args.source_name,))
-        keys = list(result.keys())
-        nodes = [clean_dict(keys, vals) for vals in result.fetchall()]
+        results = tax.fetchall(cmd, name=args.source_name)
+        nodes = [clean_dict(row._asdict()) for row in results]
 
         # get the complete lineage for each node, and provide an
         # ordering for all nodes so that children may be placed after
         # parents.
-        tax_ids = list(map(itemgetter('tax_id'), nodes))
+        tax_ids = [node['tax_id'] for node in nodes]
         lineages = tax._get_lineage_table(tax_ids)
         ordering = {}
         for i, lineage in enumerate(lineages):
@@ -81,16 +92,16 @@ def action(args):
 
         nodes = sorted(nodes, key=lambda n: ordering[n['tax_id']])
 
-        cmd = """
+        cmd = sa.text("""
         select names.*, source.name as source_name
         from {names}
         join {source} on names.source_id = source.id
-        where source.name = {x}
-        """.format(x=tax.placeholder, names=tax.names, source=tax.source)
+        where source.name = :name
+        """.format(**tax.tables))
 
-        result = con.execute(cmd, (args.source_name,))
-        keys = list(result.keys())
-        names = [clean_dict(keys, vals) for vals in result.fetchall()]
+        results = tax.fetchall(cmd, name=args.source_name)
+        names = [clean_dict(row._asdict()) for row in results]
+
         namedict = {key: list(grp)
                     for key, grp in groupby(names, itemgetter('tax_id'))}
 
@@ -115,5 +126,9 @@ def action(args):
                 'names': names
             })
 
-        yaml.safe_dump_all(remaining_names, args.outfile, default_flow_style=False,
-                           explicit_start=True, indent=2)
+        yaml.safe_dump_all(
+            remaining_names,
+            args.outfile,
+            default_flow_style=False,
+            explicit_start=True,
+            indent=2)

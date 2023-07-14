@@ -20,9 +20,9 @@ import re
 import subprocess
 import string
 import random
+import configparser
 from collections import OrderedDict
 
-from six.moves import configparser
 
 log = logging
 
@@ -344,7 +344,7 @@ def add_database_args(parser):
 
 def sqlite_default():
     '''
-    Prepend default scheme if none is specified. This helps provides backwards
+    Prepend default schema if none is specified. This helps provides backwards
     compatibility with old versions of taxtastic where sqlite was the automatic
     default database.
     '''
@@ -354,7 +354,7 @@ def sqlite_default():
             if not url.startswith('sqlite:///'):
                 url = 'sqlite:///' + url
         elif url.endswith('.cfg') or url.endswith('.conf'):
-            conf = configparser.SafeConfigParser(allow_no_value=True)
+            conf = configparser.ConfigParser(allow_no_value=True)
             conf.optionxform = str  # options are case-sensitive
             conf.read(url)
             url = conf.get('sqlalchemy', 'url')

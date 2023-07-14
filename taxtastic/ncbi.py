@@ -20,18 +20,19 @@ import itertools
 import logging
 import os
 import re
-from six.moves.urllib import request
-# import urllib.parse
-# import urllib.error
+from urllib import request
 import zipfile
 import io
 from operator import itemgetter
 
-import sqlalchemy
+from jinja2 import Environment, PackageLoader
+import sqlparse
+
+import sqlalchemy as sa
 from sqlalchemy import (Column, Integer, String, Boolean,
                         ForeignKey, Index, MetaData, PrimaryKeyConstraint)
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 from taxtastic.utils import random_name
 
@@ -171,11 +172,29 @@ UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
 UNCLASSIFIED_REGEX = re.compile('|'.join(UNCLASSIFIED_REGEX_COMPONENTS))
 
 
+def execute_template(engine, template, **kwargs):
+    """Execute sql commands in taxtastic/templates/{template}"""
+
+    env = Environment(
+        loader=PackageLoader('taxtastic'),
+        autoescape=False
+    )
+
+    script = env.get_template(template).render(**kwargs)
+    commands = sqlparse.split(sqlparse.format(script, strip_comments=True))
+
+    with engine.connect() as conn:
+        for cmd in commands:
+            log.info(cmd)
+            conn.exec_driver_sql(cmd)
+        conn.commit()
+
+
 def define_schema(Base):
 
     class Node(Base):
         __tablename__ = 'nodes'
-        tax_id = Column(String, primary_key=True, nullable=False)
+        tax_id = Column(String, primary_key=True, nullable=False, index=True)
 
         # TODO: temporarily remove foreign key constratint on parent
         # TODO: (creates order depencence during insertion); may need to
@@ -183,10 +202,10 @@ def define_schema(Base):
 
         # parent_id = Column(String, ForeignKey('nodes.tax_id'))
         parent_id = Column(String, index=True)
-        rank = Column(String, ForeignKey('ranks.rank'))
+        rank = Column(String, ForeignKey('ranks.rank'), index=True)
         embl_code = Column(String)
         division_id = Column(String)
-        source_id = Column(Integer, ForeignKey('source.id'))
+        source_id = Column(Integer, ForeignKey('source.id'), index=True)
         is_valid = Column(Boolean, default=True)
         names = relationship('Name')
         ranks = relationship('Rank', back_populates='nodes')
@@ -195,13 +214,14 @@ def define_schema(Base):
     class Name(Base):
         __tablename__ = 'names'
         # id = Column(Integer, primary_key=True)
-        tax_id = Column(String, ForeignKey('nodes.tax_id', ondelete='CASCADE'))
+        tax_id = Column(
+            String, ForeignKey('nodes.tax_id', ondelete='CASCADE'), index=True)
         node = relationship('Node', back_populates='names')
         tax_name = Column(String)
         unique_name = Column(String)
         name_class = Column(String)
         source_id = Column(Integer, ForeignKey('source.id'))
-        is_primary = Column(Boolean)
+        is_primary = Column(Boolean, index=True)
         is_classified = Column(Boolean)
         sources = relationship('Source', back_populates='names')
         __table_args__ = (
@@ -217,7 +237,7 @@ def define_schema(Base):
 
     class Rank(Base):
         __tablename__ = 'ranks'
-        rank = Column(String, primary_key=True)
+        rank = Column(String, primary_key=True, index=True)
         height = Column(Integer, unique=True, nullable=False)
         nodes = relationship('Node')
 
@@ -241,18 +261,18 @@ def db_connect(engine, schema=None, clobber=False):
         base = declarative_base()
     else:
         try:
-            engine.execute(sqlalchemy.schema.CreateSchema(schema))
-        except sqlalchemy.exc.ProgrammingError as err:
-            logging.warn(err)
+            engine.execute(sa.schema.CreateSchema(schema))
+        except sa.exc.ProgrammingError as err:
+            log.warning(err)
         base = declarative_base(metadata=MetaData(schema=schema))
 
     define_schema(base)
 
     if clobber:
-        logging.info('Clobbering database tables')
+        log.info('Clobbering database tables')
         base.metadata.drop_all(bind=engine)
 
-    logging.info('Creating database tables')
+    log.info('Creating database tables')
     base.metadata.create_all(bind=engine)
 
     return base
@@ -351,7 +371,11 @@ class NCBILoader(object):
         self.tables = {name: self.prepend_schema(name)
                        for name in ['merged', 'names', 'nodes', 'ranks', 'source']}
         self.ranks = ranks
-        self.placeholder = {'pysqlite': '?', 'psycopg2': '%s'}[engine.driver]
+        self.placeholder = {
+            'pysqlite': '?',
+            'psycopg2': '%s',
+            'psycopg': '%s',  # psycopg3
+        }[engine.driver]
 
     def prepend_schema(self, name):
         """Prepend schema name to 'name' when a schema is specified
@@ -405,19 +429,19 @@ class NCBILoader(object):
         )
 
         # nodes
-        logging.info('loading nodes')
+        log.info('loading nodes')
         nodes_rows = read_nodes(
             read_archive(archive, 'nodes.dmp'), source_id=source_id)
         self.load_table('nodes', rows=nodes_rows)
 
         # names
-        logging.info('loading names')
+        log.info('loading names')
         names_rows = read_names(
             read_archive(archive, 'names.dmp'), source_id=source_id)
         self.load_table('names', rows=names_rows)
 
         # merged
-        logging.info('loading merged')
+        log.info('loading merged')
         merged_rows = read_merged(read_archive(archive, 'merged.dmp'))
         self.load_table('merged', rows=merged_rows)
 
@@ -536,10 +560,10 @@ def fetch_data(dest_dir='.', clobber=False, url=DATA_URL):
 
     if os.access(fout, os.F_OK) and not clobber:
         downloaded = False
-        logging.info(fout + ' exists; not downloading')
+        log.info(f'{fout} exists; not downloading')
     else:
         downloaded = True
-        logging.info('downloading {} to {}'.format(url, fout))
+        log.info(f'downloading {url} to {fout}')
         request.urlretrieve(url, fout)
 
     return (fout, downloaded)
@@ -551,10 +575,10 @@ def read_archive(archive, fname):
     * archive - path to the zip archive.
     * fname - name of the compressed file within the archive.
 
-    """
+    Lines are deduplicated (equivalent to an upsert/ignore) but avoids
+    requirement for a database-specific implementation.
 
-    # Note that deduplication here is equivalent to an upsert/ignore,
-    # but avoids requirement for a database-specific implementation.
+    """
 
     zfile = zipfile.ZipFile(archive)
     contents = zfile.open(fname, 'r')
@@ -566,11 +590,3 @@ def read_archive(archive, fname):
         if line not in seen:
             yield line.split('\t|\t')
             seen.add(line)
-
-# def read_dmp(fname):
-#     seen = set()
-#     for line in open(fname, 'r'):
-#         line = line.rstrip('\t|\n')
-#         if line not in seen:
-#             yield line.split('\t|\t')
-#             seen.add(line)

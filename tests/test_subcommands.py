@@ -8,7 +8,7 @@ import os.path
 import csv
 import sys
 
-import sqlalchemy
+import sqlalchemy as sa
 
 from taxtastic import refpkg
 from taxtastic.subcommands import (
@@ -399,8 +399,9 @@ class TestUpdateTaxids(TestBase):
 class TestAddNode(TestBase):
 
     def setUp(self):
-        self.suppress_stdout()
-        self.suppress_stderr()
+        if '-v' not in sys.argv:
+            self.suppress_stdout()
+            self.suppress_stderr()
 
         self.outdir = self.mkoutdir()
         self.dbname = os.path.join(self.outdir, 'taxonomy.db')
@@ -418,49 +419,55 @@ class TestAddNode(TestBase):
 
     def test_new_nodes02(self):
         # fails without --source-name
-        args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml')]
+        args = ['add_nodes', self.dbname,
+                data_path('new_nodes_ok_nosource.yml')]
         self.assertNonZeroExitStatus(main(args))
 
     def test_new_nodes03(self):
-        args = ['add_nodes', self.dbname, data_path('new_nodes_ok_nosource.yml'),
+        args = ['add_nodes', self.dbname,
+                data_path('new_nodes_ok_nosource.yml'),
                 '--source-name', 'some_source']
         self.assertZeroExitStatus(main(args))
 
     def test_new_nodes04(self):
-        args = ['add_nodes', self.dbname, data_path('staph_species_group.yml'),
+        args = ['add_nodes', self.dbname,
+                data_path('staph_species_group.yml'),
                 '--source-name', 'foo']
         self.assertZeroExitStatus(main(args))
 
-        tax = Taxonomy(sqlalchemy.create_engine('sqlite:///' + self.dbname))
+        tax = Taxonomy(sa.create_engine('sqlite:///' + self.dbname))
         with tax.engine.connect() as con:
-            result = con.execute(
-                'select * from nodes where parent_id = ?', ('stapha_sg',))
-            keys = list(result.keys())
-            nodes = [dict(list(zip(keys, row))) for row in result.fetchall()]
+            result = tax.fetchall(
+                sa.text('select source_id from nodes '
+                        'where parent_id = :parent_id'),
+                parent_id='stapha_sg'
+            )
 
-        self.assertEqual(len(nodes), 5)
-        self.assertEqual([row['source_id'] for row in nodes], [2] * len(nodes))
+        self.assertEqual(len(result), 5)
+        self.assertEqual([row[0] for row in result], [2] * len(result))
 
     def test_new_nodes05(self):
         args = ['add_nodes', self.dbname, data_path('staph_species_group2.yml')]
         self.assertZeroExitStatus(main(args))
 
-        tax = Taxonomy(sqlalchemy.create_engine('sqlite:///' + self.dbname))
+        tax = Taxonomy(sa.create_engine('sqlite:///' + self.dbname))
         with tax.engine.connect() as con:
-            result = con.execute(
-                'select * from nodes where parent_id = ?', ('stapha_sg',))
-            keys = list(result.keys())
-            nodes = [dict(list(zip(keys, row))) for row in result.fetchall()]
+            result = tax.fetchall(
+                sa.text('select source_id from nodes '
+                        'where parent_id = :parent_id'),
+                parent_id='stapha_sg'
+            )
 
-        self.assertEqual(len(nodes), 5)
-        self.assertEqual([row['source_id'] for row in nodes], [2] * len(nodes))
+        self.assertEqual(len(result), 5)
+        self.assertEqual([row[0] for row in result], [2] * len(result))
 
 
 class TestExtractNodes(TestBase):
 
     def setUp(self):
-        self.suppress_stdout()
-        self.suppress_stderr()
+        if '-v' not in sys.argv:
+            self.suppress_stdout()
+            self.suppress_stderr()
 
         self.outdir = self.mkoutdir()
         self.dbname = os.path.join(self.outdir, 'taxonomy.db')

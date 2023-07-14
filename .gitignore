@@ -12,6 +12,7 @@ html
 MANIFEST
 TODO
 src/
+.DS_Store
 
 # due to using tox and pytest
 .tox

@@ -14,8 +14,10 @@
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
 """Add nodes and names to a database
 
-The input file specifies new nodes (type: node) and names (type:
-name) in yaml format (see http://fhcrc.github.io/taxtastic/commands.html#add-nodes).
+The input file specifies new nodes (type: node) and names (type: name)
+in yaml format (see
+http://fhcrc.github.io/taxtastic/commands.html#add-nodes).
+
 """
 
 import sys
@@ -55,17 +57,17 @@ def action(args):
     log.info('adding new nodes')
     retval = None
     for rec in records:
+        tax_id = rec['tax_id']
         try:
             record_type = rec.pop('type')
             if record_type not in {'node', 'name'}:
                 raise ValueError
         except (KeyError, ValueError):
-            log.error(('Error in record for tax_id {tax_id}: "type" is '
-                       'required and must be one of "node" or "name"').format(**rec))
+            log.error((f'Error in record for tax_id {tax_id}: "type" is '
+                       'required and must be one of "node" or "name"'))
             retval = 1
             continue
 
-        tax_id = rec['tax_id']
         rec['source_name'] = rec.get('source_name') or args.source_name
 
         try:
@@ -75,26 +77,28 @@ def action(args):
                         pprint.pformat(rec)))
                     raise ValueError
                 if tax.has_node(tax_id):
-                    log.info('updating *node* "{tax_id}"'.format(**rec))
+                    log.info(f'updating *node* "{tax_id}"')
                     tax.update_node(**rec)
                 else:
-                    log.info('new *node* "{tax_id}"'.format(**rec))
+                    log.info(f'new *node* "{tax_id}"')
                     tax.add_node(**rec)
             elif record_type == 'name':
                 for name in rec['names']:
                     name['tax_id'] = tax_id
                     # source_name may be provided at the record or name level
-                    name['source_name'] = name.get('source_name') or rec['source_name']
+                    name['source_name'] = (
+                        name.get('source_name') or rec['source_name'])
                     if not name['source_name']:
                         log.error(
                             'Error: record has no source_name:\n {}'.format(
                                 pprint.pformat(rec)))
                         raise ValueError
 
-                    log.info('new *name* for "{tax_id}": "{tax_name}"'.format(**name))
+                    log.info('new *name* for "{tax_id}": "{tax_name}"'
+                             .format(**name))
                     tax.add_name(**name)
         except (ValueError, TypeError):
-            log.error('Error in record with tax_id {}'.format(rec['tax_id']))
+            log.error('Error in record with tax_id {tax_id}')
             log.error(''.join(traceback.format_exception(*sys.exc_info())))
             retval = 1
 

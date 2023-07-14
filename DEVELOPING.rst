@@ -10,7 +10,6 @@ additional dependencies. In your active virtualenv::
 
   pip3 install -r requirements-dev.txt
 
-
 Git workflow
 ============
 
@@ -28,6 +27,22 @@ for development. Briefly (for those working on the main fork):
   result, the head of the `master` branch is always on a release
   version).
 
+Unit tests
+==========
+
+Run all unit tests from an active virtualenv as follows::
+
+  python -m unittest discover
+
+Run a subset of tests by providing a pattern::
+
+  % python -m unittest discover -k test_subcommands.TestAddNode.test_new_nodes03 -v
+  test_new_nodes03 (tests.test_subcommands.TestAddNode) ... ok
+
+  ----------------------------------------------------------------------
+  Ran 1 test in 0.151s
+
+  OK
 
 Preparing a release
 ===================
@@ -40,8 +55,6 @@ Preparing a release
 1. checkout master and merge dev
 1. tag the commit to reflect the new version number:
    `git tag -a -m "some message" vX.Y.Z`
-1. update the docs (details below): `(cd docs && make html)`
-1. publish the updated docs: `ghp-import -p html`
 1. `git push origin master`
 1. `git push --tags`
 1. update PyPi (see below)
@@ -78,8 +91,8 @@ Note that the html directory needs to contain a file named `.nojekyll`
 to prevent GitHub from ignoring pages with leading underscores (like
 `_static`), so the Makefile adds one
 
-Thankfully, publishing to the GitHub page for the bioscons repository
-is easy using `ghp-import`::
+Manual deployment should not be necessary since there is a GH action
+to build and deploy. However, is manual deployment is necessary, use
+`ghp-import`::
 
   ghp-import -p html
-

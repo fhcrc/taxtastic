@@ -22,12 +22,13 @@ info file as passed to ``taxit create --seq-info``
 
 import csv
 import logging
-import sqlalchemy
 import sys
-import taxtastic
+
+import sqlalchemy as sa
 
 from fastalite import Opener
 
+import taxtastic
 from taxtastic.taxonomy import Taxonomy
 
 log = logging.getLogger(__name__)
@@ -36,8 +37,8 @@ log = logging.getLogger(__name__)
 def build_parser(parser):
     parser.add_argument(
         'infile', type=Opener('r'),
-        help=('Input CSV file to process, minimally containing the field `tax_id`. '
-              'Use "-" for stdin.'))
+        help=('Input CSV file to process, minimally containing the field '
+              '`tax_id`. Use "-" for stdin.'))
     parser = taxtastic.utils.add_database_args(parser)
     parser.add_argument(
         '-o', '--outfile', default=sys.stdout, type=Opener('wt'),
@@ -55,7 +56,8 @@ def build_parser(parser):
         help=('optional output file containing rows with unknown tax_ids '
               'having no replacements in merged table'))
     parser.add_argument(
-        '-a', '--unknown-action', choices=['drop', 'ignore', 'error'], default='error',
+        '-a', '--unknown-action', choices=['drop', 'ignore', 'error'],
+        default='error',
         help=('action to perform for tax_ids with no replacement '
               'in merged table [%(default)s]'))
 
@@ -97,17 +99,18 @@ def action(args):
         if not args.tax_id_file:
             unknowns.writeheader()
 
-    engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
+    engine = sa.create_engine(args.url, echo=args.verbosity > 3)
     tax = Taxonomy(engine, schema=args.schema)
 
     with tax.engine.connect() as con:
         log.info('reading table merged')
-        result = con.execute(
-            'select old_tax_id, new_tax_id from {merged}'.format(merged=tax.merged))
+        result = con.execute(sa.text(
+            'select old_tax_id, new_tax_id from {merged}'.format(**tax.tables)))
         mergedict = dict(result.fetchall())
 
-        log.info('reading tax_ids from table {nodes}'.format(nodes=tax.nodes))
-        result = con.execute('select tax_id from {nodes}'.format(nodes=tax.nodes))
+        log.info('reading tax_ids from table nodes')
+        result = con.execute(sa.text(
+            'select tax_id from {nodes}'.format(**tax.tables)))
         all_tax_ids = {x[0] for x in result.fetchall()}
 
     log.info('reading input file')
@@ -127,6 +130,6 @@ def action(args):
             elif drop:
                 continue
             elif error:
-                sys.exit('Error: tax_id {} is unknown'.format(tax_id))
+                sys.exit(f'Error: tax_id {tax_id} is unknown')
 
         writer.writerow(row)

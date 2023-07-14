@@ -3,7 +3,9 @@
 from os import path
 import logging
 import shutil
+from itertools import groupby
 
+import sqlalchemy as sa
 from sqlalchemy import create_engine
 
 from . import config
@@ -37,7 +39,7 @@ class TestAddNode(TestTaxonomyBase):
 
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
-        log.info(self.dbname)
+        # log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddNode, self).setUp()
 
@@ -161,33 +163,34 @@ class TestAddNode(TestTaxonomyBase):
 
 class TestAddName(TestTaxonomyBase):
     """
-    test tax.add_node
+    test tax.add_name
     """
 
-    def count_names(self, tax_id):
+    def query(self, query, **params):
         with self.tax.engine.connect() as con:
-            result = con.execute(
-                'select count(*) from names where tax_id = ?', (tax_id,))
-            return result.fetchone()[0]
+            result = con.execute(sa.text(query), params)
+            return result.fetchone()
+
+    def count_names(self, tax_id):
+        result = self.query(
+            'select count(*) from names where tax_id=:tax_id', tax_id=tax_id)
+        return result[0]
 
     def count_primary_names(self, tax_id):
-        with self.tax.engine.connect() as con:
-            result = con.execute(
-                'select count(*) from names where tax_id = ? and is_primary',
-                (tax_id,))
-            return result.fetchone()[0]
+        result = self.query(
+            'select count(*) from names where tax_id=:tax_id and is_primary',
+            tax_id=tax_id)
+        return result[0]
 
     def primary_name(self, tax_id):
-        with self.tax.engine.connect() as con:
-            result = con.execute(
-                'select tax_name from names where tax_id = ? and is_primary',
-                (tax_id,))
-            val = result.fetchone()
-            return val[0] if val else None
+        result = self.query(
+            'select tax_name from names where tax_id=:tax_id and is_primary',
+            tax_id=tax_id)
+        return result[0] if result else None
 
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
-        log.info(self.dbname)
+        # log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddName, self).setUp()
 
@@ -217,6 +220,63 @@ class TestAddName(TestTaxonomyBase):
             is_primary=True, source_name='ncbi')
 
         self.assertEqual(self.primary_name('1280'), 'SA')
+
+
+class TestAddNames(TestTaxonomyBase):
+    """
+    test tax.add_names
+    """
+
+    def setUp(self):
+        self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
+        # log.info(self.dbname)
+        shutil.copyfile(dbname, self.dbname)
+        super(TestAddNames, self).setUp()
+
+    def test01(self):
+
+        names = [
+            dict(tax_id='1280', tax_name='SA', is_primary=True,
+                 source_name='ncbi'),
+            dict(tax_id='1280', tax_name='SA2', is_primary=False,
+                 source_name='ncbi'),
+        ]
+
+        count_before = self.tax.fetchone(
+            sa.text("select count(*) from names where tax_id = :tax_id"),
+            tax_id='1280')[0]
+
+        self.tax.add_names(tax_id='1280', names=names)
+
+        count_after = self.tax.fetchone(
+            sa.text("select count(*) from names where tax_id = :tax_id"),
+            tax_id='1280')[0]
+
+        self.assertEqual(count_before + 2, count_after)
+
+    def test02(self):
+
+        names = [
+            dict(tax_id='1280', tax_name='SA', is_primary=True,
+                 source_name='ncbi'),
+            dict(tax_id='1280', tax_name='SA2', is_primary=True,
+                 source_name='ncbi'),
+        ]
+
+        self.assertRaises(
+            ValueError, self.tax.add_names, tax_id='1280', names=names)
+
+    def test03(self):
+
+        names = [
+            dict(tax_id='1280', tax_name='SA', is_primary=True,
+                 source_name='ncbi'),
+            dict(tax_id='1280', tax_name='SA', is_primary=False,
+                 source_name='ncbi'),
+        ]
+
+        self.assertRaises(
+            ValueError, self.tax.add_names, tax_id='1280', names=names)
 
 
 class TestGetSource(TestTaxonomyBase):
@@ -249,7 +309,7 @@ class TestGetSource(TestTaxonomyBase):
 class TestAddSource(TestTaxonomyBase):
     def setUp(self):
         self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
-        log.info(self.dbname)
+        # log.info(self.dbname)
         shutil.copyfile(dbname, self.dbname)
         super(TestAddSource, self).setUp()
 
@@ -258,15 +318,17 @@ class TestAddSource(TestTaxonomyBase):
 
     def sources(self):
         with self.tax.engine.connect() as con:
-            result = con.execute('select * from source')
+            result = con.execute(sa.text('select * from source'))
             return result.fetchall()
 
     def test01(self):
-        self.tax.add_source('foo')
+        res = self.tax.add_source('foo')
+        self.assertEqual(res, (2, True))
         self.assertEqual(self.sources()[1], (2, 'foo', None))
 
     def test02(self):
-        self.tax.add_source('ncbi')
+        res = self.tax.add_source('ncbi')
+        self.assertEqual(res, (1, False))
         self.assertEqual(
             self.sources(),
             [(1, 'ncbi', 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip')])
@@ -292,6 +354,8 @@ class TestTaxonomyTree(TestTaxonomyBase):
     def test_child_of(self):
         self.assertRaises(ValueError, self.tax.child_of, None)
         self.assertEqual(self.tax.child_of('1239'), '91061')
+
+    def test_children_of(self):
         self.assertEqual(self.tax.children_of('90964', 2), ['1279', '45669'])
 
     def test_is_ancestor_of(self):
@@ -333,3 +397,27 @@ class TestTaxonomyTree(TestTaxonomyBase):
         self.assertEqual(
             self.tax.nary_subtree('1239'),
             ['1280', '1281', '45670', '138846'])
+
+
+class TestGetLineageTable(TestTaxonomyBase):
+
+    def setUp(self):
+        self.dbname = path.join(self.mkoutdir(), 'taxonomy.db')
+        # log.info(self.dbname)
+        shutil.copyfile(dbname, self.dbname)
+        super(TestGetLineageTable, self).setUp()
+
+    def tearDown(self):
+        pass
+
+    def test01(self):
+        lineage = self.tax._get_lineage_table(['1280', '1379'])
+
+        species = {}
+        for tax_id, grp in groupby(lineage, lambda row: getattr(row, 'tid')):
+            species[tax_id] = list(grp)[-1]
+
+        self.assertEqual(species['1280'].tax_name, 'Staphylococcus aureus')
+        self.assertEqual(species['1379'].tax_name, 'Gemella haemolysans')
+
+
