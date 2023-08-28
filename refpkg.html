@@ -1,19 +1,17 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Creating and manipulating refpkgs &#8212; taxtastic 0.9.4 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <title>Creating and manipulating refpkgs &#8212; taxtastic 0.10.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=261ea15a"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,7 +30,7 @@
         <li class="right" >
           <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.9.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.10.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Creating and manipulating refpkgs</a></li> 
       </ul>
     </div>  
@@ -43,12 +41,12 @@
           <div class="body" role="main">
             
   <section id="creating-and-manipulating-refpkgs">
-<h1>Creating and manipulating refpkgs<a class="headerlink" href="#creating-and-manipulating-refpkgs" title="Permalink to this headline">¶</a></h1>
+<h1>Creating and manipulating refpkgs<a class="headerlink" href="#creating-and-manipulating-refpkgs" title="Link to this heading">¶</a></h1>
 <section id="quickstart">
-<h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
+<h2>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading">¶</a></h2>
 <p>The refpkgs is a container format for keeping all the miscellaneous files required to run <a class="reference external" href="http://matsen.fhcrc.org/pplacer">pplacer</a> in one place.  Roughly, it is a directory containing files and JSON file describing the other contents.  Refpkgs can be created and manipulated either from the commandline with subcommands of <code class="docutils literal notranslate"><span class="pre">taxit</span></code>, or from Python using an API exposed by the module <code class="docutils literal notranslate"><span class="pre">taxtastic.refpkg</span></code>.</p>
 <p>To create an empty refpkg from Python, you would write:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="k">import</span> <span class="n">Refpkg</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">taxtastic.refpkg</span> <span class="kn">import</span> <span class="n">Refpkg</span>
 
 <span class="n">r</span> <span class="o">=</span> <span class="n">Refpkg</span><span class="p">(</span><span class="s1">&#39;/path/to/new/refpkg&#39;</span><span class="p">)</span>
 </pre></div>
@@ -95,7 +93,7 @@
 <p>There is a method and a command, both called <code class="docutils literal notranslate"><span class="pre">check</span></code>, which check if a refpkg is usable as an input to <code class="docutils literal notranslate"><span class="pre">pplacer</span></code>.  Running <code class="docutils literal notranslate"><span class="pre">r.check()</span></code> from Python or <code class="docutils literal notranslate"><span class="pre">taxit</span> <span class="pre">check</span> <span class="pre">/path/to/refpkg</span></code> from the command line will fail, saying that there is no such key <code class="docutils literal notranslate"><span class="pre">aln_fasta</span></code> in the refpkg.</p>
 </section>
 <section id="the-refpkg-format">
-<h2>The Refpkg format<a class="headerlink" href="#the-refpkg-format" title="Permalink to this headline">¶</a></h2>
+<h2>The Refpkg format<a class="headerlink" href="#the-refpkg-format" title="Link to this heading">¶</a></h2>
 <p>A refpkg is a crude key-value store for files with some basic integrity checking, machinery for undo and redo of operations, and a little bit of metadata storage.  The minimal refpkg consists of a directory containing a file names <code class="docutils literal notranslate"><span class="pre">CONTENTS.json</span></code>.  The JSON file must contain the following keys:</p>
 <dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">files</span></code></dt><dd><p>A list of the files this refpkg is currently tracking in its directory.   The value must be a JSON object assigning keys to filenames in the directory, e.g. <code class="docutils literal notranslate"><span class="pre">{&quot;taxonomy&quot;:</span> <span class="pre">&quot;taxtable.csv&quot;}</span></code>.</p>
@@ -186,7 +184,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -203,13 +201,13 @@
         <li class="right" >
           <a href="taxonomy.html" title="Manipulating the NCBI taxonomy"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.9.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">taxtastic 0.10.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Creating and manipulating refpkgs</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2011-2022, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy, Chris Rosenthal.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
+    &#169; Copyright 2011-2023, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy, Chris Rosenthal.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.4.
     </div>
   </body>
 </html>
