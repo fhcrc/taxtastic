@@ -17,7 +17,7 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install .
           python -m pip install sphinx
-          python dev/helptext.py taxit.py -d docs/_helptext
+          python dev/helptext.py -d docs/_helptext ./taxit.py
           sphinx-build docs html
       -
         name: Deploy
