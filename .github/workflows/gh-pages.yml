@@ -2,7 +2,8 @@ name: Build and push GH-Pages
 
 on:
   push:
-    tags: [ 'v*.*.*' ]
+    branches:
+      - "master"
 
 jobs:
   push_gh_pages:
