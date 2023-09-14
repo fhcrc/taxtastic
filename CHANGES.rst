@@ -5,7 +5,7 @@
 0.10.1
 ======
 
-* bug fixes
+* Fixed broken GH-Pages build
 
 0.10.0
 ======
