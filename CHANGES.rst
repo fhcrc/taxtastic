@@ -2,6 +2,11 @@
  change log for taxtastic
 ==========================
 
+Upcoming
+========
+
+* Updated NCBI taxdmp.zip download protocol from ftp to https [GH-156]
+
 0.10.1
 ======
 
