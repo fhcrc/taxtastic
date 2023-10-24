@@ -147,9 +147,10 @@ class Taxonomy(object):
 
         """
         names = self.names
-        s = select([names.c.tax_name, names.c.tax_id],
-                   names.c.tax_name.in_(tax_names)).distinct()
-        return s.execute()
+        s = select(names.c.tax_name, names.c.tax_id).\
+            where(names.c.tax_name.in_(tax_names)).\
+            distinct()
+        return self.fetchall(s)
 
     def primary_from_id(self, tax_id):
         """Returns primary taxonomic name associated with tax_id
@@ -168,10 +169,12 @@ class Taxonomy(object):
 
     def primary_from_ids(self, tax_ids):
         names = self.names
-        s = select([names.c.tax_id, names.c.tax_name],
-                   and_(names.c.tax_id.in_(tax_ids),
-                        names.c.is_primary)).distinct()
-        return s.execute()
+        s = select(names.c.tax_id, names.c.tax_name).\
+            where(and_(
+                names.c.tax_id.in_(tax_ids),
+                names.c.is_primary)).\
+            distinct()
+        return self.fetchall(s)
 
     def primary_from_name(self, tax_name):
         """
@@ -734,7 +737,7 @@ class Taxonomy(object):
         '''
         Return all tax_ids in node table
         '''
-        fetch = select([self.nodes.c.tax_id]).execute().fetchall()
+        fetch = self.fetchall(select(self.nodes.c.tax_id))
         ids = [t[0] for t in fetch]
         return ids
 
