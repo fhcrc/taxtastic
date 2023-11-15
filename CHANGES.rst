@@ -6,6 +6,7 @@ Upcoming
 ========
 
 * Updated NCBI taxdmp.zip download protocol from ftp to https [GH-156]
+* New subcommand `taxit named` that filters unclassified, unnamed taxonomy ids
 
 0.10.1
 ======
