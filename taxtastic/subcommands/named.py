@@ -57,23 +57,18 @@ def build_parser(parser):
 def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
     tax = Taxonomy(engine, schema=args.schema)
-    if args.tax_ids:
-        tax_ids = args.tax_ids
-    elif args.tax_id_file:
-        tax_ids = (i.strip() for i in args.tax_id_file)
-        tax_ids = [i for i in tax_ids if i]
-    elif args.seq_info:
-        seq_info = csv.DictReader(args.seq_info)
-        tax_ids = (row['tax_id'] for row in seq_info)
-    named = set(tax.named(set(tax_ids), no_rank=not args.ranked))
     if args.seq_info:
+        named = set(tax.named(no_rank=not args.ranked))
+        seq_info = csv.DictReader(args.seq_info)
         out = csv.DictWriter(args.outfile, fieldnames=seq_info.fieldnames)
         out.writeheader()
-        args.seq_info.seek(0)
-        for i in csv.DictReader(args.seq_info):
-            if i['tax_id'] in named:
-                out.writerow(i)
+        out.writerows(i for i in seq_info if i['tax_id'] in named)
     else:
-        for i in tax_ids:
-            if i in named:
-                args.outfile.write(i + '\n')
+        if args.tax_ids:
+            tax_ids = args.tax_ids
+        else:
+            tax_ids = (i.strip() for i in args.tax_id_file)
+            tax_ids = [i for i in tax_ids if i]
+        named = set(tax.named(set(tax_ids), no_rank=not args.ranked))
+        tax_ids = (i for i in tax_ids if i in named)
+        args.outfile.write('\n'.join(tax_ids) + '\n')

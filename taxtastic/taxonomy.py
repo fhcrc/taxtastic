@@ -825,12 +825,11 @@ class Taxonomy(object):
             assert self.is_ancestor_of(newc, tax_id)
             return newc
 
-    def named(self, taxids, no_rank=True):
+    def named(self, taxids=None, no_rank=True):
         nodes = self.nodes
-        s = select(nodes.c.tax_id).\
-            where(and_(
-                nodes.c.tax_id.in_(taxids),
-                nodes.c.is_valid))
+        s = select(nodes.c.tax_id).where(nodes.c.is_valid)
+        if taxids:
+            s = s.where(nodes.c.tax_id.in_(taxids))
         if not no_rank:
             s = s.where(nodes.c.rank != 'no_rank')
         return [f[0] for f in self.fetchall(s)]
