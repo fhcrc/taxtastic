@@ -22,7 +22,6 @@ By default the CSV is written to ``stdout``, unless a file is
 specified with ``-o/--outfile``.
 
 """
-import argparse
 import csv
 import logging
 import re
@@ -31,7 +30,7 @@ import sys
 from itertools import groupby
 
 from taxtastic.taxonomy import Taxonomy
-from taxtastic.utils import add_database_args
+from taxtastic.utils import add_database_args, Opener
 
 log = logging.getLogger(__name__)
 
@@ -93,13 +92,13 @@ def build_parser(parser):
         help='one or more space-delimited tax_ids (eg "-t 47770 33945")')
 
     input_group.add_argument(
-        '-f', '--tax-id-file', metavar='FILE', type=argparse.FileType('rt'),
+        '-f', '--tax-id-file', metavar='FILE', type=Opener('rt'),
         help=('File containing a whitespace-delimited list of '
               'tax_ids (ie, separated by tabs, spaces, or newlines.'))
 
     input_group.add_argument(
         '-i', '--seq-info',
-        type=argparse.FileType('rt'),
+        type=Opener('rt'),
         help=('Read tax_ids from sequence info file, minimally '
               'containing a column named "tax_id"'))
 
@@ -108,7 +107,7 @@ def build_parser(parser):
 
     output_group.add_argument(
         '-o', '--outfile',
-        type=argparse.FileType('wt'),
+        type=Opener('wt'),
         default=sys.stdout,
         metavar='FILE',
         help=('Output file containing lineages for the specified taxa '
