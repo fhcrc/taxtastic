@@ -26,8 +26,6 @@ import sys
 
 import sqlalchemy as sa
 
-from fastalite import Opener
-
 import taxtastic
 from taxtastic.taxonomy import Taxonomy
 
@@ -36,12 +34,14 @@ log = logging.getLogger(__name__)
 
 def build_parser(parser):
     parser.add_argument(
-        'infile', type=Opener('r'),
+        'infile', type=taxtastic.utils.Opener('r'),
         help=('Input CSV file to process, minimally containing the field '
               '`tax_id`. Use "-" for stdin.'))
     parser = taxtastic.utils.add_database_args(parser)
     parser.add_argument(
-        '-o', '--outfile', default=sys.stdout, type=Opener('wt'),
+        '-o', '--outfile',
+        default=sys.stdout,
+        type=taxtastic.utils.Opener('wt'),
         help='Modified version of input file [default: stdout]')
     input_format = parser.add_mutually_exclusive_group(required=False)
     input_format.add_argument(
@@ -52,7 +52,7 @@ def build_parser(parser):
         help='Infile is a headerless text file '
              'of tax_ids separated by newlines. [%(default)s]')
     parser.add_argument(
-        '--unknowns', type=Opener('wt'),
+        '--unknowns', type=taxtastic.utils.Opener('wt'),
         help=('optional output file containing rows with unknown tax_ids '
               'having no replacements in merged table'))
     parser.add_argument(

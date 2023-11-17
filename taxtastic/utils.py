@@ -12,8 +12,10 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with taxtastic.  If not, see <http://www.gnu.org/licenses/>.
+import bz2
 import csv
 import errno
+import gzip
 import logging
 import os
 import re
@@ -21,10 +23,44 @@ import subprocess
 import string
 import random
 import configparser
+import sys
 from collections import OrderedDict
 
 
 log = logging
+
+
+class Opener(object):
+    """Factory for creating file objects. Transparenty opens compressed
+    files for reading or writing based on suffix (.gz and .bz2 only).
+
+    Example::
+
+        with Opener()('in.txt') as infile, Opener('w')('out.gz') as outfile:
+            outfile.write(infile.read())
+    """
+
+    def __init__(self, mode='r', *args, **kwargs):
+        self.mode = mode
+        self.args = args
+        self.kwargs = kwargs
+        self.writable = 'w' in self.mode
+
+    def __call__(self, obj):
+        if obj is sys.stdout or obj is sys.stdin:
+            return obj
+        elif obj == '-':
+            return sys.stdout if self.writable else sys.stdin
+        else:
+            openers = {'bz2': bz2.open, 'gz': gzip.open}
+            __, suffix = obj.rsplit('.', 1)
+            # in python3, both bz2 and gz libraries default to binary input and output
+            mode = self.mode
+            if sys.version_info.major == 3 and suffix in openers \
+               and mode in {'w', 'r'}:
+                mode += 't'
+            opener = openers.get(suffix, open)
+            return opener(obj, mode=mode, *self.args, **self.kwargs)
 
 
 def get_new_nodes(fname):

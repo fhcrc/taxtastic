@@ -15,11 +15,10 @@
 """
 Filters unclassified, unnamed taxonomy ids
 """
-import argparse
 import csv
 import sqlalchemy
 import sys
-from taxtastic.utils import add_database_args
+from taxtastic.utils import add_database_args, Opener
 from taxtastic.taxonomy import Taxonomy
 
 
@@ -33,12 +32,12 @@ def build_parser(parser):
     input_group.add_argument(
         '-f', '--tax-id-file',
         metavar='FILE',
-        type=argparse.FileType('rt'),
+        type=Opener('rt'),
         help=('File containing a whitespace-delimited list of '
               'tax_ids (ie, separated by tabs, spaces, or newlines.'))
     input_group.add_argument(
         '-i', '--seq-info',
-        type=argparse.FileType('rt'),
+        type=Opener('rt'),
         help=('Read tax_ids from sequence info file, minimally '
               'containing a column named "tax_id"'))
     parser.add_argument(
@@ -47,7 +46,7 @@ def build_parser(parser):
         help='Ignore "no rank" taxonomies [%(default)s]')
     parser.add_argument(
         '-o', '--outfile',
-        type=argparse.FileType('wt'),
+        type=Opener('wt'),
         default=sys.stdout,
         metavar='FILE',
         help=('Output file containing named taxonomy ids;'

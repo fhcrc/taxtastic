@@ -27,10 +27,9 @@ import pprint
 import traceback
 
 import yaml
-from fastalite import Opener
 
 from taxtastic.taxonomy import Taxonomy
-from taxtastic.utils import add_database_args
+from taxtastic.utils import add_database_args, Opener
 
 log = logging.getLogger(__name__)
 
