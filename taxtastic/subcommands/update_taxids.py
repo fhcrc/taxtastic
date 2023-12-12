@@ -51,11 +51,6 @@ def build_parser(parser):
         help='name of column or index if headerless containing '
              'tax_ids to be replaced [%(default)s]')
     parser.add_argument(
-        '--tax-id-file',
-        action='store_true',
-        help='Infile is a headerless text file '
-             'of tax_ids separated by newlines. [%(default)s]')
-    parser.add_argument(
         '--unknowns',
         metavar='',
         type=taxtastic.utils.Opener('wt'),
@@ -85,40 +80,36 @@ def build_parser(parser):
 
 
 def action(args):
-    if args.tax_id_file:
-        reader = csv.DictReader(args.infile, fieldnames=[args.taxid_column])
+    header = next(args.infile).strip().split(args.delimiter)
+    if args.taxid_column in header:
+        taxid_column = header.index(args.taxid_column)
+    elif len(header) == 1:
+        taxid_column = 0
+        header = None
+        args.infile.seek(0)
+    elif args.taxid_column.isnumeric():
+        taxid_column = int(args.taxid_column) - 1
+        header = None
+        args.infile.seek(0)
     else:
-        reader = csv.DictReader(args.infile, delimiter=args.delimiter)
+        raise ValueError("No column " + args.taxid_column)
 
-    fieldnames = reader.fieldnames
-    taxid_column = args.taxid_column
     drop = args.unknown_action == 'drop'
     error = args.unknown_action == 'error'
     ignore = args.unknown_action == 'ignore'
 
-    if taxid_column not in fieldnames:
-        if taxid_column.isnumeric():
-            index = int(taxid_column)
-            taxid_column = list(fieldnames)[index - 1]
-        else:
-            raise ValueError("No column " + args.taxid_column)
-
     # TODO: remove unless --use-names is implemented
-    # if args.use_names and args.name_column not in fieldnames:
+    # if args.use_names and args.name_column not in header:
     #     raise ValueError("No column " + args.name_column)
 
-    writer = csv.DictWriter(
-        args.outfile,
-        delimiter=args.delimiter,
-        fieldnames=fieldnames)
-    if not (args.tax_id_file or args.taxid_column.isnumeric()):
-        writer.writeheader()
+    writer = csv.writer(args.outfile, delimiter=args.delimiter)
+    if header:
+        writer.writerow(header)
 
     if args.unknowns:
-        unknowns = csv.DictWriter(
-            args.unknowns, fieldnames=fieldnames)
-        if not args.tax_id_file:
-            unknowns.writeheader()
+        unknowns = csv.writer(args.unknowns, delimiter=args.delimiter)
+        if header:
+            unknowns.writerow(header)
 
     engine = sa.create_engine(args.url, echo=args.verbosity > 3)
     tax = Taxonomy(engine, schema=args.schema)
@@ -135,7 +126,7 @@ def action(args):
         all_tax_ids = {x[0] for x in result.fetchall()}
 
     log.info('reading input file')
-    for row in reader:
+    for row in csv.reader(args.infile, delimiter=args.delimiter):
         tax_id = row[taxid_column]
 
         if tax_id in all_tax_ids:
