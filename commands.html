@@ -933,7 +933,7 @@ Tree inference log file parsing (for updating `tree_stats`):
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: taxit update_taxids [-h] [--schema SCHEMA] [--delimiter]
                            [--taxid-column] [--tax-id-file] [--unknowns]
                            [-a {drop,ignore,error}] [-o]
-                           [url] infile
+                           infile [url]
 
 Update obsolete tax_ids
 
@@ -942,10 +942,10 @@ database. Use in preparation for ``taxit taxtable``. Takes sequence
 info file as passed to ``taxit create --seq-info``
 
 positional arguments:
+  infile                Input file with taxids. Use &quot;-&quot; for stdin.
   url                   Database string URI or filename. If no database scheme
                         specified &quot;sqlite:///&quot; will be prepended.
                         [sqlite:///ncbi_taxonomy.db]
-  infile                Input file with taxids. Use &quot;-&quot; for stdin.
 
 options:
   -h, --help            show this help message and exit
