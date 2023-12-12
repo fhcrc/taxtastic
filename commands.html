@@ -931,7 +931,7 @@ Tree inference log file parsing (for updating `tree_stats`):
 <section id="update-taxids">
 <h2>update_taxids<a class="headerlink" href="#update-taxids" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: taxit update_taxids [-h] [--schema SCHEMA] [--delimiter]
-                           [--taxid-column] [--tax-id-file] [--unknowns]
+                           [--taxid-column] [--unknowns]
                            [-a {drop,ignore,error}] [-o]
                            infile [url]
 
@@ -952,8 +952,6 @@ options:
   --delimiter           Infile columns delimiter [,]
   --taxid-column        name of column or index if headerless containing
                         tax_ids to be replaced [tax_id]
-  --tax-id-file         Infile is a headerless text file of tax_ids separated
-                        by newlines. [False]
   --unknowns            optional output file containing rows with unknown
                         tax_ids having no replacements in merged table
   -a {drop,ignore,error}, --unknown-action {drop,ignore,error}
