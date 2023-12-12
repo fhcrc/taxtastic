@@ -33,11 +33,11 @@ log = logging.getLogger(__name__)
 
 
 def build_parser(parser):
-    parser = taxtastic.utils.add_database_args(parser)
     parser.add_argument(
         'infile',
         type=taxtastic.utils.Opener('r'),
         help='Input file with taxids. Use "-" for stdin.')
+    parser = taxtastic.utils.add_database_args(parser)
     parser.add_argument(
         '--delimiter',
         default=',',
