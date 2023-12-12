@@ -36,7 +36,7 @@ def build_parser(parser):
     parser = taxtastic.utils.add_database_args(parser)
     parser.add_argument(
         'infile',
-        type=taxtastic.utils.Opener('rt'),
+        type=taxtastic.utils.Opener('r'),
         help='Input file with taxids. Use "-" for stdin.')
     parser.add_argument(
         '--delimiter',
@@ -88,7 +88,7 @@ def action(args):
     if args.tax_id_file:
         reader = csv.DictReader(args.infile, fieldnames=[args.taxid_column])
     else:
-        reader = csv.DictReader(args.infile)
+        reader = csv.DictReader(args.infile, delimiter=args.delimiter)
 
     fieldnames = reader.fieldnames
     taxid_column = args.taxid_column
