@@ -811,7 +811,7 @@ Output options:
 <section id="taxtable">
 <h2>taxtable<a class="headerlink" href="#taxtable" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: taxit taxtable [-h] [--schema SCHEMA] [-t TAX_IDS [TAX_IDS ...]]
-                      [-f FILE] [-i SEQ_INFO] [-o FILE]
+                      [-f FILE] [-i SEQ_INFO] [-a {error,warn}] [-o FILE]
                       [url]
 
 Create a tabular representation of taxonomic lineages
@@ -830,6 +830,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  -a {error,warn}, --unknown-action {error,warn}
+                        action to perform for tax_ids not present in database
+                        [error]
 
 database options:
   --schema SCHEMA       Name of SQL schema in database to query (if database
