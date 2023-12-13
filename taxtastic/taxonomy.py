@@ -503,6 +503,13 @@ class Taxonomy(object):
             .filter_by(tax_id=tax_id))
         return bool(result)
 
+    def unknowns(self, tax_ids):
+        result = self.fetchall(
+            select(self.nodes.c.tax_id)
+            .filter(self.nodes.c.tax_id.in_(tax_ids)))
+        result = set(r for r, in result)
+        return [i for i in tax_ids if i not in result]
+
     def add_node(self, tax_id, parent_id, rank, names, source_name,
                  children=None, is_valid=True, execute=True, **ignored):
         """Add a node to the taxonomy.

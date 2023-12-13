@@ -102,6 +102,13 @@ def build_parser(parser):
         help=('Read tax_ids from sequence info file, minimally '
               'containing a column named "tax_id"'))
 
+    parser.add_argument(
+        '-a', '--unknown-action',
+        choices=['error', 'warn'],
+        default='error',
+        help='action to perform for tax_ids '
+             'not present in database [%(default)s]')
+
     output_group = parser.add_argument_group(
         "Output options").add_mutually_exclusive_group()
 
@@ -121,12 +128,18 @@ def action(args):
     elif args.tax_id_file:
         tax_ids = set(args.tax_id_file.read().split())
     elif args.seq_info:
-        tax_ids = {row['tax_id'] for row in csv.DictReader(args.seq_info)}
+        tax_ids = set(row['tax_id'] for row in csv.DictReader(args.seq_info))
     else:
         sys.exit('Error: no tax_ids were specified')
 
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
     tax = Taxonomy(engine, schema=args.schema)
+
+    if args.unknown_action == 'warn':
+        unknowns = tax.unknowns(tax_ids)
+        log.warn('Unknown tax_ids not '
+                 'represented in output: ' + str(sorted(unknowns)))
+        tax_ids = set(tax_ids) - set(unknowns)
 
     rows = tax._get_lineage_table(tax_ids)
 

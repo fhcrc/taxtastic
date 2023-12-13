@@ -8,6 +8,7 @@ Upcoming
 * Updated NCBI taxdmp.zip download protocol from ftp to https [GH-156]
 * New subcommand `taxit named` that filters unclassified, unnamed taxonomy ids
 * Subcommand update_taxids can now process a tab delimited headerless file
+* Subcommand taxtable has option to continue if unknown taxids
 
 0.10.1
 ======
