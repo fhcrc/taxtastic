@@ -1,7 +1,7 @@
 decorator==5.1.1
 DendroPy==4.6.0
 fastalite==0.4.1
-Jinja2==3.1.2
+Jinja2==3.1.3
 MarkupSafe==2.1.2
 psycopg==3.1.9
 psycopg-binary==3.1.9
