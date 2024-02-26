@@ -67,7 +67,8 @@ def action(args):
             tax_ids = args.tax_ids
         else:
             tax_ids = (i.strip() for i in args.tax_id_file)
-            tax_ids = [i for i in tax_ids if i]
-        named = set(tax.named(set(tax_ids), no_rank=not args.ranked))
+            tax_ids = (i for i in tax_ids if i)
+        named = set(tax.named())
         tax_ids = (i for i in tax_ids if i in named)
-        args.outfile.write('\n'.join(tax_ids) + '\n')
+        for i in tax_ids:
+            args.outfile.write(i + '\n')
