@@ -40,7 +40,7 @@ from taxtastic.utils import random_name
 log = logging.getLogger(__name__)
 
 
-DATA_URL = 'https://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
+DATA_URL = 'https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdmp.zip'
 
 # For rank order: https://en.wikipedia.org/wiki/Taxonomic_rank
 RANK_ORDER = [
