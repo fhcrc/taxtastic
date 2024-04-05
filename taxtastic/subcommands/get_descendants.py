@@ -38,8 +38,8 @@ def build_parser(parser):
 
 def action(args):
     # TODO: move this logic into the taxonomy.py object file
-    if os.path.isfile(args.taxids):
-        taxids = [i.strip() for i in open(args.taxids) if i]
+    if os.path.isfile(args.taxids) or args.taxids == '-':
+        taxids = [i.strip() for i in taxtastic.utils.Opener('rt')(args.taxids) if i]
     else:
         taxids = args.taxids.split(',')
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
