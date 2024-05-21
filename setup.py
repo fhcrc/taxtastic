@@ -45,6 +45,7 @@ params = {'name': 'taxtastic',
               'Programming Language :: Python :: 3.9',
               'Programming Language :: Python :: 3.10',
               'Programming Language :: Python :: 3.11',
+              'Programming Language :: Python :: 3.12',
               'Topic :: Scientific/Engineering :: Bio-Informatics'],
           'download_url': 'https://github.com/fhcrc/taxtastic',
           # 'package_data': {

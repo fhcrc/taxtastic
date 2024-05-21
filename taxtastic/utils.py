@@ -109,35 +109,6 @@ def try_set_fields(d, regex, text, hook=lambda x: x):
 class InvalidLogError(ValueError):
     pass
 
-def parse_raxmlng(handle):
-    """Parse RAxMLng's summary output.
-
-    *handle* should be an open file handle containing the RAxMLng
-    log.  It is parsed and a dictionary returned.
-    """
-    s = handle.read()
-    result = {}
-    try_set_fields(result, r'(?P<program>RAxML-NG v. [\d\.]+)', s)
-    # Less ideal, but for now force DNA and GTR for now
-    result['datatype'] = 'DNA'
-    result["subs_model"] =  "GTR"
-    try_set_fields(result, r'\\nModel: (?P<subs_model>[\w\+]+)\\n', s)
-    result['empirical_frequencies'] = re.search(r'Base frequencies \(ML\)', s) is not None
-    rates = {}
-    try_set_fields(rates, r'Substitution rates \(ML\): (?P<ac>\d+\.\d+) (?P<ag>\d+\.\d+) (?P<at>\d+\.\d+) (?P<cg>\d+\.\d+) (?P<ct>\d+\.\d+) (?P<gt>\d+\.\d+)', s, hook=float)
-    if len(rates) > 0:
-        result['subs_rates'] = rates
-    gamma = {}
-    try_set_fields(gamma, r'Rate heterogeneity: GAMMA \((?P<n_cats>\d+) cats, mean\),  alpha: (?P<alpha>\d+\.\d+)', s, hook=float)
-    try:
-        gamma['n_cats'] = int(gamma['n_cats'])
-    except:
-        pass
-    result['gamma'] = gamma
-    result['ras_model'] = 'gamma'
-
-    return result
-
 # https://github.com/amkozlov/raxml-ng/wiki/Input-data#single-mode
 DNA = ['JC', 'K80', 'F81', 'HKY', 'TN93ef', 'TN93', 'K81', 'K81uf', 'TPM2',
        'TPM2uf', 'TPM3', 'TPM3uf', 'TIM1', 'TIM1uf', 'TIM2', 'TIM2uf',
@@ -176,6 +147,70 @@ def parse_raxmlng(handle):
         gamma['n_cats'] = int(gamma['n_cats'])
         result['gamma'] = gamma
         result['ras_model'] = 'gamma'
+    return result
+
+
+def parse_iqtree(handle):
+    """Parse iqtrees's summary output.
+    *handle* should be an open file handle containing the ".iqtree" output file
+    It is parsed and a dictionary returned.
+    """
+    s = handle.read()
+    result = {}
+    try_set_fields(result, r'(?P<program>IQ-TREE [\d\.]+)', s)
+    try_set_fields(result, r'Model of substitution: (?P<model>[\w\+]+)\n', s)
+    if 'model' in result:
+        models = set(result['model'].split('+'))
+        # Assume here that the substitution models are the same as RAxML-ng.
+        # Maybe need to be corrected in the future.
+        subs_model = list(set(DNA).intersection(models))
+        if len(subs_model) > 0:
+            result['subs_model'] = subs_model[0]
+            result['datatype'] = 'DNA'
+        else:
+            subs_model = list(set(PROT).intersection(models))
+            if len(subs_model) > 0:
+                result['subs_model'] = subs_model[0]
+                result['datatype'] = 'AA'
+    # Implicit else here both if no model, and/or no model overlapping with substitutions
+
+    # Were these empiric frequencies?
+    result['empirical_frequencies'] = re.search(
+        r'State frequencies: \(empirical counts from alignment\)\n', s) is not None
+
+    # Grab the rates (if available)
+    re_rate = re.compile(r'(?P<first>[A-Z])\-(?P<second>[A-Z]): (?P<rate>\d+\.\d+)\n')
+    rates = {
+        f'{f.lower()}{s.lower()}': float(r)
+        for f, s, r in
+        re_rate.findall(s)
+    }
+    if len(rates) > 0:
+        result['subs_rates'] = rates
+
+    frequencies = {
+        b: float(f)
+        for (b, f) in
+        re.findall(
+            r'pi\((?P<base>[ACTG])\) = (\d+\.\d+)\n',
+            s
+        )
+    }
+    if len(frequencies) > 0:
+        result['frequencies'] = frequencies
+    # Gamma (if done)
+    gamma = {}
+    try_set_fields(
+        gamma,
+        r'Model of rate heterogeneity: Gamma with (?P<n_cats>\d+) categories\nGamma shape alpha: (?P<alpha>\d+\.\d+)\n',
+        s,
+        hook=float
+    )
+    if gamma:
+        gamma['n_cats'] = int(gamma['n_cats'])
+        result['gamma'] = gamma
+        result['ras_model'] = 'gamma'
+
     return result
 
 
