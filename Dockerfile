@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bullseye
+FROM python:3.12-slim-bullseye
 
 RUN apt-get -y update && \
     apt-get install -y unzip wget
