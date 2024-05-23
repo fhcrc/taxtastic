@@ -71,7 +71,7 @@ def build_parser(parser):
 
     stats_group = parser.add_argument_group('Tree inference log file parsing '
                                             '(for updating `tree_stats`)')
-    stats_group.add_argument("--stats-type", choices=('PhyML', 'FastTree', 'RAxML'),
+    stats_group.add_argument("--stats-type", choices=('PhyML', 'FastTree', 'RAxML', 'IQTREE'),
                              help="""stats file type [default: attempt to guess from
                         file contents]""")
     stats_group.add_argument("--frequency-type", choices=('empirical', 'model'),
