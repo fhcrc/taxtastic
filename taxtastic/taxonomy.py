@@ -833,8 +833,11 @@ class Taxonomy(object):
             return newc
 
     def named(self, no_rank=True):
+        nodes = self.nodes
         names = self.names
-        s = select(names.c.tax_id).where(names.c.is_classified)
+        s = select(nodes.c.tax_id)
+        s = s.join(nodes, nodes.c.tax_id == names.c.tax_id)
+        s = s.where(names.c.is_classified)
         if not no_rank:
-            s = s.where(names.c.rank != 'no_rank')
+            s = s.where(nodes.c.rank != 'no_rank')
         return [f[0] for f in self.fetchall(s)]
