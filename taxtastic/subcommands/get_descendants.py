@@ -22,6 +22,8 @@ import sqlalchemy
 import sys
 import taxtastic
 
+from taxtastic.taxonomy import Taxonomy
+
 log = logging.getLogger(__name__)
 
 
@@ -37,27 +39,11 @@ def build_parser(parser):
 
 
 def action(args):
-    # TODO: move this logic into the taxonomy.py object file
     if os.path.isfile(args.taxids) or args.taxids == '-':
         taxids = [i.strip() for i in taxtastic.utils.Opener('rt')(args.taxids) if i]
     else:
         taxids = args.taxids.split(',')
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
-    cmd = """
-    WITH RECURSIVE descendants AS (
-     SELECT tax_id
-     FROM nodes
-     WHERE tax_id in ({})
-     UNION ALL
-     SELECT
-     n.tax_id
-     FROM nodes n
-     JOIN descendants d ON d.tax_id = n.parent_id
-    ) SELECT DISTINCT tax_id
-    FROM descendants
-    JOIN names using(tax_id)
-    WHERE is_primary;
-    """.format(','.join("'{}'".format(t) for t in taxids))
-    with engine.connect() as conn:
-        for i in conn.exec_driver_sql(cmd):
-            args.out.write(i[0] + '\n')
+    tax = Taxonomy(engine, schema=args.schema)
+    for i in tax.descendants_of(taxids):
+        args.out.write(i + '\n')
