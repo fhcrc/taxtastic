@@ -58,11 +58,11 @@ def action(args):
     tax = Taxonomy(engine, schema=args.schema)
     if args.seq_info:
         seq_info = csv.DictReader(args.seq_info)
+        fieldnames = seq_info.fieldnames
+        seq_info = list(seq_info)
         tax_ids = (i['tax_id'] for i in seq_info)
         named = tax.is_valid(tax_ids, no_rank=not args.ranked)
-        args.seq_info.seek(0)
-        seq_info = csv.DictReader(args.seq_info)
-        out = csv.DictWriter(args.outfile, fieldnames=seq_info.fieldnames)
+        out = csv.DictWriter(args.outfile, fieldnames=fieldnames)
         out.writeheader()
         out.writerows(i for i in seq_info if i['tax_id'] in named)
     else:
