@@ -318,14 +318,14 @@ class Taxonomy(object):
                     raise ValueError('no tax_ids were found')
                 else:
                     returned = {row[0] for row in rows}
-                    # # TODO: compare set membership, not lengths
-                    # if len(returned) < len(tax_ids):
-                    #     msg = ('{} tax_ids were provided '
-                    #            'but only {} were returned').format(
-                    #                len(tax_ids), len(returned))
-                    #     log.error('Input tax_ids not represented in output:')
-                    #     log.error(sorted(set(tax_ids) - returned))
-                    #     raise ValueError(msg)
+                    # TODO: compare set membership, not lengths
+                    if len(returned) < len(tax_ids):
+                        msg = ('{} tax_ids were provided '
+                               'but only {} were returned').format(
+                                   len(tax_ids), len(returned))
+                        log.error('Input tax_ids not represented in output:')
+                        log.error(sorted(set(tax_ids) - returned))
+                        raise ValueError(msg)
 
                 return rows
 
