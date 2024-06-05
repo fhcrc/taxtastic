@@ -318,14 +318,14 @@ class Taxonomy(object):
                     raise ValueError('no tax_ids were found')
                 else:
                     returned = {row[0] for row in rows}
-                    # TODO: compare set membership, not lengths
-                    if len(returned) < len(tax_ids):
-                        msg = ('{} tax_ids were provided '
-                               'but only {} were returned').format(
-                                   len(tax_ids), len(returned))
-                        log.error('Input tax_ids not represented in output:')
-                        log.error(sorted(set(tax_ids) - returned))
-                        raise ValueError(msg)
+                    # # TODO: compare set membership, not lengths
+                    # if len(returned) < len(tax_ids):
+                    #     msg = ('{} tax_ids were provided '
+                    #            'but only {} were returned').format(
+                    #                len(tax_ids), len(returned))
+                    #     log.error('Input tax_ids not represented in output:')
+                    #     log.error(sorted(set(tax_ids) - returned))
+                    #     raise ValueError(msg)
 
                 return rows
 
@@ -832,12 +832,33 @@ class Taxonomy(object):
             assert self.is_ancestor_of(newc, tax_id)
             return newc
 
-    def named(self, no_rank=True):
-        names = self.names
-        s = select(names.c.tax_id)
-        s = s.where(names.c.is_classified)
+    def descendants_of(self, tax_ids):
+        """Return list of all tax_ids under *tax_id*"""
+        tax_ids = ','.join("'{}'".format(t) for t in tax_ids)
+        cmd = sa.text("""
+        WITH RECURSIVE descendants AS (
+         SELECT tax_id
+         FROM nodes
+         WHERE tax_id in ({})
+         UNION ALL
+         SELECT
+         n.tax_id
+         FROM nodes n
+         JOIN descendants d ON d.tax_id = n.parent_id
+        ) SELECT DISTINCT tax_id
+        FROM descendants
+        JOIN names using(tax_id)
+        WHERE is_primary;
+        """.format(tax_ids))
+        with self.engine.connect() as con:
+            return [row[0] for row in con.execute(cmd).fetchall()]
+
+    def is_valid(self, tax_ids=None, no_rank=True):
+        """Return all classified tax_ids"""
+        nodes = self.nodes
+        s = select(nodes.c.tax_id).where(nodes.c.is_valid)
+        if tax_ids:
+            s = s.where(nodes.c.tax_id.in_(tax_ids))
         if not no_rank:
-            nodes = self.nodes
-            s = s.join(nodes, nodes.c.tax_id == names.c.tax_id)
-            s = s.where(nodes.c.rank != 'no_rank')
-        return [f[0] for f in self.fetchall(s)]
+            s = s.where(nodes.c.rank == 'no_rank')
+        return [r[0] for r in self.fetchall(s)]

@@ -57,7 +57,10 @@ def action(args):
     engine = sqlalchemy.create_engine(args.url, echo=args.verbosity > 3)
     tax = Taxonomy(engine, schema=args.schema)
     if args.seq_info:
-        named = set(tax.named(no_rank=not args.ranked))
+        seq_info = csv.DictReader(args.seq_info)
+        tax_ids = (i['tax_id'] for i in seq_info)
+        named = tax.is_valid(tax_ids, no_rank=not args.ranked)
+        args.seq_info.seek(0)
         seq_info = csv.DictReader(args.seq_info)
         out = csv.DictWriter(args.outfile, fieldnames=seq_info.fieldnames)
         out.writeheader()
@@ -67,8 +70,8 @@ def action(args):
             tax_ids = args.tax_ids
         else:
             tax_ids = (i.strip() for i in args.tax_id_file)
-            tax_ids = (i for i in tax_ids if i)
-        named = set(tax.named())
+            tax_ids = [i for i in tax_ids if i]
+        named = tax.is_valid(tax_ids, no_rank=not args.ranked)
         tax_ids = (i for i in tax_ids if i in named)
         for i in tax_ids:
             args.outfile.write(i + '\n')
