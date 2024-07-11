@@ -9,6 +9,7 @@ Upcoming
 * New subcommand `taxit named` that filters unclassified, unnamed taxonomy ids
 * Subcommand update_taxids can now process a tab delimited headerless file
 * Subcommand taxtable has option to continue if unknown taxids
+* Added Dockerfile support for execution on cirro.app
 
 0.10.1
 ======
