@@ -9,7 +9,7 @@ on:
       - "v*.*.*"
   pull_request:
     branches:
-      - "master"
+      - $default-branch
 
 env:
   REGISTRY: ghcr.io
@@ -42,16 +42,9 @@ jobs:
   deploy:
       if: github.ref_type == 'tag'
       needs: [unittests]
-      permissions:
-        contents: read
-        packages: write
-        id-token: write
       runs-on: ubuntu-latest
 
       steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -74,13 +67,6 @@ jobs:
         with:
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          context: .
           labels: ${{ steps.meta.outputs.labels }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-
-      - name: Sign the published Docker image
-        env:
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-          TAGS: ${{ steps.meta.outputs.tags }}
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
