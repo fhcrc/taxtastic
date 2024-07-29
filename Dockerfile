@@ -1,10 +1,6 @@
 FROM python:3.11-slim-bullseye
 
-RUN apt-get -y update && apt-get upgrade -y && apt-get install -y \
-unzip \
-wget \
-# Cirro requirement
-psutils
+RUN apt-get -y update && apt-get upgrade -y && apt-get install -y unzip wget
 
 WORKDIR /opt/build
 COPY dev/install_pplacer.sh /opt/build/install_pplacer.sh
