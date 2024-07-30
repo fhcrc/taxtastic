@@ -1,10 +1,10 @@
 ---
 name: Run tests and deploy to registry
 
-  on:
-    push:
-      branches:
-        - "asdasdf"
+on:
+  push:
+    branches:
+      - "asdasdf"
 
 env:
   REGISTRY: ghcr.io
