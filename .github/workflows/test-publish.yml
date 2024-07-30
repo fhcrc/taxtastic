@@ -1,7 +1,7 @@
 ---
 name: Run tests and deploy to registry
 
-  on: false
+  on:
   #   push:
   #     branches:
   #       - "*"
