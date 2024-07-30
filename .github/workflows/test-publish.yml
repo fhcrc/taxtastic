@@ -2,11 +2,6 @@
 name: Run tests and deploy to registry
 
 on:
-  push:
-    branches:
-      - "*"
-    tags: 
-      - "v*.*.*"
   pull_request:
 		branches:
       - "master"
