@@ -1,15 +1,15 @@
 ---
 name: Run tests and deploy to registry
 
-on:
-  push:
-    branches:
-      - "*"
-    tags: 
-      - "v*.*.*"
-  pull_request:
-    branches:
-      - $default-branch
+  # on:
+  #   push:
+  #     branches:
+  #       - "*"
+  #     tags: 
+  #       - "v*.*.*"
+  #   pull_request:
+  #     branches:
+  #       - $default-branch
 
 env:
   REGISTRY: ghcr.io
