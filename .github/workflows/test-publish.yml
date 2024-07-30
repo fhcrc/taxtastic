@@ -9,7 +9,7 @@ on:
       - "v*.*.*"
   pull_request:
     branches:
-      - "master"
+      - $default-branch
 
 env:
   REGISTRY: ghcr.io
