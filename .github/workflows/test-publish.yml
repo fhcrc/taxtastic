@@ -10,6 +10,8 @@ on:
   pull_request:
     branches:
       - "master"
+  schedule:
+    - cron: '0 6 15 * *'  # 15th of each month at 6am
 
 env:
   REGISTRY: ghcr.io
@@ -65,6 +67,8 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v6
         with:
+          annotations: ${{ steps.meta.outputs.annotations }}
+          build-args: VERSION=${{ steps.meta.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           labels: ${{ steps.meta.outputs.labels }}
