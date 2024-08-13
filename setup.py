@@ -48,20 +48,18 @@ params = {'name': 'taxtastic',
               'Programming Language :: Python :: 3.12',
               'Topic :: Scientific/Engineering :: Bio-Informatics'],
           'download_url': 'https://github.com/fhcrc/taxtastic',
-          # 'package_data': {
-          #     'taxtastic': ['data/*']},
           'include_package_data': True,
           'entry_points': {
               'console_scripts': ['taxit = taxtastic.scripts.taxit:main']},
           'test_suite': 'tests',
           'install_requires': [
-              'DendroPy',
-              'PyYAML',
               'decorator',
+              'DendroPy',
               'fastalite',
               'jinja2',
+              'psycopg-binary',
               'psycopg2-binary',
-              'psycopg[binary]',
+              'PyYAML',
               'sqlalchemy>=2',
               'sqlparse',
           ]}
