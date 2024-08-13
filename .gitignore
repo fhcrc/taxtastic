@@ -1,19 +1,5 @@
-taxtastic/data/ver
-*.pyc
-build/
-dist/
-_build
-test_output/
-doctrees/
-*-env
-*.egg-info/
-html
-/docs/_helptext/
-MANIFEST
-TODO
-src/
-.DS_Store
-
-# due to using tox and pytest
-.tox
-.cache
+*
+!setup.py
+!MANINFEST.in
+!README.rst
+!taxtastic/
