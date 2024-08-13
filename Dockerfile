@@ -1,7 +1,7 @@
 # docker build --build-arg VERSION=something --tag taxtastic:latest .
 FROM python:3.11-slim-bullseye
 
-ARG VERSION=
+ARG VERSION
 ENV PIP_ROOT_USER_ACTION=ignore TAXTASTIC_VERSION=${VERSION#v}
 
 RUN apt-get -y update && apt-get upgrade -y && apt-get install -y unzip wget
