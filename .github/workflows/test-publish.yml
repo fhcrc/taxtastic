@@ -39,7 +39,9 @@ jobs:
           python -m pip install .
 
       - name: Run tests
-        run: python -m unittest discover
+        run: |
+          python -m unittest discover
+          taxit -v new_database
 
   deploy:
       if: github.ref_type == 'tag'
