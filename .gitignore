@@ -1,5 +1,8 @@
-*
+/*
+taxtastic/data/ver
+__pycache__
 !setup.py
 !MANINFEST.in
 !README.rst
 !taxtastic/
+!.github/
