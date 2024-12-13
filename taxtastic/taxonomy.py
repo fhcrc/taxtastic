@@ -858,7 +858,7 @@ class Taxonomy(object):
         nodes = self.nodes
         s = select(nodes.c.tax_id).where(nodes.c.is_valid)
         if tax_ids:
-            s = s.where(nodes.c.tax_id.in_(tax_ids))
+            s = s.where(nodes.c.tax_id.in_(set(tax_ids)))
         if not no_rank:
             s = s.where(nodes.c.rank == 'no_rank')
         return [r[0] for r in self.fetchall(s)]

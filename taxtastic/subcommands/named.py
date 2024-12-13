@@ -61,7 +61,7 @@ def action(args):
         fieldnames = seq_info.fieldnames
         seq_info = list(seq_info)
         tax_ids = (i['tax_id'] for i in seq_info)
-        named = tax.is_valid(tax_ids, no_rank=not args.ranked)
+        named = set(tax.is_valid(tax_ids, no_rank=not args.ranked))
         out = csv.DictWriter(args.outfile, fieldnames=fieldnames)
         out.writeheader()
         out.writerows(i for i in seq_info if i['tax_id'] in named)
@@ -71,7 +71,7 @@ def action(args):
         else:
             tax_ids = (i.strip() for i in args.tax_id_file)
             tax_ids = [i for i in tax_ids if i]
-        named = tax.is_valid(tax_ids, no_rank=not args.ranked)
+        named = set(tax.is_valid(tax_ids, no_rank=not args.ranked))
         tax_ids = (i for i in tax_ids if i in named)
         for i in tax_ids:
             args.outfile.write(i + '\n')
