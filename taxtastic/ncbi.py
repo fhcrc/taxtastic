@@ -83,7 +83,7 @@ RANK_ORDER = [
     'superphylum',
     'subkingdom',
     'kingdom',
-    'superkingdom',
+    'domain',
     'root',
 ]
 
