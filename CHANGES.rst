@@ -2,14 +2,15 @@
  change log for taxtastic
 ==========================
 
-Upcoming
-========
+0.11.0
+======
 
 * Updated NCBI taxdmp.zip download protocol from ftp to https [GH-156]
 * New subcommand `taxit named` that filters unclassified, unnamed taxonomy ids
 * Subcommand update_taxids can now process a tab delimited headerless file
 * Subcommand taxtable has option to continue if unknown taxids
 * Added Dockerfile support for execution on cirro.app
+* Updated taxonomy ranks to replace superkingdom with domain [GH-171]
 
 0.10.1
 ======
