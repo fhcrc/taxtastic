@@ -2,6 +2,11 @@
  change log for taxtastic
 ==========================
 
+0.11.1
+======
+
+* Updated taxonomy ranks to include cellular_root and acellular_root [GH-171]
+
 0.11.0
 ======
 
