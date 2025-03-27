@@ -84,6 +84,8 @@ RANK_ORDER = [
     'subkingdom',
     'kingdom',
     'domain',
+    'cellular_root',
+    'acellular_root',
     'root',
 ]
 
