@@ -30,7 +30,8 @@ description = "Tools for taxonomic naming and annotation"
 dynamic = ["version"]
 license = {file = "LICENSE"}
 maintainers = [
-  {email = "crosenth@gmail.com", name = "Chris Rosenthal"}
+  {email = "crosenth@gmail.com", name = "Chris Rosenthal"},
+  {email = "dhoogest@uw.edu", name="Dan Hoogestraat"}
 ]
 name = "taxtastic"
 readme = "README.rst"
