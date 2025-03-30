@@ -28,7 +28,7 @@ dependencies = [
 ]
 description = "Tools for taxonomic naming and annotation"
 dynamic = ["version"]
-license = "GPL-3.0-only"
+license = {file = "LICENSE"}
 maintainers = [
   {email = "crosenth@gmail.com", name = "Chris Rosenthal"}
 ]
