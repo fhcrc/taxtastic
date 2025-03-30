@@ -27,7 +27,7 @@ dependencies = [
 "sqlparse"
 ]
 description = "Tools for taxonomic naming and annotation"
-dynamic = ["version"]
+dynamic = ["version"]  # https://setuptools-scm.readthedocs.io/en/latest/
 license = {file = "LICENSE"}
 maintainers = [
   {email = "crosenth@gmail.com", name = "Chris Rosenthal"},
