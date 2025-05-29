@@ -28,7 +28,7 @@ dependencies = [
 ]
 description = "Tools for taxonomic naming and annotation"
 dynamic = ["version"]  # https://setuptools-scm.readthedocs.io/en/latest/
-license = "GPL-3.0-only"
+license = {test = "GPL-3.0-only"}
 maintainers = [
   {email = "crosenth@gmail.com", name = "Chris Rosenthal"},
   {email = "dhoogest@uw.edu", name="Dan Hoogestraat"}
