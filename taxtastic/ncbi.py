@@ -24,6 +24,7 @@ from urllib import request
 import zipfile
 import io
 from operator import itemgetter
+import warnings
 
 from jinja2 import Environment, PackageLoader
 import sqlparse
@@ -84,6 +85,7 @@ RANK_ORDER = [
     'subkingdom',
     'kingdom',
     'domain',
+    'realm',
     'cellular_root',
     'acellular_root',
     'root',
@@ -316,6 +318,11 @@ def read_nodes(rows, source_id=1):
     for row in rows:
         # replace whitespace in "rank" with underscore
         row[rank] = '_'.join(row[rank].split())
+        # set missing ranks to no_rank and warn
+        if row[rank] not in RANKS:
+            warnings.warn(
+                'replacing unknown rank "{}" with "no_rank"'.format(row[rank]))
+            row[rank] = 'no_rank'
         # provide default values for source_id and is_valid
         yield row[:ncbi_cols] + [source_id, is_valid]
 
