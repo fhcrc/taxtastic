@@ -129,7 +129,7 @@ class LonelyNodesTestCase(TestScriptBase):
         with open(self.outfile, **self.openargs) as fp:
             self.assertEqual("""tax_name,tax_id,rank
 Bacilli,91061,class
-Bacteria,2,superkingdom
+Bacteria,2,domain
 Enterobacteriaceae,543,family
 Enterobacteriales,91347,order
 Escherichia,561,genus
@@ -138,7 +138,7 @@ Gammaproteobacteria,1236,class
 Lactobacillaceae,33958,family
 Lactobacillales,186826,order
 Lactobacillus,1578,genus
-cellular organisms,131567,below_root
+cellular organisms,131567,cellular_root
 """, fp.read())
 
     def test_species(self):

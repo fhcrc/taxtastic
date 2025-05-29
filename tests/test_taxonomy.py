@@ -385,12 +385,15 @@ class TestTaxonomyTree(TestTaxonomyBase):
         self.assertFalse(self.tax.is_below('kingdom', 'family'))
         self.assertEqual(
             self.tax.ranks_below('species'),
-            ['forma', 'varietas', 'subspecies'])
+            ['forma', 'subvariety', 'varietas', 'serogroup',
+             'pathogroup', 'morph', 'genotype', 'biotype', 'subspecies'])
         self.assertEqual(
             self.tax.ranks_below('family'),
-            ['forma', 'varietas', 'subspecies', 'species',
-             'species_subgroup', 'species_group', 'subgenus',
-             'genus', 'subtribe', 'tribe', 'subfamily'])
+            ['forma', 'subvariety', 'varietas', 'serogroup', 'pathogroup',
+             'morph', 'genotype', 'biotype', 'subspecies', 'species',
+             'species_subgroup', 'species_group', 'subseries', 'series',
+             'subsection', 'section', 'subgenus', 'genus', 'subtribe',
+             'tribe', 'subfamily'])
 
     def test_nary_subtree(self):
         self.assertRaises(ValueError, self.tax.nary_subtree, None)
