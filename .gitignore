@@ -1,7 +1,7 @@
 /*
-taxtastic/data/ver
+taxtastic/taxtastic.egg-info/
 __pycache__
-!setup.py
+!pyproject.toml
 !MANINFEST.in
 !README.rst
 !taxtastic/

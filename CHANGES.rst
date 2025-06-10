@@ -2,6 +2,11 @@
  change log for taxtastic
 ==========================
 
+0.11.2-dev
+==========
+
+* Migrated setup.py to pyproject.toml [GH-172]
+
 0.11.1
 ======
 
