@@ -27,7 +27,7 @@ from sqlalchemy.sql import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from taxtastic.ncbi import UNORDERED_RANKS
+from taxtastic.ncbi import UnknownRankError, UNORDERED_RANKS
 from taxtastic.utils import random_name
 
 log = logging.getLogger(__name__)
@@ -480,7 +480,7 @@ class Taxonomy(object):
             return self.ranks.index(n1) < self.ranks.index(n2)
 
         if rank not in self.ranks:
-            raise TaxonIntegrityError('rank "{}" is undefined'.format(rank))
+            raise UnknownRankError('"{}" is undefined'.format(rank))
 
         parent_rank = self.rank(parent_id)
         # undefined ranks can be placed anywhere in a lineage

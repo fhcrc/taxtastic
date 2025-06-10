@@ -24,6 +24,7 @@ from urllib import request
 import zipfile
 import io
 from operator import itemgetter
+import warnings
 
 from jinja2 import Environment, PackageLoader
 import sqlparse
@@ -84,6 +85,7 @@ RANK_ORDER = [
     'subkingdom',
     'kingdom',
     'domain',
+    'realm',
     'cellular_root',
     'acellular_root',
     'root',
@@ -287,7 +289,7 @@ def read_merged(rows):
         yield tuple(row)
 
 
-def read_nodes(rows, source_id=1):
+def read_nodes(rows, source_id=1, error=True):
     """
     Return an iterator of rows ready to insert into table "nodes".
 
@@ -316,6 +318,15 @@ def read_nodes(rows, source_id=1):
     for row in rows:
         # replace whitespace in "rank" with underscore
         row[rank] = '_'.join(row[rank].split())
+        # set missing ranks to no_rank and warn
+        if row[rank] not in RANKS:
+            if error:
+                raise UnknownRankError('"{}" is undefined'.format(row[rank]))
+            else:
+                warnings.warn(
+                    'replacing unknown rank '
+                    '"{}" with "no_rank"'.format(row[rank]))
+            row[rank] = 'no_rank'
         # provide default values for source_id and is_valid
         yield row[:ncbi_cols] + [source_id, is_valid]
 
@@ -404,7 +415,7 @@ class NCBILoader(object):
         cur.executemany(cmd, itertools.islice(rows, limit))
         conn.commit()
 
-    def load_archive(self, archive):
+    def load_archive(self, archive, error):
         """Load data from the zip archive of the NCBI taxonomy.
 
         """
@@ -433,7 +444,9 @@ class NCBILoader(object):
         # nodes
         log.info('loading nodes')
         nodes_rows = read_nodes(
-            read_archive(archive, 'nodes.dmp'), source_id=source_id)
+            read_archive(archive, 'nodes.dmp'),
+            source_id=source_id,
+            error=error)
         self.load_table('nodes', rows=nodes_rows)
 
         # names
@@ -592,3 +605,9 @@ def read_archive(archive, fname):
         if line not in seen:
             yield line.split('\t|\t')
             seen.add(line)
+
+
+class UnknownRankError(Exception):
+    '''
+    Raised when a node contains an rank not present in the RANKS variable
+    '''
