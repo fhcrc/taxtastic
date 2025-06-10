@@ -531,7 +531,8 @@ options:
 <section id="new-database">
 <h2>new_database<a class="headerlink" href="#new-database" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>usage: taxit new_database [-h] [--schema SCHEMA] [--no-clobber] [-n]
-                          [-z FILE.zip] [-u URL] [-p PATH] [--out OUT]
+                          [-a {error,warn}] [-z FILE.zip] [-u URL] [-p PATH]
+                          [--out OUT]
                           [url]
 
 Download NCBI taxonomy and create a database
@@ -553,6 +554,8 @@ options:
   --no-clobber          If database exists keep current data and append new
                         data. [False]
   -n, --no-load         Create schema and exit
+  -a {error,warn}, --unknown-action {error,warn}
+                        action to perform for unknown ranks [error]
   --out OUT             table sql
 
 database options:
