@@ -34,10 +34,10 @@ class TaxNodeTestCase(unittest.TestCase):
                          [i.tax_id for i in lineage])
 
     def test_write_taxtable(self):
-        expected = '''"tax_id","parent_id","rank","tax_name","root","below_root","superkingdom","phylum","class","order","family","genus","species"
+        expected = '''"tax_id","parent_id","rank","tax_name","root","cellular_root","domain","phylum","class","order","family","genus","species"
 "1","1","root","root","1","","","","","","","",""
-"131567","1","below_root","cellular organisms","1","131567","","","","","","",""
-"2","131567","superkingdom","Bacteria","1","131567","2","","","","","",""
+"131567","1","cellular_root","cellular organisms","1","131567","","","","","","",""
+"2","131567","domain","Bacteria","1","131567","2","","","","","",""
 "1239","2","phylum","Firmicutes","1","131567","2","1239","","","","",""
 "91061","1239","class","Bacilli","1","131567","2","1239","91061","","","",""
 "186826","91061","order","Lactobacillales","1","131567","2","1239","91061","186826","","",""
