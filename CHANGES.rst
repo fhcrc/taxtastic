@@ -2,6 +2,12 @@
  change log for taxtastic
 ==========================
 
+0.12.0
+======
+
+* Fixed updated NCBI taxonomoy update for `lineages_table` subcommand [GH-176]
+* Added another new NCBI rank plus ability to set unknown ranks to no_rank [GH-175]
+
 0.11.1
 ======
 
