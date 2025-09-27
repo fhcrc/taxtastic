@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Escape Granny: Rudra & Swastik — The Easy Game</title>
+  <style>
+    body{margin:0;background:#0b1020;color:#fff;font-family:sans-serif;text-align:center}
+    canvas{background:#111827;display:block;margin:10px auto;border-radius:8px}
+    #menu,#gameOver{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(0,0,0,0.8)}
+    #menu button,#gameOver button{padding:12px 24px;margin:10px;font-size:18px;border:none;border-radius:8px;cursor:pointer;background:#4ade80;color:#111827}
+    #instructions{max-width:400px;margin:10px;padding:10px;background:#1e293b;border-radius:8px;font-size:14px}
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <h1>Escape Granny: Rudra & Swastik — The Easy Game</h1>
+    <button id="playBtn">Play</button>
+    <div id="instructions">
+      <p>Control Rudra with WASD and Swastik with Arrow keys.</p>
+      <p>Avoid Granny and try to escape!</p>
+    </div>
+  </div>
+
+  <canvas id="game" width="800" height="500" style="display:none"></canvas>
+
+  <div id="gameOver" style="display:none">
+    <h1>Game Over!</h1>
+    <p id="finalScore"></p>
+    <button id="restartBtn">Restart</button>
+  </div>
+
+  <script>
+    const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
+    const menu=document.getElementById("menu"),gameOver=document.getElementById("gameOver");
+    const players={rudra:{x:50,y:50,w:20,h:20,color:"#4ade80"},swastik:{x:730,y:430,w:20,h:20,color:"#60a5fa"}};
+    const granny={x:400,y:250,w:30,h:30,color:"#f87171",dx:1,dy:1};
+    const keys={};
+    let gameRunning=false;
+
+    document.addEventListener("keydown",e=>keys[e.key]=true);
+    document.addEventListener("keyup",e=>keys[e.key]=false);
+
+    function update(){
+      if(keys["w"]) players.rudra.y-=2;
+      if(keys["s"]) players.rudra.y+=2;
+      if(keys["a"]) players.rudra.x-=2;
+      if(keys["d"]) players.rudra.x+=2;
+      if(keys["ArrowUp"]) players.swastik.y-=2;
+      if(keys["ArrowDown"]) players.swastik.y+=2;
+      if(keys["ArrowLeft"]) players.swastik.x-=2;
+      if(keys["ArrowRight"]) players.swastik.x+=2;
+
+      granny.x+=granny.dx; granny.y+=granny.dy;
+      if(granny.x<0||granny.x+granny.w>canvas.width) granny.dx*=-1;
+      if(granny.y<0||granny.y+granny.h>canvas.height) granny.dy*=-1;
+
+      // Check collision
+      if(collide(players.rudra,granny)||collide(players.swastik,granny)) endGame();
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle=granny.color; ctx.fillRect(granny.x,granny.y,granny.w,granny.h);
+      for(const p of Object.values(players)){ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.w,p.h);}
+    }
+
+    function loop(){
+      if(!gameRunning) return;
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function collide(a,b){return a.x<a.x+b.w && a.x+a.w>b.x && a.y<a.y+b.h && a.y+a.h>b.y || b.x<b.x+a.w && b.x+b.w>a.x && b.y<b.y+a.h && b.y+b.h>a.y;}
+
+    function startGame(){
+      players.rudra.x=50; players.rudra.y=50;
+      players.swastik.x=730; players.swastik.y=430;
+      granny.x=400; granny.y=250; granny.dx=1; granny.dy=1;
+      menu.style.display="none";
+      gameOver.style.display="none";
+      canvas.style.display="block";
+      gameRunning=true;
+      loop();
+    }
+
+    function endGame(){
+      gameRunning=false;
+      canvas.style.display="none";
+      gameOver.style.display="flex";
+      document.getElementById("finalScore").textContent="You were caught!";
+    }
+
+    document.getElementById("playBtn").addEventListener("click",startGame);
+    document.getElementById("restartBtn").addEventListener("click",startGame);
+  </script>
+</body>
+</html>
