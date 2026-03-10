@@ -6,8 +6,8 @@ Taxtastic is a python package used to build and maintain reference
 packages, i.e. collections of reference trees, reference alignments,
 profiles, and associated taxonomic information.
 
-.. image:: https://travis-ci.org/fhcrc/taxtastic.svg?branch=master
-    :target: https://travis-ci.org/fhcrc/taxtastic
+.. image:: https://github.com/fhcrc/taxtastic/actions/workflows/test-publish.yml/badge.svg
+    :target: https://github.com/fhcrc/taxtastic/actions/workflows/test-publish.yml
 
 * quickstart_
 * `full documentation`_
@@ -16,14 +16,14 @@ A script named ``taxit`` provides a command line interface::
 
   % taxit -h
   usage: taxit [-h] [-V] [-v] [-q]
-               {help,add_nodes,add_to_taxtable,check,composition,create,extract_nodes,findcompany,get_descendants,get_lineage,info,lineage_table,lonelynodes,namelookup,new_database,refpkg_intersection,reroot,rollback,rollforward,rp,strip,taxids,taxtable,update,update_taxids}
+               {help,add_nodes,add_to_taxtable,check,composition,create,extract_nodes,findcompany,get_descendants,get_lineage,info,lineage_table,lonelynodes,named,namelookup,new_database,refpkg_intersection,reroot,rollback,rollforward,rp,strip,taxids,taxtable,update,update_taxids}
                ...
 
   Creation, validation, and modification of reference packages for use with
   `pplacer` and related software.
 
   positional arguments:
-    {help,add_nodes,add_to_taxtable,check,composition,create,extract_nodes,findcompany,get_descendants,get_lineage,info,lineage_table,lonelynodes,namelookup,new_database,refpkg_intersection,reroot,rollback,rollforward,rp,strip,taxids,taxtable,update,update_taxids}
+    {help,add_nodes,add_to_taxtable,check,composition,create,extract_nodes,findcompany,get_descendants,get_lineage,info,lineage_table,lonelynodes,named,namelookup,new_database,refpkg_intersection,reroot,rollback,rollforward,rp,strip,taxids,taxtable,update,update_taxids}
       help                Detailed help for actions using `help <action>`
       add_nodes           Add nodes and names to a database
       add_to_taxtable     Add nodes to an existing taxtable csv
@@ -38,6 +38,7 @@ A script named ``taxit`` provides a command line interface::
       lineage_table       Create a table of lineages as taxonimic names for a
                           collection of sequences
       lonelynodes         Extracts tax ids of all lonely nodes in a taxtable
+      named               Filters unclassified, unnamed taxonomy ids
       namelookup          Find primary name and tax_id from taxonomic names
       new_database        Download NCBI taxonomy and create a database
       refpkg_intersection
@@ -68,26 +69,13 @@ Installation
 ============
 
 ``taxtastic`` requires Python 3.8+. The simplest method of installing
-is using `pip <http://pip-installer.org>`_::
+is from PyPi using `uv <https://docs.astral.sh/uv/>`_::
 
-  pip install taxtastic
+  uv tool install taxtastic
 
-We strongly recommend installation into a virtualenv. Instructions for
-installing the ``taxtastic`` package and the ``taxit`` command line
-entry point in a virtualenv are as follows::
+Or if you prefer to install from the git repository::
 
-  python3 -m venv taxtastic-env
-  source taxtastic-env/bin/activate
-  pip install -U pip
-  pip install taxtastic
-
-If you prefer to install from the git repository::
-
-  git clone https://github.com/fhcrc/taxtastic.git
-  cd taxtastic
-  python3 -m venv taxtastic-env
-  source taxtastic-env/bin/activate
-  pip install .
+  uv tool install git+https://github.com/fhcrc/taxtastic.git
 
 Finally, ``taxit`` can be run from a Docker image hosted in the GitHub
 Container Registry. For example, to create a new sqlite database::
