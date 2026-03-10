@@ -47,6 +47,12 @@ def build_parser(parser):
         dest='load',
         help=('Create schema and exit'))
 
+    parser.add_argument(
+        '-a', '--unknown-action',
+        choices=['error', 'warn'],
+        default='error',
+        help='action to perform for unknown ranks [%(default)s]')
+
     download_parser = parser.add_argument_group(title='download options')
     download_parser.add_argument(
         '-z', '--taxdump-file',
@@ -96,7 +102,7 @@ def action(args):
 
     if args.load:
         ncbi_loader = taxtastic.ncbi.NCBILoader(engine, args.schema)
-        ncbi_loader.load_archive(zfile)
+        ncbi_loader.load_archive(zfile, args.unknown_action == 'error')
 
         if dialect == 'postgresql':
             taxtastic.ncbi.execute_template(engine, 'add_pg_indexes.sql')

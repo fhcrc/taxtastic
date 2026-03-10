@@ -2,10 +2,15 @@
  change log for taxtastic
 ==========================
 
-0.11.2-dev
+0.12.0-dev
 ==========
-
 * Migrated setup.py to pyproject.toml [GH-172]
+
+0.12.0
+======
+
+* Fixed updated NCBI taxonomoy update for `lineages_table` subcommand [GH-176]
+* Added another new NCBI rank plus ability to set unknown ranks to no_rank [GH-175]
 
 0.11.1
 ======

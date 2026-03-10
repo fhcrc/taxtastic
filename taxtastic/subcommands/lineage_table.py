@@ -29,7 +29,7 @@ sequence names to tax_ids. Outputs are one or more of:
     ('order', 'o'),
     ('class', 'c'),
     ('phylum', 'p'),
-    ('superkingdom', 'k'),
+    ('domain', 'd'),
 
   Lineages are truncated to either the most specific defined rank or
   species, and missing tax_names at a given rank are replaced with the
@@ -122,7 +122,7 @@ def action(args):
             ('order', 'o'),
             ('class', 'c'),
             ('phylum', 'p'),
-            ('superkingdom', 'k'),
+            ('domain', 'd'),
         ]
 
         def clean(tax_name, rexp=re.compile(r'[^-A-Z0-9_\[\]]+', re.I)):
