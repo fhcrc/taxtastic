@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+authors = [
+  {email = "ngh2@uw.edu", name = "Noah Hoffman"}
+]
+classifiers = [
+"Development Status :: 3 - Alpha",
+"Programming Language :: Python :: 3.8",
+"Programming Language :: Python :: 3.9",
+"Programming Language :: Python :: 3.10",
+"Programming Language :: Python :: 3.11",
+"Programming Language :: Python :: 3.12",
+"Topic :: Scientific/Engineering :: Bio-Informatics"
+]
+dependencies = [
+"decorator",
+"DendroPy",
+"fastalite",
+"jinja2",
+"psycopg-binary",
+"psycopg2-binary",
+"PyYAML",
+"sqlalchemy>=2",
+"sqlparse"
+]
+description = "Tools for taxonomic naming and annotation"
+dynamic = ["version"]  # https://setuptools-scm.readthedocs.io/en/latest/
+license = {text = "GPL-3.0-only"}
+maintainers = [
+  {email = "crosenth@gmail.com", name = "Chris Rosenthal"},
+  {email = "dhoogest@uw.edu", name="Dan Hoogestraat"}
+]
+name = "taxtastic"
+readme = "README.rst"
+requires-python = ">=3.8"
+
+[project.urls]
+repository = "https://github.com/fhcrc/taxtastic"
+
+[project.scripts]
+taxit = "taxtastic.scripts.taxit:main"
+
+[tool.setuptools.packages.find]
+exclude = ["testfiles", "tests"]
+
+[tool.setuptools_scm]
+# can be empty if no extra settings are needed, presence enables setuptools-scm
