@@ -14,7 +14,7 @@ RUN /opt/build/install_pplacer.sh /usr/local
 COPY pyproject.toml MANIFEST.in README.rst ./
 COPY taxtastic/ ./taxtastic/
 COPY .git/ ./.git/
-RUN pip3 install --upgrade pip && pip3 install .
+RUN pip3 install .
 
 WORKDIR /opt/run
 RUN mkdir -p /app /fh /mnt /run/shm
