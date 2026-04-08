@@ -5,6 +5,7 @@
 0.12.0-dev
 ==========
 * Migrated setup.py to pyproject.toml [GH-172]
+* New subcommand `taxit append` that adds rank tax_id or tax_name to csv file
 
 0.12.0
 ======
