@@ -1,8 +1,5 @@
-/*
-taxtastic/taxtastic.egg-info/
+taxtastic.egg-info/
 __pycache__
-!pyproject.toml
-!MANINFEST.in
-!README.rst
-!taxtastic/
-!.github/
+build/
+dist/
+.venv/
