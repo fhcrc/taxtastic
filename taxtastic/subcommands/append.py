@@ -76,12 +76,13 @@ def action(args):
     }
 
     log.info('fetching lineages for {} tax_ids'.format(len(tax_ids)))
-    lineage_rows = tax._get_lineage_table(tax_ids)
-
-    # build {tid: {rank: tax_name}}
     lineages = defaultdict(dict)
-    for tid, _tax_id, _parent_id, rank, tax_name in lineage_rows:
-        lineages[tid][rank] = (_tax_id, tax_name)
+    try:
+        lineage_rows = tax._get_lineage_table(tax_ids)
+        for tid, _tax_id, _parent_id, rank, tax_name in lineage_rows:
+            lineages[tid][rank] = (_tax_id, tax_name)
+    except ValueError:
+        log.warning('no tax_ids were found in the database')
 
     missing = tax_ids - set(lineages)
     if missing:
