@@ -16,11 +16,12 @@
 
 Given a CSV file with a tax_id column, look up the taxonomic lineage
 for each tax_id and append the requested rank columns (e.g. genus,
-species) to each row.
+species) to each row.  Use _name to for rank tax_name (e.g. genus_name,
+species_name)
 
 Example::
 
-    taxit append --columns genus,species seq_info.csv ncbi.db
+    taxit append --columns genus,species,species_name seq_info.csv ncbi.db
 
 """
 import csv
