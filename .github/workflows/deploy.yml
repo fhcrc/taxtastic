@@ -1,10 +1,8 @@
 ---
-name: Run tests and deploy to registry
+name: Deploy to registry
 
 on:
   push:
-    branches:
-      - "*"
     tags:
       - "v*.*.*"
 
@@ -17,7 +15,6 @@ jobs:
     uses: ./.github/workflows/unittests.yml
 
   deploy:
-      if: github.ref_type == 'tag'
       needs: [unittests]
       runs-on: ubuntu-latest
 
