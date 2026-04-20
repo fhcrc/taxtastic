@@ -7,9 +7,12 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    uses: ./.github/workflows/unittests.yml
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
-    environment: pypi
     permissions:
       id-token: write
 
