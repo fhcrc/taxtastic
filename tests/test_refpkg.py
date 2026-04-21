@@ -65,7 +65,7 @@ class TestRefpkg(unittest.TestCase):
                 self.assertRaises(
                     ValueError, refpkg.Refpkg, pkg_path, create=False)
         finally:
-            shutil.rmtree(scratch)
+            shutil.rmtree(scratch, ignore_errors=True)
 
     def test_catch_nonmatching_md5(self):
         scratch = tempfile.mkdtemp()
