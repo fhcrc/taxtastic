@@ -1,8 +1,0 @@
-decorator
-DendroPy
-fastalite
-Jinja2
-psycopg-binary
-psycopg2-binary
-PyYAML
-SQLAlchemy
