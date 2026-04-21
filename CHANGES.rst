@@ -2,8 +2,8 @@
  change log for taxtastic
 ==========================
 
-0.12.1
-======
+1.0.0
+=====
 * Migrated setup.py to pyproject.toml [GH-172]
 * New subcommand `taxit append` that adds rank tax_id or tax_name to csv file
 * Updated tox.ini to support Python 3.8-3.12, removed obsolete setup.py and pysqlite commands
