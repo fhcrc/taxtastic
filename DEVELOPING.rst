@@ -2,14 +2,6 @@
  Developing taxtastic
 ======================
 
-Requirements
-============
-
-Note that building docs, publishing to pypi, etc require some
-additional dependencies. In your active virtualenv::
-
-  pip3 install -r requirements-dev.txt
-
 Git workflow
 ============
 
@@ -59,40 +51,34 @@ Preparing a release
 1. `git push --tags`
 1. update PyPi (see below)
 
-PyPi
+PyPI
 ====
 
-If you have not done so create a ~/.pypirc file::
-
-  python setup.py register
-
-Proceed to build and upload (assuming python3 in an active virtualenv)::
-
-  python setup.py clean
-  pip install -e .
-  rm -r dist
-  python3 setup.py sdist bdist_wheel
-  python3 -m twine upload dist/*
+Publishing to PyPI is handled automatically by the ``publish-pypi.yml``
+GitHub Actions workflow when a release is created on GitHub.
 
 Building docs with Sphinx
 =========================
 
-It's best to create and activate a virtualenv first to provide all of
-the requirements for building and publishing the documentation (see
-above).
+Install the package and Sphinx into an active virtualenv::
 
-The Sphinx configuration uses the version defined in the package,
-which in turn uses the git tag, so make sure that the tag is up to
-date before building the docs::
+  pip install -e . sphinx
 
-  (cd docs && make html)
+If subcommand help text has changed, regenerate it first::
 
-Note that the html directory needs to contain a file named `.nojekyll`
-to prevent GitHub from ignoring pages with leading underscores (like
-`_static`), so the Makefile adds one
+  python dev/helptext.py -d docs/_helptext ./taxit.py
 
-Manual deployment should not be necessary since there is a GH action
-to build and deploy. However, is manual deployment is necessary, use
-`ghp-import`::
+Then build the docs::
 
-  ghp-import -p html
+  cd docs && make html
+
+Open ``html/index.html`` in a browser to review.
+
+For iterative development, use ``sphinx-autobuild`` which watches for
+changes and auto-reloads at ``http://127.0.0.1:8000``::
+
+  pip install sphinx-autobuild
+  sphinx-autobuild docs html
+
+Deployment is handled automatically by the ``gh-pages.yml`` GitHub
+Actions workflow on push to master.
