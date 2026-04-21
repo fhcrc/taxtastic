@@ -6,8 +6,8 @@ Taxtastic is a python package used to build and maintain reference
 packages, i.e. collections of reference trees, reference alignments,
 profiles, and associated taxonomic information.
 
-.. image:: https://github.com/fhcrc/taxtastic/actions/workflows/test-publish.yml/badge.svg
-    :target: https://github.com/fhcrc/taxtastic/actions/workflows/test-publish.yml
+.. image:: https://github.com/fhcrc/taxtastic/actions/workflows/unittests.yml/badge.svg
+    :target: https://github.com/fhcrc/taxtastic/actions/workflows/unittests.yml
 
 * quickstart_
 * `full documentation`_
