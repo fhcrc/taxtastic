@@ -114,6 +114,10 @@ def parse_arguments(argv):
 
     # Support help <action> by simply having this function call itself and
     # translate the arguments into something that argparse can work with.
+    if action is None:
+        parser.print_help()
+        sys.exit(1)
+
     if action == 'help':
         return parse_arguments([str(arguments.action[0]), '-h'])
 
