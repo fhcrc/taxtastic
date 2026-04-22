@@ -15,7 +15,7 @@ root_doc = 'index'
 
 project = 'taxtastic'
 author = 'Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy, Chris Rosenthal'
-copyright = '2011-{}'.format(datetime.date.today().strftime('%Y'))
+copyright = '2011-{} {}'.format(datetime.date.today().strftime('%Y'), author)
 
 version = __version__.split('+')[0]
 release = version
