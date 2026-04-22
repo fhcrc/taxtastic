@@ -2,20 +2,20 @@ Installation
 ============
 
 ``taxtastic`` requires Python 3.8 or later. The simplest method of
-installation is using `pip <https://pip.pypa.io>`_::
+installation is using `uv <https://docs.astral.sh/uv/>`_::
 
+  uv tool install taxtastic
+
+Or to install from the git repository::
+
+  uv tool install git+https://github.com/fhcrc/taxtastic.git
+
+For development we recommend installing into a virtual environment::
+
+  python -m venv .env
+  source .env/bin/activate
   pip install taxtastic
 
-We recommend installing into a virtual environment::
+Or installing using the `--editable` flag::
 
-  python -m venv taxtastic-env
-  source taxtastic-env/bin/activate
-  pip install taxtastic
-
-To install from the git repository::
-
-  git clone https://github.com/fhcrc/taxtastic.git
-  cd taxtastic
-  python -m venv taxtastic-env
-  source taxtastic-env/bin/activate
-  pip install .
+  uv tool install --editable taxtastic
