@@ -16,6 +16,6 @@ For development we recommend installing into a virtual environment::
   source .env/bin/activate
   pip install taxtastic
 
-Or installing using the `--editable` flag::
+Or installing using the `uv tool install --editable` flag::
 
   uv tool install --editable taxtastic
