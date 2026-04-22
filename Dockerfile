@@ -1,5 +1,5 @@
 # docker build --build-arg VERSION=something --tag taxtastic:latest .
-FROM python:3.11-slim-bullseye
+FROM python:3.12-slim-bullseye
 
 ARG VERSION
 ENV PIP_ROOT_USER_ACTION=ignore
