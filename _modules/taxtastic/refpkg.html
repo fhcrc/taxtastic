@@ -1,38 +1,235 @@
-<!DOCTYPE html>
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="canonical" href="https://fhcrc.github.io/taxtastic/_modules/taxtastic/refpkg.html">
 
-<html lang="en" data-content_root="../../">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>taxtastic.refpkg &#8212; taxtastic 0.1.dev1+g290515b8a documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>taxtastic.refpkg - taxtastic 0.1.dev1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
-    <script src="../../_static/documentation_options.js?v=259853e5"></script>
-    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
-    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     
-    <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
-  </head><body>
-    <div class="related" role="navigation" aria-label="Related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">taxtastic 0.1.dev1+g290515b8a documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">taxtastic.refpkg</a></li> 
-      </ul>
-    </div>  
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
-            
-  <h1>Source code for taxtastic.refpkg</h1><div class="highlight"><pre>
+
+<style>
+  body {
+    --color-code-background: #f0f0f0;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">taxtastic 0.1.dev1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  <span class="sidebar-brand-text">taxtastic 0.1.dev1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../taxonomy.html">Manipulating the NCBI taxonomy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../refpkg.html">Creating and manipulating refpkgs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../refpkg_api.html">The Python Refpkg API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../commands.html">Detailed <code class="docutils literal notranslate"><span class="pre">taxit</span></code> documentation</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for taxtastic.refpkg</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">taxtastic/refpkg.py</span>
 
@@ -55,50 +252,50 @@
 <span class="c1">#</span>
 <span class="c1">#    You should have received a copy of the GNU General Public License</span>
 <span class="c1">#    along with taxtastic.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
-<span class="kn">import</span> <span class="nn">errno</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">contextlib</span>
-<span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">csv</span>
-<span class="kn">import</span> <span class="nn">functools</span>
-<span class="kn">import</span> <span class="nn">hashlib</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">shutil</span>
-<span class="kn">import</span> <span class="nn">subprocess</span>
-<span class="kn">import</span> <span class="nn">tempfile</span>
-<span class="kn">import</span> <span class="nn">zipfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">errno</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
 
-<span class="kn">import</span> <span class="nn">dendropy</span>
-<span class="kn">from</span> <span class="nn">decorator</span> <span class="kn">import</span> <span class="n">decorator</span>
-<span class="kn">from</span> <span class="nn">fastalite</span> <span class="kn">import</span> <span class="n">fastalite</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dendropy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastalite</span><span class="w"> </span><span class="kn">import</span> <span class="n">fastalite</span>
 
-<span class="kn">from</span> <span class="nn">taxtastic</span> <span class="kn">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">taxdb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">taxtastic</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">taxdb</span>
 
 <span class="n">FORMAT_VERSION</span> <span class="o">=</span> <span class="s1">&#39;1.1&#39;</span>
 
 
-<span class="k">class</span> <span class="nc">DerivedFileNotUpdatedWarning</span><span class="p">(</span><span class="ne">UserWarning</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DerivedFileNotUpdatedWarning</span><span class="p">(</span><span class="ne">UserWarning</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<span class="k">def</span> <span class="nf">is_string</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_string</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">basestring</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">md5file</span><span class="p">(</span><span class="n">fobj</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">md5file</span><span class="p">(</span><span class="n">fobj</span><span class="p">):</span>
     <span class="n">md5</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
     <span class="n">md5</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fobj</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">md5</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
 
 <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-<span class="k">def</span> <span class="nf">scratch_file</span><span class="p">(</span><span class="n">unlink</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scratch_file</span><span class="p">(</span><span class="n">unlink</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a temporary file and return its name.</span>
 
 <span class="sd">    Additional arguments are passed to :class:`tempfile.NamedTemporaryFile`</span>
@@ -117,7 +314,7 @@
             <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">manifest_template</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">manifest_template</span><span class="p">():</span>
     <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;create_date&#39;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span>
                          <span class="s1">&#39;format_version&#39;</span><span class="p">:</span> <span class="n">FORMAT_VERSION</span><span class="p">},</span>
             <span class="s1">&#39;files&#39;</span><span class="p">:</span> <span class="p">{},</span>
@@ -162,7 +359,7 @@
 <span class="c1"># set by _log.</span>
 
 <span class="nd">@decorator</span>
-<span class="k">def</span> <span class="nf">transaction</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">transaction</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_transaction</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -179,14 +376,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">current_transaction</span> <span class="o">=</span> <span class="kc">None</span>
 
 
-<span class="k">class</span> <span class="nc">NoAncestor</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NoAncestor</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<span class="k">class</span> <span class="nc">Refpkg</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Refpkg</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="n">_manifest_name</span> <span class="o">=</span> <span class="s1">&#39;CONTENTS.json&#39;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a reference to a new or existing RefPkg at *path*.</span>
 
 <span class="sd">        If there is already a RefPkg at *path*, a reference is returned to that</span>
@@ -225,7 +422,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_install_zipfile_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_install_zipfile_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_archive</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
         <span class="n">archive_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">zi</span> <span class="k">for</span> <span class="n">zi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_archive</span><span class="o">.</span><span class="n">infolist</span><span class="p">()</span>
                         <span class="k">if</span> <span class="n">zi</span><span class="o">.</span><span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)]</span>
@@ -234,11 +431,11 @@
                 <span class="s1">&#39;zipped reference packages must contain exactly one directory&#39;</span><span class="p">)</span>
         <span class="n">archive_dir</span> <span class="o">=</span> <span class="n">archive_dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">filename</span>
 
-        <span class="k">def</span> <span class="nf">zipopen</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">zipopen</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">archive_dir</span> <span class="o">+</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">open</span> <span class="o">=</span> <span class="n">zipopen</span>
 
-        <span class="k">def</span> <span class="nf">file_path</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">file_path</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
             <span class="k">with</span> <span class="n">scratch_file</span><span class="p">(</span><span class="n">unlink</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">path</span><span class="p">:</span>
                 <span class="n">src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
@@ -250,7 +447,7 @@
     <span class="c1"># providing data (e.g. for testing)</span>
     <span class="n">file_factory</span> <span class="o">=</span> <span class="nb">open</span>
 
-    <span class="k">def</span> <span class="nf">file_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">file_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the full path to a file in the reference package.</span>
 
@@ -259,13 +456,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return an open file object for a file in the reference package.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_factory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="o">*</span><span class="n">mode</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">open_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return an open file object for the manifest file in this reference</span>
 <span class="sd">        package.</span>
@@ -274,7 +471,7 @@
 
 <div class="viewcode-block" id="Refpkg.open_resource">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.open_resource">[docs]</a>
-    <span class="k">def</span> <span class="nf">open_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">,</span> <span class="o">*</span><span class="n">mode</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return an open file object for a particular named resource in this</span>
 <span class="sd">        reference package.</span>
@@ -284,7 +481,7 @@
 
 <div class="viewcode-block" id="Refpkg.resource_name">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.resource_name">[docs]</a>
-    <span class="k">def</span> <span class="nf">resource_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resource_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the name of the file within the reference package for a</span>
 <span class="sd">        particular named resource.</span>
@@ -296,21 +493,21 @@
 
 <div class="viewcode-block" id="Refpkg.resource_md5">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.resource_md5">[docs]</a>
-    <span class="k">def</span> <span class="nf">resource_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resource_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the stored MD5 sum for a particular named resource.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;md5&#39;</span><span class="p">]):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No such resource </span><span class="si">%r</span><span class="s2"> in refpkg&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">resource</span><span class="p">,))</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;md5&#39;</span><span class="p">][</span><span class="n">resource</span><span class="p">]</span></div>
 
 
-    <span class="k">def</span> <span class="nf">calculate_resource_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_resource_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the MD5 sum for a particular named resource.&quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">md5file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Refpkg.resource_path">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.resource_path">[docs]</a>
-    <span class="k">def</span> <span class="nf">resource_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resource_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the path to the file within the reference package for a</span>
 <span class="sd">        particular named resource.</span>
@@ -321,7 +518,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resource_name</span><span class="p">(</span><span class="n">resource</span><span class="p">))</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_set_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set some default values in the manifest.</span>
 
@@ -332,7 +529,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;rollback&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;rollforward&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_sync_to_disk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sync_to_disk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write any changes made on Refpkg to disk.</span>
 
 <span class="sd">        Other methods of Refpkg that alter the contents of the package</span>
@@ -346,7 +543,7 @@
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
             <span class="n">h</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_sync_from_disk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sync_from_disk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read any changes made on disk to this Refpkg.</span>
 
 <span class="sd">        This is necessary if other programs are making changes to the</span>
@@ -369,7 +566,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_defaults</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_refpkg</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_add_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Copy a file into the reference package.&quot;&quot;&quot;</span>
         <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="n">base</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
@@ -380,32 +577,32 @@
         <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">filename</span>
 
-    <span class="k">def</span> <span class="nf">_delete_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_delete_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete a file from the reference package.&quot;&quot;&quot;</span>
         <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Refpkg.metadata">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.metadata">[docs]</a>
-    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the metadata value associated to *key*.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Refpkg.file_keys">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.file_keys">[docs]</a>
-    <span class="k">def</span> <span class="nf">file_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">file_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a list of all the keys referring to files in this refpkg.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;files&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="Refpkg.metadata_keys">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.metadata_keys">[docs]</a>
-    <span class="k">def</span> <span class="nf">metadata_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metadata_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a list of all the keys referring to metadata in this refpkg.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the log message for this operation.</span>
 
 <span class="sd">        When writing transactions that encapsulate several others,</span>
@@ -416,7 +613,7 @@
 
 <div class="viewcode-block" id="Refpkg.log">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.log">[docs]</a>
-    <span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the log of this refpkg.</span>
 
 <span class="sd">        The log is a list of strings, one per operation, from newest</span>
@@ -427,7 +624,7 @@
 
 <div class="viewcode-block" id="Refpkg.is_invalid">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.is_invalid">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if this RefPkg is invalid.</span>
 
 <span class="sd">        Valid means that it contains a properly named manifest, and</span>
@@ -496,7 +693,7 @@
         <span class="k">return</span> <span class="kc">False</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_check_refpkg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_refpkg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">error</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_invalid</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Refpkg is invalid: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">error</span><span class="p">)</span>
@@ -504,7 +701,7 @@
 <div class="viewcode-block" id="Refpkg.update_metadata">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.update_metadata">[docs]</a>
     <span class="nd">@transaction</span>
-    <span class="k">def</span> <span class="nf">update_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set *key* in the metadata to *value*.</span>
 
 <span class="sd">        Returns the previous value of *key*, or None if the key was</span>
@@ -519,7 +716,7 @@
 <div class="viewcode-block" id="Refpkg.update_file">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.update_file">[docs]</a>
     <span class="nd">@transaction</span>
-    <span class="k">def</span> <span class="nf">update_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">new_path</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">new_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Insert file *new_path* into the refpkg under *key*.</span>
 
 <span class="sd">        The filename of *new_path* will be preserved in the refpkg</span>
@@ -550,7 +747,7 @@
 <div class="viewcode-block" id="Refpkg.reroot">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.reroot">[docs]</a>
     <span class="nd">@transaction</span>
-    <span class="k">def</span> <span class="nf">reroot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rppr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pretend</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reroot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rppr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pretend</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Reroot the phylogenetic tree.</span>
 
 <span class="sd">        This operation calls ``rppr reroot`` to generate the rerooted</span>
@@ -573,7 +770,7 @@
 
 <div class="viewcode-block" id="Refpkg.update_phylo_model">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.update_phylo_model">[docs]</a>
-    <span class="k">def</span> <span class="nf">update_phylo_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stats_type</span><span class="p">,</span> <span class="n">stats_file</span><span class="p">,</span> <span class="n">frequency_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_phylo_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stats_type</span><span class="p">,</span> <span class="n">stats_file</span><span class="p">,</span> <span class="n">frequency_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse a stats log and use it to update ``phylo_model``.</span>
 
 <span class="sd">        ``pplacer`` expects its input to include the deatils of the</span>
@@ -647,7 +844,7 @@
 
 <div class="viewcode-block" id="Refpkg.rollback">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.rollback">[docs]</a>
-    <span class="k">def</span> <span class="nf">rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Revert the previous modification to the refpkg.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># This is slightly complicated because of Python&#39;s freakish</span>
@@ -667,7 +864,7 @@
 
 <div class="viewcode-block" id="Refpkg.rollforward">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.rollforward">[docs]</a>
-    <span class="k">def</span> <span class="nf">rollforward</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rollforward</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Restore a reverted modification to the refpkg.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;rollforward&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -684,7 +881,7 @@
 
 <div class="viewcode-block" id="Refpkg.strip">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.strip">[docs]</a>
-    <span class="k">def</span> <span class="nf">strip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">strip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove rollbacks, rollforwards, and all non-current files.</span>
 
 <span class="sd">        When distributing a refpkg, you probably want to distribute as</span>
@@ -707,7 +904,7 @@
 
 <div class="viewcode-block" id="Refpkg.start_transaction">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.start_transaction">[docs]</a>
-    <span class="k">def</span> <span class="nf">start_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Begin a transaction to group operations on the refpkg.</span>
 
 <span class="sd">        All the operations until the next call to</span>
@@ -725,7 +922,7 @@
 
 <div class="viewcode-block" id="Refpkg.commit_transaction">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.commit_transaction">[docs]</a>
-    <span class="k">def</span> <span class="nf">commit_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">commit_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Commit a transaction, with *log* as the log entry.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_transaction</span><span class="p">[</span><span class="s1">&#39;rollback&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_transaction</span><span class="p">[</span><span class="s1">&#39;rollback&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;rollforward&#39;</span><span class="p">)</span>
@@ -739,7 +936,7 @@
 
 <div class="viewcode-block" id="Refpkg.is_ill_formed">
 <a class="viewcode-back" href="../../refpkg_api.html#taxtastic.refpkg.Refpkg.is_ill_formed">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_ill_formed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_ill_formed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Stronger set of checks than is_invalid for Refpkg.</span>
 
 <span class="sd">        Checks that FASTA, Stockholm, JSON, and CSV files under known</span>
@@ -830,7 +1027,7 @@
         <span class="k">return</span> <span class="kc">False</span></div>
 
 
-    <span class="k">def</span> <span class="nf">load_db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Load the taxonomy into a sqlite3 database.</span>
 
 <span class="sd">        This will set ``self.db`` to a sqlite3 database which contains all of</span>
@@ -850,7 +1047,7 @@
         <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="n">db</span>
 
-    <span class="k">def</span> <span class="nf">most_recent_common_ancestor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ts</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">most_recent_common_ancestor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ts</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the MRCA of some tax_ids.</span>
 
 <span class="sd">        Returns the MRCA of the specified tax_ids, or raises ``NoAncestor`` if</span>
@@ -867,7 +1064,7 @@
             <span class="k">raise</span> <span class="n">NoAncestor</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">res</span>
 
-    <span class="k">def</span> <span class="nf">_large_mrca</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ts</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_large_mrca</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ts</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the MRCA using a temporary table.&quot;&quot;&quot;</span>
         <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
 
@@ -900,7 +1097,7 @@
 
         <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_small_mrca</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ts</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_small_mrca</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ts</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Find a MRCA using query parameters.</span>
 
 <span class="sd">        This only supports a limited number of tax_ids; ``_large_mrca`` will</span>
@@ -923,62 +1120,61 @@
 
         <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">file_abspath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">file_abspath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated alias for *resource_path*.&quot;&quot;&quot;</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">&quot;file_abspath is deprecated; use resource_path instead&quot;</span><span class="p">,</span>
             <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_path</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">file_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">file_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated alias for *resource_name*.&quot;&quot;&quot;</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">&quot;file_name is deprecated; use resource_name instead&quot;</span><span class="p">,</span>
             <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_name</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">file_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">file_md5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated alias for *resource_md5*.&quot;&quot;&quot;</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">&quot;file_md5 is deprecated; use resource_md5 instead&quot;</span><span class="p">,</span>
             <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_md5</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
 </pre></div>
-
-            <div class="clearer"></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2011-2026
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
           </div>
         </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="Main">
-        <div class="sphinxsidebarwrapper">
-<search id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
+        
+      </footer>
     </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related" role="navigation" aria-label="Related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../../genindex.html" title="General Index"
-             >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">taxtastic 0.1.dev1+g290515b8a documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">taxtastic.refpkg</a></li> 
-      </ul>
-    </div>
-    <div class="footer" role="contentinfo">
-    &#169; Copyright 2011-2026, Noah Hoffman, Erick Matsen, Brian Hodges, Connor McCoy, Chris Rosenthal.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
-    </div>
-  </body>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=6aee1ebc"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
 </html>

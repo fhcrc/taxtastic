@@ -126,6 +126,20 @@ add_to_taxtable
 
 .. literalinclude:: _helptext/add_to_taxtable.txt
 
+append
+------
+
+.. literalinclude:: _helptext/append.txt
+
+Append taxonomy rank columns to a CSV file containing a ``tax_id`` column.
+Use the ``_name`` suffix to retrieve the tax name for a rank (e.g.
+``genus_name``).
+
+Examples::
+
+  taxit append --columns genus,species,species_name seq_info.csv taxonomy.db
+  taxit append --columns genus_name,species_name -o annotated.csv seq_info.csv taxonomy.db
+
 check
 -----
 
@@ -174,6 +188,20 @@ Examples::
         --taxonomy taxtable.csv
 
 
+extract_nodes
+-------------
+
+.. literalinclude:: _helptext/extract_nodes.txt
+
+Extract nodes and names added via ``taxit add_nodes`` from a given source,
+outputting them in the same YAML format accepted by ``add_nodes``. Useful
+for exporting custom taxonomy additions for reuse or version control.
+
+Examples::
+
+  taxit extract_nodes taxonomy.db my_source_name
+  taxit extract_nodes taxonomy.db my_source_name -o my_nodes.yaml
+
 findcompany
 -----------
 
@@ -183,6 +211,33 @@ Examples::
 
   taxit findcompany taxonomy.db -i taxids.txt -o newtaxids.txt
   taxit findcompany taxonomy.db 31661 5213 564
+
+get_descendants
+---------------
+
+.. literalinclude:: _helptext/get_descendants.txt
+
+Returns all descendant tax_ids of the given tax_ids, one per line.
+Input may be a file, a comma-delimited list, or ``-`` for stdin.
+
+Examples::
+
+  taxit get_descendants taxonomy.db 1279
+  taxit get_descendants taxonomy.db 1279,1301 --out descendants.txt
+  taxit get_descendants taxonomy.db taxids.txt
+
+get_lineage
+-----------
+
+.. literalinclude:: _helptext/get_lineage.txt
+
+Outputs a CSV of the full taxonomic lineage for each given tax_id,
+with columns for each rank from root to the given node.
+
+Examples::
+
+  taxit get_lineage taxonomy.db 1280
+  taxit get_lineage taxonomy.db 1280 47770 -o lineages.csv
 
 info
 ----
@@ -218,6 +273,35 @@ Examples::
 
     # Find lonely nodes in RefPkg mypkg-0.1.refpkg
     taxit lonelynodes mypkg-0.1.refpkg
+
+named
+-----
+
+.. literalinclude:: _helptext/named.txt
+
+Filters a list of tax_ids (or a seq_info CSV) to only those with valid,
+classified names in the taxonomy. Use ``--ranked`` to additionally exclude
+``no rank`` entries.
+
+Examples::
+
+  taxit named taxonomy.db -t 47770 33945
+  taxit named taxonomy.db -f taxids.txt -o named_taxids.txt
+  taxit named taxonomy.db -i seq_info.csv -o named_seq_info.csv --ranked
+
+namelookup
+----------
+
+.. literalinclude:: _helptext/namelookup.txt
+
+Look up tax_ids and primary names from taxonomic name strings. Outputs a
+CSV with columns ``input``, ``tax_name``, ``tax_id``, and ``rank``.
+
+Examples::
+
+  taxit namelookup taxonomy.db -n "Staphylococcus aureus,Escherichia coli"
+  taxit namelookup taxonomy.db -i names.txt -o results.csv
+  taxit namelookup taxonomy.db -i names.txt --include-unmatched
 
 new_database
 ------------
