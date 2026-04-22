@@ -4,3 +4,5 @@ build/
 dist/
 .venv/
 test_output/
+docs/_build/
+docs/_helptext/

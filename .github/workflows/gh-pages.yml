@@ -4,23 +4,41 @@ on:
   push:
     branches:
       - "master"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   push_gh_pages:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v3
-      -
-        name: Build Sphinx
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
         run: |
-          python -m pip install . sphinx
+          pip install .
+          pip install -r docs/requirements.txt
+
+      - name: Build Sphinx
+        run: |
           python dev/helptext.py -d docs/_helptext ./taxit.py
-          sphinx-build docs html
-      -
-        name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+          sphinx-build -b html docs docs/_build/html
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./html
+          publish_dir: ./docs/_build/html

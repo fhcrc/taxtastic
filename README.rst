@@ -113,6 +113,25 @@ default Postgres configuration on MacOS is likely to be quite resource
 constrained; consider tuning your database configuration by consulting
 a site such as PGTune (https://pgtune.leopard.in.ua).
 
+Building docs locally
+=====================
+
+To work on the Sphinx docs locally, first install ``taxtastic`` and then
+install the docs dependencies::
+
+  uv pip install -r docs/requirements.txt
+
+From the repository root, build the docs once::
+
+  make -C docs/ html
+
+Then start the live-reload server::
+
+  sphinx-autobuild docs docs/_build/html
+
+This serves the docs locally and rebuilds the HTML output whenever the
+docs sources change.
+
 .. Targets ..
 .. _quickstart: https://fhcrc.github.io/taxtastic/quickstart.html
 .. _full documentation: https://fhcrc.github.io/taxtastic/index.html
