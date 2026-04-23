@@ -144,6 +144,21 @@ The production docs are hosted on `GitHub Pages
 triggered manually: go to **Actions → Build and push GH-Pages → Run
 workflow** and click **Run workflow**.
 
+Contributors
+============
+
+* Noah Hoffman
+* Erick Matsen
+* Chris Rosenthal
+* Connor McCoy
+* Daniel Hoogestraat
+* Jonathan Golob
+* Sacha Coesel
+* Aaron Gallagher
+* Fred Ross
+* Zach Stednick
+* Brian Hodges
+
 .. Targets ..
 .. _quickstart: https://fhcrc.github.io/taxtastic/quickstart.html
 .. _full documentation: https://fhcrc.github.io/taxtastic/index.html
