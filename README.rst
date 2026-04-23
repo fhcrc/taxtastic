@@ -113,8 +113,11 @@ default Postgres configuration on MacOS is likely to be quite resource
 constrained; consider tuning your database configuration by consulting
 a site such as PGTune (https://pgtune.leopard.in.ua).
 
-Building docs locally
-=====================
+Building docs
+=============
+
+Locally
+-------
 
 To work on the Sphinx docs locally, first install ``taxtastic`` and then
 install the docs dependencies::
@@ -131,6 +134,15 @@ Then start the live-reload server::
 
 This serves the docs locally and rebuilds the HTML output whenever the
 docs sources change.
+
+Production
+----------
+
+The production docs are hosted on `GitHub Pages
+<https://fhcrc.github.io/taxtastic/>`_ and are deployed via the
+``Build and push GH-Pages`` GitHub Actions workflow. Deployment is
+triggered manually: go to **Actions → Build and push GH-Pages → Run
+workflow** and click **Run workflow**.
 
 .. Targets ..
 .. _quickstart: https://fhcrc.github.io/taxtastic/quickstart.html
