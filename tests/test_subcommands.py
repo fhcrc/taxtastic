@@ -290,6 +290,31 @@ class TestTaxtable(TestBase):
         self.assertIsNone(main(args))
 
 
+class TestNamed(TestBase):
+
+    def setUp(self):
+        self.outdir = self.mkoutdir()
+        self.outfile = os.path.join(self.outdir, 'named.txt')
+
+    def output_taxids(self):
+        with open(self.outfile) as handle:
+            return [line.strip() for line in handle]
+
+    def test_ranked_excludes_no_rank(self):
+        args = [
+            'named',
+            '--ranked',
+            '--tax-ids',
+            '1287',
+            '1280',
+            '-o',
+            self.outfile,
+            config.ncbi_master_db,
+        ]
+        self.assertIsNone(main(args))
+        self.assertEqual(self.output_taxids(), ['1280'])
+
+
 class TestAddToTaxtable(TestBase):
     maxDiff = None
 

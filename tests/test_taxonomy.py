@@ -401,6 +401,14 @@ class TestTaxonomyTree(TestTaxonomyBase):
             self.tax.nary_subtree('1239'),
             ['1280', '1281', '45670', '138846'])
 
+    def test_is_valid_excludes_no_rank_by_default(self):
+        self.assertEqual(self.tax.is_valid(['1287']), [])
+        self.assertEqual(self.tax.is_valid(['1280']), ['1280'])
+
+    def test_is_valid_includes_no_rank_when_requested(self):
+        self.assertEqual(
+            self.tax.is_valid(['1287'], exclude_no_rank=False), ['1287'])
+
 
 class TestGetLineageTable(TestTaxonomyBase):
 
@@ -422,5 +430,3 @@ class TestGetLineageTable(TestTaxonomyBase):
 
         self.assertEqual(species['1280'].tax_name, 'Staphylococcus aureus')
         self.assertEqual(species['1379'].tax_name, 'Gemella haemolysans')
-
-
