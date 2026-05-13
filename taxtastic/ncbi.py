@@ -123,7 +123,7 @@ UNCLASSIFIED_REGEX_COMPONENTS = [r'-like\b',
                                  r'^\W+\s+[a-zA-Z]*\d',  # Digit in second word
                                  r'\d\d',
                                  r'atypical',
-                                 r'^cf\.',
+                                 r'\bcf\.',
                                  r'acidophile',
                                  r'\bactinobacterium\b',
                                  r'aerobic',
