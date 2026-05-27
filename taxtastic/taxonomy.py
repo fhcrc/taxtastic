@@ -853,12 +853,12 @@ class Taxonomy(object):
         with self.engine.connect() as con:
             return [row[0] for row in con.execute(cmd).fetchall()]
 
-    def is_valid(self, tax_ids=None, no_rank=True):
+    def is_valid(self, tax_ids=None, exclude_no_rank=True):
         """Return all classified tax_ids"""
         nodes = self.nodes
         s = select(nodes.c.tax_id).where(nodes.c.is_valid)
         if tax_ids:
             s = s.where(nodes.c.tax_id.in_(set(tax_ids)))
-        if not no_rank:
-            s = s.where(nodes.c.rank == 'no_rank')
+        if exclude_no_rank:
+            s = s.where(nodes.c.rank != 'no_rank')
         return [r[0] for r in self.fetchall(s)]

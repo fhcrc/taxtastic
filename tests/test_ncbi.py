@@ -73,6 +73,74 @@ class TestUnclassifiedRegex(TestBase):
     Test the heuristic used to determine if a taxonomic name is meaningful.
     """
 
+    unclassified_regex_examples = [
+        (r'-like\b', 'WA-like'),
+        (r'\bactinomycete\b', 'actinomycete A4'),
+        (r'\bcrenarchaeote\b', 'crenarchaeote OlA-6'),
+        (r'\bculture\b', 'mixed culture'),
+        (r'\bchimeric\b', 'chimeric sequence SJA-7'),
+        (r'\bcyanobiont\b', 'Nostocaceae cyanobiont AE1'),
+        (r'degrading', '2,4-D degrading bacterium M1'),
+        (r'\beuryarchaeote\b', 'euryarchaeote D4.75-4'),
+        (r'disease', 'Fiji disease virus'),
+        (r'\b[cC]lone', 'soil clone WD1'),
+        (r'\bmethanogen(ic)?\b', 'methanogen 5c'),
+        (r'\bplanktonic\b', 'planktonic crenarchaeote'),
+        (r'\bplanctomycete\b', 'planctomycete A-2'),
+        (r'\bsymbiote\b', 'Ornithodoros moubata symbiote B'),
+        (r'\btransconjugant\b', '2,4-D degrading transconjugant WD2'),
+        (r'^(?!root$)[a-z]', 'liara'),
+        # No matching primary scientific name was found in ncbi_taxonomy.db
+        # for r'^\W+\s+[a-zA-Z]*\d'.
+        (r'\d\d', 'GB10C'),
+        (r'atypical', 'Limbodessus atypicalis'),
+        (r'\bcf\.', 'Doto cf. divae'),
+        (r'acidophile', 'acidophile enrichment culture'),
+        (r'\bactinobacterium\b', 'actinobacterium D'),
+        (r'aerobic', 'aerobic bacillus'),
+        (r'.+\b[Al]g(um|a)\b', 'Prosthecochloris sp. L21-Aga-LIT'),
+        (r'\b[Bb]acteri(um|al)\b', 'bacterium'),
+        (r'.+\b[Bb]acteria\b', 'cf. Bacteria SAR-1'),
+        (r'Barophile', 'Barophile WHB 46'),
+        (r'cyanobacterium', 'cyanobacterium G1'),
+        (r'Chloroplast', 'Chloroplast expression vector pCEV1'),
+        (r'Cloning', 'Cloning vector AC'),
+        (r'\bclone\b', 'soil clone WD1'),
+        (r'cluster', 'Cyclustera'),
+        (r'^diazotroph', 'diazotroph DU1'),
+        (r'\bcoccus\b', 'Dactylopius coccus'),
+        (r'archaeon', 'archaeon'),
+        (r'-containing', 'HSV-tk-containing vector pGTK3'),
+        (r'epibiont', 'epibiont metagenome'),
+        (r'environmental samples', 'environmental samples <bats>'),
+        (r'eubacterium', 'Desulfoeubacterium'),
+        (r'halophilic', 'halophilic archaeon'),
+        (r'hydrothermal\b', 'hydrothermal vent metagenome'),
+        (r'isolate', 'Biserrula isolate'),
+        (r'\bmarine\b', 'marine bacterium'),
+        (r'methanotroph', 'methanotroph B8'),
+        (r'microorganism', 'uncultured microorganism'),
+        (r'mollicute', "'Candidatus Bacilliplasma' mollicute"),
+        (r'pathogen', 'fungal pathogen UWFP-388'),
+        (r'[Pp]hytoplasma', 'Phytoplasma sp.'),
+        (r'proteobacterium', 'proteobacterium 1'),
+        (r'putative', 'uncultured putative methanotroph'),
+        (r'\bsp\.', 'Aix sp.'),
+        (r'species', 'Eucara species group'),
+        (r'spirochete', 'wall-less spirochete'),
+        (r'str\.', 'archaeal str. vp21'),
+        (r'strain', 'slope strain DI4'),
+        (r'symbiont', 'ant endosymbionts'),
+        (r'\b[Tt]axon\b', 'Bisgaard Taxon 2'),
+        (r'unicellular', 'Gesasha unicellularis'),
+        (r'uncultured', 'uncultured Ulva'),
+        (r'unclassified', 'unclassified Aa'),
+        (r'unidentified', 'unidentified'),
+        (r'unknown', 'HIV-1 unknown group'),
+        (r'vector\b', 'YTT vector A'),
+        (r'vent\b', 'Ripavent virus'),
+    ]
+
     def setUp(self):
         self.pieces = taxtastic.ncbi.UNCLASSIFIED_REGEX_COMPONENTS
         self.regexes = [re.compile(piece) for piece in self.pieces]
@@ -86,6 +154,21 @@ class TestUnclassifiedRegex(TestBase):
                 if m:
                     self.fail('"{0}" matches "{1}"'.format(
                         strain_name, regex.pattern))
+
+    def test_cf_prefix_matches(self):
+        self.assertRegex(
+            'cf. Pedicellasteridae sp. CLM-2010-1',
+            taxtastic.ncbi.UNCLASSIFIED_REGEX)
+
+    def test_cf_middle_matches(self):
+        self.assertRegex(
+            'Plasmodium cf. ovale',
+            taxtastic.ncbi.UNCLASSIFIED_REGEX)
+
+    def test_scientific_name_examples_match_components(self):
+        for pattern, tax_name in self.unclassified_regex_examples:
+            with self.subTest(pattern=pattern, tax_name=tax_name):
+                self.assertRegex(tax_name, re.compile(pattern))
 
 # def generate_test_unclassified_regex():
     #"""
